@@ -9,6 +9,7 @@
     import { VerticalPosition } from '@nativescript-community/ui-popover';
     import { View } from '@nativescript/core';
     import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
+    import SettingsSlider from '@shared/components/SettingsSlider.svelte';
     import { showError } from '@shared/utils/showError';
     import { lc } from '~/helpers/locale';
     import { MatricesTypes } from '~/utils/color_matrix';
@@ -185,8 +186,24 @@
                         <checkbox id="checkbox" checked={transforms.indexOf(item.id) !== -1} col={1} verticalAlignment="center" on:checkedChange={(e) => onCheckedChanged(item, e)} />
                     </ListItemAutoSize>
                 {/each}
-                <ListItemAutoSize item={{ title: lc('brightness'), rightValue: brightness.toFixed(2) }} />
-                <ListItemAutoSize item={{ title: lc('contrast'), rightValue: contrast.toFixed(2) }} />
+
+                <SettingsSlider
+                    formatter={(v) => (v / 100).toFixed(2)}
+                    max={500}
+                    min={-100}
+                    onChange={(value) => (brightness = value / 100)}
+                    step={1}
+                    title={lc('brightness')}
+                    value={Math.round(Math.max(-1, Math.min(brightness ?? DEFAULT_BRIGHTNESS, 5)) * 100)} />
+
+                <SettingsSlider
+                    formatter={(v) => (v / 100).toFixed(2)}
+                    max={500}
+                    min={-100}
+                    onChange={(value) => (contrast = value / 100)}
+                    step={1}
+                    title={lc('contrast')}
+                    value={Math.round(Math.max(-1, Math.min(contrast ?? DEFAULT_CONTRAST, 4)) * 100)} />
             </stacklayout>
             <label class="sectionBigHeader" text={lc('filters')} />
             <collectionview bind:this={collectionView} colWidth={FILTER_COL_WIDTH} height={FILTER_ROW_HEIGHT} items={filters} orientation="horizontal">
