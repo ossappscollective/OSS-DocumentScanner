@@ -84,6 +84,7 @@ export abstract class BasePDFSyncService extends BaseSyncService {
                 pages: thePages.map((p) => p.page),
                 ...exportOptions
             });
+            DEV_LOG && console.log('generatePDFASync', folderPath, fileName, document.name);
             await generatePDFASync(folderPath, fileName, options, wrapNativeException);
         } else {
             const thePages = pages.map((page) => ({ page, document }));

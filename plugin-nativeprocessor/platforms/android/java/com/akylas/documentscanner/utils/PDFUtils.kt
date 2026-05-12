@@ -502,7 +502,7 @@ class PDFUtils {
             var needsCopy = false
             if (destFolder.startsWith("content://")) {
                 needsCopy = true
-                generateFilePath = context.cacheDir.toString() + "/compressed.pdf"
+                generateFilePath = context.cacheDir.toString() + "/${fileName}_compressed.pdf"
             }
             cyrillicFont = null
             cjkFont = null
