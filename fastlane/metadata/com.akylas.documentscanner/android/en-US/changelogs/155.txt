@@ -1,0 +1,6 @@
+Bug fixes:
+- settings dialogs showing title twice
+- make sure alerts always show buttons for screen with bigger font size
+- webdav folders data sync fix
+- sync fixes for PDF, paperlessNGX. Sync should also now be faster
+- Translations update
