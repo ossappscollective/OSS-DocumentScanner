@@ -41,7 +41,10 @@
     let syncEnabled: boolean;
 
     export let alwaysShowNames = ApplicationSettings.getBoolean(SETTINGS_CARD_ALWAYS_SHOW_NAME, DEFAULT_CARD_ALWAYS_SHOW_NAME);
-    prefs.on(`key:${SETTINGS_CARD_ALWAYS_SHOW_NAME}`, () => (alwaysShowNames = ApplicationSettings.getBoolean(SETTINGS_CARD_ALWAYS_SHOW_NAME, DEFAULT_CARD_ALWAYS_SHOW_NAME)));
+    prefs.on(`key:${SETTINGS_CARD_ALWAYS_SHOW_NAME}`, () => {
+        alwaysShowNames = ApplicationSettings.getBoolean(SETTINGS_CARD_ALWAYS_SHOW_NAME, DEFAULT_CARD_ALWAYS_SHOW_NAME);
+        refreshCollectionView();
+    });
 
     export let folder: DocFolder;
     let getSyncColors: (item: Item) => string[];

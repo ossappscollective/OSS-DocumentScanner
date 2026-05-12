@@ -244,8 +244,8 @@
     //         }
     //     }
     // }
-    function itemHasDefaultName(item: Item) {
-        return !alwaysShowNames && (!item.doc.name || item.doc.name.match(/\d+:\d+:\d+/));
+    function showCardName(item: Item) {
+        return alwaysShowNames || !item.doc.pages[0].imagePath || (item.doc.name && !item.doc.name.match(/\d+:\d+:\d+/));
     }
 </script>
 
@@ -276,7 +276,7 @@
                 minFontSize={20}
                 padding={16}
                 text={item.doc.name}
-                visibility={itemHasDefaultName(item) ? 'hidden' : 'visible'}
+                visibility={showCardName(item) ? 'visible' : 'hidden'}
                 {...getLabelParams(layout, item, height, itemHeight)} />
         {/if}
         <!-- <gridlayout borderRadius={12}> -->
