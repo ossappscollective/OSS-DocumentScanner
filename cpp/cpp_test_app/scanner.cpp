@@ -1312,7 +1312,8 @@ private slots:
                 QString(), "Images (*.png *.jpg *.bmp)");
             if (basePath.isEmpty()) return;
             QString ext  = QFileInfo(basePath).suffix();
-            QString base = basePath.left(basePath.length() - (int)ext.length() - 1);
+            QString base = QFileInfo(basePath).absolutePath() + "/"
+                         + QFileInfo(basePath).completeBaseName();
             if (!leftPageResult_.empty())
                 cv::imwrite((base + "_left."  + ext).toStdString(), leftPageResult_);
             if (!rightPageResult_.empty())
@@ -1544,6 +1545,7 @@ private:
                 break;
             }
             case COMPARE: {
+                const int gap = 4;
                 Mat left  = currentImage_.clone();
                 Mat right = resultImage_.empty()
                            ? Mat(left.size(), CV_8UC3, Scalar(30,30,30))
@@ -1552,10 +1554,10 @@ private:
                     double sc = (double)left.rows / right.rows;
                     resize(right, right, Size((int)(right.cols*sc), left.rows));
                 }
-                display = Mat(left.rows, left.cols + right.cols + 4, CV_8UC3, Scalar(50,50,50));
-                left.copyTo( display(Rect(0,           0, left.cols,  left.rows)));
-                right.copyTo(display(Rect(left.cols+4, 0, right.cols, left.rows)));
-                line(display, Point(left.cols+1,0), Point(left.cols+1,display.rows),
+                display = Mat(left.rows, left.cols + right.cols + gap, CV_8UC3, Scalar(50,50,50));
+                left.copyTo( display(Rect(0,                0, left.cols,  left.rows)));
+                right.copyTo(display(Rect(left.cols + gap,  0, right.cols, left.rows)));
+                line(display, Point(left.cols + gap/2, 0), Point(left.cols + gap/2, display.rows),
                      Scalar(255,200,0), 2, LINE_AA);
                 break;
             }

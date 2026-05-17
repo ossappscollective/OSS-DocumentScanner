@@ -426,8 +426,8 @@ DocumentDetector::PageSplitResult DocumentDetector::detectGutterAndSplit(const M
     float gradMin = *std::min_element(colGrad.begin(), colGrad.end());
     float gradMax = *std::max_element(colGrad.begin(), colGrad.end());
 
-    float meanRange = std::max(meanMax - meanMin, 1.0f);
-    float gradRange = std::max(gradMax - gradMin, 1.0f);
+    float meanRange = std::max(meanMax - meanMin, 1e-6f);
+    float gradRange = std::max(gradMax - gradMin, 1e-6f);
 
     // Combined "gutterScore": low score = likely gutter
     //   darkness component: (colMean - meanMin) / meanRange  (0 = darkest)
