@@ -56,6 +56,7 @@
 #include <QMessageBox>
 #include <QElapsedTimer>
 #include <QAction>
+#include <QComboBox>
 #include <QDockWidget>
 #include <QSizePolicy>
 #include <QCursor>
@@ -257,6 +258,142 @@ static QVector<AlgoDef> buildCatalog() {
     c.push_back({"despeckle_aggressive","Despeckle Aggressive (todo)", false, {}});
 
     return c;
+}
+
+// ============================================================
+//  Pipeline Presets — example mode configurations
+// ============================================================
+
+/**
+ * A named pipeline preset.  Each step stores an algorithm ID and optional
+ * parameter overrides; any param NOT overridden uses the AlgoDef default.
+ */
+struct PipelinePreset {
+    QString name;
+    QString description;
+    /// {algoId, paramOverrides}  — empty map = use AlgoDef defaults
+    QVector<QPair<QString, QMap<QString,double>>> steps;
+};
+
+/**
+ * Build the predefined preset list.  Every algo ID here must be present
+ * in the catalogue produced by buildCatalog().
+ *
+ * The presets are intended as demonstrations / starting points; the user
+ * can freely modify each step after loading.
+ */
+static QVector<PipelinePreset> buildPresets() {
+    QVector<PipelinePreset> p;
+
+    // ---- 📖 Book Scan ----
+    // Gutter detection is automatic (built into DocumentDetector::detectGutterAndSplit).
+    // This pipeline handles the per-page image quality.
+    p.push_back({
+        "📖 Book Scan",
+        "Two-page book scan — gutter detection splits pages automatically.\n"
+        "Normalizes illumination (page curl shadows), deskews each page,\n"
+        "denoises, then binarizes with Sauvola (optimal for ink on paper\n"
+        "with spine shadow gradients). Finish with light despeckle.",
+        {
+            {"bg_normalize",    {{"polyDegree", 4}, {"marginFraction", 15}}},
+            {"skew_correct",    {{"maxAngle", 10}}},
+            {"wiener_denoise",  {{"windowSize", 5}, {"noiseSigma", 8}}},
+            {"adaptive_sauvola",{{"windowSize", 25}, {"k", 34}, {"delta", 0}}},
+            {"despeckle_normal",{}},
+        }
+    });
+
+    // ---- 📄 Whitepaper Document ----
+    p.push_back({
+        "📄 Whitepaper Document",
+        "Flat whitepaper / whiteboard document: corrects colour cast and\n"
+        "contrast with the Whitepaper transform, then applies Enhance for\n"
+        "additional sharpening and a cautious despeckle.",
+        {
+            {"whitepaper",         {}},
+            {"enhance",            {}},
+            {"despeckle_cautious", {}},
+        }
+    });
+
+    // ---- 📄 Whitepaper 2 (Alt) ----
+    p.push_back({
+        "📄 Whitepaper 2 (Alt)",
+        "Alternative whitepaper pipeline using the secondary transform\n"
+        "(different highlight recovery), followed by colour simplification\n"
+        "to a small palette — great for diagrams and handwritten notes.",
+        {
+            {"whitepaper2",        {}},
+            {"colors",             {{"nbColors", 4}, {"filterDistThreshold", 15}}},
+            {"despeckle_cautious", {}},
+        }
+    });
+
+    // ---- 🔤 OCR Preparation ----
+    p.push_back({
+        "🔤 OCR Preparation",
+        "Optimised for optical character recognition:\n"
+        "1) Background-normalize (removes uneven lighting).\n"
+        "2) Skew-correct (horizontal text lines → max projection variance).\n"
+        "3) Wiener denoise (preserve strokes, reduce scan noise).\n"
+        "4) Wolf binarization (robust to varying local contrast).\n"
+        "5) Normal despeckle (remove dots that confuse OCR engines).",
+        {
+            {"bg_normalize",    {{"polyDegree", 4}}},
+            {"skew_correct",    {{"maxAngle", 10}}},
+            {"wiener_denoise",  {{"windowSize", 7}, {"noiseSigma", 12}}},
+            {"adaptive_wolf",   {{"windowSize", 25}, {"k", 30}}},
+            {"despeckle_normal",{}},
+        }
+    });
+
+    // ---- 🎨 Color Document ----
+    p.push_back({
+        "🎨 Color Document",
+        "Preserves colour while reducing noise and normalizing illumination.\n"
+        "Colour-preserving Wiener filter → background normalization →\n"
+        "colour-palette simplification (keep 6 colours by default).\n"
+        "Suitable for maps, charts, and colour-rich printed documents.",
+        {
+            {"wiener_color",  {{"windowSize", 5}, {"coef", 8}}},
+            {"bg_normalize",  {{"polyDegree", 3}}},
+            {"colors",        {{"nbColors", 6}, {"filterDistThreshold", 15}}},
+        }
+    });
+
+    // ---- 🌑 Shadow Removal ----
+    p.push_back({
+        "🌑 Shadow Removal",
+        "Removes cast shadows and uneven lighting using high-degree\n"
+        "polynomial background estimation followed by EdgeDiv binarization,\n"
+        "which blends edge-enhanced and blur-divided images — very robust\n"
+        "against illumination gradients near the spine or under a lamp.\n"
+        "Best combined with Book Scan for double-page spreads.",
+        {
+            {"bg_normalize",     {{"polyDegree", 5}, {"marginFraction", 20}}},
+            {"wiener_denoise",   {{"windowSize", 3}, {"noiseSigma", 5}}},
+            {"adaptive_edgediv", {{"windowSize", 31}, {"kep", 60}, {"kdb", 40}}},
+            {"despeckle_cautious",{}},
+        }
+    });
+
+    // ---- ✏️ Gradient Binarize (Grad) ----
+    p.push_back({
+        "✏️ Gradient Binarize",
+        "Uses the scantailor-advanced Grad method (zvezdochiot 2024):\n"
+        "classifies a pixel as foreground when it falls below\n"
+        "  mean - k * (maxStd - localStd)\n"
+        "Very crisp edges; works well on pencil and ink drawings.\n"
+        "Preceded by background normalization and a light denoise.",
+        {
+            {"bg_normalize",    {{"polyDegree", 3}}},
+            {"wiener_denoise",  {{"windowSize", 3}, {"noiseSigma", 6}}},
+            {"adaptive_grad",   {{"windowSize", 25}, {"k", 30}}},
+            {"despeckle_cautious",{}},
+        }
+    });
+
+    return p;
 }
 
 // ============================================================
@@ -483,8 +620,9 @@ signals:
 
 public:
     explicit AlgorithmPipelineWidget(const QVector<AlgoDef>& catalog,
+                                     const QVector<PipelinePreset>& presets,
                                      QWidget* parent = nullptr)
-        : QWidget(parent), catalog_(catalog)
+        : QWidget(parent), catalog_(catalog), presets_(presets)
     {
         auto* mainVl = new QVBoxLayout(this);
         mainVl->setContentsMargins(0,0,0,0);
@@ -493,19 +631,91 @@ public:
         // ---- Top: pipeline list ----
         auto* listGb = new QGroupBox("Algorithm Pipeline", this);
         auto* listVl = new QVBoxLayout(listGb);
-        listVl->setContentsMargins(4,4,4,4);
-        listVl->setSpacing(4);
+        listVl->setContentsMargins(4,6,4,4);
+        listVl->setSpacing(6);
 
-        // Add Step button
-        auto* addBtn = new QPushButton("＋ Add Step", listGb);
+        // ── Preset selector row ──
+        auto* presetRow = new QWidget(listGb);
+        auto* presetHl  = new QHBoxLayout(presetRow);
+        presetHl->setContentsMargins(0,0,0,0); presetHl->setSpacing(4);
+        auto* modeLbl = new QLabel("Mode:", presetRow);
+        modeLbl->setFixedWidth(40);
+        modeLbl->setStyleSheet("color: #A0A0A0; font-size: 11px;");
+        presetCombo_ = new QComboBox(presetRow);
+        presetCombo_->addItem("(custom — no preset)");
+        for (const auto& pr : presets_)
+            presetCombo_->addItem(pr.name);
+        presetCombo_->setToolTip("Select a mode preset to load a predefined pipeline");
+        auto* loadBtn = new QPushButton("▶ Load", presetRow);
+        loadBtn->setFixedWidth(64);
+        loadBtn->setToolTip("Load selected preset — replaces the current pipeline");
+        loadBtn->setStyleSheet("QPushButton { background:#1A5A1A; border-color:#2A8A2A; }"
+                               "QPushButton:hover { background:#216121; }");
+        connect(loadBtn, &QPushButton::clicked, this, [this]{
+            onLoadPreset(presetCombo_->currentIndex());
+        });
+        presetHl->addWidget(modeLbl);
+        presetHl->addWidget(presetCombo_, 1);
+        presetHl->addWidget(loadBtn);
+        listVl->addWidget(presetRow);
+
+        // ── Preset description label ──
+        descLabel_ = new QLabel(listGb);
+        descLabel_->setWordWrap(true);
+        descLabel_->setStyleSheet(
+            "color: #909090; font-size: 10px; font-style: italic;"
+            "background: #1E2A1E; border: 1px solid #2A4A2A;"
+            "border-radius: 3px; padding: 4px 6px;");
+        descLabel_->setMinimumHeight(54);
+        descLabel_->setMaximumHeight(80);
+        descLabel_->setText("Select a mode above and press ▶ Load,\n"
+                            "or build a custom pipeline with ＋ Add Step.");
+        listVl->addWidget(descLabel_);
+
+        // Update description when combo changes
+        connect(presetCombo_, QOverload<int>::of(&QComboBox::currentIndexChanged),
+                this, [this](int idx) {
+            if (idx <= 0 || idx > (int)presets_.size()) {
+                descLabel_->setText("Select a mode above and press ▶ Load,\n"
+                                    "or build a custom pipeline with ＋ Add Step.");
+            } else {
+                descLabel_->setText(presets_[idx-1].description);
+            }
+        });
+
+        // Separator line
+        auto* sep = new QFrame(listGb);
+        sep->setFrameShape(QFrame::HLine);
+        sep->setStyleSheet("color: #444444;");
+        listVl->addWidget(sep);
+
+        // ── Add Step + Clear buttons ──
+        auto* addClearRow = new QWidget(listGb);
+        auto* addClearHl  = new QHBoxLayout(addClearRow);
+        addClearHl->setContentsMargins(0,0,0,0); addClearHl->setSpacing(4);
+        auto* addBtn = new QPushButton("＋ Add Step", addClearRow);
         addBtn->setToolTip("Add a processing step to the pipeline");
         connect(addBtn, &QPushButton::clicked, this, &AlgorithmPipelineWidget::onAddStep);
-        listVl->addWidget(addBtn);
+        auto* clearBtn = new QPushButton("🗑 Clear", addClearRow);
+        clearBtn->setToolTip("Remove all pipeline steps");
+        clearBtn->setFixedWidth(72);
+        clearBtn->setStyleSheet("QPushButton { background:#3A1A1A; border-color:#6A2A2A; }"
+                                "QPushButton:hover { background:#4A2020; }");
+        connect(clearBtn, &QPushButton::clicked, this, [this]{
+            pipeline_.clear();
+            rebuildList();
+            paramForm_->clearStep();
+            presetCombo_->setCurrentIndex(0);
+            emit pipelineChanged();
+        });
+        addClearHl->addWidget(addBtn, 1);
+        addClearHl->addWidget(clearBtn);
+        listVl->addWidget(addClearRow);
 
         listWidget_ = new QListWidget(listGb);
         listWidget_->setDragDropMode(QAbstractItemView::InternalMove);
         listWidget_->setSelectionMode(QAbstractItemView::SingleSelection);
-        listWidget_->setMinimumHeight(100);
+        listWidget_->setMinimumHeight(80);
         connect(listWidget_, &QListWidget::currentRowChanged,
                 this, &AlgorithmPipelineWidget::onSelectionChanged);
         // Reorder via drag-and-drop
@@ -557,14 +767,51 @@ public:
 
     const QVector<PipelineStep>& pipeline() const { return pipeline_; }
 
+    /** Load a preset by its 0-based index in presets_. */
+    void loadPresetByIndex(int idx) {
+        if (idx < 0 || idx >= (int)presets_.size()) return;
+        const PipelinePreset& pr = presets_[idx];
+
+        pipeline_.clear();
+        for (const auto& [algoId, overrides] : pr.steps) {
+            // Find AlgoDef in catalog
+            for (const auto& def : catalog_) {
+                if (def.id == algoId) {
+                    PipelineStep step = makeStep(def);
+                    // Apply overrides
+                    for (auto it = overrides.begin(); it != overrides.end(); ++it)
+                        step.paramValues[it.key()] = it.value();
+                    pipeline_.push_back(step);
+                    break;
+                }
+            }
+        }
+
+        rebuildList();
+        if (!pipeline_.empty())
+            listWidget_->setCurrentRow(0);
+
+        // Update combo + description (block signals to avoid re-entry)
+        presetCombo_->blockSignals(true);
+        presetCombo_->setCurrentIndex(idx + 1); // +1 because index 0 = "(custom)"
+        presetCombo_->blockSignals(false);
+        descLabel_->setText(pr.description);
+
+        emit pipelineChanged();
+    }
+
 private slots:
+    void onLoadPreset(int comboIdx) {
+        // comboIdx 0 = "(custom)", 1..N = preset idx 0..N-1
+        if (comboIdx <= 0) return;
+        loadPresetByIndex(comboIdx - 1);
+    }
+
     void onAddStep() {
         QMenu menu(this);
         for (const auto& def : catalog_) {
             QAction* act = menu.addAction(def.name);
             act->setData(def.id);
-            if (!def.implemented)
-                act->setEnabled(true); // shown but styled differently
         }
         QAction* chosen = menu.exec(QCursor::pos());
         if (!chosen) return;
@@ -573,6 +820,7 @@ private slots:
             if (def.id == id) {
                 pipeline_.push_back(makeStep(def));
                 addListRow(pipeline_.back());
+                presetCombo_->setCurrentIndex(0); // mark as custom
                 emit pipelineChanged();
                 listWidget_->setCurrentRow(listWidget_->count() - 1);
                 break;
@@ -642,14 +890,8 @@ private:
     }
 
     void syncPipelineFromList() {
-        // After a drag-reorder the list order may differ from pipeline_
-        // We can't easily reorder pipeline_ since items lost their index.
-        // Simplest: rebuild from scratch is handled by drag internally,
-        // but QListWidget drag changes only the display. We reflect it:
-        // (For simplicity, reorder pipeline_ to match list order)
         QVector<PipelineStep> newPipeline;
         for (int i = 0; i < listWidget_->count(); ++i) {
-            // Find matching step by name (good enough for a test app)
             QString text = listWidget_->item(i)->text();
             for (auto& s : pipeline_) {
                 QString t2 = (s.def.implemented ? "→ " : "⊘ ") + s.def.name;
@@ -670,10 +912,13 @@ private:
         emit pipelineChanged();
     }
 
-    QVector<AlgoDef>     catalog_;
-    QVector<PipelineStep> pipeline_;
-    QListWidget*          listWidget_ = nullptr;
-    ParamFormWidget*      paramForm_  = nullptr;
+    QVector<AlgoDef>      catalog_;
+    QVector<PipelinePreset> presets_;
+    QVector<PipelineStep>  pipeline_;
+    QListWidget*           listWidget_   = nullptr;
+    ParamFormWidget*       paramForm_    = nullptr;
+    QComboBox*             presetCombo_  = nullptr;
+    QLabel*                descLabel_    = nullptr;
 };
 
 // ============================================================
@@ -810,9 +1055,11 @@ class ScannerWindow : public QMainWindow {
 
 public:
     explicit ScannerWindow(const QVector<AlgoDef>& catalog,
+                           const QVector<PipelinePreset>& presets,
                            QWidget* parent = nullptr)
         : QMainWindow(parent)
         , catalog_(catalog)
+        , presets_(presets)
         , docDetector_(300, 0)
     {
         setWindowTitle("Document Scanner");
@@ -1162,7 +1409,7 @@ private:
         auto* rightSplit = new QSplitter(Qt::Vertical);
         rightSplit->setHandleWidth(4);
 
-        pipelineWidget_ = new AlgorithmPipelineWidget(catalog_);
+        pipelineWidget_ = new AlgorithmPipelineWidget(catalog_, presets_);
         connect(pipelineWidget_, &AlgorithmPipelineWidget::pipelineChanged,
                 this, [this]{ debounceTimer_->start(); });
 
@@ -1208,6 +1455,33 @@ private:
         fileMenu->addSeparator();
         fileMenu->addAction("E&xit", this, &QWidget::close, QKeySequence::Quit);
 
+        // Presets menu
+        auto* presetsMenu = menuBar()->addMenu("&Presets");
+        presetsMenu->setToolTipsVisible(true);
+        for (int i = 0; i < (int)presets_.size(); ++i) {
+            const auto& pr = presets_[i];
+            QAction* act = presetsMenu->addAction(pr.name, this, [this, i]{
+                pipelineWidget_->loadPresetByIndex(i);
+                viewMode_ = RESULT;
+                // Update view buttons: find and check the RESULT button
+                for (auto* btn : findChildren<QPushButton*>()) {
+                    if (btn->text() == "Result") {
+                        btn->setChecked(true);
+                        break;
+                    }
+                }
+                debounceTimer_->start();
+            });
+            act->setToolTip(pr.description);
+            act->setStatusTip(pr.description.split('\n').first());
+        }
+        presetsMenu->addSeparator();
+        presetsMenu->addAction("Clear Pipeline", this, [this]{
+            // Trigger the clear action via the pipeline widget's internal state
+            // by loading an empty preset
+            pipelineWidget_->loadPresetByIndex(-1); // -1 = no-op but triggers reset
+        });
+
         auto* viewMenu = menuBar()->addMenu("&View");
         viewMenu->addAction("Fit Image", this, [this]{
             if (imageDisplay_) imageDisplay_->fitToWindow();
@@ -1228,12 +1502,33 @@ private:
         tb->addAction("◀ Prev", this, &ScannerWindow::onPrevImage);
         tb->addAction("▶ Next", this, &ScannerWindow::onNextImage);
         tb->addSeparator();
+
+        // Quick-load presets from toolbar
+        auto* presetTbBtn = new QPushButton("🎛 Presets ▾", tb);
+        presetTbBtn->setFlat(true);
+        presetTbBtn->setStyleSheet("padding: 3px 8px;");
+        presetTbBtn->setToolTip("Quick-load a pipeline preset");
+        connect(presetTbBtn, &QPushButton::clicked, this, [this, presetTbBtn]{
+            QMenu m(this);
+            for (int i = 0; i < (int)presets_.size(); ++i) {
+                const auto& pr = presets_[i];
+                m.addAction(pr.name, this, [this, i]{
+                    pipelineWidget_->loadPresetByIndex(i);
+                    debounceTimer_->start();
+                });
+            }
+            m.exec(presetTbBtn->mapToGlobal(QPoint(0, presetTbBtn->height())));
+        });
+        tb->addWidget(presetTbBtn);
+
+        tb->addSeparator();
         tb->addAction("💾 Save Result", this, &ScannerWindow::onSaveResult);
     }
 
     // ----- Members -----
 
-    QVector<AlgoDef>        catalog_;
+    QVector<AlgoDef>          catalog_;
+    QVector<PipelinePreset>   presets_;
     detector::DocumentDetector docDetector_;
 
     vector<string>          images_;
@@ -1312,12 +1607,20 @@ QSlider::handle:horizontal {
 }
 QSlider::sub-page:horizontal { background: #4A9EFF; border-radius: 2px; }
 
-QSpinBox, QDoubleSpinBox {
+QSpinBox, QDoubleSpinBox, QComboBox {
     background-color: #3C3C3C;
     color: #F0F0F0;
     border: 1px solid #5A5A5A;
     border-radius: 3px;
     padding: 1px 4px;
+}
+QComboBox::drop-down { border: none; }
+QComboBox::down-arrow { image: none; width: 0; }
+QComboBox QAbstractItemView {
+    background-color: #3C3C3C;
+    color: #F0F0F0;
+    border: 1px solid #5A5A5A;
+    selection-background-color: #1A6ECC;
 }
 
 QListWidget {
@@ -1397,7 +1700,8 @@ int main(int argc, char** argv) {
     const string startName = (argc > 2) ? argv[2] : "";
 
     auto catalog = buildCatalog();
-    ScannerWindow win(catalog);
+    auto presets = buildPresets();
+    ScannerWindow win(catalog, presets);
     win.show();
 
     win.loadFolder(QString::fromStdString(dirPath));
