@@ -953,6 +953,8 @@ public:
         int    houghLinesMinLineLength    = 55;
         int    houghLinesMaxLineGap       = 0;
         int    useChannel                 = 0; // 0=auto (-1 in detector), 1-3 = ch 0-2
+        // Book mode gutter detection
+        double gutterSensitivity          = 0.15; // significance threshold (0.05=very sensitive, 0.40=strict)
     };
 
     DetSettings settings;
@@ -1034,6 +1036,22 @@ public:
         addInt("Hough Threshold",      0, 500, &settings.houghLinesThreshold);
         addInt("Hough Min Length",     0, 500, &settings.houghLinesMinLineLength);
         addInt("Hough Max Gap",        0, 500, &settings.houghLinesMaxLineGap);
+
+        // ── Book-mode gutter section ──────────────────────────────────────
+        auto* gutterSep = new QFrame(w);
+        gutterSep->setFrameShape(QFrame::HLine);
+        gutterSep->setStyleSheet("color: #555555;");
+        fl->addRow(gutterSep);
+        auto* gutterLbl = new QLabel("<b>Book Mode / Gutter</b>", w);
+        gutterLbl->setStyleSheet("color: #80C0FF; font-size: 11px;");
+        fl->addRow(gutterLbl);
+        addDbl("Gutter Sensitivity",  0.01, 0.50, 0.01, &settings.gutterSensitivity);
+        auto* gutterHelp = new QLabel(
+            "Higher = only split when gutter is very obvious.\n"
+            "Lower  = split more aggressively.", w);
+        gutterHelp->setStyleSheet("color: #909090; font-size: 10px; font-style: italic;");
+        gutterHelp->setWordWrap(true);
+        fl->addRow(gutterHelp);
     }
 
     void applyToDetector(detector::DocumentDetector& det) const {
@@ -1128,72 +1146,141 @@ private slots:
         docDetector_.image = currentImage_;
         resizedImage_      = docDetector_.resizeImageMax();
 
-        auto split = docDetector_.detectGutterAndSplit(resizedImage_, 0.4f);
+        // Reset book-mode state
+        gutterFound_      = false;
+        gutterXResized_   = -1;
+        leftPageWarped_   = Mat(); rightPageWarped_  = Mat();
+        leftPageResult_   = Mat(); rightPageResult_  = Mat();
+        leftDetectedPts_.clear();  rightDetectedPts_.clear();
 
-        vector<vector<cv::Point>> pointsList;
-        if (split.foundGutter) {
-            Mat combinedEdged = Mat::zeros(resizedImage_.size(), CV_8U);
-            auto scanAndMerge = [&](const Rect& r) {
-                if (r.width <= 0 || r.height <= 0) return;
-                Mat sub = resizedImage_(r);
+        // ── Gutter detection (always run; result used only in book mode) ──
+        auto split = docDetector_.detectGutterAndSplit(resizedImage_, 0.30f, 5,
+            (float)detSettings_->settings.gutterSensitivity);
+
+        if (bookMode_ && split.foundGutter && split.hasLeft && split.hasRight) {
+            gutterFound_    = true;
+            gutterXResized_ = split.gutterX;
+
+            // Helper: scan one sub-image, warp, run pipeline, return result
+            auto processPage = [&](const Rect& roi) -> pair<Mat, vector<cv::Point>> {
+                if (roi.width <= 10 || roi.height <= 10)
+                    return {Mat(), {}};
+
+                Mat subImage = resizedImage_(roi).clone();
                 Mat subEdged;
-                auto subList = docDetector_.scanPoint(subEdged, sub, true);
-                if (!subEdged.empty()) {
-                    if (subEdged.type() != combinedEdged.type())
-                        cvtColor(subEdged, subEdged, COLOR_BGR2GRAY);
-                    subEdged.copyTo(combinedEdged(r));
+                auto pts = docDetector_.scanPoint(subEdged, subImage, /*drawContours=*/false);
+
+                // If no contour found, use full sub-image rectangle
+                if (pts.empty()) {
+                    pts.push_back({
+                        cv::Point(0, 0),
+                        cv::Point(subImage.cols, 0),
+                        cv::Point(subImage.cols, subImage.rows),
+                        cv::Point(0, subImage.rows)
+                    });
                 }
+
+                // Scale detected points back to currentImage_ coordinates
                 double sf = docDetector_.resizeScale * docDetector_.scale;
-                Point off((int)(r.x*sf),(int)(r.y*sf));
-                for (auto& c : subList) {
-                    for (auto& pt : c) pt += off;
-                    pointsList.push_back(c);
+                vector<cv::Point> scaledPts;
+                for (auto& p : pts[0])
+                    scaledPts.push_back(cv::Point(
+                        (int)((p.x + roi.x) / sf),
+                        (int)((p.y + roi.y) / sf)));
+
+                // Warp from the original full-resolution image
+                Rect fullRoi(
+                    (int)(roi.x / sf), (int)(roi.y / sf),
+                    std::min((int)(roi.width  / sf), currentImage_.cols - (int)(roi.x / sf)),
+                    std::min((int)(roi.height / sf), currentImage_.rows - (int)(roi.y / sf)));
+                fullRoi.x      = std::max(fullRoi.x, 0);
+                fullRoi.y      = std::max(fullRoi.y, 0);
+                fullRoi.width  = std::min(fullRoi.width,  currentImage_.cols - fullRoi.x);
+                fullRoi.height = std::min(fullRoi.height, currentImage_.rows - fullRoi.y);
+
+                Mat warpedPage;
+                if (fullRoi.width > 10 && fullRoi.height > 10) {
+                    // Re-scale pts[0] relative to the sub-image for cropAndWarp
+                    vector<cv::Point> warpPts;
+                    for (auto& p : pts[0])
+                        warpPts.push_back(cv::Point(
+                            std::clamp((int)(p.x / sf), 0, fullRoi.width  - 1),
+                            std::clamp((int)(p.y / sf), 0, fullRoi.height - 1)));
+
+                    Mat pageOrig = currentImage_(fullRoi).clone();
+                    warpedPage   = cropAndWarp(pageOrig, warpPts);
+                    if (warpedPage.empty())
+                        warpedPage = pageOrig;
                 }
+
+                return {warpedPage, scaledPts};
             };
-            if (split.hasLeft)  scanAndMerge(split.leftPage);
-            if (split.hasRight) scanAndMerge(split.rightPage);
-            if (pointsList.empty())
-                pointsList = docDetector_.scanPoint(edged_, resizedImage_, true);
-            else
-                edged_ = combinedEdged;
-        } else {
-            pointsList = docDetector_.scanPoint(edged_, resizedImage_, true);
-        }
 
-        if (pointsList.empty()) {
-            // Fall back to full-image rectangle
-            pointsList.push_back({
-                cv::Point(0,0),
-                cv::Point(currentImage_.cols,0),
-                cv::Point(currentImage_.cols,currentImage_.rows),
-                cv::Point(0,currentImage_.rows)
-            });
-        }
+            auto [lWarped, lPts] = processPage(split.leftPage);
+            auto [rWarped, rPts] = processPage(split.rightPage);
 
-        // Warp
-        if (!pointsList.empty()) {
-            detectedPoints_ = pointsList[0];
-            warped_ = cropAndWarp(currentImage_, pointsList[0]);
-        } else {
+            leftPageWarped_  = lWarped;
+            rightPageWarped_ = rWarped;
+            leftDetectedPts_ = lPts;
+            rightDetectedPts_= rPts;
+
+            // Run the algorithm pipeline on each page independently
+            leftPageResult_  = leftPageWarped_.empty()  ? Mat() : leftPageWarped_.clone();
+            rightPageResult_ = rightPageWarped_.empty() ? Mat() : rightPageWarped_.clone();
+            for (auto& step : pipelineWidget_->pipeline()) {
+                if (!step.enabled) continue;
+                if (!leftPageResult_.empty())  applyStep(step, leftPageResult_);
+                if (!rightPageResult_.empty()) applyStep(step, rightPageResult_);
+            }
+
+            // For the RESULT view we stitch both pages side by side
+            resultImage_ = stitchPages(leftPageResult_, rightPageResult_);
+
+            // Also produce a combined edge map and detected points for other views
+            edged_ = Mat();
             detectedPoints_.clear();
-            warped_ = Mat();
-        }
+        } else {
+            // ── Standard single-page pipeline ────────────────────────────
+            vector<vector<cv::Point>> pointsList;
+            pointsList = docDetector_.scanPoint(edged_, resizedImage_, true);
 
-        // Apply pipeline
-        resultImage_ = warped_.empty() ? Mat() : warped_.clone();
-        for (auto& step : pipelineWidget_->pipeline()) {
-            if (!step.enabled || resultImage_.empty()) continue;
-            applyStep(step, resultImage_);
+            if (pointsList.empty()) {
+                pointsList.push_back({
+                    cv::Point(0,0),
+                    cv::Point(currentImage_.cols,0),
+                    cv::Point(currentImage_.cols,currentImage_.rows),
+                    cv::Point(0,currentImage_.rows)
+                });
+            }
+
+            if (!pointsList.empty()) {
+                detectedPoints_ = pointsList[0];
+                warped_ = cropAndWarp(currentImage_, pointsList[0]);
+            } else {
+                detectedPoints_.clear();
+                warped_ = Mat();
+            }
+
+            resultImage_ = warped_.empty() ? Mat() : warped_.clone();
+            for (auto& step : pipelineWidget_->pipeline()) {
+                if (!step.enabled || resultImage_.empty()) continue;
+                applyStep(step, resultImage_);
+            }
         }
 
         long long ms = timer.elapsed();
-        bool detected = !detectedPoints_.empty() &&
-                        !(detectedPoints_.size() == 4 &&
-                          detectedPoints_[0] == cv::Point(0,0) &&
-                          detectedPoints_[2] == cv::Point(currentImage_.cols,currentImage_.rows));
+        QString modeStr = bookMode_ ?
+            (gutterFound_ ? "📖 Book (gutter found)" : "📖 Book (no gutter — single page)") :
+            "Single Page";
+        bool detected = bookMode_ ? gutterFound_ :
+            (!detectedPoints_.empty() &&
+             !(detectedPoints_.size() == 4 &&
+               detectedPoints_[0] == cv::Point(0,0) &&
+               detectedPoints_[2] == cv::Point(currentImage_.cols,currentImage_.rows)));
         statusBar()->showMessage(
-            QString("Image %1/%2  |  Pipeline: %3ms  |  Detection: %4")
+            QString("Image %1/%2  |  %3  |  Pipeline: %4ms  |  Detection: %5")
             .arg(currentIdx_+1).arg((int)images_.size())
+            .arg(modeStr)
             .arg(ms)
             .arg(detected ? "found" : "not found / fallback"));
 
@@ -1218,15 +1305,29 @@ private slots:
     }
 
     void onSaveResult() {
-        if (resultImage_.empty()) {
-            QMessageBox::information(this, "Save", "No result image to save.");
-            return;
+        if (bookMode_ && gutterFound_) {
+            // In book mode: offer to save both pages
+            QString basePath = QFileDialog::getSaveFileName(
+                this, "Save Pages (base path — _left/_right will be appended)",
+                QString(), "Images (*.png *.jpg *.bmp)");
+            if (basePath.isEmpty()) return;
+            QString ext  = QFileInfo(basePath).suffix();
+            QString base = basePath.left(basePath.length() - (int)ext.length() - 1);
+            if (!leftPageResult_.empty())
+                cv::imwrite((base + "_left."  + ext).toStdString(), leftPageResult_);
+            if (!rightPageResult_.empty())
+                cv::imwrite((base + "_right." + ext).toStdString(), rightPageResult_);
+        } else {
+            if (resultImage_.empty()) {
+                QMessageBox::information(this, "Save", "No result image to save.");
+                return;
+            }
+            QString path = QFileDialog::getSaveFileName(
+                this, "Save Result", QString(),
+                "Images (*.png *.jpg *.bmp)");
+            if (!path.isEmpty())
+                cv::imwrite(path.toStdString(), resultImage_);
         }
-        QString path = QFileDialog::getSaveFileName(
-            this, "Save Result", QString(),
-            "Images (*.png *.jpg *.bmp)");
-        if (!path.isEmpty())
-            cv::imwrite(path.toStdString(), resultImage_);
     }
 
     void onPrevImage() {
@@ -1243,6 +1344,34 @@ private slots:
 
 private:
     // ----- Pipeline execution -----
+
+    /** Stitch two page images side by side with a thin divider line. */
+    static Mat stitchPages(const Mat& left, const Mat& right) {
+        if (left.empty() && right.empty())
+            return Mat();
+        if (left.empty())  return right.clone();
+        if (right.empty()) return left.clone();
+
+        // Normalise to the same height
+        Mat r = right.clone();
+        if (r.rows != left.rows && r.rows > 0) {
+            double sc = (double)left.rows / r.rows;
+            resize(r, r, Size((int)(r.cols * sc), left.rows));
+        }
+
+        const int gap = 6;
+        Mat out(left.rows, left.cols + gap + r.cols, CV_8UC3, Scalar(30, 30, 30));
+        if (left.type() == CV_8UC3)
+            left.copyTo(out(Rect(0, 0, left.cols, left.rows)));
+        else { Mat tmp; cvtColor(left, tmp, COLOR_GRAY2BGR); tmp.copyTo(out(Rect(0,0,left.cols,left.rows))); }
+        if (r.type() == CV_8UC3)
+            r.copyTo(out(Rect(left.cols + gap, 0, r.cols, out.rows)));
+        else { Mat tmp; cvtColor(r, tmp, COLOR_GRAY2BGR); tmp.copyTo(out(Rect(left.cols+gap, 0, r.cols, out.rows))); }
+        // Gutter divider line
+        line(out, Point(left.cols + gap/2, 0), Point(left.cols + gap/2, out.rows),
+             Scalar(80, 180, 255), 2, LINE_AA);
+        return out;
+    }
 
     void applyStep(const PipelineStep& step, Mat& img) {
         if (!step.def.implemented) return; // placeholder
@@ -1285,12 +1414,86 @@ private:
         if (currentImage_.empty()) return;
 
         Mat display;
+
+        // ── Book mode with gutter found: specialised views ──────────────────
+        if (bookMode_ && gutterFound_) {
+            switch (viewMode_) {
+                case SOURCE: {
+                    display = currentImage_.clone();
+                    double sf = docDetector_.resizeScale * docDetector_.scale;
+
+                    // Draw gutter line
+                    if (gutterXResized_ > 0 && sf > 0.0) {
+                        int gx = (int)(gutterXResized_ / sf);
+                        line(display, Point(gx, 0), Point(gx, display.rows),
+                             Scalar(80, 180, 255), 3, LINE_AA);
+                    }
+
+                    // Draw left-page contour (cyan)
+                    if (!leftDetectedPts_.empty()) {
+                        vector<vector<cv::Point>> c = {leftDetectedPts_};
+                        polylines(display, c, true, Scalar(0, 220, 255), 3, LINE_AA);
+                        for (auto& p : leftDetectedPts_)
+                            circle(display, p, 8, Scalar(0, 255, 100), -1, LINE_AA);
+                    }
+                    // Draw right-page contour (orange)
+                    if (!rightDetectedPts_.empty()) {
+                        vector<vector<cv::Point>> c = {rightDetectedPts_};
+                        polylines(display, c, true, Scalar(0, 140, 255), 3, LINE_AA);
+                        for (auto& p : rightDetectedPts_)
+                            circle(display, p, 8, Scalar(0, 200, 255), -1, LINE_AA);
+                    }
+                    break;
+                }
+                case EDGES: {
+                    // Show combined edge images side by side (edged_ not populated in book mode)
+                    display = currentImage_.clone();
+                    break;
+                }
+                case RESULT: {
+                    // Both pages processed by pipeline, side by side
+                    Mat l = leftPageResult_.empty()  ? Mat(400, 300, CV_8UC3, Scalar(30,30,30)) : leftPageResult_.clone();
+                    Mat r = rightPageResult_.empty() ? Mat(400, 300, CV_8UC3, Scalar(30,30,30)) : rightPageResult_.clone();
+
+                    // Add "Left" / "Right" labels
+                    if (!leftPageResult_.empty())
+                        putText(l, "Left Page",  Point(10, 28), FONT_HERSHEY_SIMPLEX, 0.8, Scalar(80,200,255), 2, LINE_AA);
+                    if (!rightPageResult_.empty())
+                        putText(r, "Right Page", Point(10, 28), FONT_HERSHEY_SIMPLEX, 0.8, Scalar(80,200,255), 2, LINE_AA);
+
+                    display = stitchPages(l, r);
+                    break;
+                }
+                case COMPARE: {
+                    // Left: original resized; Right: both pages side by side
+                    Mat orig = currentImage_.clone();
+                    Mat processed = stitchPages(leftPageResult_, rightPageResult_);
+                    if (processed.empty())
+                        processed = Mat(orig.size(), CV_8UC3, Scalar(30,30,30));
+                    // Normalise heights
+                    if (processed.rows != orig.rows && processed.rows > 0) {
+                        double sc = (double)orig.rows / processed.rows;
+                        resize(processed, processed, Size((int)(processed.cols*sc), orig.rows));
+                    }
+                    const int gap = 4;
+                    display = Mat(orig.rows, orig.cols + gap + processed.cols, CV_8UC3, Scalar(50,50,50));
+                    orig.copyTo(display(Rect(0, 0, orig.cols, orig.rows)));
+                    processed.copyTo(display(Rect(orig.cols + gap, 0, processed.cols, orig.rows)));
+                    line(display, Point(orig.cols+1,0), Point(orig.cols+1,display.rows),
+                         Scalar(255,200,0), 2, LINE_AA);
+                    break;
+                }
+            }
+            imageDisplay_->setImage(matToQPixmap(display));
+            return;
+        }
+
+        // ── Standard single-page views ────────────────────────────────────────
         switch (viewMode_) {
             case SOURCE: {
                 display = currentImage_.clone();
                 // Draw detected corners overlay
                 if (!detectedPoints_.empty()) {
-                    // Scale points back to original image coordinates
                     double scaleFactor = docDetector_.resizeScale * docDetector_.scale;
                     if (scaleFactor > 0.0) {
                         vector<cv::Point> scaled;
@@ -1298,11 +1501,19 @@ private:
                             scaled.push_back(cv::Point(
                                 (int)(p.x / scaleFactor),
                                 (int)(p.y / scaleFactor)));
-                        // Draw filled polygon with transparency-like effect
                         vector<vector<cv::Point>> contours = {scaled};
                         polylines(display, contours, true, Scalar(0,200,255), 3, LINE_AA);
                         for (auto& p : scaled)
                             circle(display, p, 8, Scalar(0,255,100), -1, LINE_AA);
+                    }
+                }
+                // Draw gutter line even when not in book mode (informational)
+                if (gutterXResized_ > 0) {
+                    double sf = docDetector_.resizeScale * docDetector_.scale;
+                    if (sf > 0.0) {
+                        int gx = (int)(gutterXResized_ / sf);
+                        line(display, Point(gx, 0), Point(gx, display.rows),
+                             Scalar(80, 80, 255), 2, LINE_AA);
                     }
                 }
                 break;
@@ -1313,7 +1524,6 @@ private:
                         cvtColor(edged_, display, COLOR_GRAY2BGR);
                     else
                         display = edged_.clone();
-                    // Scale back to original image size
                     if (!resizedImage_.empty() && resizedImage_.rows > 0) {
                         double scaleBack = (double)currentImage_.rows / resizedImage_.rows;
                         resize(display, display, Size(), scaleBack, scaleBack, INTER_LINEAR);
@@ -1338,14 +1548,13 @@ private:
                 Mat right = resultImage_.empty()
                            ? Mat(left.size(), CV_8UC3, Scalar(30,30,30))
                            : resultImage_.clone();
-                // Normalize heights
                 if (right.rows != left.rows && right.rows > 0) {
                     double sc = (double)left.rows / right.rows;
                     resize(right, right, Size((int)(right.cols*sc), left.rows));
                 }
                 display = Mat(left.rows, left.cols + right.cols + 4, CV_8UC3, Scalar(50,50,50));
-                left.copyTo( display(Rect(0,                   0, left.cols,  left.rows)));
-                right.copyTo(display(Rect(left.cols+4,         0, right.cols, left.rows)));
+                left.copyTo( display(Rect(0,           0, left.cols,  left.rows)));
+                right.copyTo(display(Rect(left.cols+4, 0, right.cols, left.rows)));
                 line(display, Point(left.cols+1,0), Point(left.cols+1,display.rows),
                      Scalar(255,200,0), 2, LINE_AA);
                 break;
@@ -1475,6 +1684,10 @@ private:
                 viewMode_ = RESULT;
                 if (viewBtnGroup_)
                     viewBtnGroup_->button(RESULT)->setChecked(true);
+                // "Book Scan" preset (index 0) auto-enables book mode
+                if (i == 0 && bookModeAction_) {
+                    bookModeAction_->setChecked(true);
+                }
                 debounceTimer_->start();
             });
             act->setToolTip(pr.description);
@@ -1504,6 +1717,20 @@ private:
         tb->addSeparator();
         tb->addAction("◀ Prev", this, &ScannerWindow::onPrevImage);
         tb->addAction("▶ Next", this, &ScannerWindow::onNextImage);
+        tb->addSeparator();
+
+        // Book Mode toggle
+        bookModeAction_ = tb->addAction("📖 Book Mode");
+        bookModeAction_->setCheckable(true);
+        bookModeAction_->setChecked(false);
+        bookModeAction_->setToolTip(
+            "Book Mode: detect gutter, split into left and right pages,\n"
+            "process each independently and display side by side.\n"
+            "Uses a scantailor-inspired darkness+gradient valley detector.");
+        connect(bookModeAction_, &QAction::toggled, this, [this](bool on) {
+            bookMode_ = on;
+            debounceTimer_->start();
+        });
         tb->addSeparator();
 
         // Quick-load presets from toolbar
@@ -1540,6 +1767,14 @@ private:
     vector<cv::Point>       detectedPoints_;
     ViewMode                viewMode_ = SOURCE;
 
+    // Book Mode state
+    bool                    bookMode_    = false; ///< user toggled book mode
+    bool                    gutterFound_ = false; ///< gutter detected this frame
+    int                     gutterXResized_ = -1; ///< gutter column in resizedImage coords
+    Mat                     leftPageWarped_,  rightPageWarped_;
+    Mat                     leftPageResult_,  rightPageResult_;
+    vector<cv::Point>       leftDetectedPts_, rightDetectedPts_;
+
     // Widgets
     QListWidget*            fileList_       = nullptr;
     ImageDisplayWidget*     imageDisplay_   = nullptr;
@@ -1547,6 +1782,7 @@ private:
     DetectionSettingsWidget* detSettings_   = nullptr;
     QTimer*                 debounceTimer_  = nullptr;
     QButtonGroup*           viewBtnGroup_   = nullptr; ///< View mode toggle buttons
+    QAction*                bookModeAction_ = nullptr; ///< Book Mode toolbar toggle
 };
 
 // ============================================================
