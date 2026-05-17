@@ -1,1 +1,28 @@
-{}
+{
+    "$com.akylas.cardwallet": {
+        "app": {
+            "name": "Liberfontkoda Kartujo"
+        },
+        "ios": {
+            "info": {
+                "plist": {
+                    "NSCameraUsageDescription": "Permesu atingi la fotilon por ke vi povas skani kartojn per ĝi",
+                    "NSPhotoLibraryUsageDescription": "Permesu atingi bildojn por skani kartojn el via bildaro"
+                }
+            }
+        }
+    },
+    "$com.akylas.documentscanner": {
+        "app": {
+            "name": "Liberfontkoda Dokumento-skanilo"
+        }
+    },
+    "a3": "A3",
+    "a4": "A4",
+    "about": "Pri",
+    "add": "Aldoni",
+    "add_extra_field": "Aldoni plian kampon",
+    "add_from_camera": "Aldoni de fotilo",
+    "add_manual_card": "Aldoni karton malaŭtomate",
+    "add_qrcode_camera": "Aldoni strikodon de fotilo"
+}
