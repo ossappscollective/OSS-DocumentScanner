@@ -35,8 +35,8 @@ GutterResult detectGutter(const cv::Mat& input,
 
     // Optional light blur to reduce noise before column profiling
     if (blurSize > 1) {
-        int k = (blurSize % 2 == 0) ? blurSize + 1 : blurSize;
-        cv::GaussianBlur(gray, gray, cv::Size(k, k), 0);
+        int kernelSize = (blurSize % 2 == 0) ? blurSize + 1 : blurSize;
+        cv::GaussianBlur(gray, gray, cv::Size(kernelSize, kernelSize), 0);
     }
 
     // ── 3. Per-column mean brightness ─────────────────────────────────────

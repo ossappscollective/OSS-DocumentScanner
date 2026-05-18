@@ -110,6 +110,11 @@ static void orderPoints(vector<Point> inpts, vector<Point>& ordered) {
     Point tr(tmp[0].second), br(tmp[1].second);
     ordered = {tl, tr, br, bl};
 }
+/** Return ws adjusted to the nearest odd number ≥ ws (minimum 1). */
+static int oddWindowSize(int ws) {
+    if (ws < 1) ws = 1;
+    return (ws % 2 == 0) ? ws + 1 : ws;
+}
 static Mat cropAndWarp(Mat src, vector<cv::Point> pts) {
     int w = (int)ptDist(pts[0], pts[1]);
     int h = (int)ptDist(pts[1], pts[2]);
@@ -1461,8 +1466,7 @@ private:
                 (ColorSpace)colSp, (ColorSpace)palSp);
         }
         else if (id == "adaptive_sauvola") {
-            int ws = (int)step.paramValues.value("windowSize", 25);
-            if (ws % 2 == 0) ws++;
+            int ws       = oddWindowSize((int)step.paramValues.value("windowSize", 25));
             double k     = step.paramValues.value("k",     34) / 100.0;
             double delta = step.paramValues.value("delta",  0);
             Mat dst;
@@ -1471,8 +1475,7 @@ private:
             else img = dst;
         }
         else if (id == "adaptive_wolf") {
-            int ws = (int)step.paramValues.value("windowSize", 25);
-            if (ws % 2 == 0) ws++;
+            int ws   = oddWindowSize((int)step.paramValues.value("windowSize", 25));
             double k = step.paramValues.value("k", 30) / 100.0;
             Mat dst;
             adaptive::binarizeWolf(img, dst, ws, k);
@@ -1480,8 +1483,7 @@ private:
             else img = dst;
         }
         else if (id == "adaptive_bradley") {
-            int ws = (int)step.paramValues.value("windowSize", 25);
-            if (ws % 2 == 0) ws++;
+            int ws   = oddWindowSize((int)step.paramValues.value("windowSize", 25));
             double k = step.paramValues.value("k", 15) / 100.0;
             Mat dst;
             adaptive::binarizeBradley(img, dst, ws, k);
@@ -1489,8 +1491,7 @@ private:
             else img = dst;
         }
         else if (id == "adaptive_edgediv") {
-            int ws = (int)step.paramValues.value("windowSize", 25);
-            if (ws % 2 == 0) ws++;
+            int ws     = oddWindowSize((int)step.paramValues.value("windowSize", 25));
             double kep = step.paramValues.value("kep", 50) / 100.0;
             double kdb = step.paramValues.value("kdb", 50) / 100.0;
             Mat dst;
@@ -1499,8 +1500,7 @@ private:
             else img = dst;
         }
         else if (id == "adaptive_grad") {
-            int ws = (int)step.paramValues.value("windowSize", 25);
-            if (ws % 2 == 0) ws++;
+            int ws   = oddWindowSize((int)step.paramValues.value("windowSize", 25));
             double k = step.paramValues.value("k", 30) / 100.0;
             Mat dst;
             adaptive::binarizeGrad(img, dst, ws, k);
@@ -1514,9 +1514,7 @@ private:
                 img = skew::correctSkew(img, sr.angleDeg);
         }
         else if (id == "wiener_denoise") {
-            int ws = (int)step.paramValues.value("windowSize", 5);
-            if (ws < 1) ws = 1;
-            if (ws % 2 == 0) ws++;
+            int ws            = oddWindowSize((int)step.paramValues.value("windowSize", 5));
             double noiseSigma = step.paramValues.value("noiseSigma", 10);
             Mat gray, dst;
             if (img.channels() == 3) cvtColor(img, gray, COLOR_BGR2GRAY);
@@ -1526,9 +1524,7 @@ private:
             else img = dst;
         }
         else if (id == "wiener_color") {
-            int ws = (int)step.paramValues.value("windowSize", 5);
-            if (ws < 1) ws = 1;
-            if (ws % 2 == 0) ws++;
+            int ws     = oddWindowSize((int)step.paramValues.value("windowSize", 5));
             double coef = step.paramValues.value("coef", 10) / 100.0;
             if (img.channels() == 3) {
                 denoiser::wienerDenoiseColor(img, img, cv::Size(ws, ws), coef);
