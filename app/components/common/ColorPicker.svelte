@@ -27,7 +27,7 @@
     strokePaint.setStyle(Style.STROKE);
     strokePaint.setStrokeWidth(3);
 
-    const SETTINGS_COLORS_SAVED = 'color_picker_saved'
+    const SETTINGS_COLORS_SAVED = 'color_picker_saved';
 </script>
 
 <script lang="ts">
@@ -48,12 +48,15 @@
 
     export let mode: 'grid' | 'spectrum' | 'sliders' | 'hue' = 'grid';
 
+    DEV_LOG && console.log('ColorPicker', modes, mode);
+
     const tabs = [
         { id: 'grid', title: lc('grid') },
         { id: 'spectrum', title: lc('spectrum') },
         { id: 'hue', title: lc('hue') },
         { id: 'sliders', title: lc('sliders') }
     ].filter((t) => modes.indexOf(t.id) !== -1);
+    DEV_LOG && console.log('tabs', tabs);
 
     let spectrumCanvas: NativeViewElementNode<CanvasView>;
     let hvSquare: NativeViewElementNode<CanvasView>; // Add this
@@ -715,7 +718,7 @@
     function onDrawSavedColorTapped(e: TapGestureEventData, color: string): any {
         if (color === 'add') {
             saved.push(currentColor.hex);
-            ApplicationSettings.setString(SETTINGS_COLORS_SAVED, JSON.stringify(saved))
+            ApplicationSettings.setString(SETTINGS_COLORS_SAVED, JSON.stringify(saved));
             saved = saved;
             colorsPager?.nativeView.refresh();
         } else {
@@ -726,6 +729,7 @@
     }
 </script>
 
+<!-- <page actionBarHidden={true}> -->
 <gesturerootview rows="auto,*" {...$$restProps}>
     <!-- <CActionBar title="Color Picker">
         <mdbutton class="actionBarButton" text="mdi-eyedropper-variant" variant="text" on:tap={startScreenPicker} />
@@ -811,5 +815,5 @@
             </gridlayout>
         </stacklayout>
     </gridlayout>
-
 </gesturerootview>
+<!-- </page> -->

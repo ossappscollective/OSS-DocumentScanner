@@ -164,11 +164,11 @@ export async function pickColor(color: Color | string, options: { alpha?: boolea
     const view = (await import('~/components/common/ColorPicker.svelte')).default;
     return showBottomSheet({
         view,
-        backgroundOpacity: 0.8,
+        // backgroundOpacity: 1,
         skipCollapsedState: true,
         props: {
             color,
-            mode: 'spectrum',
+            mode: 'grid',
             height: screenHeightDips * 0.8,
             alphaSupport: false
         }

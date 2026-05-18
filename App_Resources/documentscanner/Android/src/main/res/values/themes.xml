@@ -18,6 +18,7 @@
 
     </style>
     <style name="AppTheme" parent="AppThemeBase">
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.App.BottomSheetDialog</item>
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
 

@@ -16,7 +16,10 @@
         <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">@bool/use_light_navigation</item>
      </style> -->
     <!-- theme to use FOR launch screen-->
-    <style name="ThemeOverlay.App.EinkBottomSheetDialog" parent="ThemeOverlay.Material3.BottomSheetDialog">
+    <style name="ThemeOverlay.App.BottomSheetDialog" parent="ThemeOverlay.Material3.BottomSheetDialog">
+        <item name="android:windowSoftInputMode">adjustPan</item>
+    </style>
+    <style name="ThemeOverlay.App.EinkBottomSheetDialog" parent="ThemeOverlay.App.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/ModalEInkBottomSheetDialog</item>
     </style>
     <style name="ModalEInkBottomSheetDialog" parent="Widget.Material3.BottomSheet.Modal">
