@@ -74,6 +74,13 @@
 #include <WhitePaperTransform2.h>
 #include <Utils.h>
 #include <jsoncons/json.hpp>
+// Algorithm libraries (scantailor-advanced ports)
+#include <AdaptiveBinarize.h>
+#include <SkewDetector.h>
+#include <WienerDenoiser.h>
+#include <BackgroundEstimator.h>
+#include <Despeckle.h>
+#include <GutterDetector.h>
 
 using namespace cv;
 using namespace std;
@@ -215,47 +222,47 @@ static QVector<AlgoDef> buildCatalog() {
         {"paletteColorSpace",   "Palette Space",      0, 5,   2,   1},
     }});
 
-    // ---- Placeholders — not yet integrated ----
-    c.push_back({"adaptive_sauvola","Adaptive Binarize: Sauvola (todo)",false,{
+    // ---- Adaptive Binarization (all fully implemented) ----
+    c.push_back({"adaptive_sauvola","Adaptive Binarize: Sauvola",true,{
         {"windowSize","Window Size",5,101,25,2},
         {"k",         "K (×0.01)", 1,100,34,1},
         {"delta",     "Delta",     0,100, 0,1},
     }});
-    c.push_back({"adaptive_wolf","Adaptive Binarize: Wolf (todo)",false,{
+    c.push_back({"adaptive_wolf","Adaptive Binarize: Wolf",true,{
         {"windowSize","Window Size",5,101,25,2},
         {"k",         "K (×0.01)", 1,100,30,1},
     }});
-    c.push_back({"adaptive_bradley","Adaptive Binarize: Bradley (todo)",false,{
+    c.push_back({"adaptive_bradley","Adaptive Binarize: Bradley",true,{
         {"windowSize","Window Size",5,101,25,2},
         {"k",         "K (×0.01)", 1,100,15,1},
     }});
-    c.push_back({"adaptive_edgediv","Adaptive Binarize: EdgeDiv (todo)",false,{
+    c.push_back({"adaptive_edgediv","Adaptive Binarize: EdgeDiv",true,{
         {"windowSize","Window Size",5,101,25,2},
         {"kep",       "kep (×0.01)",0,100,50,1},
         {"kdb",       "kdb (×0.01)",0,100,50,1},
     }});
-    c.push_back({"adaptive_grad","Adaptive Binarize: Grad (todo)",false,{
+    c.push_back({"adaptive_grad","Adaptive Binarize: Grad",true,{
         {"windowSize","Window Size",5,101,25,2},
         {"k",         "K (×0.01)", 1,100,30,1},
     }});
-    c.push_back({"skew_correct","Skew Correction (todo)",false,{
+    c.push_back({"skew_correct","Skew Correction",true,{
         {"maxAngle","Max Angle (deg)",1,45,10,1},
     }});
-    c.push_back({"wiener_denoise","Wiener Denoise (todo)",false,{
+    c.push_back({"wiener_denoise","Wiener Denoise (grayscale)",true,{
         {"windowSize","Window Size",1,15,5,1},
         {"noiseSigma","Noise Sigma",1,100,10,1},
     }});
-    c.push_back({"wiener_color","Wiener Denoise Color (todo)",false,{
+    c.push_back({"wiener_color","Wiener Denoise (color-preserving)",true,{
         {"windowSize","Window Size",1,15,5,1},
         {"coef",      "Coef (×0.01)",1,100,10,1},
     }});
-    c.push_back({"bg_normalize","Background Normalize (todo)",false,{
+    c.push_back({"bg_normalize","Background Normalize",true,{
         {"polyDegree",    "Poly Degree",    1,8,4,1},
         {"marginFraction","Margin % (×0.01)",5,40,15,1},
     }});
-    c.push_back({"despeckle_cautious",  "Despeckle Cautious (todo)",  false, {}});
-    c.push_back({"despeckle_normal",    "Despeckle Normal (todo)",    false, {}});
-    c.push_back({"despeckle_aggressive","Despeckle Aggressive (todo)", false, {}});
+    c.push_back({"despeckle_cautious",  "Despeckle (Cautious)",   true, {}});
+    c.push_back({"despeckle_normal",    "Despeckle (Normal)",     true, {}});
+    c.push_back({"despeckle_aggressive","Despeckle (Aggressive)", true, {}});
 
     return c;
 }
@@ -393,8 +400,44 @@ static QVector<PipelinePreset> buildPresets() {
         }
     });
 
+    // ---- 📋 Document (Standard) ----
+    p.push_back({
+        "📋 Document (Standard)",
+        "General-purpose document pipeline for everyday scanning:\n"
+        "1) Background-normalize to remove uneven lighting.\n"
+        "2) Skew-correct to straighten tilted pages.\n"
+        "3) Whitepaper transform for contrast and white balance.\n"
+        "4) Cautious despeckle to clean up dust/noise artifacts.\n"
+        "Works well for letters, forms, and printed documents.",
+        {
+            {"bg_normalize",       {{"polyDegree", 3}}},
+            {"skew_correct",       {{"maxAngle", 10}}},
+            {"whitepaper",         {}},
+            {"despeckle_cautious", {}},
+        }
+    });
+
+    // ---- 🪪 ID / Loyalty Card ----
+    p.push_back({
+        "🪪 ID / Loyalty Card",
+        "Optimised for scanning plastic cards (ID cards, loyalty cards,\n"
+        "business cards) to extract text for OCR:\n"
+        "1) Background-normalize to remove surface reflections.\n"
+        "2) Color simplification (4 colors) to remove noisy backgrounds\n"
+        "   and isolate the printed text/logo areas.\n"
+        "3) Wolf binarization for robust local-contrast thresholding.\n"
+        "4) Cautious despeckle to remove fine printing artifacts.",
+        {
+            {"bg_normalize",       {{"polyDegree", 2}, {"marginFraction", 10}}},
+            {"colors",             {{"nbColors", 4}, {"filterDistThreshold", 20}, {"distThreshold", 30}}},
+            {"adaptive_wolf",      {{"windowSize", 21}, {"k", 25}}},
+            {"despeckle_cautious", {}},
+        }
+    });
+
     return p;
 }
+
 
 // ============================================================
 //  ImageDisplayWidget — shows a cv::Mat with zoom and pan
@@ -1161,59 +1204,70 @@ private slots:
             gutterFound_    = true;
             gutterXResized_ = split.gutterX;
 
-            // Helper: scan one sub-image, warp, run pipeline, return result
+            // Helper: scan one sub-image, warp, run pipeline, return result.
+            //
+            // Coordinate spaces involved:
+            //   resizedImage_  : input to this function's roi is in this space
+            //   currentImage_  : original full-resolution image
+            //   sf             : scale factor, resized→original  (sf = resizeScale * scale > 1)
+            //
+            // DocumentDetector::scanPoint() returns points already multiplied by
+            // (resizeScale * scale), so they are in original-image coordinates
+            // relative to the sub-image top-left (i.e. fullRoi origin).
             auto processPage = [&](const Rect& roi) -> pair<Mat, vector<cv::Point>> {
                 if (roi.width <= 10 || roi.height <= 10)
                     return {Mat(), {}};
+
+                // Build fullRoi: roi in original-image coordinates
+                double sf = docDetector_.resizeScale * docDetector_.scale;
+                int origX = std::max(0, (int)(roi.x * sf));
+                int origY = std::max(0, (int)(roi.y * sf));
+                int origW = std::min((int)(roi.width  * sf), currentImage_.cols - origX);
+                int origH = std::min((int)(roi.height * sf), currentImage_.rows - origY);
+                if (origW <= 10 || origH <= 10) return {Mat(), {}};
+                Rect fullRoi(origX, origY, origW, origH);
 
                 Mat subImage = resizedImage_(roi).clone();
                 Mat subEdged;
                 auto pts = docDetector_.scanPoint(subEdged, subImage, /*drawContours=*/false);
 
-                // If no contour found, use full sub-image rectangle
-                if (pts.empty()) {
-                    pts.push_back({
-                        cv::Point(0, 0),
-                        cv::Point(subImage.cols, 0),
-                        cv::Point(subImage.cols, subImage.rows),
-                        cv::Point(0, subImage.rows)
-                    });
-                }
+                // pts[0] points are in original-space relative to sub-image top-left
+                // (scanPoint multiplied them by resizeScale * scale internally).
+                // For warp  : use directly — they are in pageOrig = currentImage_(fullRoi) space.
+                // For display: add fullRoi origin to get absolute currentImage_ coordinates.
 
-                // Scale detected points back to currentImage_ coordinates
-                double sf = docDetector_.resizeScale * docDetector_.scale;
-                vector<cv::Point> scaledPts;
-                for (auto& p : pts[0])
-                    scaledPts.push_back(cv::Point(
-                        (int)((p.x + roi.x) / sf),
-                        (int)((p.y + roi.y) / sf)));
+                vector<cv::Point> warpPts;
+                vector<cv::Point> displayPts;
 
-                // Warp from the original full-resolution image
-                Rect fullRoi(
-                    (int)(roi.x / sf), (int)(roi.y / sf),
-                    std::min((int)(roi.width  / sf), currentImage_.cols - (int)(roi.x / sf)),
-                    std::min((int)(roi.height / sf), currentImage_.rows - (int)(roi.y / sf)));
-                fullRoi.x      = std::max(fullRoi.x, 0);
-                fullRoi.y      = std::max(fullRoi.y, 0);
-                fullRoi.width  = std::min(fullRoi.width,  currentImage_.cols - fullRoi.x);
-                fullRoi.height = std::min(fullRoi.height, currentImage_.rows - fullRoi.y);
-
-                Mat warpedPage;
-                if (fullRoi.width > 10 && fullRoi.height > 10) {
-                    // Re-scale pts[0] relative to the sub-image for cropAndWarp
-                    vector<cv::Point> warpPts;
-                    for (auto& p : pts[0])
+                if (!pts.empty()) {
+                    for (auto& p : pts[0]) {
                         warpPts.push_back(cv::Point(
-                            std::clamp((int)(p.x / sf), 0, fullRoi.width  - 1),
-                            std::clamp((int)(p.y / sf), 0, fullRoi.height - 1)));
-
-                    Mat pageOrig = currentImage_(fullRoi).clone();
-                    warpedPage   = cropAndWarp(pageOrig, warpPts);
-                    if (warpedPage.empty())
-                        warpedPage = pageOrig;
+                            std::clamp(p.x, 0, fullRoi.width  - 1),
+                            std::clamp(p.y, 0, fullRoi.height - 1)));
+                        displayPts.push_back(cv::Point(p.x + fullRoi.x,
+                                                       p.y + fullRoi.y));
+                    }
+                } else {
+                    // Fallback: full page rectangle (no perspective correction)
+                    warpPts = {
+                        cv::Point(0, 0),
+                        cv::Point(fullRoi.width, 0),
+                        cv::Point(fullRoi.width, fullRoi.height),
+                        cv::Point(0, fullRoi.height)
+                    };
+                    displayPts = {
+                        cv::Point(fullRoi.x, fullRoi.y),
+                        cv::Point(fullRoi.x + fullRoi.width,  fullRoi.y),
+                        cv::Point(fullRoi.x + fullRoi.width,  fullRoi.y + fullRoi.height),
+                        cv::Point(fullRoi.x, fullRoi.y + fullRoi.height)
+                    };
                 }
 
-                return {warpedPage, scaledPts};
+                Mat pageOrig = currentImage_(fullRoi).clone();
+                Mat warpedPage = cropAndWarp(pageOrig, warpPts);
+                if (warpedPage.empty()) warpedPage = pageOrig;
+
+                return {warpedPage, displayPts};
             };
 
             auto [lWarped, lPts] = processPage(split.leftPage);
@@ -1406,7 +1460,97 @@ private:
                 img, img, false, resizeT, filterD, distT, nbCol,
                 (ColorSpace)colSp, (ColorSpace)palSp);
         }
-        // New algorithm placeholders — nothing yet
+        else if (id == "adaptive_sauvola") {
+            int ws = (int)step.paramValues.value("windowSize", 25);
+            if (ws % 2 == 0) ws++;
+            double k     = step.paramValues.value("k",     34) / 100.0;
+            double delta = step.paramValues.value("delta",  0);
+            Mat dst;
+            adaptive::binarizeSauvola(img, dst, ws, k, delta);
+            if (img.channels() == 3) cvtColor(dst, img, COLOR_GRAY2BGR);
+            else img = dst;
+        }
+        else if (id == "adaptive_wolf") {
+            int ws = (int)step.paramValues.value("windowSize", 25);
+            if (ws % 2 == 0) ws++;
+            double k = step.paramValues.value("k", 30) / 100.0;
+            Mat dst;
+            adaptive::binarizeWolf(img, dst, ws, k);
+            if (img.channels() == 3) cvtColor(dst, img, COLOR_GRAY2BGR);
+            else img = dst;
+        }
+        else if (id == "adaptive_bradley") {
+            int ws = (int)step.paramValues.value("windowSize", 25);
+            if (ws % 2 == 0) ws++;
+            double k = step.paramValues.value("k", 15) / 100.0;
+            Mat dst;
+            adaptive::binarizeBradley(img, dst, ws, k);
+            if (img.channels() == 3) cvtColor(dst, img, COLOR_GRAY2BGR);
+            else img = dst;
+        }
+        else if (id == "adaptive_edgediv") {
+            int ws = (int)step.paramValues.value("windowSize", 25);
+            if (ws % 2 == 0) ws++;
+            double kep = step.paramValues.value("kep", 50) / 100.0;
+            double kdb = step.paramValues.value("kdb", 50) / 100.0;
+            Mat dst;
+            adaptive::binarizeEdgeDiv(img, dst, ws, kep, kdb);
+            if (img.channels() == 3) cvtColor(dst, img, COLOR_GRAY2BGR);
+            else img = dst;
+        }
+        else if (id == "adaptive_grad") {
+            int ws = (int)step.paramValues.value("windowSize", 25);
+            if (ws % 2 == 0) ws++;
+            double k = step.paramValues.value("k", 30) / 100.0;
+            Mat dst;
+            adaptive::binarizeGrad(img, dst, ws, k);
+            if (img.channels() == 3) cvtColor(dst, img, COLOR_GRAY2BGR);
+            else img = dst;
+        }
+        else if (id == "skew_correct") {
+            double maxAngle = step.paramValues.value("maxAngle", 10);
+            skew::SkewResult sr = skew::detectSkew(img, maxAngle);
+            if (std::abs(sr.angleDeg) > 0.05)
+                img = skew::correctSkew(img, sr.angleDeg);
+        }
+        else if (id == "wiener_denoise") {
+            int ws = (int)step.paramValues.value("windowSize", 5);
+            if (ws < 1) ws = 1;
+            if (ws % 2 == 0) ws++;
+            double noiseSigma = step.paramValues.value("noiseSigma", 10);
+            Mat gray, dst;
+            if (img.channels() == 3) cvtColor(img, gray, COLOR_BGR2GRAY);
+            else gray = img.clone();
+            denoiser::wienerDenoise(gray, dst, cv::Size(ws, ws), noiseSigma);
+            if (img.channels() == 3) cvtColor(dst, img, COLOR_GRAY2BGR);
+            else img = dst;
+        }
+        else if (id == "wiener_color") {
+            int ws = (int)step.paramValues.value("windowSize", 5);
+            if (ws < 1) ws = 1;
+            if (ws % 2 == 0) ws++;
+            double coef = step.paramValues.value("coef", 10) / 100.0;
+            if (img.channels() == 3) {
+                denoiser::wienerDenoiseColor(img, img, cv::Size(ws, ws), coef);
+            } else {
+                Mat dst;
+                denoiser::wienerDenoise(img, dst, cv::Size(ws, ws), coef * 255.0);
+                img = dst;
+            }
+        }
+        else if (id == "bg_normalize") {
+            int polyDeg = (int)step.paramValues.value("polyDegree", 4);
+            bgest::normalizeIllumination(img, img, polyDeg);
+        }
+        else if (id == "despeckle_cautious") {
+            speckle::despeckleInPlace(img, speckle::DespeckleLevel::CAUTIOUS);
+        }
+        else if (id == "despeckle_normal") {
+            speckle::despeckleInPlace(img, speckle::DespeckleLevel::NORMAL);
+        }
+        else if (id == "despeckle_aggressive") {
+            speckle::despeckleInPlace(img, speckle::DespeckleLevel::AGGRESSIVE);
+        }
     }
 
     // ----- Display -----
@@ -1421,15 +1565,17 @@ private:
             switch (viewMode_) {
                 case SOURCE: {
                     display = currentImage_.clone();
+                    // gutterXResized_ is in resizedImage_ space; multiply by sf to get original coords.
                     double sf = docDetector_.resizeScale * docDetector_.scale;
 
                     // Draw gutter line
                     if (gutterXResized_ > 0 && sf > 0.0) {
-                        int gx = (int)(gutterXResized_ / sf);
+                        int gx = (int)(gutterXResized_ * sf);
                         line(display, Point(gx, 0), Point(gx, display.rows),
                              Scalar(80, 180, 255), 3, LINE_AA);
                     }
 
+                    // leftDetectedPts_ / rightDetectedPts_ are already in original-image coords.
                     // Draw left-page contour (cyan)
                     if (!leftDetectedPts_.empty()) {
                         vector<vector<cv::Point>> c = {leftDetectedPts_};
@@ -1493,26 +1639,21 @@ private:
         switch (viewMode_) {
             case SOURCE: {
                 display = currentImage_.clone();
-                // Draw detected corners overlay
+                // Draw detected corners overlay.
+                // detectedPoints_ are already in original-image coordinates
+                // (DocumentDetector::scanPoint multiplies by resizeScale * scale internally).
                 if (!detectedPoints_.empty()) {
-                    double scaleFactor = docDetector_.resizeScale * docDetector_.scale;
-                    if (scaleFactor > 0.0) {
-                        vector<cv::Point> scaled;
-                        for (auto& p : detectedPoints_)
-                            scaled.push_back(cv::Point(
-                                (int)(p.x / scaleFactor),
-                                (int)(p.y / scaleFactor)));
-                        vector<vector<cv::Point>> contours = {scaled};
-                        polylines(display, contours, true, Scalar(0,200,255), 3, LINE_AA);
-                        for (auto& p : scaled)
-                            circle(display, p, 8, Scalar(0,255,100), -1, LINE_AA);
-                    }
+                    vector<vector<cv::Point>> contours = {detectedPoints_};
+                    polylines(display, contours, true, Scalar(0,200,255), 3, LINE_AA);
+                    for (auto& p : detectedPoints_)
+                        circle(display, p, 8, Scalar(0,255,100), -1, LINE_AA);
                 }
-                // Draw gutter line even when not in book mode (informational)
+                // Draw gutter line even when not in book mode (informational).
+                // gutterXResized_ is in resizedImage_ space; multiply by sf to get original.
                 if (gutterXResized_ > 0) {
                     double sf = docDetector_.resizeScale * docDetector_.scale;
                     if (sf > 0.0) {
-                        int gx = (int)(gutterXResized_ / sf);
+                        int gx = (int)(gutterXResized_ * sf);
                         line(display, Point(gx, 0), Point(gx, display.rows),
                              Scalar(80, 80, 255), 2, LINE_AA);
                     }
@@ -1715,14 +1856,14 @@ private:
     void setupToolBar() {
         auto* tb = addToolBar("Main");
         tb->setMovable(false);
-        tb->addAction("📂 Open", this, &ScannerWindow::onOpenFolder);
+        tb->addAction("Open...", this, &ScannerWindow::onOpenFolder);
         tb->addSeparator();
-        tb->addAction("◀ Prev", this, &ScannerWindow::onPrevImage);
-        tb->addAction("▶ Next", this, &ScannerWindow::onNextImage);
+        tb->addAction("< Prev", this, &ScannerWindow::onPrevImage);
+        tb->addAction("Next >", this, &ScannerWindow::onNextImage);
         tb->addSeparator();
 
         // Book Mode toggle
-        bookModeAction_ = tb->addAction("📖 Book Mode");
+        bookModeAction_ = tb->addAction("Book Mode");
         bookModeAction_->setCheckable(true);
         bookModeAction_->setChecked(false);
         bookModeAction_->setToolTip(
@@ -1736,7 +1877,7 @@ private:
         tb->addSeparator();
 
         // Quick-load presets from toolbar
-        auto* presetTbBtn = new QPushButton("🎛 Presets ▾", tb);
+        auto* presetTbBtn = new QPushButton("Presets v", tb);
         presetTbBtn->setFlat(true);
         presetTbBtn->setStyleSheet("padding: 3px 8px;");
         presetTbBtn->setToolTip("Quick-load a pipeline preset");
@@ -1754,7 +1895,7 @@ private:
         tb->addWidget(presetTbBtn);
 
         tb->addSeparator();
-        tb->addAction("💾 Save Result", this, &ScannerWindow::onSaveResult);
+        tb->addAction("Save Result", this, &ScannerWindow::onSaveResult);
     }
 
     // ----- Members -----
@@ -1818,11 +1959,18 @@ QSplitter::handle { background-color: #444444; }
 QGroupBox {
     border: 1px solid #5A5A5A;
     border-radius: 5px;
-    margin-top: 8px;
+    margin-top: 16px;
+    padding-top: 4px;
     font-weight: bold;
     color: #D0D0D0;
 }
-QGroupBox::title { subcontrol-origin: margin; left: 8px; padding: 0 4px; }
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    left: 8px;
+    top: -1px;
+    padding: 2px 6px;
+}
 
 QPushButton {
     background-color: #3C3C3C;

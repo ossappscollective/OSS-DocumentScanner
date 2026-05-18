@@ -4,6 +4,7 @@
 #include <ColorSimplificationTransform.h>
 #include <Utils.h>
 #include <jsoncons/json.hpp>
+#include "include/GutterDetector.h"
 using namespace detector;
 using namespace cv;
 using namespace std;
@@ -378,126 +379,16 @@ DocumentDetector::PageSplitResult DocumentDetector::detectGutterAndSplit(const M
                                       int blurSize,
                                       float significanceGap)
 {
-    CV_Assert(!input.empty());
-
-    const int width  = input.cols;
-    const int height = input.rows;
-
+    // Delegate to the standalone GutterDetector module.
+    gutter::GutterResult gr = gutter::detectGutter(input, minPageWidthRatio,
+                                                   blurSize, significanceGap);
     DocumentDetector::PageSplitResult result;
-
-    // ── 0. Reject portrait-aspect images — books are landscape ──────────────
-    //   (book spreads are always wider than tall; skip for obvious portraits)
-    if (width < height) {
-        return result; // foundGutter = false
-    }
-
-    Mat gray;
-    if (input.channels() == 3)
-        cvtColor(input, gray, COLOR_BGR2GRAY);
-    else
-        gray = input.clone();
-
-    // ── 1. Blur to suppress noise ────────────────────────────────────────────
-    GaussianBlur(gray, gray, Size(blurSize, blurSize), 0);
-
-    // ── 2. Per-column mean brightness (float, 0..255) ─────────────────────
-    //   The binding shadow creates a DARK vertical band → low mean.
-    Mat colMeanMat;
-    reduce(gray, colMeanMat, 0, REDUCE_AVG, CV_32F);
-    vector<float> colMean(width);
-    for (int i = 0; i < width; i++)
-        colMean[i] = colMeanMat.at<float>(0, i);
-
-    // ── 3. Per-column horizontal-gradient energy (Sobel |dI/dx|) ───────────
-    //   A real gutter = vertical dark line → low horizontal gradient
-    //   (the line is nearly uniform vertically → low variance and low Sobel).
-    Mat gradX;
-    Sobel(gray, gradX, CV_32F, 1, 0, 3);
-    gradX = cv::abs(gradX);
-    Mat colGradMat;
-    reduce(gradX, colGradMat, 0, REDUCE_AVG, CV_32F);
-    vector<float> colGrad(width);
-    for (int i = 0; i < width; i++)
-        colGrad[i] = colGradMat.at<float>(0, i);
-
-    // ── 4. Normalise both signals to [0,1] then combine ──────────────────
-    float meanMin = *std::min_element(colMean.begin(), colMean.end());
-    float meanMax = *std::max_element(colMean.begin(), colMean.end());
-    float gradMin = *std::min_element(colGrad.begin(), colGrad.end());
-    float gradMax = *std::max_element(colGrad.begin(), colGrad.end());
-
-    float meanRange = std::max(meanMax - meanMin, 1e-6f);
-    float gradRange = std::max(gradMax - gradMin, 1e-6f);
-
-    // Combined "gutterScore": low score = likely gutter
-    //   darkness component: (colMean - meanMin) / meanRange  (0 = darkest)
-    //   gradient component: (colGrad - gradMin) / gradRange  (0 = smoothest)
-    const float kDarkWeight = 0.6f; // weight for darkness (binding shadow)
-    const float kGradWeight = 0.4f; // weight for gradient (edge content)
-    vector<float> gutterScore(width);
-    for (int i = 0; i < width; i++) {
-        float darkComp = (colMean[i] - meanMin) / meanRange;
-        float gradComp = (colGrad[i] - gradMin) / gradRange;
-        gutterScore[i] = kDarkWeight * darkComp + kGradWeight * gradComp;
-    }
-
-    // ── 5. Smooth the combined score ──────────────────────────────────────
-    const int smoothRadius = 12;
-    vector<float> smoothScore(width, 0.0f);
-    for (int i = 0; i < width; i++) {
-        float sum = 0.0f; int cnt = 0;
-        for (int j = -smoothRadius; j <= smoothRadius; j++) {
-            int k = i + j;
-            if (k >= 0 && k < width) { sum += gutterScore[k]; cnt++; }
-        }
-        smoothScore[i] = (cnt > 0) ? sum / cnt : gutterScore[i];
-    }
-
-    // ── 6. Find minimum score in centre band [30%..70%] ──────────────────
-    int searchMin = (int)(width * 0.30f);
-    int searchMax = (int)(width * 0.70f);
-    int gutterX = searchMin;
-    float valleyScore = smoothScore[searchMin];
-    for (int i = searchMin + 1; i < searchMax; i++) {
-        if (smoothScore[i] < valleyScore) {
-            valleyScore = smoothScore[i];
-            gutterX = i;
-        }
-    }
-
-    // ── 7. Significance test ─────────────────────────────────────────────
-    //   Compute mean score in flanking regions (10–30 % and 70–90 %).
-    //   The valley must be at least kSignificanceGap below the flank mean,
-    //   otherwise there is no real gutter (single-page document).
-    const float kSignificanceGap = significanceGap;
-    float flankSum = 0.0f; int flankCnt = 0;
-    for (int i = (int)(width * 0.10f); i < searchMin; i++) {
-        flankSum += smoothScore[i]; flankCnt++;
-    }
-    for (int i = searchMax; i < (int)(width * 0.90f); i++) {
-        flankSum += smoothScore[i]; flankCnt++;
-    }
-    float flankMean = (flankCnt > 0) ? flankSum / flankCnt : 1.0f;
-
-    if (flankMean - valleyScore < kSignificanceGap) {
-        // No statistically significant gutter
-        return result; // foundGutter = false
-    }
-
-    // ── 8. Build page ROIs ───────────────────────────────────────────────
-    result.gutterX = gutterX;
-    int minWidth = static_cast<int>(width * minPageWidthRatio);
-
-    if (gutterX > minWidth) {
-        result.leftPage = cv::Rect(0, 0, gutterX, height);
-        result.hasLeft  = true;
-    }
-    if (width - gutterX > minWidth) {
-        result.rightPage = cv::Rect(gutterX, 0, width - gutterX, height);
-        result.hasRight  = true;
-    }
-
-    result.foundGutter = result.hasLeft || result.hasRight;
+    result.foundGutter = gr.foundGutter;
+    result.hasLeft     = gr.hasLeft;
+    result.hasRight    = gr.hasRight;
+    result.gutterX     = gr.gutterX;
+    result.leftPage    = gr.leftPage;
+    result.rightPage   = gr.rightPage;
     return result;
 }
 
