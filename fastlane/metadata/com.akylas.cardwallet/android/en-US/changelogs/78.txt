@@ -1,0 +1,7 @@
+Bug fixes:
+- update folders correctly on folder change where there are only folders
+- show correct keyboard type based on extra field type
+- allow to search extra fields
+- cards image aspect fill for better rendering
+- colorpicker fixes
+- Translations update
