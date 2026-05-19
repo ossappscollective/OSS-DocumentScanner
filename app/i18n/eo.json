@@ -125,5 +125,7 @@
     "delete_page": "Forigi",
     "detect_qrcode": "Serĉi QR-kodon",
     "disable": "Malŝalti",
-    "disabled": "Malŝaltita"
+    "disabled": "Malŝaltita",
+    "document_date_format_desc": "Determinas la formaton de datoj kiun konformas novaj dokumentaj nomoj\n* Uzas \"%1$s\" por la formato %2$s\n* Uzas \"%3$s\" por Unix epoka tempo (daŭro de milisekundoj ekde 1970)\n* Uzas propran formaton per %4$s. Lernu pli per %5$s",
+    "here": "la dokumentaro"
 }
