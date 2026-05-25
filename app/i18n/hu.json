@@ -36,6 +36,7 @@
     "appearance": "Megjelenés",
     "appearance_settings": "Téma és más megjelenési beállítások",
     "apply": "Alkalmaz",
+    "ascending": "növekvő",
     "ask_everytime": "mindig kérdezzen rá",
     "aspect_ratio": "Képarány",
     "authenticate_security": "Hitelesítsen az alkalmazás eléréséhez",
@@ -147,5 +148,8 @@
     "exporting": "Exportálás…",
     "failed": "Sikertelen",
     "feedback_sent": "Visszajelzés küldése",
-    "file_naming_settings": "a képek/PDF nevével kapcsolatos beállítások exportáláskor"
+    "file_naming_settings": "a képek/PDF nevével kapcsolatos beállítások exportáláskor",
+    "print": "nyomtatás",
+    "share": "megosztás",
+    "share_images": "képek megosztása"
 }

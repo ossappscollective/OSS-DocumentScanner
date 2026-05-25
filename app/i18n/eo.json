@@ -167,6 +167,9 @@
     "exporting": "Eksportado",
     "failed": "Malsukcesis",
     "favorite": "Favoratigi",
+    "feedback_sent": "Komentoj sendiĝis",
+    "file_naming_settings": "Agordoj kiuj rilatas nomojn de eksportataj bildaro aŭ PDF",
+    "file_naming_template": "Ŝablono de dosiero-nomado",
     "here": "la dokumentaro",
     "most_used": "Plej uzataj",
     "toggle_favorite": "Baskuli ĉu favorata"
