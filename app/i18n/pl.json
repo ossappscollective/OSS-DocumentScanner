@@ -203,7 +203,7 @@
     "folders": "foldery",
     "folders_settings_desc": "ustawienia dotyczące folderów",
     "force_white_background_qrcode": "wymuś białe tło kodu QR",
-    "force_white_background_qrcode_desc": "niektóre czytniki nie mogą odczytać kodu na białym tle",
+    "force_white_background_qrcode_desc": "niektóre czytniki nie mogą odczytać białego kodu QR na czarnym tle",
     "format": "format",
     "french": "francuski",
     "front_cam_mirrored": "przednia kamera w lustrzanym odbiciu",
