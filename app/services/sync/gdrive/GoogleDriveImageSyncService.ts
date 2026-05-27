@@ -1,4 +1,5 @@
 import { File, ImageSource, knownFolders, path } from '@nativescript/core';
+import dayjs from 'dayjs';
 import type { DocFolder } from '~/models/OCRDocument';
 import { networkService } from '~/services/api';
 import { DocumentEvents } from '~/services/documents';
@@ -74,7 +75,7 @@ export class GoogleDriveImageSyncService extends BaseImageSyncService implements
             .map((item) => ({
                 filename: path.join(relativePath || '', item.name),
                 basename: item.name,
-                lastmod: item.modifiedTime || new Date().toISOString(),
+                lastmod: item.modifiedTime ? dayjs(item.modifiedTime).valueOf() : undefined,
                 size: parseInt((item.size || 0) + '', 10),
                 type: 'file' as const,
                 mime: item.mimeType

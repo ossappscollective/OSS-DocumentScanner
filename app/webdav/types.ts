@@ -120,7 +120,7 @@ export enum ErrorCode {
 export interface FileStat {
     filename: string;
     basename: string;
-    lastmod: string | number | Date;
+    lastmod: number;
     size: number;
     type: 'file' | 'directory';
     etag?: string;

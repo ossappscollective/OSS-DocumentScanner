@@ -1,4 +1,5 @@
 import { File, Folder, path } from '@nativescript/core';
+import dayjs from 'dayjs';
 import { type OCRDocument } from '~/models/OCRDocument';
 import { networkService } from '~/services/api';
 import { DocumentEvents } from '~/services/documents';
@@ -69,7 +70,7 @@ export class OneDriveDataSyncService extends BaseDataSyncService implements OneD
                 ({
                     filename: path.join(relativePath || '', item.name),
                     basename: item.name,
-                    lastmod: item.lastModifiedDateTime || new Date().toISOString(),
+                    lastmod: item.lastModifiedDateTime ? dayjs(item.lastModifiedDateTime).valueOf() : undefined,
                     size: item.size || 0,
                     type: item.folder ? 'directory' : 'file',
                     mime: item.file?.mimeType

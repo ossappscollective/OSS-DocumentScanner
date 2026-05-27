@@ -6,6 +6,7 @@ import { DAVResult, DAVResultPropstatResponse, DAVResultRaw, DAVResultResponse, 
 import { basename } from './path';
 import { HTTPError } from '@akylas/nativescript-app-utils/error';
 import { SEPARATOR } from '~/utils/constants';
+import dayjs from 'dayjs';
 
 enum PropertyType {
     Array = 'array',
@@ -98,13 +99,13 @@ export function parseRawXML(xml: string): Promise<any> {
 
 export function prepareFileFromProps(props: DAVResultResponseProps, rawFilename: string, isDetailed: boolean = false): FileStat {
     // Last modified time, raw size, item type and mime
-    const { getcontentlength: rawSize = '0', getcontenttype: mimeType = null, getetag: etag = null, getlastmodified: lastMod = null, resourcetype: resourceType = null } = props;
+    const { getcontentlength: rawSize = '0', getcontenttype: mimeType, getetag: etag, getlastmodified, resourcetype: resourceType } = props;
     const type = resourceType && typeof resourceType === 'object' && typeof resourceType.collection !== 'undefined' ? 'directory' : 'file';
     const filename = decodeHTMLEntities(rawFilename);
     const stat: FileStat = {
         filename,
         basename: basename(filename),
-        lastmod: lastMod,
+        lastmod: getlastmodified ? dayjs(getlastmodified).valueOf() : undefined,
         size: parseInt(rawSize, 10),
         type,
         etag: typeof etag === 'string' ? etag.replace(/"/g, '') : null
@@ -115,6 +116,7 @@ export function prepareFileFromProps(props: DAVResultResponseProps, rawFilename:
     if (isDetailed) {
         stat.props = props;
     }
+    DEV_LOG && console.log('prepareFileFromProps', JSON.stringify(props), stat);
     return stat;
 }
 

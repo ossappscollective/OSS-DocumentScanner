@@ -1,4 +1,5 @@
 import { File, path } from '@nativescript/core';
+import dayjs from 'dayjs';
 import type { DocFolder, OCRDocument } from '~/models/OCRDocument';
 import { networkService } from '~/services/api';
 import { DocumentEvents } from '~/services/documents';
@@ -72,7 +73,7 @@ export class GoogleDrivePDFSyncService extends BasePDFSyncService implements Goo
             .map((item) => ({
                 filename: path.join(relativePath || '', item.name),
                 basename: item.name,
-                lastmod: item.modifiedTime || new Date().toISOString(),
+                lastmod: item.modifiedTime ? dayjs(item.modifiedTime).valueOf() : undefined,
                 size: parseInt((item.size || 0) + '', 10),
                 type: 'file' as const,
                 mime: 'application/pdf'

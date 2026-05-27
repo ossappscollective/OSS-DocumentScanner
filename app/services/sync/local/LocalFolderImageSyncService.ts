@@ -49,7 +49,7 @@ export class LocalFolderImageSyncService extends BaseImageSyncService {
                         basename: e.name,
                         filename: e.path,
                         type: 'file',
-                        lastmod: e.lastModified.valueOf() / 1000,
+                        lastmod: e.lastModified.valueOf(),
                         size: e.size
                     }) as FileStat
             );

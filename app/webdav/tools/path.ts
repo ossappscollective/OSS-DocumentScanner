@@ -39,10 +39,6 @@ export function basename(path, ext?) {
     return f;
 }
 
-export function extname(path) {
-    return posixSplitPath(path)[3];
-}
-
 export function encodePath(filePath: string): string {
     try {
         const replaced = filePath.replace(/\//g, SEP_PATH_POSIX).replace(/\\\\/g, SEP_PATH_WINDOWS);

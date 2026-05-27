@@ -1,5 +1,6 @@
 import { TimeoutError } from '@akylas/nativescript-app-utils/error';
 import { File } from '@nativescript/core';
+import dayjs from 'dayjs';
 import type { DocFolder, OCRDocument } from '~/models/OCRDocument';
 import { networkService } from '~/services/api';
 import { DocumentEvents } from '~/services/documents';
@@ -60,7 +61,7 @@ export class PaperlessNgxPDFSyncService extends BasePDFSyncService {
             return {
                 filename: displayName,
                 basename: displayName,
-                lastmod: doc.modified || doc.added || new Date().toISOString(),
+                lastmod: doc.modified ? dayjs(doc.modified).valueOf() : undefined,
                 size: 0,
                 type: 'file' as const,
                 mime: 'application/pdf'

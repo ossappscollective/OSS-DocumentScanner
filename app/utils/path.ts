@@ -32,5 +32,9 @@ export function basename(path, ext?) {
 }
 
 export function extname(path) {
-    return posixSplitPath(path)[3];
+    if (!path) {
+        return '';
+    }
+    const index = path.lastIndexOf('.');
+    return index !== -1 ? path.substring(index + 1) : '';
 }

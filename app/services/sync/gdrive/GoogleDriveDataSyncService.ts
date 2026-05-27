@@ -1,4 +1,5 @@
 import { File, Folder, path } from '@nativescript/core';
+import dayjs from 'dayjs';
 import { type OCRDocument } from '~/models/OCRDocument';
 import { networkService } from '~/services/api';
 import { DocumentEvents } from '~/services/documents';
@@ -67,7 +68,7 @@ export class GoogleDriveDataSyncService extends BaseDataSyncService implements G
                 ({
                     filename: path.join(relativePath || '', item.name),
                     basename: item.name,
-                    lastmod: item.modifiedTime || new Date().toISOString(),
+                    lastmod: item.modifiedTime ? dayjs(item.modifiedTime).valueOf() : undefined,
                     size: parseInt((item.size || 0) + '', 10),
                     type: item.mimeType === 'application/vnd.google-apps.folder' ? 'directory' : 'file',
                     mime: item.mimeType

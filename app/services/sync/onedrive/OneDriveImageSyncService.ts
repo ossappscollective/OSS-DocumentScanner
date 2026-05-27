@@ -1,4 +1,5 @@
 import { File, ImageSource, knownFolders, path } from '@nativescript/core';
+import dayjs from 'dayjs';
 import type { DocFolder } from '~/models/OCRDocument';
 import { networkService } from '~/services/api';
 import { DocumentEvents } from '~/services/documents';
@@ -66,7 +67,7 @@ export class OneDriveImageSyncService extends BaseImageSyncService implements On
             .map((item) => ({
                 filename: path.join(relativePath || '', item.name),
                 basename: item.name,
-                lastmod: item.lastModifiedDateTime || new Date().toISOString(),
+                lastmod: item.lastModifiedDateTime ? dayjs(item.lastModifiedDateTime).valueOf() : undefined,
                 size: item.size || 0,
                 type: 'file' as const,
                 mime: item.file?.mimeType

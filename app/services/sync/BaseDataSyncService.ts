@@ -180,7 +180,7 @@ export abstract class BaseDataSyncService extends BaseSyncService {
     }
     async removeDocumentFromRemote(remoteRelativePath: string) {
         const remoteDocPath = path.join(this.remoteFolder, remoteRelativePath);
-        DEV_LOG && console.log('removeDocumentFromWebdav', remoteDocPath);
+        DEV_LOG && console.log('removeDocumentFromRemote', remoteDocPath);
         return this.deleteFile(remoteDocPath);
         // const remoteDocuments = (await this.getRemoteFolderDirectories(remotePath)) as FileStat[];
         // for (let index = 0; index < remoteDocuments.length; index++) {

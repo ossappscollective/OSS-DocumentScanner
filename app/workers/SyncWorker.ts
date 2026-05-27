@@ -841,14 +841,16 @@ export default class SyncWorker extends BaseWorker {
             // pages will be updated independently
             return;
         }
-        let localDocuments = event?.['pages']
-            ? [{ document: event['doc'] as OCRDocument, pages: event['pages'] as OCRPage[] }]
-            : event?.['pageIndex'] !== undefined
-              ? [{ document: event['doc'] as OCRDocument, pages: [event['doc']['pages'][event['pageIndex']]] as OCRPage[] }]
-              : (await documentsService.documentRepository.search()).map((d) => ({ document: d, pages: d.pages }));
+        const eventDocuments = (
+            event?.['pages']
+                ? [{ document: event['doc'] as OCRDocument, pages: event['pages'] as OCRPage[] }]
+                : event?.['pageIndex'] !== undefined
+                  ? [{ document: event['doc'] as OCRDocument, pages: [event['doc']['pages'][event['pageIndex']]] as OCRPage[] }]
+                  : undefined
+        )?.filter((d) => !!d.document);
+        const localDocuments = eventDocuments ?? (await documentsService.documentRepository.search()).map((d) => ({ document: d, pages: d.pages }));
 
         // this should not happened but i got bug reports with null document. cant reproduce
-        localDocuments = localDocuments.filter((d) => !!d.document);
         DEV_LOG &&
             console.log(
                 'Sync',
@@ -935,14 +937,19 @@ export default class SyncWorker extends BaseWorker {
             // pages will be updated independently
             return;
         }
-        let localDocuments = event?.['pages']
-            ? [{ document: event['doc'] as OCRDocument, pages: event['pages'] as OCRPage[] }]
-            : event?.['pageIndex'] !== undefined
-              ? [{ document: event['doc'] as OCRDocument, pages: [event['doc']['pages'][event['pageIndex']]] as OCRPage[] }]
-              : (await documentsService.documentRepository.search()).map((d) => ({ document: d, pages: d.pages }));
+        const eventDocuments = (
+            event?.['pages']
+                ? [{ document: event['doc'] as OCRDocument, pages: event['pages'] as OCRPage[] }]
+                : event?.['pageIndex'] !== undefined
+                  ? [{ document: event['doc'] as OCRDocument, pages: [event['doc']['pages'][event['pageIndex']]] as OCRPage[] }]
+                  : undefined
+        )?.filter((d) => !!d.document);
+        // in case of a full triggered sync we can filter non ocr paged to ocr as less as possible.
+        // if the sync is triggered from page update or events like that we are forced to ocr
+        const canFilterToOCR = force && eventDocuments === undefined;
+        const localDocuments = eventDocuments ?? (await documentsService.documentRepository.search()).map((d) => ({ document: d, pages: d.pages }));
 
         // this should not happened but i got bug reports with null document. cant reproduce
-        localDocuments = localDocuments.filter((d) => !!d.document);
         DEV_LOG &&
             console.log(
                 'Sync',
@@ -955,7 +962,7 @@ export default class SyncWorker extends BaseWorker {
             this.services
                 .filter((s) => s instanceof BasePDFSyncService)
                 .map(async (service) => {
-                    DEV_LOG && console.log('syncPDFDocuments', 'handling service', service.type, service.id, service.autoSync, force);
+                    DEV_LOG && console.log('syncPDFDocuments', 'handling service', service.type, service.id, service.autoSync, force, canFilterToOCR);
                     if (!service.shouldSync(force, event)) {
                         return;
                     }
@@ -979,26 +986,31 @@ export default class SyncWorker extends BaseWorker {
                             async (doc: { document: OCRDocument; pages: OCRPage[] }) => {
                                 const pages = doc.pages.filter((p) => !!p);
                                 const document = doc.document;
-                                //see if we need to OCR
-                                if (service.OCREnabled && service.OCRLanguages.length && event?.eventName !== EVENT_DOCUMENT_PAGE_DELETED) {
-                                    const OCRDataPath = path.join(baseOCRDataPath, service.OCRDataType);
-                                    // we need to make sure the OCR update wont trigger another sync or we will end up in an endless loop
-                                    await Promise.all(
-                                        pages.map(async (p, index) => document.ocrPage({ pageIndex: index, language: service.OCRLanguages.join('+'), dataPath: OCRDataPath, notify: false }))
-                                    );
-                                }
 
                                 const name = service.getPDFName(document);
-                                const existing = remoteFiles.find((r) => r.basename === name);
-                                DEV_LOG && console.info('syncPDFDocuments', 'test', document.id, existing?.lastmod, document.modifiedDate);
+                                const fullName = name + '.pdf';
+                                const existing = remoteFiles.find((r) => r.basename === fullName);
+                                DEV_LOG && console.log('syncPDFDocuments', 'syncing PDF', document.id, document.modifiedDate, existing?.lastmod);
                                 if (!existing || new Date(existing.lastmod).valueOf() < document.modifiedDate) {
+                                    //see if we need to OCR
+                                    if (service.OCREnabled && service.OCRLanguages.length && event?.eventName !== EVENT_DOCUMENT_PAGE_DELETED) {
+                                        const OCRDataPath = path.join(baseOCRDataPath, service.OCRDataType);
+                                        // we need to make sure the OCR update wont trigger another sync or we will end up in an endless loop
+                                        await Promise.all(
+                                            (canFilterToOCR ? pages.filter((p) => !p.ocrData) : pages).map(async (p, index) =>
+                                                document.ocrPage({ pageIndex: index, language: service.OCRLanguages.join('+'), dataPath: OCRDataPath, notify: false })
+                                            )
+                                        );
+                                    }
                                     await service.writePDF(
                                         document,
                                         name,
                                         service.useFoldersStructure && document.folders?.length ? await documentsService.folderRepository.findFolderById(document.folders[0]) : null
                                     );
                                 }
-                                await document.save({ _synced: document._synced | service.syncMask });
+                                if ((document._synced & service.syncMask) !== service.syncMask) {
+                                    await document.save({ _synced: document._synced | service.syncMask });
+                                }
                                 currentDocIndex++;
                                 this.updateSyncProgress('pdf', currentDocIndex, totalDocuments, document.id, document.name);
                             },
