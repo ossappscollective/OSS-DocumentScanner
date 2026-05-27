@@ -76,7 +76,7 @@
                     color: colorOnSurfaceVariant,
                     fontSize: 14 * $fontScale,
                     lineHeight: condensed ? 14 : 20 * $fontScale,
-                    text: '\n' + dayjs(doc.createdDate).format('L LT')
+                    text: '\n' + dayjs(doc.trashedDate).format('L LT')
                 }
             ]
         });

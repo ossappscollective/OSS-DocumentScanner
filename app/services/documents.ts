@@ -990,7 +990,7 @@ export class DocumentsService extends Observable {
             documents,
             async (d: OCRDocument) => {
                 await this.documentRepository.update(d, { trashedDate }, false);
-                // notify sync that the document is deleted so it gets queued for remote removal
+                // fire EVENT_DOCUMENT_DELETED for sync compatibility: trashed docs are treated as deleted by sync
                 this.notify({ eventName: EVENT_DOCUMENT_DELETED, documents: [d], folders: d.folders } as DocumentDeletedEventData);
             },
             1

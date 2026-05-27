@@ -887,8 +887,8 @@
                     if (result === true) {
                         await documentsService.trashDocuments(await getSelectedDocuments());
                         return true;
-                    } else if (result === false && (result as any) !== null && (result as any) !== undefined) {
-                        // neutral button: delete permanently
+                    } else if (result == null) {
+                        // neutral button tapped: delete permanently
                         const confirmed = await confirm({
                             cancelButtonText: lc('cancel'),
                             message: lc('confirm_delete_permanently', nbSelected),
