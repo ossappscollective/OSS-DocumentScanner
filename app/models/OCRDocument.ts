@@ -118,6 +118,7 @@ export interface Document {
     favorite?: number;
     usedDate?: number;
     useCount?: number;
+    trashedDate?: number;
 }
 
 let documentsService: DocumentsService;
@@ -160,6 +161,7 @@ export class OCRDocument extends Observable implements Document {
     favorite: number = 0;
     usedDate?: number;
     useCount: number = 0;
+    trashedDate?: number;
 
     extra?: DocumentExtra;
 

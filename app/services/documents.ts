@@ -7,7 +7,7 @@ import SqlQuery from 'kiss-orm/dist/Queries/SqlQuery';
 import CrudRepository from 'kiss-orm/dist/Repositories/CrudRepository';
 import { DocFolder, Document, IDocFolder, OCRDocument, OCRPage, Page, Tag } from '~/models/OCRDocument';
 import { PKPass, PKPassType } from '~/models/PKPass';
-import { EVENT_DOCUMENT_DELETED, EVENT_DOCUMENT_USE_COUNT, SETTINGS_ROOT_DATA_FOLDER } from '~/utils/constants';
+import { EVENT_DOCUMENT_DELETED, EVENT_DOCUMENT_RESTORED, EVENT_DOCUMENT_TRASHED, EVENT_DOCUMENT_USE_COUNT, SETTINGS_ROOT_DATA_FOLDER } from '~/utils/constants';
 import { groupByArray } from '@shared/utils';
 import DatabaseInterface from 'kiss-orm/dist/Databases/DatabaseInterface';
 import QueryIdentifier from 'kiss-orm/dist/Queries/QueryIdentifier';
@@ -541,6 +541,7 @@ export class DocumentRepository extends BaseRepository<OCRDocument, Document> {
         addFavorite: tableColumnAlterPromise(sql`ALTER TABLE Document ADD COLUMN favorite INTEGER NOT NULL DEFAULT 0`),
         addUsedDate: tableColumnAlterPromise(sql`ALTER TABLE Document ADD COLUMN usedDate BIGINT`),
         addUseCount: tableColumnAlterPromise(sql`ALTER TABLE Document ADD COLUMN useCount INTEGER NOT NULL DEFAULT 0`),
+        addTrashedDate: tableColumnAlterPromise(sql`ALTER TABLE Document ADD COLUMN trashedDate BIGINT`),
 
         updateDocSearchAccentInsensitive: (sequenceDb: DatabaseInterface) =>
             new Promise<void>(async (resolve, reject) => {
@@ -622,7 +623,7 @@ export class DocumentRepository extends BaseRepository<OCRDocument, Document> {
             } else if (k === 'name') {
                 toUpdate[k] = value;
                 toUpdate.nameSearch = normalizeSearchString(value);
-            } else if (k === 'favorite' || k === 'usedDate' || k === 'useCount') {
+            } else if (k === 'favorite' || k === 'usedDate' || k === 'useCount' || k === 'trashedDate') {
                 toUpdate[k] = value;
             } else if (typeof value === 'object' || Array.isArray(value)) {
                 toUpdate[k] = JSON.stringify(value);
@@ -713,7 +714,7 @@ LEFT JOIN
             if (filter?.length) {
                 const normalizedFilter = normalizeSearchString(filter);
                 const escaped = escapeLike(normalizedFilter);
-                const where = `p.nameSearch LIKE '%${escaped}%' OR d.nameSearch LIKE '%${escaped}%' OR p.ocrDataSearch LIKE '%${escaped}%' OR d.extra LIKE '%${escaped}%'`;
+                const where = `(p.nameSearch LIKE '%${escaped}%' OR d.nameSearch LIKE '%${escaped}%' OR p.ocrDataSearch LIKE '%${escaped}%' OR d.extra LIKE '%${escaped}%') AND d.trashedDate IS NULL`;
                 if (folder) {
                     args.postfix = sql` LEFT JOIN Page p ON p.document_id = d.id `;
                     args.where = new SqlQuery([`df.folder_id = ${folder.id} AND (${where})`]);
@@ -722,19 +723,28 @@ LEFT JOIN
                     args.where = new SqlQuery([where]);
                 }
             } else {
-                args.where = new SqlQuery([`df.folder_id = ${folder.id}`]);
+                args.where = new SqlQuery([`df.folder_id = ${folder.id} AND d.trashedDate IS NULL`]);
             }
             args.postfix = new SqlQuery((args.postfix ? [args.postfix] : []).concat([foldersPostfix]));
         } else {
             if (omitThoseWithFolders) {
                 args.select = sql`d.*`;
                 args.from = sql`Document d`;
-                args.where = sql`d.id NOT IN(SELECT document_id FROM DocumentsFolders)`;
+                args.where = sql`d.id NOT IN(SELECT document_id FROM DocumentsFolders) AND d.trashedDate IS NULL`;
             } else {
+                args.where = sql`d.trashedDate IS NULL`;
                 args.postfix = new SqlQuery((args.postfix ? [args.postfix] : []).concat([foldersPostfix]));
             }
         }
         return this.search(args);
+    }
+    async findTrashedDocuments({ order = 'trashedDate DESC' }: { order?: string } = {}) {
+        const orderBy = new SqlQuery([`d.${order}`]);
+        return this.search({
+            from: sql`Document d`,
+            where: sql`d.trashedDate IS NOT NULL`,
+            orderBy
+        } as any);
     }
     async createModelFromAttributes(attributes: Required<any> | OCRDocument): Promise<any> {
         const { extra, folders, id, pagesOrder, ...others } = attributes;
@@ -821,6 +831,12 @@ export interface DocumentUpdatedEventData extends SingleDocumentEventData {
 export interface DocumentDeletedEventData extends DocumentEventData {
     documents?: OCRDocument[];
     folders?: number[];
+}
+export interface DocumentTrashedEventData extends DocumentEventData {
+    documents?: OCRDocument[];
+}
+export interface DocumentRestoredEventData extends DocumentEventData {
+    documents?: OCRDocument[];
 }
 
 export type DocumentEvents =
@@ -962,6 +978,39 @@ export class DocumentsService extends Observable {
         // await OCRDocument.delete(docs.map((d) => d.id));
         // documents.forEach((doc) => doc.removeFromDisk());
         // this.notify({ eventName: EVENT_DOCUMENT_DELETED, documents } as DocumentDeletedEventData);
+    }
+    async trashDocuments(documents: OCRDocument[]) {
+        DEV_LOG &&
+            console.log(
+                'trashDocuments',
+                documents.map((d) => d.id)
+            );
+        const trashedDate = Date.now();
+        await doInBatch<OCRDocument, void>(
+            documents,
+            async (d: OCRDocument) => {
+                await this.documentRepository.update(d, { trashedDate }, false);
+                // notify sync that the document is deleted so it gets queued for remote removal
+                this.notify({ eventName: EVENT_DOCUMENT_DELETED, documents: [d], folders: d.folders } as DocumentDeletedEventData);
+            },
+            1
+        );
+        this.notify({ eventName: EVENT_DOCUMENT_TRASHED, documents } as DocumentTrashedEventData);
+    }
+    async restoreDocuments(documents: OCRDocument[]) {
+        DEV_LOG &&
+            console.log(
+                'restoreDocuments',
+                documents.map((d) => d.id)
+            );
+        await doInBatch<OCRDocument, void>(
+            documents,
+            async (d: OCRDocument) => {
+                await this.documentRepository.update(d, { trashedDate: null }, false);
+            },
+            1
+        );
+        this.notify({ eventName: EVENT_DOCUMENT_RESTORED, documents } as DocumentRestoredEventData);
     }
     stop() {
         DEV_LOG && console.log('DocumentsService stop');

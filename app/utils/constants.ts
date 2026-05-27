@@ -139,12 +139,17 @@ export const EVENT_DOCUMENT_ADDED = 'documentAdded';
 export const EVENT_DOCUMENT_MOVED_FOLDER = 'documentMovedFolder';
 export const EVENT_DOCUMENT_UPDATED = 'documentUpdated';
 export const EVENT_DOCUMENT_DELETED = 'documentsDeleted';
+export const EVENT_DOCUMENT_TRASHED = 'documentsTrashed';
+export const EVENT_DOCUMENT_RESTORED = 'documentsRestored';
 export const EVENT_DOCUMENT_PAGES_ADDED = 'documentPagesAdded';
 export const EVENT_DOCUMENT_PAGE_DELETED = 'documentPageDeleted';
 export const EVENT_DOCUMENT_PAGE_UPDATED = 'documentPageUpdated';
 export const EVENT_DOCUMENT_USE_COUNT = 'documentUseCount';
 export const EVENT_FOLDER_UPDATED = 'folderUpdated';
 export const EVENT_FOLDER_ADDED = 'folderAdded';
+
+export const SETTINGS_TRASH_ENABLED = 'trash_enabled';
+export const DEFAULT_TRASH_ENABLED = true;
 
 export const EVENT_STATE = 'state';
 export const EVENT_SYNC_STATE = 'syncState';

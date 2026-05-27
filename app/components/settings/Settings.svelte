@@ -40,6 +40,7 @@
         DEFAULT_NB_COLUMNS_VIEW_LANDSCAPE,
         DEFAULT_OCR_COPY_USE_SPACE,
         DEFAULT_PDF_OPTIONS_STRING,
+        DEFAULT_TRASH_ENABLED,
         DOCUMENT_NAME_FORMAT,
         DOCUMENT_NOT_DETECTED_MARGIN,
         FILENAME_DATE_FORMAT,
@@ -74,6 +75,7 @@
         SETTINGS_START_ON_CAM,
         SETTINGS_SYNC_ON_START,
         SETTINGS_TRANSFORM_BATCH_SIZE,
+        SETTINGS_TRASH_ENABLED,
         TRANSFORM_BATCH_SIZE,
         USE_SYSTEM_CAMERA
     } from '~/utils/constants';
@@ -504,6 +506,16 @@
                         description: lc('image_processing_settings_desc')
                     }
                 ];
+            case 'documents':
+                return [
+                    {
+                        type: 'switch',
+                        id: SETTINGS_TRASH_ENABLED,
+                        title: lc('trash_enabled'),
+                        description: lc('trash_enabled_desc'),
+                        value: ApplicationSettings.getBoolean(SETTINGS_TRASH_ENABLED, DEFAULT_TRASH_ENABLED)
+                    }
+                ];
             case 'folders':
                 return [
                     {
@@ -907,6 +919,13 @@
                         title: lc('folders'),
                         description: lc('folders_settings_desc'),
                         options: () => getSubSettings('folders')
+                    },
+                    {
+                        id: 'sub_settings',
+                        icon: 'mdi-trash-can-outline',
+                        title: lc('trash'),
+                        description: lc('documents_settings'),
+                        options: () => getSubSettings('documents')
                     },
                     {
                         id: 'sub_settings',

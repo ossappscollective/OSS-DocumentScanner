@@ -31,6 +31,8 @@
         DocumentFolderAddedEventData,
         DocumentMovedFolderEventData,
         DocumentPageUpdatedEventData,
+        DocumentRestoredEventData,
+        DocumentTrashedEventData,
         DocumentUpdatedEventData,
         FolderUpdatedEventData,
         documentsService
@@ -43,12 +45,15 @@
         DEFAULT_NB_COLUMNS,
         DEFAULT_NB_COLUMNS_LANDSCAPE,
         DEFAULT_SORT_ORDER,
+        DEFAULT_TRASH_ENABLED,
         DEFAULT_VIEW_STYLE,
         EVENT_DOCUMENT_ADDED,
         EVENT_DOCUMENT_DELETED,
         EVENT_DOCUMENT_MOVED_FOLDER,
         EVENT_DOCUMENT_PAGE_DELETED,
         EVENT_DOCUMENT_PAGE_UPDATED,
+        EVENT_DOCUMENT_RESTORED,
+        EVENT_DOCUMENT_TRASHED,
         EVENT_DOCUMENT_UPDATED,
         EVENT_FOLDER_ADDED,
         EVENT_FOLDER_UPDATED,
@@ -58,6 +63,7 @@
         SETTINGS_NB_COLUMNS,
         SETTINGS_NB_COLUMNS_LANDSCAPE,
         SETTINGS_SORT_ORDER,
+        SETTINGS_TRASH_ENABLED,
         SETTINGS_VIEW_STYLE
     } from '~/utils/constants';
     import {
@@ -143,6 +149,7 @@
         useCount: { name: lc('most_used') }
     };
     export let onlyForImport = false;
+    export let isTrash = false;
     export let viewStyleChanged = (oldValue, newValue) => newValue !== oldValue;
     export let folderViewStyleChanged = (oldValue, newValue) => newValue !== oldValue;
     export let sortOrder = ApplicationSettings.getString(SETTINGS_SORT_ORDER, DEFAULT_SORT_ORDER);
@@ -198,6 +205,7 @@
 
     let syncRunning = false;
     $: DEV_LOG && console.log('syncEnabled', syncEnabled);
+    const trashEnabled = ApplicationSettings.getBoolean(SETTINGS_TRASH_ENABLED, DEFAULT_TRASH_ENABLED);
 
     let lastRefreshFilter = null;
     let showSearch = false;
@@ -241,11 +249,15 @@
         loading = true;
         try {
             DEV_LOG && console.log('MainList', 'refresh', folder, filter, sortOrder);
-            const r = await documentsService.documentRepository.findDocuments({ filter, folder, omitThoseWithFolders: true, order: sortOrder });
-
-            await refreshFolders(filter);
+            let r;
+            if (isTrash) {
+                r = await documentsService.documentRepository.findTrashedDocuments();
+            } else {
+                r = await documentsService.documentRepository.findDocuments({ filter, folder, omitThoseWithFolders: true, order: sortOrder });
+                await refreshFolders(filter);
+            }
             documents = new ObservableArray(
-                (folderItems.length ? (folderViewStyle === 'vertical' ? [...folderItems] : [{ type: 'folders', selected: false }]) : []).concat(
+                (!isTrash && folderItems.length ? (folderViewStyle === 'vertical' ? [...folderItems] : [{ type: 'folders', selected: false }]) : []).concat(
                     r.map(
                         (doc) =>
                             ({
@@ -508,6 +520,8 @@
         documentsService.on(EVENT_DOCUMENT_UPDATED, onDocumentUpdated);
         documentsService.on(EVENT_DOCUMENT_DELETED, onDocumentsDeleted);
         documentsService.on(EVENT_DOCUMENT_MOVED_FOLDER, onDocumentMovedFolder);
+        documentsService.on(EVENT_DOCUMENT_TRASHED, refreshSimple);
+        documentsService.on(EVENT_DOCUMENT_RESTORED, refreshSimple);
         documentsService.on(EVENT_FOLDER_ADDED, onFolderAdded);
         documentsService.on(EVENT_FOLDER_UPDATED, onFolderUpdated);
         syncService.on(EVENT_SYNC_STATE, onSyncState);
@@ -526,6 +540,8 @@
         documentsService.off(EVENT_DOCUMENT_ADDED, onDocumentAdded);
         documentsService.off(EVENT_DOCUMENT_DELETED, onDocumentsDeleted);
         documentsService.off(EVENT_DOCUMENT_MOVED_FOLDER, onDocumentMovedFolder);
+        documentsService.off(EVENT_DOCUMENT_TRASHED, refreshSimple);
+        documentsService.off(EVENT_DOCUMENT_RESTORED, refreshSimple);
         documentsService.off(EVENT_FOLDER_ADDED, onFolderAdded);
         documentsService.off(EVENT_FOLDER_UPDATED, onFolderUpdated);
         syncService.off(EVENT_SYNC_STATE, onSyncState);
@@ -860,11 +876,59 @@
     async function deleteSelectedDocuments() {
         if (nbSelected > 0) {
             try {
+                if (trashEnabled && !isTrash) {
+                    const result = await confirm({
+                        cancelButtonText: lc('cancel'),
+                        message: lc('confirm_move_to_trash', nbSelected),
+                        neutralButtonText: lc('delete_permanently'),
+                        okButtonText: lc('move_to_trash'),
+                        title: lc('delete')
+                    } as any);
+                    if (result === true) {
+                        await documentsService.trashDocuments(await getSelectedDocuments());
+                        return true;
+                    } else if (result === false && (result as any) !== null && (result as any) !== undefined) {
+                        // neutral button: delete permanently
+                        const confirmed = await confirm({
+                            cancelButtonText: lc('cancel'),
+                            message: lc('confirm_delete_permanently', nbSelected),
+                            okButtonText: lc('delete_permanently'),
+                            title: lc('delete_permanently')
+                        });
+                        if (confirmed) {
+                            await documentsService.deleteDocuments(await getSelectedDocuments());
+                            return true;
+                        }
+                        return false;
+                    }
+                    return false;
+                } else {
+                    const result = await confirm({
+                        cancelButtonText: lc('cancel'),
+                        message: lc('confirm_delete_documents', nbSelected),
+                        okButtonText: lc('delete'),
+                        title: lc('delete')
+                    });
+                    if (result) {
+                        await documentsService.deleteDocuments(await getSelectedDocuments());
+                        return true;
+                    }
+                    return false;
+                }
+            } catch (error) {
+                showError(error);
+            }
+        }
+    }
+
+    async function deleteSelectedDocumentsPermanently() {
+        if (nbSelected > 0) {
+            try {
                 const result = await confirm({
                     cancelButtonText: lc('cancel'),
-                    message: lc('confirm_delete_documents', nbSelected),
-                    okButtonText: lc('delete'),
-                    title: lc('delete')
+                    message: lc('confirm_delete_permanently', nbSelected),
+                    okButtonText: lc('delete_permanently'),
+                    title: lc('delete_permanently')
                 });
                 if (result) {
                     await documentsService.deleteDocuments(await getSelectedDocuments());
@@ -874,6 +938,26 @@
             } catch (error) {
                 showError(error);
             }
+        }
+    }
+
+    async function restoreSelectedDocuments() {
+        if (nbSelected > 0) {
+            try {
+                await documentsService.restoreDocuments(await getSelectedDocuments());
+                return true;
+            } catch (error) {
+                showError(error);
+            }
+        }
+    }
+
+    async function openTrash() {
+        try {
+            const TrashList = (await import('~/components/list/TrashList.svelte')).default;
+            navigate({ page: TrashList });
+        } catch (error) {
+            showError(error);
         }
     }
 
@@ -1056,6 +1140,13 @@
     }
 
     function getSelectionToolbarOptions() {
+        if (isTrash) {
+            return [
+                { id: 'select_all', name: lc('select_all'), icon: 'mdi-select-all' },
+                { icon: 'mdi-restore', id: 'restore', name: lc('restore') },
+                { color: colorError, icon: 'mdi-delete-forever', id: 'delete_permanently', name: lc('delete_permanently') }
+            ];
+        }
         // Main actions that appear in the toolbar (configurable, default 4)
         return [
             { icon: 'mdi-file-pdf-box', id: 'pdf', name: lc('export_pdf') },
@@ -1127,6 +1218,18 @@
                         unselectAll();
                     }
                     break;
+                case 'restore':
+                    result = await restoreSelectedDocuments();
+                    if (result) {
+                        unselectAll();
+                    }
+                    break;
+                case 'delete_permanently':
+                    result = await deleteSelectedDocumentsPermanently();
+                    if (result) {
+                        unselectAll();
+                    }
+                    break;
                 case 'favorite':
                     await toggleFavoriteSelectedDocuments();
                     break;
@@ -1154,15 +1257,21 @@
 
     async function showOptions(event) {
         const options = new ObservableArray(
-            [{ id: 'select_all', name: lc('select_all'), icon: 'mdi-select-all' }].concat(nbSelected === 1 ? [{ icon: 'mdi-rename', id: 'rename', name: lc('rename') }] : []).concat([
-                { icon: 'mdi-star', id: 'favorite', name: lc('toggle_favorite') },
-                { icon: 'mdi-folder-swap', id: 'move_folder', name: lc('move_folder') },
-                { icon: 'mdi-share-variant', id: 'share', name: lc('share_images') },
-                { icon: 'mdi-fullscreen', id: 'fullscreen', name: lc('show_fullscreen_images') },
-                { icon: 'mdi-auto-fix', id: 'transform', name: lc('transform_images') },
-                { icon: 'mdi-text-recognition', id: 'ocr', name: lc('ocr_document') },
-                { color: colorError, icon: 'mdi-delete', id: 'delete', name: lc('delete') }
-            ] as any)
+            isTrash
+                ? ([
+                      { id: 'select_all', name: lc('select_all'), icon: 'mdi-select-all' },
+                      { icon: 'mdi-restore', id: 'restore', name: lc('restore') },
+                      { color: colorError, icon: 'mdi-delete-forever', id: 'delete_permanently', name: lc('delete_permanently') }
+                  ] as any)
+                : [{ id: 'select_all', name: lc('select_all'), icon: 'mdi-select-all' }].concat(nbSelected === 1 ? [{ icon: 'mdi-rename', id: 'rename', name: lc('rename') }] : []).concat([
+                      { icon: 'mdi-star', id: 'favorite', name: lc('toggle_favorite') },
+                      { icon: 'mdi-folder-swap', id: 'move_folder', name: lc('move_folder') },
+                      { icon: 'mdi-share-variant', id: 'share', name: lc('share_images') },
+                      { icon: 'mdi-fullscreen', id: 'fullscreen', name: lc('show_fullscreen_images') },
+                      { icon: 'mdi-auto-fix', id: 'transform', name: lc('transform_images') },
+                      { icon: 'mdi-text-recognition', id: 'ocr', name: lc('ocr_document') },
+                      { color: colorError, icon: 'mdi-delete', id: 'delete', name: lc('delete') }
+                  ] as any)
         );
         return showPopoverMenu({
             anchor: event.object,
@@ -1209,6 +1318,18 @@
                             break;
                         case 'delete':
                             result = await deleteSelectedDocuments();
+                            if (result) {
+                                unselectAll();
+                            }
+                            break;
+                        case 'restore':
+                            result = await restoreSelectedDocuments();
+                            if (result) {
+                                unselectAll();
+                            }
+                            break;
+                        case 'delete_permanently':
+                            result = await deleteSelectedDocumentsPermanently();
                             if (result) {
                                 unselectAll();
                             }
@@ -1359,7 +1480,7 @@
                     color={colorOnSurfaceVariant}
                     flexShrink={0}
                     fontSize={19}
-                    text={lastRefreshFilter && showSearch ? lc('no_document_found') : lc('no_document_yet')}
+                    text={lastRefreshFilter && showSearch ? lc('no_document_found') : isTrash ? lc('no_trashed_document') : lc('no_document_yet')}
                     textAlignment="center"
                     textWrap={true} />
             </flexlayout>
@@ -1385,6 +1506,9 @@
                 {#if folder}
                     <mdbutton class="actionBarButton" testID="settingsBtn" text="mdi-palette" variant="text" on:tap={setFolderColor} />
                 {:else}
+                    {#if !isTrash && trashEnabled}
+                        <mdbutton class="actionBarButton" text="mdi-trash-can-outline" variant="text" on:tap={openTrash} />
+                    {/if}
                     <mdbutton class="actionBarButton" text="mdi-view-dashboard" variant="text" on:tap={showViewOptions} />
                     <mdbutton class="actionBarButton" testID="settingsBtn" text="mdi-cogs" variant="text" on:tap={() => showSettings()} />
                 {/if}
