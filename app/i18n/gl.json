@@ -202,7 +202,7 @@
     "folders": "cartafoles",
     "folders_settings_desc": "axustes relativos aos cartafoles",
     "force_white_background_qrcode": "forzar fondo branco no CódigoQR",
-    "force_white_background_qrcode_desc": "algúns lectores non poden ler un CódigoQR negro con fondo branco",
+    "force_white_background_qrcode_desc": "algúns lectores non poden ler un Código QR branco con fondo negro",
     "format": "formato",
     "french": "francés",
     "front_cam_mirrored": "cámara frontal como espello",
