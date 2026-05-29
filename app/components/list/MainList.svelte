@@ -670,7 +670,7 @@
     }
     function getDocumentsStartIndex() {
         if (folderViewStyle === 'horizontal') {
-            return folderItems.length > 0 ? 1 : 0; // 1 because the first the first item is actually the folders horizontal collectionview
+            return folderItems?.length > 0 ? 1 : 0; // 1 because the first the first item is actually the folders horizontal collectionview
         }
         return 0;
     }
@@ -825,10 +825,12 @@
                 selected.push(...(await documentsService.documentRepository.findDocuments({ folder: d.folder })));
             }
         }
-        for (let index = 0; index < folderItems.length; index++) {
-            const d = folderItems.getItem(index);
-            if (d.folder && d.selected) {
-                selected.push(...(await documentsService.documentRepository.findDocuments({ folder: d.folder })));
+        if (folderItems) {
+            for (let index = 0; index < folderItems.length; index++) {
+                const d = folderItems.getItem(index);
+                if (d.folder && d.selected) {
+                    selected.push(...(await documentsService.documentRepository.findDocuments({ folder: d.folder })));
+                }
             }
         }
         return sortByKey(selected, sortOrder);
@@ -1457,7 +1459,7 @@
             <flexlayout
                 flexDirection="column"
                 horizontalAlignment="center"
-                marginBottom="30%"
+                marginBottom={isTrash ? 0 : '30%'}
                 paddingLeft={16}
                 paddingRight={16}
                 row={2}
@@ -1475,7 +1477,8 @@
                         'scanner|**': lottieLightColor
                     }}
                     loop={true}
-                    src="~/assets/lottie/scanning.lottie" />
+                    src="~/assets/lottie/scanning.lottie"
+                    visibility={isTrash ? 'collapsed' : 'visible'} />
                 <label
                     color={colorOnSurfaceVariant}
                     flexShrink={0}

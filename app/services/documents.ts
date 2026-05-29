@@ -739,10 +739,10 @@ LEFT JOIN
         return this.search(args);
     }
     async findTrashedDocuments({ order = 'trashedDate DESC' }: { order?: string } = {}) {
-        const orderBy = new SqlQuery([`d.${order}`]);
+        const orderBy = new SqlQuery([`${order}`]);
         return this.search({
-            from: sql`Document d`,
-            where: sql`d.trashedDate IS NOT NULL`,
+            from: sql`Document`,
+            where: sql`trashedDate IS NOT NULL`,
             orderBy
         } as any);
     }
