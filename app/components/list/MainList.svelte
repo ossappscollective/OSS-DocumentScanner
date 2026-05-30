@@ -7,7 +7,7 @@
     import { createNativeAttributedString } from '@nativescript-community/ui-label';
     import { confirm, prompt } from '@nativescript-community/ui-material-dialogs';
     import { VerticalPosition } from '@nativescript-community/ui-popover';
-    import { AnimationDefinition, Application, ApplicationSettings, Color, EventData, Frame, NavigatedData, ObservableArray, Page, StackLayout } from '@nativescript/core';
+    import { AnimationDefinition, Application, ApplicationSettings, Color, EventData, Frame, NavigatedData, ObservableArray, Page, Screen, StackLayout } from '@nativescript/core';
     import { AndroidActivityBackPressedEventData } from '@nativescript/core/application/application-interfaces';
     import { debounce, throttle } from '@nativescript/core/utils';
     import { OptionType } from '@shared/components/OptionSelect.svelte';
@@ -70,6 +70,7 @@
         detectOCR,
         goToDocumentView,
         goToFolderView,
+        hideLoading,
         importAndScanImage,
         onAndroidNewItent,
         onBackButton,
@@ -83,7 +84,7 @@
         tryCatchFunction
     } from '~/utils/ui';
     import { sortByKey } from '~/utils/utils.common';
-    import { colors, folderBackgroundColor, fontScale, fonts, isLandscape, onFolderBackgroundColorChanged, onFontScaleChanged, startOnCam, windowInset } from '~/variables';
+    import { actionBarHeight, colors, folderBackgroundColor, fontScale, fonts, isLandscape, onFolderBackgroundColorChanged, onFontScaleChanged, startOnCam, windowInset } from '~/variables';
 
     const textPaint = new Paint();
 
@@ -954,15 +955,6 @@
         }
     }
 
-    async function openTrash() {
-        try {
-            const TrashList = (await import('~/components/list/TrashList.svelte')).default;
-            navigate({ page: TrashList });
-        } catch (error) {
-            showError(error);
-        }
-    }
-
     async function showViewOptions(event) {
         try {
             const options = new ObservableArray(
@@ -1257,113 +1249,6 @@
         }
     }
 
-    async function showOptions(event) {
-        const options = new ObservableArray(
-            isTrash
-                ? ([
-                      { id: 'select_all', name: lc('select_all'), icon: 'mdi-select-all' },
-                      { icon: 'mdi-restore', id: 'restore', name: lc('restore') },
-                      { color: colorError, icon: 'mdi-delete-forever', id: 'delete_permanently', name: lc('delete_permanently') }
-                  ] as any)
-                : [{ id: 'select_all', name: lc('select_all'), icon: 'mdi-select-all' }].concat(nbSelected === 1 ? [{ icon: 'mdi-rename', id: 'rename', name: lc('rename') }] : []).concat([
-                      { icon: 'mdi-star', id: 'favorite', name: lc('toggle_favorite') },
-                      { icon: 'mdi-folder-swap', id: 'move_folder', name: lc('move_folder') },
-                      { icon: 'mdi-share-variant', id: 'share', name: lc('share_images') },
-                      { icon: 'mdi-fullscreen', id: 'fullscreen', name: lc('show_fullscreen_images') },
-                      { icon: 'mdi-auto-fix', id: 'transform', name: lc('transform_images') },
-                      { icon: 'mdi-text-recognition', id: 'ocr', name: lc('ocr_document') },
-                      { color: colorError, icon: 'mdi-delete', id: 'delete', name: lc('delete') }
-                  ] as any)
-        );
-        return showPopoverMenu({
-            anchor: event.object,
-            onClose: async (item) => {
-                try {
-                    let result;
-                    switch (item.id) {
-                        case 'select_all':
-                            selectAll();
-                            break;
-                        case 'rename':
-                            const item = getSelectedItems()[0];
-                            result = await prompt({
-                                title: lc('rename'),
-                                defaultText: (item.doc || item.folder).name
-                            });
-                            if (result.result && result.text?.length) {
-                                await (item.doc || item.folder).save({
-                                    name: result.text
-                                });
-                            }
-                            break;
-                        case 'share':
-                            result = await showImageExportPopover(event);
-                            if (result) {
-                                unselectAll();
-                            }
-                            break;
-                        case 'fullscreen':
-                            await fullscreenSelectedDocuments();
-                            unselectAll();
-                            break;
-                        case 'ocr':
-                            result = await detectOCR({ documents: await getSelectedDocuments() });
-                            if (result) {
-                                unselectAll();
-                            }
-                            break;
-                        case 'transform':
-                            result = await transformPages({ documents: await getSelectedDocuments() });
-                            if (result) {
-                                unselectAll();
-                            }
-                            break;
-                        case 'delete':
-                            result = await deleteSelectedDocuments();
-                            if (result) {
-                                unselectAll();
-                            }
-                            break;
-                        case 'restore':
-                            result = await restoreSelectedDocuments();
-                            if (result) {
-                                unselectAll();
-                            }
-                            break;
-                        case 'delete_permanently':
-                            result = await deleteSelectedDocumentsPermanently();
-                            if (result) {
-                                unselectAll();
-                            }
-                            break;
-                        case 'favorite':
-                            await toggleFavoriteSelectedDocuments();
-                            break;
-                        case 'move_folder':
-                            const selected = await getSelectedDocuments();
-                            let defaultFolder;
-                            DEV_LOG && console.log('move_folder', folders);
-                            const folderName = await promptForFolderName(
-                                defaultFolder,
-                                Object.values(folders).filter((g) => g.name !== 'none')
-                            );
-                            if (typeof folderName === 'string') {
-                                for (let index = 0; index < selected.length; index++) {
-                                    const doc = selected[index];
-                                    await doc.setFolder({ folderName: folderName === 'none' ? undefined : folderName });
-                                }
-                                unselectAll();
-                            }
-                            break;
-                    }
-                } catch (error) {
-                    showError(error);
-                }
-            },
-            options,
-            vertPos: VerticalPosition.BELOW
-        });
-    }
     async function setFolderColor(event) {
         try {
             const color: string = await pickFolderColor(folder, event);
@@ -1385,6 +1270,63 @@
             subSettingsOptions: 'sync'
         })
     );
+
+    async function showOptions(event) {
+        try {
+            const options = (
+                !isTrash && trashEnabled
+                    ? [
+                          {
+                              icon: 'mdi-trash-can-outline',
+                              id: 'open_trash',
+                              name: lc('open_trash')
+                          }
+                      ]
+                    : []
+            ).concat([
+                ,
+                {
+                    icon: 'mdi-cogs',
+                    id: 'preferences',
+                    name: lc('preferences')
+                }
+            ]);
+
+            await showPopoverMenu({
+                options,
+                anchor: event.object,
+                vertPos: VerticalPosition.BELOW,
+                props: {
+                    width: 220 * $fontScale,
+                    maxHeight: Screen.mainScreen.heightDIPs - $actionBarHeight
+                    // autoSizeListItem: true
+                },
+
+                onClose: async (item) => {
+                    try {
+                        if (item) {
+                            switch (item.id) {
+                                case 'preferences':
+                                    const Settings = (await import('~/components/settings/Settings.svelte')).default;
+                                    navigate({ page: Settings });
+                                    break;
+                                case 'open_trash':
+                                    const TrashList = (await import('~/components/list/TrashList.svelte')).default;
+                                    navigate({ page: TrashList });
+                                    break;
+                            }
+                        }
+                    } catch (error) {
+                        showError(error);
+                    } finally {
+                        hideLoading();
+                    }
+                }
+            });
+        } catch (error) {
+            showError(error);
+        }
+    }
 </script>
 
 <page bind:this={page} id="documentList" actionBarHidden={true} on:navigatedTo={onNavigatedTo} on:navigatingFrom={onNavigatingFrom}>
@@ -1509,11 +1451,8 @@
                 {#if folder}
                     <mdbutton class="actionBarButton" testID="settingsBtn" text="mdi-palette" variant="text" on:tap={setFolderColor} />
                 {:else}
-                    {#if !isTrash && trashEnabled}
-                        <mdbutton class="actionBarButton" text="mdi-trash-can-outline" variant="text" on:tap={openTrash} />
-                    {/if}
                     <mdbutton class="actionBarButton" text="mdi-view-dashboard" variant="text" on:tap={showViewOptions} />
-                    <mdbutton class="actionBarButton" testID="settingsBtn" text="mdi-cogs" variant="text" on:tap={() => showSettings()} />
+                    <mdbutton class="actionBarButton" testID="settingsBtn" text="mdi-dots-vertical" variant="text" on:tap={showOptions} />
                 {/if}
             {/if}
             <ActionBarSearch bind:this={search} slot="center" {refresh} bind:visible={showSearch} />
