@@ -525,5 +525,6 @@
   "webdav_sync_desc": "enable webdav to sync your documents (backup)",
   "whitepaper": "whitepaper",
   "whitepaper_desc": "improvement for whitepaper type documents",
-  "wrong_passcode": "wrong password"
+  "wrong_passcode": "wrong password",
+  "open_trash": "open trash"
 }

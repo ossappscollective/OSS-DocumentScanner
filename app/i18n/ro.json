@@ -1,52 +1,53 @@
 {
-    "$com.akylas.cardwallet": {
-        "app": {
-            "name": "Portofel carduri OSS"
-        },
-        "ios": {
-            "info": {
-                "plist": {
-                    "NSCameraUsageDescription": "Permiteți accesul la camera video pentru a o putea folosi la scanarea cardurilor",
-                    "NSPhotoLibraryUsageDescription": "Permiteți accesul la imagini pentru a vă scana cardurile de pe dispozitiv"
-                }
-            }
-        }
-    },
-    "$com.akylas.documentscanner": {
-        "app": {
-            "name": "OSS Scanare Documente"
-        }
-    },
-    "a3": "a3",
-    "a4": "a4",
-    "about": "despre",
-    "add": "adăugați",
-    "add_extra_field": "adăugați un câmp suplimentar",
-    "add_from_camera": "adăugați cu ajutorul camerei foto",
-    "add_manual_card": "adăugați cardul manual",
-    "add_qrcode_file": "adaugă cod de bare din imagine",
-    "add_qrcode_manual": "adaugă cod de bare manual",
-    "allow_app_screenshot": "permite capturi de ecran",
-    "always": "întotdeauna",
-    "always_prompt_crop_edit": "întreabă întotdeauna pentru editarea regiunilor documentelor",
+  "$com.akylas.cardwallet": {
     "app": {
-        "name": "Scanner de documente OSS"
+      "name": "Portofel carduri OSS"
     },
-    "appearance": "Aspect",
-    "appearance_settings": "teme și alte setări de aspect",
-    "apply": "aplică",
-    "ask_everytime": "întreabă mereu",
-    "aspect_fill": "umplerea aspectului",
-    "aspect_fit": "aspect de potrivire",
-    "aspect_ratio": "aspect raport",
-    "authenticate_security": "autentificați-vă pentru a accesa aplicația",
-    "authentication": "auth",
-    "auto": "auto",
-    "auto_black": "Folosiți pur negru pentru tema auto-dark",
-    "auto_scan": "descoperă și adaugă documente automat",
-    "auto_scan_delay": "întârziere automată la scanare",
-    "auto_scan_delay_desc": "întârziere înainte de începe automat scanarea la documentele descoperite",
-    "auto_scan_distance_threshold": "prag de distanță",
-    "autoscan": "auto scanare",
-    "autoscan_settings": "setări auto scranare"
+    "ios": {
+      "info": {
+        "plist": {
+          "NSCameraUsageDescription": "Permiteți accesul la camera video pentru a o putea folosi la scanarea cardurilor",
+          "NSPhotoLibraryUsageDescription": "Permiteți accesul la imagini pentru a vă scana cardurile de pe dispozitiv"
+        }
+      }
+    }
+  },
+  "$com.akylas.documentscanner": {
+    "app": {
+      "name": "OSS Scanare Documente"
+    }
+  },
+  "a3": "a3",
+  "a4": "a4",
+  "about": "despre",
+  "add": "adăugați",
+  "add_extra_field": "adăugați un câmp suplimentar",
+  "add_from_camera": "adăugați cu ajutorul camerei foto",
+  "add_manual_card": "adăugați cardul manual",
+  "add_qrcode_file": "adaugă cod de bare din imagine",
+  "add_qrcode_manual": "adaugă cod de bare manual",
+  "allow_app_screenshot": "permite capturi de ecran",
+  "always": "întotdeauna",
+  "always_prompt_crop_edit": "întreabă întotdeauna pentru editarea regiunilor documentelor",
+  "app": {
+    "name": "Scanner de documente OSS"
+  },
+  "appearance": "Aspect",
+  "appearance_settings": "teme și alte setări de aspect",
+  "apply": "aplică",
+  "ask_everytime": "întreabă mereu",
+  "aspect_fill": "umplerea aspectului",
+  "aspect_fit": "aspect de potrivire",
+  "aspect_ratio": "aspect raport",
+  "authenticate_security": "autentificați-vă pentru a accesa aplicația",
+  "authentication": "auth",
+  "auto": "auto",
+  "auto_black": "Folosiți pur negru pentru tema auto-dark",
+  "auto_scan": "descoperă și adaugă documente automat",
+  "auto_scan_delay": "întârziere automată la scanare",
+  "auto_scan_delay_desc": "întârziere înainte de începe automat scanarea la documentele descoperite",
+  "auto_scan_distance_threshold": "prag de distanță",
+  "autoscan": "auto scanare",
+  "autoscan_settings": "setări auto scranare",
+  "open_trash": "gunoi deschis"
 }

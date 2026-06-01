@@ -1284,7 +1284,6 @@
                       ]
                     : []
             ).concat([
-                ,
                 {
                     icon: 'mdi-cogs',
                     id: 'preferences',
