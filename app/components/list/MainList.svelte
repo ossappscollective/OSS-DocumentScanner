@@ -178,7 +178,7 @@
 
     export let updateTitle = (folder) => {
         if (folder) {
-            DEV_LOG && console.log('updateTitle', $fontScale, folder);
+            // DEV_LOG && console.log('updateTitle', $fontScale, folder);
             title = createNativeAttributedString(
                 {
                     spans: [
@@ -200,7 +200,7 @@
                 1,
                 true // needed as will be used in a label
             );
-            DEV_LOG && console.log('updating folder title', folder, $fonts.mdi, title);
+            // DEV_LOG && console.log('updating folder title', folder, $fonts.mdi, title);
         }
     };
 
@@ -240,16 +240,16 @@
         //     needsRefreshOnBack = true;
         //     return;
         // }
-        DEV_LOG && console.log('refresh', force, filter);
+        // DEV_LOG && console.log('refresh', force, filter);
         if (loading || (!force && lastRefreshFilter === filter) || !documentsService.started) {
             return;
         }
-        DEV_LOG && console.log('refresh1', force, filter);
+        // DEV_LOG && console.log('refresh1', force, filter);
         lastRefreshFilter = filter;
         nbSelected = 0;
         loading = true;
         try {
-            DEV_LOG && console.log('MainList', 'refresh', folder, filter, sortOrder);
+            // DEV_LOG && console.log('MainList', 'refresh', folder, filter, sortOrder);
             let r;
             if (isTrash) {
                 r = await documentsService.documentRepository.findTrashedDocuments();
@@ -268,11 +268,11 @@
                     )
                 )
             );
-            DEV_LOG &&
-                console.log(
-                    'documents',
-                    documents.map((d) => d.doc?.id)
-                );
+            // DEV_LOG &&
+            //     console.log(
+            //         'documents',
+            //         documents.map((d) => d.doc?.id)
+            //     );
             updateNoDocument();
         } catch (error) {
             showError(error);
@@ -720,7 +720,6 @@
         await goToFolderView(folder);
     };
     export const onItemTapFast = async function (item: Item) {
-        DEV_LOG && console.log('onItemTapFast');
         try {
             if (nbSelected > 0) {
                 onItemLongPress(item);
@@ -1463,7 +1462,7 @@
             <SelectionToolbar onAction={handleSelectionAction} options={getSelectionToolbarOptions()} row={2} />
         {/if}
         {#if !onlyForImport && editingTitle}
-            <EditNameActionBar {folder} bind:editingTitle />
+            <EditNameActionBar {folder} onRenameSuccessful={() => (folder = folder)} bind:editingTitle />
         {/if}
     </gridlayout>
 </page>

@@ -16,6 +16,7 @@
     export let labelsDefaultVisualState = null;
     export let buttonsDefaultVisualState = null;
     export let onSave = null;
+    export let onRenameSuccessful = null;
     export let onGoBack = null;
     export let autoFocus = true;
     let editingTitleTextField: NativeViewElementNode<TextField>;
@@ -37,6 +38,7 @@
                 if (CARD_APP && document) {
                     shortcutService.updateShortcuts(document);
                 }
+                onRenameSuccessful?.(document || folder);
             }
             editingTitle = false;
         } catch (error) {
