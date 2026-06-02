@@ -261,14 +261,14 @@ export default class SyncWorker extends BaseWorker {
                 }
             }
             // this.syncRunning = true;
-            if (type === 0 || (type & SyncType.DATA) !== 0) {
-                await this.syncDataDocuments({ force, bothWays, withFolders, event });
-            }
             if (type === 0 || (type & SyncType.IMAGE) !== 0) {
                 await this.syncImageDocuments({ force, event });
             }
             if (type === 0 || (type & SyncType.PDF) !== 0) {
                 await this.syncPDFDocuments({ force, event });
+            }
+            if (type === 0 || (type & SyncType.DATA) !== 0) {
+                await this.syncDataDocuments({ force, bothWays, withFolders, event });
             }
 
             // Show sync complete notification
@@ -860,6 +860,10 @@ export default class SyncWorker extends BaseWorker {
             );
 
         const defaultExportSettings = getImageExportSettings();
+        // Shared map (keyed by document id) so that multiple services with deleteAfterSync each
+        // contribute their documents, all services finish before any deletion happens, and each
+        // document is only deleted once even when several services target it.
+        const documentsToDeleteLocally = new Map<string, OCRDocument>();
         await Promise.all(
             this.services
                 .filter((s) => s instanceof BaseImageSyncService)
@@ -883,8 +887,6 @@ export default class SyncWorker extends BaseWorker {
                         // Calculate total pages for progress tracking
                         const totalPages = documentsToSync.reduce((sum, d) => sum + d.pages.length, 0);
                         let currentPageIndex = 0;
-
-                        const documentsToDeleteLocally: OCRDocument[] = [];
 
                         for (let index = 0; index < documentsToSync.length; index++) {
                             const doc = documentsToSync[index];
@@ -924,21 +926,23 @@ export default class SyncWorker extends BaseWorker {
                                 this.updateSyncProgress('image', currentPageIndex, totalPages, doc.document.id, doc.document.name);
                             }
                             if (service.deleteAfterSync) {
-                                documentsToDeleteLocally.push(doc.document);
+                                // Collect into shared map; actual deletion happens after all services finish
+                                documentsToDeleteLocally.set(doc.document.id, doc.document);
                             } else {
                                 await doc.document.save({ _synced: doc.document._synced | service.syncMask });
                             }
-                        }
-
-                        if (documentsToDeleteLocally.length) {
-                            DEV_LOG && console.log('syncImageDocuments', 'deleting', documentsToDeleteLocally.length, 'documents after sync');
-                            await documentsService.deleteDocuments(documentsToDeleteLocally);
                         }
                     }
                     ApplicationSettings.remove(deleteKey);
                     this.onServiceSyncDone(service);
                 })
         );
+        // Delete collected documents once all services have finished syncing to avoid
+        // interfering with a service that is still uploading the same document in parallel.
+        if (documentsToDeleteLocally.size > 0) {
+            DEV_LOG && console.log('syncImageDocuments', 'deleting', documentsToDeleteLocally.size, 'documents after sync');
+            await documentsService.deleteDocuments([...documentsToDeleteLocally.values()]);
+        }
         DEV_LOG && console.log('syncImageDocuments done ');
     }
 
@@ -969,6 +973,10 @@ export default class SyncWorker extends BaseWorker {
                 localDocuments.map((d) => d.document.id)
             );
 
+        // Shared map (keyed by document id) so that multiple services with deleteAfterSync each
+        // contribute their documents, all services finish before any deletion happens, and each
+        // document is only deleted once even when several services target it.
+        const documentsToDeleteLocally = new Map<string, OCRDocument>();
         await Promise.all(
             this.services
                 .filter((s) => s instanceof BasePDFSyncService)
@@ -991,8 +999,6 @@ export default class SyncWorker extends BaseWorker {
                         // Calculate total documents for progress tracking
                         const totalDocuments = documentsToSync.length;
                         let currentDocIndex = 0;
-
-                        const documentsToDeleteLocally: OCRDocument[] = [];
 
                         await doInBatch(
                             documentsToSync,
@@ -1022,7 +1028,8 @@ export default class SyncWorker extends BaseWorker {
                                     );
                                 }
                                 if (service.deleteAfterSync) {
-                                    documentsToDeleteLocally.push(document);
+                                    // Collect into shared map; actual deletion happens after all services finish
+                                    documentsToDeleteLocally.set(document.id, document);
                                 } else if ((document._synced & service.syncMask) !== service.syncMask) {
                                     await document.save({ _synced: document._synced | service.syncMask });
                                 }
@@ -1031,11 +1038,6 @@ export default class SyncWorker extends BaseWorker {
                             },
                             10
                         );
-
-                        if (documentsToDeleteLocally.length) {
-                            DEV_LOG && console.log('syncPDFDocuments', 'deleting', documentsToDeleteLocally.length, 'documents after sync');
-                            await documentsService.deleteDocuments(documentsToDeleteLocally);
-                        }
 
                         // for (let index = 0; index < documentsToSync.length; index++) {
                         //     const doc = documentsToSync[index];
@@ -1046,6 +1048,12 @@ export default class SyncWorker extends BaseWorker {
                     this.onServiceSyncDone(service);
                 })
         );
+        // Delete collected documents once all services have finished syncing to avoid
+        // interfering with a service that is still uploading the same document in parallel.
+        if (documentsToDeleteLocally.size > 0) {
+            DEV_LOG && console.log('syncPDFDocuments', 'deleting', documentsToDeleteLocally.size, 'documents after sync');
+            await documentsService.deleteDocuments([...documentsToDeleteLocally.values()]);
+        }
         DEV_LOG && console.log('syncPDFDocuments done ');
     }
 }
