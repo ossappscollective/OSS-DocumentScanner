@@ -137,6 +137,8 @@
     "debugging_settings_desc": "ustawienia debugowania",
     "default_value": "domyślne",
     "delete": "usuń",
+    "delete_after_sync": "usuń po synchronizacji",
+    "delete_after_sync_desc": "⚠ Niszczące: dokument zostanie trwale usunięty z lokalnej bazy danych po pomyślnej synchronizacji. Konieczne będzie ponowne jego zeskanowanie w celu wprowadzenia zmian.",
     "delete_page": "usuń",
     "delete_permanently": "usuń trwale",
     "detect_qrcode": "rozpoznaj kod QR",
