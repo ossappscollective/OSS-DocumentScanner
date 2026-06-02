@@ -105,6 +105,7 @@ import { showToast } from '~/utils/ui';
 import { colors, fontScale, screenWidthDips } from '~/variables';
 import { MatricesTypes, Matrix } from '../color_matrix';
 import { cleanFilename, saveImage } from '../utils';
+import { deduplicateFilenames } from '../exportUtils';
 
 export { ColorMatricesType, ColorMatricesTypes, getColorMatrix } from '~/utils/matrix';
 
@@ -908,19 +909,7 @@ async function exportImages(pages: { page: OCRPage; document: OCRDocument }[], e
         outputImageNames.push(result.text);
     } else {
         outputImageNames = sortedPages.map((page) => getFormatedDateForFilename(page.page.createdDate));
-        // find duplicates and rename if any
-        let lastName;
-        let renameDelta = 1;
-        for (let index = 0; index < outputImageNames.length; index++) {
-            const name = outputImageNames[index];
-            if (name === lastName) {
-                outputImageNames[index] = name + '_' + (renameDelta++ + '').padStart(3, '0');
-                // we dont reset lastName so that we compare to the first one found
-            } else {
-                lastName = name;
-                renameDelta = 1;
-            }
-        }
+        outputImageNames = deduplicateFilenames(outputImageNames);
     }
     DEV_LOG && console.log('exporting images', imageExportSettings.imageFormat, imageExportSettings.imageQuality, exportDirectory, sortedPages.length, outputImageNames);
     showLoading(lc('exporting'));
