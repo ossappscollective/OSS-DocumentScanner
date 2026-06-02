@@ -884,6 +884,8 @@ export default class SyncWorker extends BaseWorker {
                         const totalPages = documentsToSync.reduce((sum, d) => sum + d.pages.length, 0);
                         let currentPageIndex = 0;
 
+                        const documentsToDeleteLocally: OCRDocument[] = [];
+
                         for (let index = 0; index < documentsToSync.length; index++) {
                             const doc = documentsToSync[index];
                             for (let j = 0; j < doc.pages.length; j++) {
@@ -921,7 +923,16 @@ export default class SyncWorker extends BaseWorker {
                                 currentPageIndex++;
                                 this.updateSyncProgress('image', currentPageIndex, totalPages, doc.document.id, doc.document.name);
                             }
-                            await doc.document.save({ _synced: doc.document._synced | service.syncMask });
+                            if (service.deleteAfterSync) {
+                                documentsToDeleteLocally.push(doc.document);
+                            } else {
+                                await doc.document.save({ _synced: doc.document._synced | service.syncMask });
+                            }
+                        }
+
+                        if (documentsToDeleteLocally.length) {
+                            DEV_LOG && console.log('syncImageDocuments', 'deleting', documentsToDeleteLocally.length, 'documents after sync');
+                            await documentsService.deleteDocuments(documentsToDeleteLocally);
                         }
                     }
                     ApplicationSettings.remove(deleteKey);
@@ -981,6 +992,8 @@ export default class SyncWorker extends BaseWorker {
                         const totalDocuments = documentsToSync.length;
                         let currentDocIndex = 0;
 
+                        const documentsToDeleteLocally: OCRDocument[] = [];
+
                         await doInBatch(
                             documentsToSync,
                             async (doc: { document: OCRDocument; pages: OCRPage[] }) => {
@@ -1008,7 +1021,9 @@ export default class SyncWorker extends BaseWorker {
                                         service.useFoldersStructure && document.folders?.length ? await documentsService.folderRepository.findFolderById(document.folders[0]) : null
                                     );
                                 }
-                                if ((document._synced & service.syncMask) !== service.syncMask) {
+                                if (service.deleteAfterSync) {
+                                    documentsToDeleteLocally.push(document);
+                                } else if ((document._synced & service.syncMask) !== service.syncMask) {
                                     await document.save({ _synced: document._synced | service.syncMask });
                                 }
                                 currentDocIndex++;
@@ -1016,6 +1031,11 @@ export default class SyncWorker extends BaseWorker {
                             },
                             10
                         );
+
+                        if (documentsToDeleteLocally.length) {
+                            DEV_LOG && console.log('syncPDFDocuments', 'deleting', documentsToDeleteLocally.length, 'documents after sync');
+                            await documentsService.deleteDocuments(documentsToDeleteLocally);
+                        }
 
                         // for (let index = 0; index < documentsToSync.length; index++) {
                         //     const doc = documentsToSync[index];

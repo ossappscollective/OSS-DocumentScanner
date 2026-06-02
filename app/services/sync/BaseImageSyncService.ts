@@ -16,6 +16,7 @@ export interface BaseImageSyncServiceOptions extends BaseSyncServiceOptions {
     contrast?: number;
     rotation?: number;
     useFoldersStructure?: boolean;
+    deleteAfterSync?: boolean;
 }
 
 export abstract class BaseImageSyncService extends BaseSyncService {
@@ -30,6 +31,7 @@ export abstract class BaseImageSyncService extends BaseSyncService {
     rotation?: number;
 
     useFoldersStructure: boolean;
+    deleteAfterSync: boolean;
 
     abstract ensureRemoteFolder(): Promise<void>;
     abstract getRemoteFolderFiles(folderStr: string): Promise<FileStat[]>;

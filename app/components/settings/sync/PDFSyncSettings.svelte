@@ -33,6 +33,7 @@
                 enabled: true,
                 OCREnabled: false,
                 useFoldersStructure: false,
+                deleteAfterSync: false,
                 OCRDataType: 'best',
                 OCRLanguages: [],
                 fileNameFormat: ApplicationSettings.getString(SETTINGS_FILE_NAME_FORMAT, FILENAME_DATE_FORMAT),
@@ -122,6 +123,13 @@
             title: lc('use_folder_structure'),
             description: lc('use_folder_structure_desc'),
             value: $store.useFoldersStructure
+        },
+        {
+            type: 'switch',
+            id: 'deleteAfterSync',
+            title: lc('delete_after_sync'),
+            description: lc('delete_after_sync_desc'),
+            value: $store.deleteAfterSync
         },
         {
             type: 'sectionheader',

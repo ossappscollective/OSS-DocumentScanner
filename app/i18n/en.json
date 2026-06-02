@@ -509,6 +509,8 @@
   "updating_pages": "updating pages (%1$s%%)",
   "use_folder_structure": "use document folder as subfolder",
   "use_folder_structure_desc": "if enabled the file will be created in sub folders respecting the document folder",
+  "delete_after_sync": "delete after sync",
+  "delete_after_sync_desc": "⚠ Destructive: the document will be permanently deleted from the local database after a successful sync. You will need to scan it again to make any changes.",
   "use_space_when__ocr_copy_text": "use spaces when copying OCR text",
   "use_space_when__ocr_copy_text_desc": "when copying OCR text to clipboard, line breaks will be replaced with spaces",
   "use_system_camera": "use system camera",

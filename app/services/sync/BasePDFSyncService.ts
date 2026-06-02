@@ -22,6 +22,7 @@ export interface BasePDFSyncServiceOptions extends BaseSyncServiceOptions {
     useDocumentName?: boolean;
 
     useFoldersStructure?: boolean;
+    deleteAfterSync?: boolean;
 }
 
 export abstract class BasePDFSyncService extends BaseSyncService {
@@ -34,6 +35,7 @@ export abstract class BasePDFSyncService extends BaseSyncService {
     OCRLanguages: string[];
 
     useFoldersStructure: boolean;
+    deleteAfterSync: boolean;
 
     abstract ensureRemoteFolder(): Promise<void>;
     abstract getRemoteFolderFiles(folderStr: string): Promise<FileStat[]>;
