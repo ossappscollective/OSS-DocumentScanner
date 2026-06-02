@@ -31,6 +31,7 @@
         IMG_FORMAT,
         PREVIEW_RESIZE_THRESHOLD,
         SETTINGS_CAMERA_SETTINGS,
+        SETTINGS_CAMERA_USER_DEFINED_RESOLUTION,
         SETTINGS_CROP_ENABLED,
         SETTINGS_FONT_CAM_MIRRORED,
         SETTINGS_IMAGE_EXPORT_FORMAT,
@@ -59,6 +60,7 @@
     $: DEV_LOG && console.log('cameraOptions', JSON.stringify($cameraOptionsStore));
     const cropEnabled = ApplicationSettings.getBoolean(SETTINGS_CROP_ENABLED, CROP_ENABLED);
     const frontMirrored = ApplicationSettings.getBoolean(SETTINGS_FONT_CAM_MIRRORED, DEFAULT_FONT_CAM_MIRRORED);
+    const usingUserDefinedCameraResolution = ApplicationSettings.getBoolean(SETTINGS_CAMERA_USER_DEFINED_RESOLUTION, false);
     cameraOptionsStore.subscribe((newValue) => {
         ApplicationSettings.setString(SETTINGS_CAMERA_SETTINGS, JSON.stringify(newValue));
     });
@@ -111,7 +113,7 @@
             await showBottomSheet({
                 parent: page,
                 view,
-                backgroundOpacity: 0.8,
+                // backgroundOpacity: 0.8,
                 skipCollapsedState: true,
                 props: {
                     showCameraSettings: true,
@@ -193,18 +195,19 @@
             if (autoScanHandler) {
                 pauseAutoScan();
             }
-            DEV_LOG && console.log('takePicture', autoScan, _actualFlashMode);
+            DEV_LOG && console.log('takePicture', autoScan, _actualFlashMode, pictureSize);
             const start = Date.now();
             await showLoading(lc('capturing'));
             // on Android we the capture will directly save the image to a temp directory
             // but thus maxWidth / maxHeight is ignored
             const { image } = await cameraView.nativeView.takePicture({
                 savePhotoToDisk: __ANDROID__,
+                pictureSize: pictureSize as any,
                 storageLocation: 'file:' + knownFolders.temp().path,
                 fileName: `capture_${Date.now()}.${compressQuality}`,
-                flashMode: _actualFlashMode,
-                maxWidth: 4500,
-                maxHeight: 4500
+                flashMode: _actualFlashMode
+                // maxWidth: 10500,
+                // maxHeight: 10500
             });
             const didAdd = await processAndAddImage(image, autoScan, onlyForOCR);
             DEV_LOG && console.log('takePicture got image', batchMode, !!image, !!didAdd, Date.now() - start, 'ms');
@@ -676,13 +679,24 @@
             maxZoom = Math.min(cameraView.nativeView.maxZoom, 16);
             DEV_LOG && console.log('onCameraOpen', minZoom, maxZoom, zoom);
             if (__ANDROID__) {
-                const currentResolution = cameraView.nativeView.getCurrentResolutionInfo();
-                if (currentResolution) {
+                if (!usingUserDefinedCameraResolution) {
+                    // choose the highest resolution
+                    const resolutions = cameraView.nativeView.getAllAvailablePictureSizes();
+                    const resolution = resolutions[0];
                     cameraOptionsStore.update((state) => {
-                        state['aspectRatio'] = currentResolution.aspectRatio;
-                        state['pictureSize'] = currentResolution.pictureSize;
+                        state['aspectRatio'] = resolution.aspectRatio;
+                        state['pictureSize'] = resolution.pictureSize;
                         return state;
                     });
+                } else {
+                    const currentResolution = cameraView.nativeView.getCurrentResolutionInfo();
+                    if (currentResolution) {
+                        cameraOptionsStore.update((state) => {
+                            state['aspectRatio'] = currentResolution.aspectRatio;
+                            state['pictureSize'] = currentResolution.pictureSize;
+                            return state;
+                        });
+                    }
                 }
             }
             cameraOpened = true;

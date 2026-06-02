@@ -18,6 +18,7 @@
         DEFAULT_TRANSFORM,
         FILTER_COL_WIDTH,
         FILTER_ROW_HEIGHT,
+        SETTINGS_CAMERA_USER_DEFINED_RESOLUTION,
         SETTINGS_DEFAULT_BRIGHTNESS,
         SETTINGS_DEFAULT_COLORMATRIX,
         SETTINGS_DEFAULT_COLORTYPE,
@@ -199,6 +200,9 @@
                 options,
                 anchor: event.object,
                 onClose: (value) => {
+                    if (item.id === 'pictureSize') {
+                        ApplicationSettings.setBoolean(SETTINGS_CAMERA_USER_DEFINED_RESOLUTION, true);
+                    }
                     updateCameraOption(item.id, valueTransformer ? valueTransformer(value.id) : value.id, value);
                 }
             });

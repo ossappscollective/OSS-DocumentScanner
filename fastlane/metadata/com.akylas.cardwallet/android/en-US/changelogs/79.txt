@@ -1,0 +1,7 @@
+Bug fixes:
+- when added documents from sync, add them to the correct "index" based on sort
+- when syncing data now delete documents are also deleted from other devices. For now a bit dangerous. But trash feature is coming
+- only sync PDF and run OCR when necessary
+- make sure camera can capture with highest resolution
+- choose camera highest resolution by default
+- Translations update

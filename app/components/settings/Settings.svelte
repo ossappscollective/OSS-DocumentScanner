@@ -1,28 +1,25 @@
 <script context="module" lang="ts">
+    import { share } from '@akylas/nativescript-app-utils/share';
+    import { Template } from '@nativescript-community/svelte-native/components';
+    import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import { CheckBox } from '@nativescript-community/ui-checkbox';
-    import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { openFilePicker, pickFolder, saveFile } from '@nativescript-community/ui-document-picker';
-    import { Label } from '@nativescript-community/ui-label';
     import { showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
-    import { alert, confirm, prompt } from '@nativescript-community/ui-material-dialogs';
+    import { alert, confirm } from '@nativescript-community/ui-material-dialogs';
     import { TextField, TextFieldProperties } from '@nativescript-community/ui-material-textfield';
     import { TextView } from '@nativescript-community/ui-material-textview';
-    import { ApplicationSettings, File, ObservableArray, Page, ScrollView, StackLayout, Utils, View, knownFolders, path } from '@nativescript/core';
+    import { ApplicationSettings, File, ObservableArray, Page, ScrollView, StackLayout, knownFolders, path } from '@nativescript/core';
+    import { presentInAppSponsorBottomsheet } from '@shared/utils/inapp-purchase';
     import { Sentry, startSentry, stopSentry } from '@shared/utils/sentry';
     import { showError } from '@shared/utils/showError';
     import { navigate } from '@shared/utils/svelte/ui';
     import dayjs from 'dayjs';
-    import { Template } from '@nativescript-community/svelte-native/components';
-    import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-    import CActionBar from '~/components/common/CActionBar.svelte';
-    import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
-    import { getLocaleDisplayName, l, lc, lu, onLanguageChanged, selectLanguage, slc } from '~/helpers/locale';
-    import { getColorThemeDisplayName, getThemeDisplayName, onThemeChanged, selectColorTheme, selectTheme } from '~/helpers/theme';
+    import { getLocaleDisplayName, l, lc, lu, selectLanguage, slc } from '~/helpers/locale';
+    import { getColorThemeDisplayName, getThemeDisplayName, selectColorTheme, selectTheme } from '~/helpers/theme';
+    import { backupWorkerService } from '~/services/backupWorker';
     import { DocumentsService, documentsService } from '~/services/documents';
     import { securityService } from '~/services/security';
-    import { backupWorkerService } from '~/services/backupWorker';
     import {
-        ALERT_OPTION_MAX_HEIGHT,
         ALWAYS_PROMPT_CROP_EDIT,
         AUTO_SCAN_DELAY,
         AUTO_SCAN_DISTANCETHRESHOLD,
@@ -81,16 +78,13 @@
     } from '~/utils/constants';
     import { copyFolderContent, removeFolderContent } from '~/utils/file';
     import { PDF_OPTIONS } from '~/utils/localized_constant';
-    import { createView, getNameFormatHTMLArgs, hideLoading, openLink, showAlertOptionSelect, showLoading, showSettings, showSliderPopover, showSnack } from '~/utils/ui';
-    import { restartApp, toggleQuickSetting } from '~/utils/utils';
-    import { colors, fontScale, fonts, hasCamera, onFontScaleChanged, windowInset } from '~/variables';
-    import IconButton from '@shared/components/IconButton.svelte';
-    import { share } from '@akylas/nativescript-app-utils/share';
-    import { inappItems, presentInAppSponsorBottomsheet } from '@shared/utils/inapp-purchase';
-    import OCRSettingsBottomSheet from '../ocr/OCRSettingsBottomSheet.svelte';
     import { restoreSettings } from '~/utils/settings.android';
+    import { createView, getNameFormatHTMLArgs, hideLoading, openLink, showLoading, showSnack } from '~/utils/ui';
+    import { restartApp, toggleQuickSetting } from '~/utils/utils';
+    import { fontScale, fonts, hasCamera } from '~/variables';
+    import OCRSettingsBottomSheet from '~/components/ocr/OCRSettingsBottomSheet.svelte';
+    import BaseSettingsPage from '@shared/components/BaseSettingsPage.svelte';
     const version = __APP_VERSION__ + ' Build ' + __APP_BUILD_NUMBER__;
-    const storeSettings = {};
     const variant = 'outline';
 
     const numberTextFieldProperties = {
@@ -100,15 +94,14 @@
 
 <script lang="ts">
     // technique for only specific properties to get updated on store change
-    let { colorOnBackground, colorOnSurfaceVariant, colorPrimary } = $colors;
-    $: ({ colorOnBackground, colorOnSurfaceVariant, colorPrimary } = $colors);
+    // let { colorOnSurfaceVariant } = $colors;
+    // $: ({ colorOnSurfaceVariant } = $colors);
 
-    let collectionView: NativeViewElementNode<CollectionView>;
     let page: NativeViewElementNode<Page>;
+    let settingsCollectionView: BaseSettingsPage;
 
     let items: ObservableArray<any>;
-
-    const inAppAvailable = PLAY_STORE_BUILD && inappItems?.length > 0;
+    // const searchFilter: string = null;
 
     const dataSettingsAvailable = __ANDROID__ && android.os.Environment.getExternalStorageState() === 'mounted';
 
@@ -120,29 +113,17 @@
         { icon: 'mdi-github', id: 'github' }
     ];
     export let subSettingsOptions: string = null;
+    export let searchable: boolean = null;
+    export let searchItemsProvider: (items: any[], filter: string) => any[] = null;
     export let options: any[] = null;
     if (!options && subSettingsOptions) {
         options = getSubSettings(subSettingsOptions);
     }
 
-    function getTitle(item) {
-        switch (item.id) {
-            case 'token':
-                return lc(item.token);
-            default:
-                return item.title;
-        }
-    }
-    function getDescription(item) {
-        return typeof item.description === 'function' ? item.description(item) : item.description;
-    }
+    let getStoreSetting: (k: string, defaultValue) => any;
+    let refresh: (force?: boolean, filter?: string) => void;
+    $: searchEnabled = searchable ?? (!subSettingsOptions && !options);
 
-    function getStoreSetting(k: string, defaultValue) {
-        if (!storeSettings[k]) {
-            storeSettings[k] = JSON.parse(ApplicationSettings.getString(k, defaultValue));
-        }
-        return storeSettings[k];
-    }
     function getSubSettings(id: string) {
         switch (id) {
             case 'ocr':
@@ -378,7 +359,6 @@
                                   description: (item) => ApplicationSettings.getString(item.key, item.defaultValue),
                                   rightBtnIcon: 'mdi-restore',
                                   onTap: async (item) => {
-                                      DEV_LOG && console.log('onTap', item);
                                       const result = await pickFolder({
                                           multipleSelection: false,
                                           forceSAF: true,
@@ -391,7 +371,6 @@
                                       }
                                   },
                                   onRightIconTap: (item) => {
-                                      DEV_LOG && console.log('onRightIconTap', item);
                                       ApplicationSettings.remove(item.key);
                                       return true;
                                   }
@@ -643,7 +622,6 @@
                                               } else {
                                                   dstFolder = knownFolders.documents().path;
                                               }
-                                              DEV_LOG && console.log('confirmed move data to', srcFolder, dstFolder);
                                               showLoading(lc('moving_files'));
                                               const srcDbPath = path.join(srcFolder, DocumentsService.DB_NAME);
                                               await File.fromPath(srcDbPath).copy(path.join(dstFolder, DocumentsService.DB_NAME));
@@ -778,8 +756,9 @@
                 break;
         }
     }
-    function refresh() {
-        const newItems: any[] =
+
+    function getAvailableOptions(force?: boolean, filter?: string) {
+        return (
             options ||
             (
                 [
@@ -1004,11 +983,9 @@
                         description: lc('import_settings_desc')
                         // rightBtnIcon: 'mdi-chevron-right'
                     }
-                ]);
-
-        items = new ObservableArray(newItems);
+                ])
+        );
     }
-    refresh();
 
     async function onLongPress(id, event) {
         try {
@@ -1023,52 +1000,11 @@
         }
     }
     function updateItem(item, key = 'key') {
-        const index = items.findIndex((it) => it[key] === item[key]);
-        if (index !== -1) {
-            items.setItem(index, item);
-        }
-    }
-    let checkboxTapTimer;
-    function clearCheckboxTimer() {
-        if (checkboxTapTimer) {
-            clearTimeout(checkboxTapTimer);
-            checkboxTapTimer = null;
-        }
-    }
-    async function onRightIconTap(item, event) {
-        try {
-            const needsUpdate = await item.onRightIconTap?.(item, event);
-            if (needsUpdate) {
-                updateItem(item);
-            }
-        } catch (error) {
-            showError(error);
-        }
+        settingsCollectionView?.updateItem?.(item, key);
     }
     async function onTap(item, event) {
         try {
-            if (item.type === 'checkbox' || item.type === 'switch') {
-                // we dont want duplicate events so let s timeout and see if we clicking diretly on the checkbox
-                const checkboxView: CheckBox = ((event.object as View).parent as View).getViewById('checkbox');
-                if (checkboxView.isEnabled) {
-                    clearCheckboxTimer();
-                    checkboxTapTimer = setTimeout(() => {
-                        checkboxView.checked = !checkboxView.checked;
-                    }, 10);
-                }
-                return;
-            }
             switch (item.id) {
-                case 'sub_settings': {
-                    showSettings({
-                        title: item.title,
-                        id: `settings[${item.id}]`,
-                        options: item.options(),
-                        actionBarButtons: item.actionBarButtons?.() || []
-                    });
-
-                    break;
-                }
                 case 'create_backup':
                     try {
                         showLoading(lc('creating_backup'));
@@ -1325,157 +1261,7 @@
                 //     }
                 //     break;
                 // }
-                case 'store_setting':
-                case 'setting': {
-                    if (item.type === 'prompt') {
-                        const defaultValue = typeof item.rightValue === 'function' ? item.rightValue() : typeof item.default === 'function' ? item.default() : item.default;
-                        const result = await prompt({
-                            title: getTitle(item),
-                            messageView: createView(Label, {
-                                padding: '0 20 0 20',
-                                autoFontSize: true,
-                                textWrap: true,
-                                lineBreak: 'end',
-                                maxLines: 3,
-                                color: colorOnSurfaceVariant as any,
-                                text: item.useHTML ? item.description : item.full_description || item.description
-                            }),
-                            okButtonText: l('save'),
-                            cancelButtonText: l('cancel'),
-                            autoFocus: true,
-                            textFieldProperties: item.textFieldProperties,
-                            defaultText: (defaultValue ?? '') + '',
-                            view: item.useHTML
-                                ? createView(
-                                      Label,
-                                      {
-                                          padding: '10 20 0 20',
-                                          textWrap: true,
-                                          color: colorOnSurfaceVariant as any,
-                                          html: item.full_description || item.description
-                                      },
-                                      item.onLinkTap
-                                          ? {
-                                                linkTap: item.onLinkTap
-                                            }
-                                          : undefined
-                                  )
-                                : undefined
-                        });
-                        Utils.dismissSoftInput();
-                        DEV_LOG && console.log('result', result);
-                        if (result && !!result.result) {
-                            if (item.id === 'store_setting') {
-                                const store = getStoreSetting(item.storeKey, item.storeDefault);
-                                if (result.text.length > 0) {
-                                    if (item.valueType === 'string') {
-                                        store[item.key] = result.text;
-                                    } else {
-                                        store[item.key] = parseInt(result.text, 10);
-                                    }
-                                } else {
-                                    delete store[item.key];
-                                }
-                                DEV_LOG && console.log('store_setting', store);
-                                ApplicationSettings.setString(item.storeKey, JSON.stringify(store));
-                            } else {
-                                if (result.text.length > 0) {
-                                    if (item.valueType === 'string') {
-                                        ApplicationSettings.setString(item.key, result.text);
-                                    } else {
-                                        ApplicationSettings.setNumber(item.key, parseInt(result.text, 10));
-                                    }
-                                } else {
-                                    ApplicationSettings.remove(item.key);
-                                }
-                            }
-                            updateItem(item);
-                        }
-                    } else if (item.type === 'slider') {
-                        await showSliderPopover({
-                            anchor: event.object,
-                            value: (item.currentValue || item.rightValue)?.(),
-                            ...item,
-                            onChange(value) {
-                                if (item.transformValue) {
-                                    value = item.transformValue(value, item);
-                                } else {
-                                    value = Math.round(value / item.step) * item.step;
-                                }
-                                if (item.id === 'store_setting') {
-                                    const store = getStoreSetting(item.storeKey, item.storeDefault);
-                                    if (item.valueType === 'string') {
-                                        store[item.key] = value + '';
-                                    } else {
-                                        store[item.key] = value;
-                                    }
-                                    ApplicationSettings.setString(item.storeKey, JSON.stringify(store));
-                                } else {
-                                    if (item.valueType === 'string') {
-                                        ApplicationSettings.setString(item.key, value + '');
-                                    } else {
-                                        ApplicationSettings.setNumber(item.key, value);
-                                    }
-                                }
-                                updateItem(item);
-                            }
-                        });
-                    } else {
-                        let selectedIndex = -1;
-                        const currentValue = (item.currentValue || item.rightValue)?.() ?? item.currentValue;
-                        const options = item.values.map((k, index) => {
-                            const selected = currentValue === k.value;
-                            if (selected) {
-                                selectedIndex = index;
-                            }
-                            return {
-                                name: k.title || k.name,
-                                data: k.value,
-                                boxType: 'circle',
-                                type: 'checkbox',
-                                value: selected
-                            };
-                        });
-                        const { full_description, title, ...others } = item;
-                        const result = await showAlertOptionSelect(
-                            {
-                                height: Math.min(item.values.length * 56, ALERT_OPTION_MAX_HEIGHT),
-                                rowHeight: item.autoSizeListItem ? undefined : 56,
-                                ...others,
-                                selectedIndex,
-                                options
-                            },
-                            {
-                                title,
-                                message: full_description
-                            }
-                        );
-                        if (result?.data !== undefined) {
-                            if (item.onResult) {
-                                item.onResult(result.data);
-                            } else {
-                                if (item.id === 'store_setting') {
-                                    const store = getStoreSetting(item.storeKey, item.storeDefault);
-                                    if (item.valueType === 'string') {
-                                        store[item.key] = result.data;
-                                    } else {
-                                        store[item.key] = parseInt(result.data, 10);
-                                    }
-                                    ApplicationSettings.setString(item.storeKey, JSON.stringify(store));
-                                } else {
-                                    if (item.valueType === 'string') {
-                                        ApplicationSettings.setString(item.key, result.data);
-                                    } else {
-                                        ApplicationSettings.setNumber(item.key, parseInt(result.data, 10));
-                                    }
-                                }
-                                updateItem(item);
-                            }
-                        }
-                    }
 
-                    break;
-                }
                 case 'data_sync':
                 case 'image_sync':
                 case 'pdf_sync':
@@ -1502,191 +1288,132 @@
             hideLoading();
         }
     }
-    onLanguageChanged(refresh);
 
-    function selectTemplate(item, index, items) {
-        if (item.type) {
-            if (item.type === 'prompt' || item.type === 'slider') {
-                return 'default';
-            }
-            return item.type;
-        }
-        if (item.icon) {
-            return 'leftIcon';
-        }
-        return 'default';
-    }
-
-    let ignoreNextOnCheckBoxChange = false;
     async function onCheckBox(item, event) {
-        if (ignoreNextOnCheckBoxChange || item.value === event.value) {
-            return;
-        }
         const value = event.value;
-        item.value = value;
-        clearCheckboxTimer();
-        DEV_LOG && console.log('onCheckBox', item.id, value);
-        try {
-            ignoreNextOnCheckBoxChange = true;
-            switch (item.id) {
-                case 'biometric_lock':
-                    if (value) {
-                        try {
-                            await securityService.enableBiometric();
-                        } catch (error) {
-                            console.error('enableBiometric error', error);
-                            const checkboxView: CheckBox = event.object;
-                            checkboxView.checked = item.value = false;
-                            // showError(error);
-                        }
-                    } else {
-                        try {
-                            securityService.clear();
-                            await securityService.disableBiometric();
-                        } catch (error) {
-                            const checkboxView: CheckBox = event.object;
-                            checkboxView.checked = item.value = true;
-                            // showError(error);
-                        }
+        switch (item.id) {
+            case 'biometric_lock':
+                if (value) {
+                    try {
+                        await securityService.enableBiometric();
+                    } catch (error) {
+                        console.error('enableBiometric error', error);
+                        const checkboxView = event.object as CheckBox;
+                        checkboxView.checked = item.value = false;
+                        // showError(error);
                     }
-                    break;
-                case 'biometric_auto_lock':
-                    // if (value) {
-                    //     if (securityService.biometricEnabled) {
-                    //         const checkboxView: CheckBox = event.object;
-                    //         checkboxView.checked = item.value = false;
-                    //     } else {
-                    securityService.autoLockEnabled = value;
-                    // }
-                    // } else {
-                    //     securityService.clear();
-                    //     securityService.disableBiometric();
-                    // }
-                    break;
+                } else {
+                    try {
+                        securityService.clear();
+                        await securityService.disableBiometric();
+                    } catch (error) {
+                        const checkboxView = event.object as CheckBox;
+                        checkboxView.checked = item.value = true;
+                        // showError(error);
+                    }
+                }
+                return true;
+            case 'biometric_auto_lock':
+                // if (value) {
+                //     if (securityService.biometricEnabled) {
+                //         const checkboxView: CheckBox = event.object;
+                //         checkboxView.checked = item.value = false;
+                //     } else {
+                //         securityService.autoLockEnabled = value;
+                //     }
+                // } else {
+                //     securityService.clear();
+                //     securityService.disableBiometric();
+                // }
+                securityService.autoLockEnabled = value;
+                return true;
 
-                case 'quicktoggle': {
-                    if (__ANDROID__) {
-                        toggleQuickSetting(value);
-                    }
-                    break;
+            case 'quicktoggle': {
+                if (__ANDROID__) {
+                    toggleQuickSetting(value);
                 }
-                case SETTINGS_ENABLE_CRASH_REPORT: {
-                    ApplicationSettings.setBoolean(item.key || item.id, value);
-                    if (value) {
-                        startSentry();
-                    } else {
-                        stopSentry();
-                    }
-                    break;
-                }
-                default:
-                    ApplicationSettings.setBoolean(item.key || item.id, value);
-                    break;
+                return true;
             }
-        } catch (error) {
-            showError(error);
-        } finally {
-            ignoreNextOnCheckBoxChange = false;
+            case SETTINGS_ENABLE_CRASH_REPORT: {
+                ApplicationSettings.setBoolean(item.key || item.id, value);
+                if (value) {
+                    startSentry();
+                } else {
+                    stopSentry();
+                }
+                return true;
+            }
+            default:
+                return false; // default persistence in SettingsCollectionView
         }
     }
-
-    function refreshCollectionView() {
-        collectionView?.nativeView?.refresh();
-    }
-
-    function refreshCollectionViewVisibleItems() {
-        collectionView?.nativeView?.refreshVisibleItems();
-    }
-    onFontScaleChanged(refreshCollectionViewVisibleItems);
-    onThemeChanged(refreshCollectionView);
+    $: refresh?.();
 </script>
 
-<page bind:this={page} {id} actionBarHidden={true}>
-    <gridlayout class="pageContent" rows="auto,*">
-        <collectionview bind:this={collectionView} accessibilityValue="settingsCV" itemTemplateSelector={selectTemplate} {items} row={1} android:paddingBottom={$windowInset.bottom}>
-            <Template key="header" let:item>
-                <gridlayout rows="auto,auto">
-                    <gridlayout columns="*,auto,auto" margin="10 16 0 16">
-                        <stacklayout
-                            backgroundColor="#ea4bae"
-                            borderRadius={10}
-                            horizontalAlignment="center"
-                            margin="10 16 0 16"
-                            orientation="horizontal"
-                            padding={10}
-                            rippleColor="white"
-                            verticalAlignment="center"
-                            on:tap={(event) => onTap({ id: 'sponsor' }, event)}>
-                            <label color="white" fontFamily={$fonts.mdi} fontSize={26} marginRight={10} text="mdi-heart" verticalAlignment="center" />
-                            <label color="white" fontSize={12 * $fontScale} text={item.title} textWrap={true} verticalAlignment="center" />
-                        </stacklayout>
-                        {#if __ANDROID__}
-                            <image
-                                borderRadius={6}
-                                col={1}
-                                height={40}
-                                margin="0 10 0 10"
-                                rippleColor="white"
-                                src="~/assets/images/librepay.png"
-                                verticalAlignment="center"
-                                on:tap={(event) => onTap({ id: 'sponsor', type: 'librepay' }, event)} />
-                            <image
-                                borderRadius={6}
-                                col={2}
-                                height={40}
-                                rippleColor="#f96754"
-                                src="~/assets/images/patreon.png"
-                                verticalAlignment="center"
-                                on:tap={(event) => onTap({ id: 'sponsor', type: 'patreon' }, event)} />
-                        {/if}
-                    </gridlayout>
+<BaseSettingsPage
+    bind:this={settingsCollectionView}
+    {id}
+    {items}
+    {onCheckBox}
+    onItemLongPress={(item, event) => onLongPress(item.id, event)}
+    onItemTap={onTap}
+    optionsProvider={getAvailableOptions}
+    {searchEnabled}
+    {searchItemsProvider}
+    title={title || $slc('settings.title')}
+    bind:getStoreSetting
+    bind:refresh>
+    <svelte:fragment slot="actionBarButtons">
+        {#each actionBarButtons as button (button.id)}
+            <mdbutton class="actionBarButton" text={button.icon} variant="text" on:tap={(event) => onTap({ id: button.id }, event)} />
+        {/each}
+    </svelte:fragment>
 
-                    <stacklayout horizontalAlignment="center" marginBottom={0} marginTop={20} row={1} verticalAlignment="center">
-                        <image borderRadius={25} height={50} horizontalAlignment="center" src="res://icon" width={50} />
-                        <label fontSize={13 * $fontScale} marginTop={4} text={version} on:longPress={(event) => onLongPress('version', event)} />
-                    </stacklayout>
-                </gridlayout>
-            </Template>
-            <Template key="sectionheader" let:item>
-                <label class="sectionHeader" {...item.additionalProps || {}} text={item.title} />
-            </Template>
-            <Template key="switch" let:item>
-                <ListItemAutoSize item={{ ...item, title: getTitle(item), subtitle: getDescription(item) }} on:tap={(event) => onTap(item, event)}>
-                    <switch id="checkbox" checked={item.value} col={1} marginLeft={10} verticalAlignment="center" on:checkedChange={(e) => onCheckBox(item, e)} />
-                </ListItemAutoSize>
-            </Template>
-            <Template key="checkbox" let:item>
-                <ListItemAutoSize item={{ ...item, title: getTitle(item), subtitle: getDescription(item) }} on:tap={(event) => onTap(item, event)}>
-                    <checkbox id="checkbox" checked={item.value} col={1} on:checkedChange={(e) => onCheckBox(item, e)} />
-                </ListItemAutoSize>
-            </Template>
-            <Template key="rightIcon" let:item>
-                <ListItemAutoSize item={{ ...item, title: getTitle(item), subtitle: getDescription(item) }} showBottomLine={false} on:tap={(event) => onTap(item, event)}>
-                    <IconButton col={1} text={item.rightBtnIcon} on:tap={(event) => onRightIconTap(item, event)} />
-                </ListItemAutoSize>
-            </Template>
-            <Template key="leftIcon" let:item>
-                <ListItemAutoSize
-                    columns="auto,*,auto"
-                    item={{ ...item, title: getTitle(item), subtitle: getDescription(item) }}
-                    mainCol={1}
-                    showBottomLine={false}
-                    on:tap={(event) => onTap(item, event)}>
-                    <label col={0} color={colorOnBackground} fontFamily={$fonts.mdi} fontSize={24} padding="0 10 0 0" text={item.icon} verticalAlignment="center" />
-                </ListItemAutoSize>
-            </Template>
-            <Template let:item>
-                <ListItemAutoSize item={{ ...item, title: getTitle(item), subtitle: getDescription(item) }} showBottomLine={false} on:tap={(event) => onTap(item, event)}></ListItemAutoSize>
-            </Template>
+    <Template key="header" let:item>
+        <gridlayout rows="auto,auto">
+            <gridlayout columns="*,auto,auto" margin="10 16 0 16">
+                <stacklayout
+                    backgroundColor="#ea4bae"
+                    borderRadius={10}
+                    horizontalAlignment="center"
+                    margin="10 16 0 16"
+                    orientation="horizontal"
+                    padding={10}
+                    rippleColor="white"
+                    verticalAlignment="center"
+                    on:tap={(event) => onTap({ id: 'sponsor' }, event)}>
+                    <label color="white" fontFamily={$fonts.mdi} fontSize={26} marginRight={10} text="mdi-heart" verticalAlignment="center" />
+                    <label color="white" fontSize={12 * $fontScale} text={item.title} textWrap={true} verticalAlignment="center" />
+                </stacklayout>
+                {#if __ANDROID__}
+                    <image
+                        borderRadius={6}
+                        col={1}
+                        height={40}
+                        margin="0 10 0 10"
+                        rippleColor="white"
+                        src="~/assets/images/librepay.png"
+                        verticalAlignment="center"
+                        on:tap={(event) => onTap({ id: 'sponsor', type: 'librepay' }, event)} />
+                    <image
+                        borderRadius={6}
+                        col={2}
+                        height={40}
+                        rippleColor="#f96754"
+                        src="~/assets/images/patreon.png"
+                        verticalAlignment="center"
+                        on:tap={(event) => onTap({ id: 'sponsor', type: 'patreon' }, event)} />
+                {/if}
+            </gridlayout>
 
-            <Template key="ocr_settings" let:item>
-                <OCRSettingsBottomSheet onlySettings={true} showDownloadButton={true} />
-            </Template>
-        </collectionview>
-        <CActionBar canGoBack title={title || $slc('settings.title')}>
-            {#each actionBarButtons as button (button.id)}
-                <mdbutton class="actionBarButton" text={button.icon} variant="text" on:tap={(event) => onTap({ id: button.id }, event)} />
-            {/each}
-        </CActionBar>
-    </gridlayout>
-</page>
+            <stacklayout horizontalAlignment="center" marginBottom={0} marginTop={20} row={1} verticalAlignment="center">
+                <image borderRadius={25} height={50} horizontalAlignment="center" src="res://icon" width={50} />
+                <label fontSize={13 * $fontScale} marginTop={4} text={version} on:longPress={(event) => onLongPress('version', event)} />
+            </stacklayout>
+        </gridlayout>
+    </Template>
+
+    <Template key="ocr_settings" let:item>
+        <OCRSettingsBottomSheet onlySettings={true} showDownloadButton={true} />
+    </Template>
+</BaseSettingsPage>

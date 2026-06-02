@@ -12,8 +12,8 @@ def truncate(string, length = 20)
 end
 def writeFileIfNotExist(filePath, string)
   if !File.exist?(filePath) 
-    if (Dir.exist?(File.basename(filePath)) == false)
-      FileUtils.mkdir File.basename(filePath)
+    if (Dir.exist?(File.dirname(filePath)) == false)
+      FileUtils.mkdir File.dirname(filePath)
     end
     File.write(filePath, string)
   end
@@ -545,12 +545,14 @@ platform :android do
     system 'mkdir', '-p', metadata_dir
     files = []
     metadata_languages.each { |lang| 
-      changelogFolderPath = File.join(metadata_dir, lang, "changelogs")
-      puts "changelogFolderPath: #{changelogFolderPath}"
-      if (Dir.exist?(changelogFolderPath)) 
-        changelogFilePath = File.join(changelogFolderPath, "#{version}.txt")
-        writeFileIfNotExist(changelogFilePath, changelog)
-        files.push(changelogFilePath)
+      if (Dir.exist?( File.join(metadata_dir, lang)))
+        changelogFolderPath = File.join(metadata_dir, lang, "changelogs")
+        puts "changelogFolderPath: #{changelogFolderPath}"
+        if (Dir.exist?(changelogFolderPath)) 
+          changelogFilePath = File.join(changelogFolderPath, "#{version}.txt")
+          writeFileIfNotExist(changelogFilePath, changelog)
+          files.push(changelogFilePath)
+        end
       end
     }
     # Create a new branch and upload a PR for it.

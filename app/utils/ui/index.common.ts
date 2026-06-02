@@ -32,7 +32,7 @@ import { create as createImagePicker } from '@nativescript/imagepicker';
 import { doInBatch } from '@shared/utils/batch';
 import { showError } from '@shared/utils/showError';
 import { goBack, navigate, showModal } from '@shared/utils/svelte/ui';
-import { hideLoading, showLoading, showSnack, updateLoadingProgress } from '@shared/utils/ui';
+import { hideLoading, showLoading, showSliderPopover, showSnack, updateLoadingProgress } from '@shared/utils/ui';
 import dayjs from 'dayjs';
 import {
     CropResult,
@@ -1528,98 +1528,12 @@ export function copyOCRToClipboard(text) {
 }
 
 export function copyTextToClipboard(text) {
-    DEV_LOG && console.log('copyTextToClipboard', text);
     copyToClipboard(text);
     if (__IOS__ || (__ANDROID__ && SDK_VERSION < 13)) {
         showToast(lc('copied'));
     }
 }
 
-export async function showSliderPopover({
-    anchor,
-    debounceDuration = 100,
-    formatter,
-    horizPos = HorizontalPosition.ALIGN_LEFT,
-    icon,
-    max = 100,
-    min = 0,
-    onChange,
-    step = 1,
-    title,
-    value,
-    vertPos = VerticalPosition.CENTER,
-    width = 0.8 * screenWidthDips
-}: {
-    title?;
-    debounceDuration?;
-    icon?;
-    min?;
-    max?;
-    step?;
-    formatter?;
-    horizPos?;
-    anchor;
-    vertPos?;
-    width?;
-    value?;
-    onChange?;
-}) {
-    const component = (await import('~/components/common/SliderPopover.svelte')).default;
-    const { colorSurfaceContainer } = get(colors);
-
-    return showPopover({
-        backgroundColor: colorSurfaceContainer,
-        view: component,
-        anchor,
-        horizPos,
-        vertPos,
-        props: {
-            title,
-            icon,
-            min,
-            max,
-            step,
-            width,
-            formatter,
-            value,
-            onChange: debounce(onChange, debounceDuration)
-        }
-
-        // trackingScrollView: 'collectionView'
-    });
-}
-export async function showSlidersPopover({
-    anchor,
-    debounceDuration = 100,
-    horizPos = HorizontalPosition.ALIGN_LEFT,
-    items,
-    vertPos = VerticalPosition.CENTER,
-    width = 0.8 * screenWidthDips
-}: {
-    debounceDuration?;
-    horizPos?;
-    anchor;
-    vertPos?;
-    width?;
-    items;
-}) {
-    const component = (await import('~/components/common/SlidersPopover.svelte')).default;
-    const { colorSurfaceContainer } = get(colors);
-
-    return showPopover({
-        backgroundColor: colorSurfaceContainer,
-        view: component,
-        anchor,
-        horizPos,
-        vertPos,
-        props: {
-            width,
-            items
-        }
-
-        // trackingScrollView: 'collectionView'
-    });
-}
 
 export async function showMatrixLevelPopover({ anchor, currentValue, item, onChange }) {
     if (!item.range) {

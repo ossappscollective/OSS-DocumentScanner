@@ -21,7 +21,7 @@
     import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
     import SelectedIndicator from '~/components/common/SelectedIndicator.svelte';
     import SelectionToolbar from '~/components/common/SelectionToolbar.svelte';
-    import ActionBarSearch from '~/components/widgets/ActionBarSearch.svelte';
+    import ActionBarSearch from '@shared/components/ActionBarSearch.svelte';
     import { l, lc } from '~/helpers/locale';
     import { getRealTheme, isEInk, onThemeChanged } from '~/helpers/theme';
     import { DocFolder, OCRDocument, OCRPage } from '~/models/OCRDocument';
