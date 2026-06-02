@@ -287,8 +287,41 @@ class PDFUtils {
             return Image(imageData).setRotationAngle(-rotation * PI / 180.0)
         }
 
-        private var cyrillicFont: PdfFont? = null
-        private var cjkFont: PdfFont? = null
+        private class FontCache {
+            var cyrillicFont: PdfFont? = null
+            var cjkFont: PdfFont? = null
+
+            fun getFont(text: String): PdfFont {
+                return if (containsCJK(text)) {
+                    if (cjkFont == null) {
+                        cjkFont = PdfFontFactory.createTtcFont(
+                            "/system/fonts/NotoSansCJK-Regular.ttc",
+                            0,
+                            PdfEncodings.IDENTITY_H,
+                            EmbeddingStrategy.PREFER_NOT_EMBEDDED,
+                            false
+                        )
+                    }
+                    cjkFont!!
+                } else {
+                    if (cyrillicFont == null) {
+                        cyrillicFont = PdfFontFactory.createFont(
+                            "/system/fonts/Roboto-Regular.ttf",
+                            PdfEncodings.IDENTITY_H
+                        )
+                    }
+                    cyrillicFont!!
+                }
+            }
+
+            private fun containsCJK(text: String): Boolean {
+                return text.any { char ->
+                    char.code in 0x4E00..0x9FFF ||
+                    char.code in 0x3040..0x309F ||
+                    char.code in 0x30A0..0x30FF
+                }
+            }
+        }
 
         /**
          * Try decreasing font size until the Paragraph fits inside the box.
@@ -375,7 +408,8 @@ class PDFUtils {
             imageScale: Float,
             toDrawHeight: Float,
             textScale: Float,
-            debug: Boolean
+            debug: Boolean,
+            fontCache: FontCache
         ) {
             val ocrData = page.optJSONObject("ocrData")
             if (ocrData != null) {
@@ -412,84 +446,13 @@ class PDFUtils {
                     }
 
                     val text = block.getString("text")
-                    val font  = getFont(text)
+                    val font = fontCache.getFont(text)
                     val actualFontSize = findFittingFontSize(text, font, rect, pdfDoc.numberOfPages, doc, fontSize, 4.0f, 2.0f)
 
                     drawTextInBox(canvas, pdfDoc, rect, text, font, actualFontSize, if (debug) ColorConstants.RED else ColorConstants.BLACK, if (debug) PdfCanvasConstants.TextRenderingMode.FILL else PdfCanvasConstants.TextRenderingMode.INVISIBLE)
                 }
             }
         }
-
-        fun getFont(text: String): PdfFont {
-            val font = when {
-                containsCJK(text) ->  {
-                    if (cjkFont == null) {
-                        cjkFont = PdfFontFactory.createTtcFont("/system/fonts/NotoSansCJK-Regular.ttc", 0, PdfEncodings.IDENTITY_H, EmbeddingStrategy.PREFER_NOT_EMBEDDED, false)
-                    }
-                    cjkFont!!
-                }
-                else -> {
-                    if (cyrillicFont == null) {
-                        cyrillicFont = PdfFontFactory.createFont("/system/fonts/Roboto-Regular.ttf", PdfEncodings.IDENTITY_H)
-                    }
-                    cyrillicFont!!
-                }
-            }
-            return font
-        }
-        private fun containsCJK(text: String): Boolean {
-            return text.any { char ->
-                char.code in 0x4E00..0x9FFF || // CJK Unified Ideographs
-                char.code in 0x3040..0x309F || // Hiragana
-                char.code in 0x30A0..0x30FF    // Katakana
-            }
-        }
-
-        // private fun addUnicodeFontsToProvider(fontProvider: FontProvider) {
-
-        //     var path = "/system/fonts";
-        //     val fileNames = File("/system/fonts").listFiles()?.map { it.name }?.toTypedArray() ?: emptyArray()
-        //     fileNames.forEachIndexed { index, name ->
-        //     Log.d("JS", "system font" + name)
-        //     }
-        //     // Add fonts that cover different Unicode ranges
-        //     val systemFonts = arrayOf(
-        //         "/system/fonts/Roboto-Regular.ttf",           // Latin + Cyrillic
-        //         "/system/fonts/NotoSansCJK-Regular.ttc",      // CJK languages  
-        //         "/system/fonts/NotoNaskhArabic-Regular.ttf",   // Arabic
-        //         "/system/fonts/DroidSans.ttf",        // General fallback
-        //         "/system/fonts/NotoColorEmoji.ttf",           // Emoji support
-        //         "/system/fonts/NotoSans-Regular.ttf",         // General Unicode
-        //         "/system/fonts/DejaVuSans.ttf"                // Alternative fallback
-        //     )
-            
-        //     systemFonts.forEach { fontPath ->
-        //         try {
-        //             if (File(fontPath).exists()) {
-        //                 Log.d("JS", "loading system font" + fontPath)
-        //                 fontProvider.addFont(fontPath)
-        //             }
-        //         } catch (e: Exception) {
-        //             // Skip if font doesn't exist or can't be loaded
-        //             e.printStackTrace()
-        //         }
-        //     }
-            
-        //     // Add custom fonts from assets
-        //    // addAssetFontSafely(fontProvider, "fonts/NotoSans-Regular.ttf")
-        //    // addAssetFontSafely(fontProvider, "fonts/DejaVuSans.ttf")
-        //    // addAssetFontSafely(fontProvider, "fonts/NotoSansCJK-Regular.otf")
-        // }
-        
-        // private fun addAssetFontSafely(fontProvider: FontProvider, assetPath: String) {
-        //     try {
-        //         val fullPath = "file:///android_asset/$assetPath"
-        //         fontProvider.addFont(fullPath, PdfEncodings.IDENTITY_H)
-        //     } catch (e: Exception) {
-        //         // Font doesn't exist or can't be loaded, skip silently
-        //         e.printStackTrace()
-        //     }
-        // }
 
         fun generatePDF(
             context: Context,
@@ -504,8 +467,8 @@ class PDFUtils {
                 needsCopy = true
                 generateFilePath = context.cacheDir.toString() + "/${fileName}_compressed.pdf"
             }
-            cyrillicFont = null
-            cjkFont = null
+            val fontCache = FontCache()
+
             val jsonOps = JSONObject(options)
             val compressionLevel = jsonOps.optInt("compressionLevel", 9)
             val paperSize = jsonOps.optString("paper_size", "full")
@@ -604,15 +567,12 @@ class PDFUtils {
                     document.add(image)
                     if (drawOcrText) {
                         drawOCRData(
-                            pdfDoc,
-                            document,
-                            page,
-                            0F,
-                            0F,
+                            pdfDoc, document, page,
+                            0F, 0F,
                             imageRatio.toFloat(),
                             imageHeight.toFloat(),
-                            textScale,
-                            debug
+                            textScale, debug,
+                            fontCache
                         )
                     }
                 }
@@ -736,10 +696,10 @@ class PDFUtils {
                             document!!.add(image)
                             if (drawOcrText) {
                                 drawOCRData(
-                                    pdfDoc,
-                                    document,
-                                    page, posX, posY,
-                                    imageRatio.toFloat(), toDrawHeight.toFloat(), textScale, debug
+                                    pdfDoc, document, page,
+                                    posX, posY,
+                                    imageRatio.toFloat(), toDrawHeight.toFloat(), textScale, debug,
+                                    fontCache
                                 )
                             }
 
