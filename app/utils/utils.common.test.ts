@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { cleanFilename, ellipsize, omit, pick, sortByKey } from './utils.common';
+import { vi, describe, expect, it } from 'vitest';
+import { cleanFilename, ellipsize, getFileNameForDocument, getFormatedDateForFilename, omit, pick, sortByKey } from './utils.common';
 
 // ─── cleanFilename ────────────────────────────────────────────────────────────
 
@@ -156,5 +156,88 @@ describe('ellipsize', () => {
 
     it('handles an empty string', () => {
         expect(ellipsize('', 5)).toBe('');
+    });
+});
+
+// ─── getFormatedDateForFilename ───────────────────────────────────────────────
+// ApplicationSettings.getString is mocked in vitest.setup.ts to return defaultValue,
+// so the default dateFormat resolves to FILENAME_DATE_FORMAT = 'timestamp'.
+
+describe('getFormatedDateForFilename', () => {
+    it('returns a numeric string for the "timestamp" format', () => {
+        const ts = 1710502200000;
+        const result = getFormatedDateForFilename(ts, 'timestamp');
+        expect(result).toBe(String(ts));
+    });
+
+    it('returns a clean ISO string for the "iso" format', () => {
+        const ts = 1710502200000;
+        const result = getFormatedDateForFilename(ts, 'iso');
+        // ISO strings contain colons which get cleaned → underscores
+        expect(result).not.toContain(':');
+        expect(result).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    });
+
+    it('returns raw ISO string when clean=false', () => {
+        const ts = 1710502200000;
+        const result = getFormatedDateForFilename(ts, 'iso', false);
+        expect(result).toContain(':');
+    });
+
+    it('formats with a custom dayjs format string', () => {
+        const ts = 1710502200000;
+        const result = getFormatedDateForFilename(ts, 'YYYY');
+        expect(result).toBe('2024');
+    });
+
+    it('cleans forbidden characters from the result by default', () => {
+        // Pass a custom format that would contain a colon; result must be clean
+        const ts = 1710502200000;
+        const result = getFormatedDateForFilename(ts, 'HH:mm');
+        expect(result).not.toContain(':');
+        expect(result).toMatch(/^\d{2}_\d{2}$/);
+    });
+
+    it('uses "timestamp" format when the mocked ApplicationSettings returns default', () => {
+        // With __ANDROID__=false and mocked settings returning defaults, format = 'timestamp'
+        const ts = 1234567890;
+        const result = getFormatedDateForFilename(ts);
+        expect(result).toBe('1234567890');
+    });
+});
+
+// ─── getFileNameForDocument ───────────────────────────────────────────────────
+
+describe('getFileNameForDocument', () => {
+    it('returns cleaned document name when useDocumentName=true and name is set', () => {
+        const doc: any = { name: 'My Invoice 2024' };
+        const result = getFileNameForDocument(doc, true);
+        expect(result).toBe('My_Invoice_2024');
+    });
+
+    it('falls back to timestamp filename when useDocumentName=true but name is absent', () => {
+        const doc: any = { name: '' };
+        const ts = 1710502200000;
+        const result = getFileNameForDocument(doc, true, ts, 'timestamp');
+        expect(result).toBe(String(ts));
+    });
+
+    it('falls back to timestamp filename when document is undefined', () => {
+        const ts = 1710502200000;
+        const result = getFileNameForDocument(undefined, true, ts, 'timestamp');
+        expect(result).toBe(String(ts));
+    });
+
+    it('uses formatted date when useDocumentName=false even if name is set', () => {
+        const doc: any = { name: 'Ignored Name' };
+        const ts = 1710502200000;
+        const result = getFileNameForDocument(doc, false, ts, 'YYYY');
+        expect(result).toBe('2024');
+    });
+
+    it('cleans forbidden chars in the document name', () => {
+        const doc: any = { name: 'report: Q1/2024' };
+        const result = getFileNameForDocument(doc, true);
+        expect(result).toBe('report__Q1_2024');
     });
 });
