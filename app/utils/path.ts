@@ -25,7 +25,7 @@ export function dirname(path) {
 export function basename(path, ext?) {
     let f = posixSplitPath(path)[2];
     // TODO: make this comparison case-insensitive on windows?
-    if (ext && f.slice(-1 * ext.length) === ext) {
+    if (ext && f.slice(-ext.length) === ext) {
         f = f.substring(0, f.length - ext.length);
     }
     return f;
