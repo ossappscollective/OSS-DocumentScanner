@@ -73,6 +73,13 @@
             description: lc('local_auto_sync_desc'),
             value: $store.autoSync
         },
+        {
+            type: 'switch',
+            id: 'deleteAfterSync',
+            title: lc('delete_after_sync'),
+            description: lc('delete_after_sync_desc'),
+            value: $store.deleteAfterSync
+        },
         ...(typeof topItems === 'function' ? topItems(store) : topItems),
         {
             id: 'setting',
@@ -98,13 +105,6 @@
             title: lc('use_folder_structure'),
             description: lc('use_folder_structure_desc'),
             value: $store.useFoldersStructure
-        },
-        {
-            type: 'switch',
-            id: 'deleteAfterSync',
-            title: lc('delete_after_sync'),
-            description: lc('delete_after_sync_desc'),
-            value: $store.deleteAfterSync
         },
         {
             id: 'setting',
