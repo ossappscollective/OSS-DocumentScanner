@@ -1,15 +1,19 @@
 <script context="module" lang="ts">
+    import { GestureRootView } from '@nativescript-community/gesturehandler';
     import { Template } from '@nativescript-community/svelte-native/components';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import { Canvas, CanvasView, LayoutAlignment, Paint, StaticLayout } from '@nativescript-community/ui-canvas';
+    import { CheckBox } from '@nativescript-community/ui-checkbox';
     import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { Img } from '@nativescript-community/ui-image';
-    import { createNativeAttributedString } from '@nativescript-community/ui-label';
+    import { Label, createNativeAttributedString } from '@nativescript-community/ui-label';
     import { confirm, prompt } from '@nativescript-community/ui-material-dialogs';
     import { VerticalPosition } from '@nativescript-community/ui-popover';
     import { AnimationDefinition, Application, ApplicationSettings, Color, EventData, Frame, NavigatedData, ObservableArray, Page, Screen, StackLayout } from '@nativescript/core';
     import { AndroidActivityBackPressedEventData } from '@nativescript/core/application/application-interfaces';
     import { debounce, throttle } from '@nativescript/core/utils';
+    import ActionBarSearch from '@shared/components/ActionBarSearch.svelte';
+    import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
     import { OptionType } from '@shared/components/OptionSelect.svelte';
     import { prefs } from '@shared/services/preferences';
     import { showError } from '@shared/utils/showError';
@@ -18,10 +22,8 @@
     import { writable } from 'svelte/store';
     import CActionBar from '~/components/common/CActionBar.svelte';
     import EditNameActionBar from '~/components/common/EditNameActionBar.svelte';
-    import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
     import SelectedIndicator from '~/components/common/SelectedIndicator.svelte';
     import SelectionToolbar from '~/components/common/SelectionToolbar.svelte';
-    import ActionBarSearch from '@shared/components/ActionBarSearch.svelte';
     import { l, lc } from '~/helpers/locale';
     import { getRealTheme, isEInk, onThemeChanged } from '~/helpers/theme';
     import { DocFolder, OCRDocument, OCRPage } from '~/models/OCRDocument';
@@ -31,8 +33,6 @@
         DocumentFolderAddedEventData,
         DocumentMovedFolderEventData,
         DocumentPageUpdatedEventData,
-        DocumentRestoredEventData,
-        DocumentTrashedEventData,
         DocumentUpdatedEventData,
         FolderUpdatedEventData,
         documentsService
@@ -46,6 +46,7 @@
         DEFAULT_NB_COLUMNS_LANDSCAPE,
         DEFAULT_SORT_ORDER,
         DEFAULT_TRASH_ENABLED,
+        DEFAULT_TRASH_REMEMBERED_DELETE_MODE,
         DEFAULT_VIEW_STYLE,
         EVENT_DOCUMENT_ADDED,
         EVENT_DOCUMENT_DELETED,
@@ -64,9 +65,11 @@
         SETTINGS_NB_COLUMNS_LANDSCAPE,
         SETTINGS_SORT_ORDER,
         SETTINGS_TRASH_ENABLED,
+        SETTINGS_TRASH_REMEMBERED_DELETE_MODE,
         SETTINGS_VIEW_STYLE
     } from '~/utils/constants';
     import {
+        createView,
         detectOCR,
         goToDocumentView,
         goToFolderView,
@@ -455,7 +458,9 @@
                 }
             }
         }
-        refreshFolders();
+        if (!isTrash) {
+            refreshFolders();
+        }
         updateNoDocument();
     }
     function getImageView(index: number) {
@@ -509,44 +514,52 @@
         Application.on('snackMessageAnimation', onSnackMessageAnimation);
         if (__ANDROID__) {
             Application.android.on(Application.android.activityBackPressedEvent, onAndroidBackButton);
-            Application.android.on(Application.android.activityNewIntentEvent, onAndroidNewItent);
-            const intent = Application.android['startIntent'];
-            if (intent) {
-                onAndroidNewItent({ intent } as any);
-            }
         }
-        documentsService.on(EVENT_DOCUMENT_PAGE_UPDATED, onDocumentPageUpdated);
-        documentsService.on(EVENT_DOCUMENT_PAGE_DELETED, onDocumentPageUpdated);
-        documentsService.on(EVENT_DOCUMENT_ADDED, onDocumentAdded);
-        documentsService.on(EVENT_DOCUMENT_UPDATED, onDocumentUpdated);
+        if (!isTrash) {
+            if (__ANDROID__) {
+                Application.android.on(Application.android.activityNewIntentEvent, onAndroidNewItent);
+                const intent = Application.android['startIntent'];
+                if (intent) {
+                    onAndroidNewItent({ intent } as any);
+                }
+            }
+            documentsService.on(EVENT_DOCUMENT_PAGE_UPDATED, onDocumentPageUpdated);
+            documentsService.on(EVENT_DOCUMENT_PAGE_DELETED, onDocumentPageUpdated);
+            documentsService.on(EVENT_DOCUMENT_ADDED, onDocumentAdded);
+            documentsService.on(EVENT_DOCUMENT_UPDATED, onDocumentUpdated);
+            documentsService.on(EVENT_DOCUMENT_MOVED_FOLDER, onDocumentMovedFolder);
+            documentsService.on(EVENT_DOCUMENT_TRASHED, refreshSimple);
+            documentsService.on(EVENT_DOCUMENT_RESTORED, refreshSimple);
+            documentsService.on(EVENT_FOLDER_ADDED, onFolderAdded);
+            documentsService.on(EVENT_FOLDER_UPDATED, onFolderUpdated);
+            syncService.on(EVENT_SYNC_STATE, onSyncState);
+            syncService.on(EVENT_STATE, refreshSimple);
+        }
         documentsService.on(EVENT_DOCUMENT_DELETED, onDocumentsDeleted);
-        documentsService.on(EVENT_DOCUMENT_MOVED_FOLDER, onDocumentMovedFolder);
-        documentsService.on(EVENT_DOCUMENT_TRASHED, refreshSimple);
-        documentsService.on(EVENT_DOCUMENT_RESTORED, refreshSimple);
-        documentsService.on(EVENT_FOLDER_ADDED, onFolderAdded);
-        documentsService.on(EVENT_FOLDER_UPDATED, onFolderUpdated);
-        syncService.on(EVENT_SYNC_STATE, onSyncState);
-        syncService.on(EVENT_STATE, refreshSimple);
     });
     onDestroy(() => {
         DEV_LOG && console.log('MainList', 'onDestroy');
         Application.off('snackMessageAnimation', onSnackMessageAnimation);
         if (__ANDROID__) {
             Application.android.off(Application.android.activityBackPressedEvent, onAndroidBackButton);
-            Application.android.off(Application.android.activityNewIntentEvent, onAndroidNewItent);
         }
-        documentsService.off(EVENT_DOCUMENT_PAGE_UPDATED, onDocumentPageUpdated);
-        documentsService.off(EVENT_DOCUMENT_PAGE_DELETED, onDocumentPageUpdated);
-        documentsService.off(EVENT_DOCUMENT_UPDATED, onDocumentUpdated);
-        documentsService.off(EVENT_DOCUMENT_ADDED, onDocumentAdded);
+        if (!isTrash) {
+            if (__ANDROID__) {
+                Application.android.off(Application.android.activityNewIntentEvent, onAndroidNewItent);
+            }
+            documentsService.off(EVENT_DOCUMENT_PAGE_UPDATED, onDocumentPageUpdated);
+            documentsService.off(EVENT_DOCUMENT_PAGE_DELETED, onDocumentPageUpdated);
+            documentsService.off(EVENT_DOCUMENT_UPDATED, onDocumentUpdated);
+            documentsService.off(EVENT_DOCUMENT_ADDED, onDocumentAdded);
+            documentsService.off(EVENT_DOCUMENT_MOVED_FOLDER, onDocumentMovedFolder);
+            documentsService.off(EVENT_DOCUMENT_TRASHED, refreshSimple);
+            documentsService.off(EVENT_DOCUMENT_RESTORED, refreshSimple);
+            documentsService.off(EVENT_FOLDER_ADDED, onFolderAdded);
+            documentsService.off(EVENT_FOLDER_UPDATED, onFolderUpdated);
+            syncService.off(EVENT_SYNC_STATE, onSyncState);
+            syncService.off(EVENT_STATE, refreshSimple);
+        }
         documentsService.off(EVENT_DOCUMENT_DELETED, onDocumentsDeleted);
-        documentsService.off(EVENT_DOCUMENT_MOVED_FOLDER, onDocumentMovedFolder);
-        documentsService.off(EVENT_DOCUMENT_TRASHED, refreshSimple);
-        documentsService.off(EVENT_DOCUMENT_RESTORED, refreshSimple);
-        documentsService.off(EVENT_FOLDER_ADDED, onFolderAdded);
-        documentsService.off(EVENT_FOLDER_UPDATED, onFolderUpdated);
-        syncService.off(EVENT_SYNC_STATE, onSyncState);
-        syncService.off(EVENT_STATE, refreshSimple);
     });
 
     export let showActionButton = !startOnCam;
@@ -835,6 +848,29 @@
         }
         return sortByKey(selected, sortOrder);
     }
+    export async function getAllDocuments() {
+        const resut: OCRDocument[] = [];
+        if (!documentsService.started) {
+            return resut;
+        }
+        for (let index = getDocumentsStartIndex(); index < documents.length; index++) {
+            const d = documents.getItem(index);
+            if (d.doc) {
+                resut.push(d.doc);
+            } else if (d.folder) {
+                resut.push(...(await documentsService.documentRepository.findDocuments({ folder: d.folder })));
+            }
+        }
+        if (folderItems) {
+            for (let index = 0; index < folderItems.length; index++) {
+                const d = folderItems.getItem(index);
+                if (d.folder) {
+                    resut.push(...(await documentsService.documentRepository.findDocuments({ folder: d.folder })));
+                }
+            }
+        }
+        return sortByKey(resut, sortOrder);
+    }
 
     // async function loopSelectedDocuments(callback: (d: OCRDocument) => void) {
     //     if (!documentsService.started) {
@@ -879,17 +915,54 @@
         if (nbSelected > 0) {
             try {
                 if (trashEnabled && !isTrash) {
-                    const result = await confirm({
-                        cancelButtonText: lc('cancel'),
-                        message: lc('confirm_move_to_trash', nbSelected),
-                        neutralButtonText: lc('delete_permanently'),
-                        okButtonText: lc('move_to_trash'),
-                        title: lc('delete')
-                    } as any);
+                    DEV_LOG && console.log('rememberedMode1');
+                    const rememberedMode = ApplicationSettings.getString(SETTINGS_TRASH_REMEMBERED_DELETE_MODE, DEFAULT_TRASH_REMEMBERED_DELETE_MODE);
+                    let result = false;
+                    DEV_LOG && console.log('rememberedMode', rememberedMode);
+                    if (!rememberedMode) {
+                        const view = createView(GestureRootView, {
+                            columns: 'auto,*',
+                            rows: 'auto'
+                        });
+                        const checkBox = createView(CheckBox, {});
+                        const label = createView(Label, {
+                            verticalAlignment: 'center',
+                            col: 1,
+                            text: lc('remember_delete_choice')
+                        });
+                        label.on('tap', () => {
+                            DEV_LOG && console.log('label tap');
+                            checkBox.checked = !checkBox.checked;
+                        });
+                        view.addChild(checkBox);
+                        view.addChild(label);
+                        result = await confirm({
+                            neutralButtonText: lc('cancel'),
+                            message: lc('confirm_move_to_trash', nbSelected),
+                            cancelButtonText: lc('delete_permanently'),
+                            okButtonText: lc('move_to_trash'),
+                            title: lc('delete'),
+                            view
+                        } as any);
+                        if (result !== null && checkBox.checked) {
+                            ApplicationSettings.setString(SETTINGS_TRASH_REMEMBERED_DELETE_MODE, result === true ? 'trash' : 'permament');
+                        }
+                    } else {
+                        switch (rememberedMode) {
+                            case 'permament':
+                                result = false;
+                                break;
+                            case 'trash':
+                                result = true;
+                                break;
+                            default:
+                                break;
+                        }
+                    }
                     if (result === true) {
                         await documentsService.trashDocuments(await getSelectedDocuments());
                         return true;
-                    } else if (result == null) {
+                    } else if (result === false) {
                         // neutral button tapped: delete permanently
                         const confirmed = await confirm({
                             cancelButtonText: lc('cancel'),
@@ -1158,6 +1231,7 @@
     async function handleSelectionAction(event, option: OptionType) {
         try {
             let result;
+            DEV_LOG && console.log('handleSelectionAction', option.id);
             switch (option.id) {
                 case 'pdf':
                     const data = await getSelectedPagesAndPossibleSingleDocument();
@@ -1325,6 +1399,19 @@
             showError(error);
         }
     }
+
+    const emptyTrash = tryCatchFunction(async () => {
+        const confirmed = await confirm({
+            cancelButtonText: lc('cancel'),
+            message: lc('confirm_empty_trash'),
+            okButtonText: lc('delete_permanently'),
+            title: lc('delete_permanently')
+        });
+        if (confirmed && isTrash) {
+            await documentsService.deleteDocuments(await getAllDocuments());
+            return true;
+        }
+    });
 </script>
 
 <page bind:this={page} id="documentList" actionBarHidden={true} on:navigatedTo={onNavigatedTo} on:navigatingFrom={onNavigatingFrom}>
@@ -1433,26 +1520,31 @@
         {/if}
 
         <CActionBar modalWindow={modal || showSearch} onGoBack={actionBarOnGoBack} onTitleTap={folder ? () => (editingTitle = true) : null} {title}>
-            {#if !onlyForImport}
-                <mdbutton
-                    class="actionBarButton"
-                    class:infinite-rotate={syncRunning}
-                    isEnabled={!syncRunning}
-                    text="mdi-autorenew"
-                    variant="text"
-                    visibility={!folder && syncEnabled ? 'visible' : 'collapse'}
-                    on:tap={syncDocuments}
-                    on:longPress={openSyncSettings} />
-            {/if}
-            <mdbutton class="actionBarButton" text="mdi-magnify" variant="text" on:tap={() => search.showSearch()} />
-            {#if !onlyForImport}
-                {#if folder}
-                    <mdbutton class="actionBarButton" testID="settingsBtn" text="mdi-palette" variant="text" on:tap={setFolderColor} />
-                {:else}
-                    <mdbutton class="actionBarButton" text="mdi-view-dashboard" variant="text" on:tap={showViewOptions} />
-                    <mdbutton class="actionBarButton" testID="settingsBtn" text="mdi-dots-vertical" variant="text" on:tap={showOptions} />
+            {#if isTrash}
+                <mdbutton class="actionBarButton" text="mdi-delete-empty" variant="text" on:tap={emptyTrash} />
+            {:else}
+                {#if !onlyForImport}
+                    <mdbutton
+                        class="actionBarButton"
+                        class:infinite-rotate={syncRunning}
+                        isEnabled={!syncRunning}
+                        text="mdi-autorenew"
+                        variant="text"
+                        visibility={!folder && syncEnabled ? 'visible' : 'collapse'}
+                        on:tap={syncDocuments}
+                        on:longPress={openSyncSettings} />
+                {/if}
+                <mdbutton class="actionBarButton" text="mdi-magnify" variant="text" on:tap={() => search.showSearch()} />
+                {#if !onlyForImport}
+                    {#if folder}
+                        <mdbutton class="actionBarButton" testID="settingsBtn" text="mdi-palette" variant="text" on:tap={setFolderColor} />
+                    {:else}
+                        <mdbutton class="actionBarButton" text="mdi-view-dashboard" variant="text" on:tap={showViewOptions} />
+                        <mdbutton class="actionBarButton" testID="settingsBtn" text="mdi-dots-vertical" variant="text" on:tap={showOptions} />
+                    {/if}
                 {/if}
             {/if}
+
             <ActionBarSearch bind:this={search} slot="center" {refresh} bind:visible={showSearch} />
         </CActionBar>
         {#if nbSelected > 0}

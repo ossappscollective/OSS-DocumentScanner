@@ -73,6 +73,7 @@
         SETTINGS_SYNC_ON_START,
         SETTINGS_TRANSFORM_BATCH_SIZE,
         SETTINGS_TRASH_ENABLED,
+        SETTINGS_TRASH_REMEMBERED_DELETE_MODE,
         TRANSFORM_BATCH_SIZE,
         USE_SYSTEM_CAMERA
     } from '~/utils/constants';
@@ -485,7 +486,7 @@
                         description: lc('image_processing_settings_desc')
                     }
                 ];
-            case 'documents':
+            case 'trash':
                 return [
                     {
                         type: 'switch',
@@ -493,6 +494,13 @@
                         title: lc('trash_enabled'),
                         description: lc('trash_enabled_desc'),
                         value: ApplicationSettings.getBoolean(SETTINGS_TRASH_ENABLED, DEFAULT_TRASH_ENABLED)
+                    },
+                    {
+                        id: 'reset_trash_remember',
+                        rightBtnIcon: 'mdi-restore',
+                        title: lc('reset_deletion_preference'),
+                        description: lc('reset_deletion_preference_desc'),
+                        onTap: () => ApplicationSettings.remove(SETTINGS_TRASH_REMEMBERED_DELETE_MODE)
                     }
                 ];
             case 'folders':
@@ -903,8 +911,8 @@
                         id: 'sub_settings',
                         icon: 'mdi-trash-can-outline',
                         title: lc('trash'),
-                        description: lc('documents_settings'),
-                        options: () => getSubSettings('documents')
+                        description: lc('trash_settings'),
+                        options: () => getSubSettings('trash')
                     },
                     {
                         id: 'sub_settings',

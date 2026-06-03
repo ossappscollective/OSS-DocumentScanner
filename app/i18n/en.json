@@ -531,5 +531,10 @@
   "whitepaper": "whitepaper",
   "whitepaper_desc": "improvement for whitepaper type documents",
   "wrong_passcode": "wrong password",
-  "open_trash": "open trash"
+  "open_trash": "open trash",
+  "remember_delete_choice": "Remember my choice for future deletions",
+  "trash_settings": "trash settings",
+  "reset_deletion_preference": "reset deletion preference",
+  "reset_deletion_preference_desc": "You'll be asked again whether to move deleted items to Trash or delete them permanently.",
+  "confirm_empty_trash": "Are you sure you want to empty the trash?"
 }

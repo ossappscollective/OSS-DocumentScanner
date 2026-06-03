@@ -146,11 +146,13 @@ export class FolderRepository extends BaseRepository<DocFolder, IDocFolder> {
     async findFolders(rootFolder?: DocFolder) {
         const folders = await this.search({
             select: sql`f.*, 
-COUNT(df.document_id) AS count`,
+COUNT(d.id) AS count`,
             from: sql`Folder f`,
             postfix: new SqlQuery([
                 `
                 LEFT JOIN DocumentsFolders df ON f.id = df.folder_id`,
+                `
+                LEFT JOIN Document d ON d.id = df.document_id AND d.trashedDate IS NULL`,
                 rootFolder
                     ? `
                 WHERE f.name LIKE "${rootFolder.name}/%"`

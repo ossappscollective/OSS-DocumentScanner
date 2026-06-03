@@ -150,7 +150,9 @@ export const EVENT_FOLDER_UPDATED = 'folderUpdated';
 export const EVENT_FOLDER_ADDED = 'folderAdded';
 
 export const SETTINGS_TRASH_ENABLED = 'trash_enabled';
+export const SETTINGS_TRASH_REMEMBERED_DELETE_MODE = 'trash_remembered_delete_mode';
 export const DEFAULT_TRASH_ENABLED = true;
+export const DEFAULT_TRASH_REMEMBERED_DELETE_MODE = null;
 
 export const EVENT_STATE = 'state';
 export const EVENT_SYNC_STATE = 'syncState';
