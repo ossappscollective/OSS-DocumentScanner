@@ -1,0 +1,11 @@
+{
+    "extends": "./tsconfig.json",
+    "include": [
+        "app/**/*",
+        "app/**/*.test.ts",
+        "tools/app/**/*",
+        "typings/*.d.ts",
+        "vitest.setup.ts"
+    ],
+    "exclude": []
+}

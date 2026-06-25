@@ -1,5 +1,7 @@
 {
     "scripts": {
+        "test": "vitest run",
+        "test:watch": "vitest",
         "createBase64Key": "openssl base64 < $KEYSTORE_PATH | tr -d '\n' | tee base64.txt",
         "postinstall": "npm run setup",
         "prepare": "ts-patch install -s",
