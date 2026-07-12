@@ -22,7 +22,7 @@ This repository is now the home of 2 apps
 <!-- [<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="80">](https://f-droid.org/packages/com.machiav3lli.backup/) -->
 <div align="center">
 
-| OSS Document Scanner | Oss CardWallet |
+| OSS Document Scanner | OSS Card Wallet |
 |:--------------------:|:--------------:|
 |[<img src="https://izzyondroid.org/assets/static/IzzyOnDroidButtonGreyBorder_nofont.png" alt="Get it on IzzyOnDroid" height="50">](https://apt.izzysoft.de/packages/com.akylas.documentscanner)|[<img src="https://izzyondroid.org/assets/static/IzzyOnDroidButtonGreyBorder_nofont.png" alt="Get it on IzzyOnDroid" height="50">](https://apt.izzysoft.de/packages/com.akylas.cardwallet)|
 |[<img src="https://raw.githubusercontent.com/pioug/google-play-badges/refs/heads/main/svg/en.svg" alt="Get it on PlayStore" height="50">](https://play.google.com/store/apps/details?id=com.akylas.documentscanner)|[<img src="https://raw.githubusercontent.com/pioug/google-play-badges/refs/heads/main/svg/en.svg" alt="Get it on PlayStore" height="50">](https://play.google.com/store/apps/details?id=com.akylas.cardwallet)|
