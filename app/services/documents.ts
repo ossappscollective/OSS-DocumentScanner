@@ -60,18 +60,29 @@ function escapeLike(val: string) {
     return val.replace(/[\\%_]/g, (m) => '\\' + m);
 }
 
-function tableColumnAlterPromise(query: SqlQuery) {
-    return async (sequenceDb: DatabaseInterface) => {
-        try {
-            await sequenceDb.query(query);
-        } catch (err) {
-            const error = wrapNativeException(err);
-            if (error.message.indexOf('duplicate column name') !== -1) {
-                return;
-            }
-            throw error;
+// createTables declares the full schema, so a redundant ADD COLUMN must be a no-op.
+async function ensureColumn(sequenceDb: DatabaseInterface, query: SqlQuery) {
+    try {
+        await sequenceDb.query(query);
+    } catch (err) {
+        if (wrapNativeException(err).message.indexOf('duplicate column name') === -1) {
+            throw err;
         }
-    };
+    }
+}
+
+function addColumn(query: SqlQuery) {
+    return (sequenceDb: DatabaseInterface) => ensureColumn(sequenceDb, query);
+}
+
+// Fresh DB shortcut: createTables already built the schema, so flag migrations done
+// without replaying them. Mirrors kiss-orm's `Migrations` bookkeeping table.
+async function markMigrationsApplied(database: NSQLDatabase, migrations: { [key: string]: unknown }) {
+    await database.query(sql`CREATE TABLE IF NOT EXISTS Migrations( name VARCHAR(768) PRIMARY KEY NOT NULL );`);
+    const names = Object.keys(migrations);
+    for (let index = 0; index < names.length; index++) {
+        await database.query(sql`INSERT OR IGNORE INTO Migrations VALUES (${names[index]});`);
+    }
 }
 
 export class BaseRepository<T, U = T, V = any> extends CrudRepository<T, U, V> {
@@ -91,6 +102,36 @@ export class BaseRepository<T, U = T, V = any> extends CrudRepository<T, U, V> {
             await this.database.migrate(migrations);
         } catch (error) {
             console.error(error, error.stack);
+        }
+    }
+
+    async backfillSearchColumns(sequenceDb: DatabaseInterface, columns: { name: string; index: string; compute: (row: any) => string | undefined }[]) {
+        const table = new QueryIdentifier(this.table);
+        for (let index = 0; index < columns.length; index++) {
+            await ensureColumn(sequenceDb, sql`ALTER TABLE ${table} ADD COLUMN ${new QueryIdentifier(columns[index].name)} TEXT`);
+        }
+        const rows = await this.search();
+        await doInBatch(
+            rows,
+            async (row) => {
+                const updates: any = {};
+                for (let index = 0; index < columns.length; index++) {
+                    const { compute, name } = columns[index];
+                    if (!row[name]) {
+                        const value = compute(row);
+                        if (value) {
+                            updates[name] = value;
+                        }
+                    }
+                }
+                if (Object.keys(updates).length) {
+                    await super.update(row, updates);
+                }
+            },
+            10
+        );
+        for (let index = 0; index < columns.length; index++) {
+            await sequenceDb.query(sql`CREATE INDEX IF NOT EXISTS ${new QueryIdentifier(columns[index].index)} ON ${table}(${new QueryIdentifier(columns[index].name)})`);
         }
     }
 }
@@ -124,7 +165,7 @@ export class FolderRepository extends BaseRepository<DocFolder, IDocFolder> {
         });
     }
     migrations = {
-        addModifDate: sql`ALTER TABLE Folder ADD COLUMN modifiedDate BIGINT;`,
+        addModifDate: addColumn(sql`ALTER TABLE Folder ADD COLUMN modifiedDate BIGINT`),
         fillNullModifDate: sql`UPDATE Folder SET modifiedDate = (round((julianday('now') - 2440587.5)*86400000)) WHERE modifiedDate IS NULL;`
     };
 
@@ -133,7 +174,8 @@ export class FolderRepository extends BaseRepository<DocFolder, IDocFolder> {
         CREATE TABLE IF NOT EXISTS "Folder" (
             id BIGINT PRIMARY KEY NOT NULL,
             name TEXT NOT NULL,
-            color TEXT
+            color TEXT,
+            modifiedDate BIGINT
         );
         `);
     }
@@ -221,7 +263,7 @@ export class PKPassRepository extends BaseRepository<PKPass, PKPass> {
     }
 
     migrations = {
-        addPassType: sql`ALTER TABLE PKPass ADD COLUMN passType TEXT NOT NULL DEFAULT 'pkpass'`
+        addPassType: addColumn(sql`ALTER TABLE PKPass ADD COLUMN passType TEXT NOT NULL DEFAULT 'pkpass'`)
     };
 
     async createTables() {
@@ -229,6 +271,7 @@ export class PKPassRepository extends BaseRepository<PKPass, PKPass> {
         CREATE TABLE IF NOT EXISTS "PKPass" (
             id TEXT PRIMARY KEY NOT NULL,
             page_id TEXT NOT NULL,
+            passType TEXT NOT NULL DEFAULT 'pkpass',
             passData TEXT NOT NULL,
             images TEXT,
             passJsonPath TEXT,
@@ -320,53 +363,26 @@ export class PageRepository extends BaseRepository<OCRPage, Page> {
     }
     migrations = Object.assign(
         {
-            addPageExtra: sql`ALTER TABLE Page ADD COLUMN extra TEXT`,
-            addPageName: sql`ALTER TABLE Page ADD COLUMN name TEXT`,
-            addPageBrightness: sql`ALTER TABLE Page ADD COLUMN brightness INTEGER`,
-            addPageContrasts: sql`ALTER TABLE Page ADD COLUMN contrast INTEGER`,
+            addPageExtra: addColumn(sql`ALTER TABLE Page ADD COLUMN extra TEXT`),
+            addPageName: addColumn(sql`ALTER TABLE Page ADD COLUMN name TEXT`),
+            addPageBrightness: addColumn(sql`ALTER TABLE Page ADD COLUMN brightness INTEGER`),
+            addPageContrasts: addColumn(sql`ALTER TABLE Page ADD COLUMN contrast INTEGER`),
             transformsSplit: sql`UPDATE Page SET transforms = replace( transforms, ',', '|' )`,
             removeDataPath: () => sql`UPDATE Page SET imagePath = replace( imagePath, ${dataFolder.path}, '' ), sourceImagePath = replace( sourceImagePath, ${dataFolder.path}, '' )`,
-            addSourceImageWidth: sql`ALTER TABLE Page ADD COLUMN sourceImageWidth INTEGER`,
-            addSourceImageHeight: sql`ALTER TABLE Page ADD COLUMN sourceImageHeight INTEGER`,
-            addSourceImageRotation: sql`ALTER TABLE Page ADD COLUMN sourceImageRotation INTEGER`,
+            addSourceImageWidth: addColumn(sql`ALTER TABLE Page ADD COLUMN sourceImageWidth INTEGER`),
+            addSourceImageHeight: addColumn(sql`ALTER TABLE Page ADD COLUMN sourceImageHeight INTEGER`),
+            addSourceImageRotation: addColumn(sql`ALTER TABLE Page ADD COLUMN sourceImageRotation INTEGER`),
 
             updatePageSearchAccentInsensitive: (sequenceDb: DatabaseInterface) =>
-                new Promise<void>(async (resolve, reject) => {
-                    try {
-                        await sequenceDb.query(sql`ALTER TABLE Page ADD COLUMN nameSearch TEXT`);
-                        await sequenceDb.query(sql`ALTER TABLE Page ADD COLUMN ocrDataSearch TEXT`);
-                        const pages = await this.search();
-                        DEV_LOG && console.log('updateSearchAccentInsensitive for Pages', pages.length);
-                        await doInBatch(
-                            pages,
-                            async (p: OCRPage) => {
-                                const updates: any = {};
-                                if (p.name && !p.nameSearch) {
-                                    updates.nameSearch = normalizeSearchString(p.name);
-                                }
-                                if (p.ocrData && !p.ocrDataSearch) {
-                                    const ocrStr = p.ocrData.text;
-                                    updates.ocrDataSearch = normalizeSearchString(ocrStr);
-                                }
-                                if (Object.keys(updates).length) {
-                                    await super.update(p, updates);
-                                }
-                            },
-                            10
-                        );
-                        await sequenceDb.query(sql`CREATE INDEX IF NOT EXISTS idx_page_nameSearch ON Page(nameSearch)`);
-                        await sequenceDb.query(sql`CREATE INDEX IF NOT EXISTS idx_page_ocrDataSearch ON Page(ocrDataSearch)`);
-                        resolve();
-                    } catch (e) {
-                        console.error('Error filling Page search indexes', e);
-                        reject(e);
-                    }
-                }),
+                this.backfillSearchColumns(sequenceDb, [
+                    { name: 'nameSearch', index: 'idx_page_nameSearch', compute: (row: OCRPage) => (row.name ? normalizeSearchString(row.name) : undefined) },
+                    { name: 'ocrDataSearch', index: 'idx_page_ocrDataSearch', compute: (row: OCRPage) => (row.ocrData ? normalizeSearchString(row.ocrData.text) : undefined) }
+                ]),
 
             addPageSourceSize: (sequenceDb: DatabaseInterface) =>
                 new Promise<void>(async (resolve, reject) => {
                     try {
-                        await sequenceDb.query(sql`ALTER TABLE Page ADD COLUMN sourceSize INTEGER`);
+                        await ensureColumn(sequenceDb, sql`ALTER TABLE Page ADD COLUMN sourceSize INTEGER`);
                         const pages = await this.search();
                         DEV_LOG && console.log('filling sourceSize for Pages', pages.length);
                         await doInBatch(
@@ -386,16 +402,25 @@ export class PageRepository extends BaseRepository<OCRPage, Page> {
         },
         CARD_APP
             ? {
-                  addQRCode: sql`ALTER TABLE Page ADD COLUMN qrcode TEXT`,
-                  addColors: sql`ALTER TABLE Page ADD COLUMN colors TEXT`,
-                  addPKPass: sql`ALTER TABLE Page ADD COLUMN pkpass_id TEXT REFERENCES PKPass(id)`
+                  addQRCode: addColumn(sql`ALTER TABLE Page ADD COLUMN qrcode TEXT`),
+                  addColors: addColumn(sql`ALTER TABLE Page ADD COLUMN colors TEXT`),
+                  addPKPass: addColumn(sql`ALTER TABLE Page ADD COLUMN pkpass_id TEXT REFERENCES PKPass(id)`)
               }
             : {}
     );
 
     async createTables() {
-        return this.database.query(
-            sql`
+        // pkpass_id references PKPass, only present in CardWallet
+        const cardColumns = CARD_APP
+            ? `,
+            qrcode TEXT,
+            colors TEXT,
+            pkpass_id TEXT REFERENCES PKPass(id)`
+            : '';
+        // raw string (not sql``) so cardColumns interpolates as SQL, not a bound param
+        await this.database.query(
+            new SqlQuery([
+                `
         CREATE TABLE IF NOT EXISTS "Page" (
             id TEXT PRIMARY KEY NOT NULL,
             createdDate BIGINT NOT NULL DEFAULT (round((julianday('now') - 2440587.5)*86400000)),
@@ -415,9 +440,21 @@ export class PageRepository extends BaseRepository<OCRPage, Page> {
             sourceImagePath TEXT,
             imagePath TEXT,
             document_id TEXT,
+            extra TEXT,
+            name TEXT,
+            brightness INTEGER,
+            contrast INTEGER,
+            sourceImageWidth INTEGER,
+            sourceImageHeight INTEGER,
+            sourceImageRotation INTEGER,
+            nameSearch TEXT,
+            ocrDataSearch TEXT${cardColumns},
             FOREIGN KEY(document_id) REFERENCES Document(id) ON DELETE CASCADE ON UPDATE CASCADE
         );`
+            ])
         );
+        await this.database.query(sql`CREATE INDEX IF NOT EXISTS idx_page_nameSearch ON Page(nameSearch)`);
+        await this.database.query(sql`CREATE INDEX IF NOT EXISTS idx_page_ocrDataSearch ON Page(ocrDataSearch)`);
     }
 
     async createPage(page: OCRPage, dataFolder: string) {
@@ -537,9 +574,14 @@ export class DocumentRepository extends BaseRepository<OCRDocument, Document> {
                 _synced INTEGER DEFAULT 0,
                 favorite INTEGER NOT NULL DEFAULT 0,
                 usedDate BIGINT,
-                useCount INTEGER NOT NULL DEFAULT 0
+                useCount INTEGER NOT NULL DEFAULT 0,
+                extra TEXT,
+                pagesOrder TEXT,
+                trashedDate BIGINT,
+                nameSearch TEXT
                 );
         `),
+            this.database.query(sql`CREATE INDEX IF NOT EXISTS idx_doc_nameSearch ON Document(nameSearch);`),
             this.database.query(sql`
         CREATE TABLE IF NOT EXISTS "DocumentsTags" (
             document_id TEXT,
@@ -562,39 +604,15 @@ export class DocumentRepository extends BaseRepository<OCRDocument, Document> {
     }
 
     migrations = {
-        addExtra: sql`ALTER TABLE Document ADD COLUMN extra TEXT`,
-        addPagesOrder: sql`ALTER TABLE Document ADD COLUMN pagesOrder TEXT`,
-        addFavorite: tableColumnAlterPromise(sql`ALTER TABLE Document ADD COLUMN favorite INTEGER NOT NULL DEFAULT 0`),
-        addUsedDate: tableColumnAlterPromise(sql`ALTER TABLE Document ADD COLUMN usedDate BIGINT`),
-        addUseCount: tableColumnAlterPromise(sql`ALTER TABLE Document ADD COLUMN useCount INTEGER NOT NULL DEFAULT 0`),
-        addTrashedDate: tableColumnAlterPromise(sql`ALTER TABLE Document ADD COLUMN trashedDate BIGINT`),
+        addExtra: addColumn(sql`ALTER TABLE Document ADD COLUMN extra TEXT`),
+        addPagesOrder: addColumn(sql`ALTER TABLE Document ADD COLUMN pagesOrder TEXT`),
+        addFavorite: addColumn(sql`ALTER TABLE Document ADD COLUMN favorite INTEGER NOT NULL DEFAULT 0`),
+        addUsedDate: addColumn(sql`ALTER TABLE Document ADD COLUMN usedDate BIGINT`),
+        addUseCount: addColumn(sql`ALTER TABLE Document ADD COLUMN useCount INTEGER NOT NULL DEFAULT 0`),
+        addTrashedDate: addColumn(sql`ALTER TABLE Document ADD COLUMN trashedDate BIGINT`),
 
         updateDocSearchAccentInsensitive: (sequenceDb: DatabaseInterface) =>
-            new Promise<void>(async (resolve, reject) => {
-                try {
-                    await sequenceDb.query(sql`ALTER TABLE Document ADD COLUMN nameSearch TEXT`);
-                    const docs = await this.search();
-                    DEV_LOG && console.log('updateSearchAccentInsensitive docs', docs.length);
-                    await doInBatch(
-                        docs,
-                        async (d: OCRDocument) => {
-                            const updates: any = {};
-                            if (d.name && !d.nameSearch) {
-                                updates.nameSearch = normalizeSearchString(d.name);
-                            }
-                            if (Object.keys(updates).length) {
-                                await super.update(d, updates);
-                            }
-                        },
-                        10
-                    );
-                    await sequenceDb.query(sql`CREATE INDEX IF NOT EXISTS idx_doc_nameSearch ON Document(nameSearch)`);
-                    resolve();
-                } catch (e) {
-                    console.error('Error filling Page search indexes', e);
-                    reject(e);
-                }
-            })
+            this.backfillSearchColumns(sequenceDb, [{ name: 'nameSearch', index: 'idx_doc_nameSearch', compute: (row: OCRDocument) => (row.name ? normalizeSearchString(row.name) : undefined) }])
     };
 
     async createDocument(document: Document) {
@@ -925,6 +943,7 @@ export class DocumentsService extends Observable {
         dataFolder = this.dataFolder = Folder.fromPath(rootDataFolder).getFolder('data');
         DEV_LOG && console.info('DocumentsService', 'start', this.id, rootDataFolder, !!db, dataFolder.path);
 
+        let databaseFileExisted = true;
         if (db) {
             this.db = new NSQLDatabase(db, {
                 // for now it breaks
@@ -933,7 +952,8 @@ export class DocumentsService extends Observable {
             } as any);
         } else {
             const filePath = path.join(rootDataFolder, DocumentsService.DB_NAME);
-            DEV_LOG && console.log('DocumentsService', 'dbFileName', filePath, File.exists(filePath));
+            databaseFileExisted = File.exists(filePath);
+            DEV_LOG && console.log('DocumentsService', 'dbFileName', filePath, databaseFileExisted);
 
             this.db = new NSQLDatabase(filePath, {
                 // for now it breaks
@@ -959,17 +979,20 @@ export class DocumentsService extends Observable {
             if (CARD_APP) {
                 await this.pkpassRepository.createTables();
             }
+            const migrations = Object.assign(
+                {},
+                this.documentRepository.migrations,
+                this.pageRepository.migrations,
+                this.tagRepository.migrations,
+                this.folderRepository.migrations,
+                CARD_APP ? this.pkpassRepository.migrations : {}
+            );
             try {
-                await this.db.migrate(
-                    Object.assign(
-                        {},
-                        this.documentRepository.migrations,
-                        this.pageRepository.migrations,
-                        this.tagRepository.migrations,
-                        this.folderRepository.migrations,
-                        CARD_APP ? this.pkpassRepository.migrations : {}
-                    )
-                );
+                if (databaseFileExisted) {
+                    await this.db.migrate(migrations);
+                } else {
+                    await markMigrationsApplied(this.db, migrations);
+                }
             } catch (error) {
                 console.error('error applying migrations', error, error.stack);
             }
