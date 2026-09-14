@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SERVICES_SYNC_COLOR, SERVICES_SYNC_MASK, SyncType, SyncTypes, getRemoteDeleteDocumentSettingsKey } from './types';
+import { SERVICES_SYNC_COLOR, SERVICES_SYNC_MASK, SyncType, SyncTypes, getRemoteDeleteDocumentSettingsKey, getRemoteDeleteFolderSettingsKey } from './types';
 
 // `_synced` is a bitfield: each sync service owns one bit and marks a document
 // as synced with `_synced & service.syncMask`. A duplicated or shifted bit would
@@ -79,5 +79,16 @@ describe('getRemoteDeleteDocumentSettingsKey', () => {
     it('produces a distinct key per service so deletions do not leak across services', () => {
         const keys = syncTypeKeys.map((type) => getRemoteDeleteDocumentSettingsKey({ type } as any));
         expect(new Set(keys).size).toBe(keys.length);
+    });
+});
+
+describe('getRemoteDeleteFolderSettingsKey', () => {
+    it('namespaces the key by service type', () => {
+        expect(getRemoteDeleteFolderSettingsKey({ type: SyncTypes.webdav_data } as any)).toBe('webdav_data_folders_to_remove_remote');
+    });
+
+    it('never collides with the pending document deletions of the same service', () => {
+        const service = { type: SyncTypes.webdav_data } as any;
+        expect(getRemoteDeleteFolderSettingsKey(service)).not.toBe(getRemoteDeleteDocumentSettingsKey(service));
     });
 });

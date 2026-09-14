@@ -7,7 +7,7 @@ import { DocFolder, OCRDocument, OCRPage, getDocumentsService, setDocumentsServi
 import { DocumentEvents, DocumentsService } from '~/services/documents';
 import { getTransformedImage } from '~/services/pdf/PDFExportCanvas.common';
 import type { SyncStateEventData } from '~/services/sync';
-import { BaseDataSyncService, DeletedDocumentEntry } from '~/services/sync/BaseDataSyncService';
+import { BaseDataSyncService, DeletedDocumentEntry, DeletedFolderEntry } from '~/services/sync/BaseDataSyncService';
 import { BaseImageSyncService } from '~/services/sync/BaseImageSyncService';
 import { BasePDFSyncService } from '~/services/sync/BasePDFSyncService';
 import { BaseSyncService, getStoredSyncServices } from '~/services/sync/BaseSyncService';
@@ -19,7 +19,7 @@ import { LocalFolderPDFSyncService } from '~/services/sync/local/LocalFolderPDFS
 import { OneDriveDataSyncService } from '~/services/sync/onedrive/OneDriveDataSyncService';
 import { OneDriveImageSyncService } from '~/services/sync/onedrive/OneDriveImageSyncService';
 import { OneDrivePDFSyncService } from '~/services/sync/onedrive/OneDrivePDFSyncService';
-import { SYNC_TYPES, SyncType, getRemoteDeleteDocumentSettingsKey } from '~/services/sync/types';
+import { SYNC_TYPES, SyncType, getRemoteDeleteDocumentSettingsKey, getRemoteDeleteFolderSettingsKey } from '~/services/sync/types';
 import { WebdavDataSyncService } from '~/services/sync/webdav/WebdavDataSyncService';
 import { WebdavImageSyncService } from '~/services/sync/webdav/WebdavImageSyncService';
 import { WebdavPDFSyncService } from '~/services/sync/webdav/WebdavPDFSyncService';
@@ -32,6 +32,7 @@ import {
     EVENT_DOCUMENT_PAGE_UPDATED,
     EVENT_DOCUMENT_UPDATED,
     EVENT_FOLDER_ADDED,
+    EVENT_FOLDER_DELETED,
     EVENT_FOLDER_UPDATED,
     EVENT_SYNC_STATE,
     FOLDERS_DATA_FILENAME,
@@ -43,7 +44,7 @@ import { recycleImages } from '~/utils/images';
 import { basename } from '~/utils/path';
 import { SyncNotificationManager } from '~/workers/SyncNotificationManager';
 import { doInBatch } from '@shared/utils/batch';
-import { mergeDeletedDocumentTombstones } from '~/services/sync/deletedDocuments';
+import { mergeDeletedDocumentTombstones, mergeTombstones } from '~/services/sync/deletedDocuments';
 import { filterBySyncFolders, filterPagedBySyncFolders } from '~/services/sync/folderFilter';
 import { networkService } from '~/services/api';
 
@@ -176,6 +177,10 @@ export default class SyncWorker extends BaseWorker {
 
     uniqueDocumentIds(ids: string[] = []) {
         return Array.from(new Set(ids.filter(Boolean)));
+    }
+
+    uniqueFolderIds(ids: number[] = []) {
+        return Array.from(new Set(ids.filter((id) => id !== null && id !== undefined)));
     }
 
     async syncPendingDeletedDocuments(service: BaseDataSyncService, documentIds: string[], tombstoneDocuments: DeletedDocumentEntry[]) {
@@ -321,6 +326,8 @@ export default class SyncWorker extends BaseWorker {
                     const deleteKey = getRemoteDeleteDocumentSettingsKey(service);
                     DEV_LOG && console.log('documentsToDeleteOnRemote', deleteKey, ApplicationSettings.getString(deleteKey, '[]'));
                     const documentsToDeleteOnRemote = this.uniqueDocumentIds(JSON.parse(ApplicationSettings.getString(deleteKey, '[]')));
+                    const folderDeleteKey = getRemoteDeleteFolderSettingsKey(service);
+                    const foldersToDeleteOnRemote = this.uniqueFolderIds(JSON.parse(ApplicationSettings.getString(folderDeleteKey, '[]')));
                     let serviceLocalDocuments = localDocuments;
                     serviceLocalDocuments = this.filterDocumentsBySyncFolders(service, serviceLocalDocuments);
                     DEV_LOG && console.log('syncDataDocuments', 'handling service', service.type, service.id, service.autoSync, force, JSON.stringify(documentsToDeleteOnRemote));
@@ -334,11 +341,20 @@ export default class SyncWorker extends BaseWorker {
                         {
                             // first we sync folders
                             DEV_LOG && console.log('syncing folders both ways');
-                            const remoteFolders = ((await service.fileExists(FOLDERS_DATA_FILENAME)) ? JSON.parse(await service.getFileFromRemote(FOLDERS_DATA_FILENAME)) : []) as DocFolder[];
+                            const allRemoteFolders = ((await service.fileExists(FOLDERS_DATA_FILENAME)) ? JSON.parse(await service.getFileFromRemote(FOLDERS_DATA_FILENAME)) : []) as DocFolder[];
+                            const [tombstoneFolders, tombstoneFoldersHasChanged]: [DeletedFolderEntry[], boolean] = mergeTombstones(await service.getDeletedFoldersManifest(), foldersToDeleteOnRemote);
+                            const deletedFolderIds = new Set(tombstoneFolders.map((entry) => entry.id));
+                            // a tombstoned folder must not be recreated on either side
+                            const remoteFolders = allRemoteFolders.filter((folder) => !deletedFolderIds.has(folder.id));
                             // we need to send folders not on remote
                             DEV_LOG && console.log('remoteFolders', JSON.stringify(remoteFolders));
-                            const localFolders = await documentsService.folderRepository.search();
-                            let needsRemoteChange = false;
+                            const allLocalFolders = await documentsService.folderRepository.search();
+                            const localFoldersToDelete = allLocalFolders.filter((folder) => deletedFolderIds.has(folder.id));
+                            if (localFoldersToDelete.length) {
+                                await documentsService.deleteFolders(localFoldersToDelete);
+                            }
+                            const localFolders = allLocalFolders.filter((folder) => !deletedFolderIds.has(folder.id));
+                            let needsRemoteChange = remoteFolders.length !== allRemoteFolders.length;
 
                             const { toBeAdded: missingLocalFolders, toBeDeleted: missingRemoteFolders, union: toBeSyncFolders } = findArrayDiffs(localFolders, remoteFolders, (a, b) => a.id === b.id);
                             for (let index = 0; index < missingRemoteFolders.length; index++) {
@@ -363,6 +379,9 @@ export default class SyncWorker extends BaseWorker {
                             }
                             if (needsRemoteChange) {
                                 await service.putFileContentsFromData(FOLDERS_DATA_FILENAME, JSON.stringify(remoteFolders));
+                            }
+                            if (tombstoneFoldersHasChanged) {
+                                await service.putDeletedFoldersManifest(tombstoneFolders);
                             }
                         }
                         const remoteDocuments = (await service.getRemoteFolderDirectories('')).filter((s) => s.type === 'directory');
@@ -443,11 +462,19 @@ export default class SyncWorker extends BaseWorker {
                             await service.putDeletedDocumentsManifest(tombstoneDocuments);
                         }
                     } else {
-                        if (withFolders || (event && (event.eventName === EVENT_FOLDER_ADDED || event.eventName === EVENT_FOLDER_UPDATED))) {
-                            const remoteFolders = ((await service.fileExists(FOLDERS_DATA_FILENAME)) ? JSON.parse(await service.getFileFromRemote(FOLDERS_DATA_FILENAME)) : []) as any[];
+                        if (
+                            withFolders ||
+                            foldersToDeleteOnRemote.length ||
+                            (event && (event.eventName === EVENT_FOLDER_ADDED || event.eventName === EVENT_FOLDER_UPDATED || event.eventName === EVENT_FOLDER_DELETED))
+                        ) {
+                            await service.ensureRemoteFolder();
+                            const allRemoteFolders = ((await service.fileExists(FOLDERS_DATA_FILENAME)) ? JSON.parse(await service.getFileFromRemote(FOLDERS_DATA_FILENAME)) : []) as any[];
+                            const [tombstoneFolders, tombstoneFoldersHasChanged]: [DeletedFolderEntry[], boolean] = mergeTombstones(await service.getDeletedFoldersManifest(), foldersToDeleteOnRemote);
+                            const deletedFolderIds = new Set(tombstoneFolders.map((entry) => entry.id));
+                            const remoteFolders = allRemoteFolders.filter((folder) => !deletedFolderIds.has(folder.id));
                             // we need to send folders not on remote
                             const localFolders = await getDocumentsService().folderRepository.search();
-                            let changed = false;
+                            let changed = remoteFolders.length !== allRemoteFolders.length;
                             for (let index = 0; index < localFolders.length; index++) {
                                 const folder = localFolders[index];
                                 const remoteIndex = remoteFolders.findIndex((f) => folder.id === f.id);
@@ -461,12 +488,15 @@ export default class SyncWorker extends BaseWorker {
                                     }
                                 } else {
                                     DEV_LOG && console.log('creating remote folder', folder.id);
-                                    remoteFolders.push(folder.toString());
+                                    remoteFolders.push(folder.toJSON());
                                     changed = true;
                                 }
                             }
                             if (changed) {
                                 await service.putFileContentsFromData(FOLDERS_DATA_FILENAME, JSON.stringify(remoteFolders));
+                            }
+                            if (tombstoneFoldersHasChanged) {
+                                await service.putDeletedFoldersManifest(tombstoneFolders);
                             }
                         }
                         // just test if we have local document marked as needing update
@@ -552,6 +582,7 @@ export default class SyncWorker extends BaseWorker {
                         }
                     }
                     ApplicationSettings.remove(deleteKey);
+                    ApplicationSettings.remove(folderDeleteKey);
                     this.onServiceSyncDone(service);
                 })
         );

@@ -63,6 +63,10 @@ export function getRemoteDeleteDocumentSettingsKey(s: BaseSyncService) {
     return s.type + '_docs_to_remove_remote';
 }
 
+export function getRemoteDeleteFolderSettingsKey(s: BaseSyncService) {
+    return s.type + '_folders_to_remove_remote';
+}
+
 export interface SyncProgressData {
     type: 'data' | 'image' | 'pdf';
     current: number;

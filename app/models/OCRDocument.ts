@@ -83,7 +83,10 @@ export class DocFolder {
         }
         await documentsService.folderRepository.update(this, data);
         Object.assign(this, data);
+        // renaming to a subfolder name needs its parents to exist too
+        const ancestors = data.name?.length ? await documentsService.folderRepository.ensureAncestors([data.name]) : [];
         if (notify) {
+            ancestors.forEach((folder) => documentsService.notify({ eventName: EVENT_FOLDER_ADDED, folder } as DocumentFolderAddedEventData));
             documentsService.notify({ eventName: EVENT_FOLDER_UPDATED, folder: this, changedProps: new Set(Object.keys(data)) } as FolderUpdatedEventData);
         }
     }
@@ -676,8 +679,9 @@ export class OCRDocument extends Observable implements Document {
             }
             if (!folder) {
                 folder = await folderRepository.create({ id: folderId || Date.now(), name: folderName });
+                const ancestors = folderName?.length ? await folderRepository.ensureAncestors([folderName]) : [];
                 if (notify) {
-                    documentsService.notify({ eventName: EVENT_FOLDER_ADDED, folder } as DocumentFolderAddedEventData);
+                    ancestors.concat(folder).forEach((addedFolder) => documentsService.notify({ eventName: EVENT_FOLDER_ADDED, folder: addedFolder } as DocumentFolderAddedEventData));
                 }
             }
         }

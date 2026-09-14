@@ -532,6 +532,11 @@
                         title: lc('folder_color_as_background'),
                         description: lc('folder_color_as_background_desc'),
                         value: ApplicationSettings.getBoolean(SETTINGS_DRAW_FOLDERS_BACKGROUND, DEFAULT_DRAW_FOLDERS_BACKGROUND)
+                    },
+                    {
+                        id: 'folder_management',
+                        title: lc('manage_folders'),
+                        description: lc('manage_folders_desc')
                     }
                 ];
             case 'sync':
@@ -1299,6 +1304,11 @@
                 case 'storage_usage': {
                     const storageView = (await import('~/components/settings/StorageView.svelte')).default;
                     navigate({ page: storageView });
+                    break;
+                }
+                case 'folder_management': {
+                    const folderManagementView = (await import('~/components/settings/FolderManagementView.svelte')).default;
+                    navigate({ page: folderManagementView });
                     break;
                 }
                 case 'data_sync':

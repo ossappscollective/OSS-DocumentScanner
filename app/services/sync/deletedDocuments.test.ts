@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { mergeDeletedDocumentTombstones } from './deletedDocuments';
+import { mergeDeletedDocumentTombstones, mergeTombstones } from './deletedDocuments';
 
 // The function returns a tuple: [tombstoneArray, hasChanged].
 
@@ -36,4 +36,24 @@ test('merges tombstones from multiple ids without duplicates', () => {
 test('ignores entries with missing or empty ids', () => {
     const [result] = mergeDeletedDocumentTombstones([], [null as any, '', 'doc-c'], 100);
     expect(result).toEqual([{ id: 'doc-c', deletedDate: 100 }]);
+});
+
+// folders are tombstoned the same way, with numeric ids
+
+test('creates tombstones for deleted folder ids', () => {
+    const [result] = mergeTombstones<number>([], [12, 34], 1234);
+    expect(result).toEqual([
+        { id: 12, deletedDate: 1234 },
+        { id: 34, deletedDate: 1234 }
+    ]);
+});
+
+test('keeps the newest deleted date for an existing folder tombstone', () => {
+    const [result] = mergeTombstones<number>([{ id: 12, deletedDate: 2000 }], [12], 1000);
+    expect(result).toEqual([{ id: 12, deletedDate: 2000 }]);
+});
+
+test('does not drop the folder id 0', () => {
+    const [result] = mergeTombstones<number>([], [0, null as any], 100);
+    expect(result).toEqual([{ id: 0, deletedDate: 100 }]);
 });

@@ -158,6 +158,7 @@ export const EVENT_DOCUMENT_PAGE_UPDATED = 'documentPageUpdated';
 export const EVENT_DOCUMENT_USE_COUNT = 'documentUseCount';
 export const EVENT_FOLDER_UPDATED = 'folderUpdated';
 export const EVENT_FOLDER_ADDED = 'folderAdded';
+export const EVENT_FOLDER_DELETED = 'folderDeleted';
 
 export const SETTINGS_TRASH_ENABLED = 'trash_enabled';
 export const SETTINGS_TRASH_REMEMBERED_DELETE_MODE = 'trash_remembered_delete_mode';
@@ -171,4 +172,5 @@ export const EVENT_SYNC_PROGRESS = 'syncProgress';
 export const FOLDERS_DATA_FILENAME = 'folders.json';
 export const DOCUMENT_DATA_FILENAME = 'data.json';
 export const DELETED_DOCUMENTS_DATA_FILENAME = 'deleted_documents.json';
+export const DELETED_FOLDERS_DATA_FILENAME = 'deleted_folders.json';
 export const VALID_MARKER_FILENAME = '.valid';

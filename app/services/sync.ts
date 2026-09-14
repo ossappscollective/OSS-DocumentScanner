@@ -15,6 +15,7 @@ import {
     EVENT_DOCUMENT_PAGE_UPDATED,
     EVENT_DOCUMENT_UPDATED,
     EVENT_FOLDER_ADDED,
+    EVENT_FOLDER_DELETED,
     EVENT_FOLDER_UPDATED,
     EVENT_STATE,
     EVENT_SYNC_STATE,
@@ -28,10 +29,11 @@ import {
     DocumentEvents,
     DocumentPagesAddedEventData,
     DocumentUpdatedEventData,
+    FolderDeletedEventData,
     FolderUpdatedEventData,
     documentsService
 } from './documents';
-import { SYNC_TYPES, SyncType, getRemoteDeleteDocumentSettingsKey } from './sync/types';
+import { SYNC_TYPES, SyncType, getRemoteDeleteDocumentSettingsKey, getRemoteDeleteFolderSettingsKey } from './sync/types';
 import { getStoredSyncServices } from '~/services/sync/BaseSyncService';
 
 export const syncServicesStore = writable([]);
@@ -162,6 +164,23 @@ export class SyncService extends BaseWorkerHandler<SyncWorker> {
             });
         this.sendDataEvent(event);
     }
+    onFolderDeleted(event: FolderDeletedEventData) {
+        if (event.fromWorker === true) {
+            return;
+        }
+        const deletedFolderIds = event.folders.map((folder) => folder.id);
+        DEV_LOG && console.log('SYNC', 'onFolderDeleted', deletedFolderIds);
+
+        this.getStoredSyncServices()
+            .filter((s) => s.enabled !== false)
+            .forEach((service) => {
+                const key = getRemoteDeleteFolderSettingsKey(service as any);
+                const foldersToDeleteOnRemote = JSON.parse(ApplicationSettings.getString(key, '[]')) as number[];
+                foldersToDeleteOnRemote.push(...deletedFolderIds);
+                ApplicationSettings.setString(key, JSON.stringify([...new Set(foldersToDeleteOnRemote)]));
+            });
+        this.sendDataEvent(event);
+    }
     onDocumentUpdated(event: DocumentUpdatedEventData) {
         // only used for data sync
         DEV_LOG && console.log('SYNC', 'onDocumentUpdated', event.updateModifiedDate);
@@ -254,6 +273,7 @@ export class SyncService extends BaseWorkerHandler<SyncWorker> {
             documentsService.on(EVENT_DOCUMENT_MOVED_FOLDER, this.sendDataEvent, this);
             documentsService.on(EVENT_FOLDER_UPDATED, this.sendDataEvent, this);
             documentsService.on(EVENT_FOLDER_ADDED, this.sendDataEvent, this);
+            documentsService.on(EVENT_FOLDER_DELETED, this.onFolderDeleted, this);
             this.on(EVENT_SYNC_STATE, this.onSyncState, this);
 
             DEV_LOG && console.log('SyncService', 'start');
@@ -271,6 +291,7 @@ export class SyncService extends BaseWorkerHandler<SyncWorker> {
         documentsService.off(EVENT_DOCUMENT_MOVED_FOLDER, this.sendDataEvent, this);
         documentsService.off(EVENT_FOLDER_UPDATED, this.sendDataEvent, this);
         documentsService.off(EVENT_FOLDER_ADDED, this.sendDataEvent, this);
+        documentsService.off(EVENT_FOLDER_DELETED, this.onFolderDeleted, this);
         if (this.syncRunning) {
             // if sync is running wait for it to be finished
             await new Promise((resolve) => this.once(EVENT_SYNC_STATE, resolve));
