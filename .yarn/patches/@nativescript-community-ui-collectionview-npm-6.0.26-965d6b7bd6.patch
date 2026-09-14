@@ -1,0 +1,157 @@
+diff --git a/index-common.js b/index-common.js
+index 1e4a0bc34f2cf7bc94559a8264406a64cdfa4145..29f55ca5c4b59dfdf0ca0f74b63429930d18a80a 100644
+--- a/index-common.js
++++ b/index-common.js
+@@ -169,9 +169,12 @@ let CollectionViewBase = CollectionViewBase_1 = class CollectionViewBase extends
+     notifyLoading(args) {
+         this.notify(args);
+     }
++    get currentItems() {
++        return this._frozenItems || this.items;
++    }
+     getItemAtIndex(index) {
+         // will be overriden in onItemsChangedInternal
+-        const thisItems = this.items;
++        const thisItems = this.currentItems;
+         return thisItems.getItem ? thisItems.getItem(index) : thisItems[index];
+     }
+     isHorizontal() {
+@@ -356,10 +359,10 @@ let CollectionViewBase = CollectionViewBase_1 = class CollectionViewBase extends
+     //     this.onItemTemplateSelectorChanged(oldValue, newValue);
+     // }
+     getItemSourceAtIndex(index) {
+-        return this.items.getItem(index);
++        return this.currentItems.getItem(index);
+     }
+     getItemArrayAtIndex(index) {
+-        return this.items[index];
++        return this.currentItems[index];
+     }
+     onItemsChanged(oldValue, newValue) {
+         const getItem = newValue && newValue.getItem;
+@@ -372,7 +375,10 @@ let CollectionViewBase = CollectionViewBase_1 = class CollectionViewBase extends
+         if (newValue instanceof Observable) {
+             addWeakEventListener(newValue, ObservableArray.changeEvent, this.onSourceCollectionChangedInternal, this);
+         }
++        // refresh can defer itself: it then freezes `oldValue` until it actually runs
++        this._replacedItems = oldValue;
+         this.refresh();
++        this._replacedItems = null;
+     }
+     onLoaded() {
+         super.onLoaded();
+diff --git a/index.android.js b/index.android.js
+index a455f35b64dc01d36ee8a22e6002c8bfae15dd7b..420558d97c3476b612801f4606a8fea986637662 100644
+--- a/index.android.js
++++ b/index.android.js
+@@ -213,7 +213,13 @@ export class CollectionView extends CollectionViewBase {
+         nativeView.setLayoutManager(layoutManager);
+         nativeView.layoutManager = layoutManager;
+         nativeView.sizeChangedListener = new com.nativescript.collectionview.SizeChangedListener({
+-            onLayout: (changed, left, top, right, bottom) => changed && this.onLayout(left, top, right, bottom),
++            onLayout: (changed, left, top, right, bottom) => {
++                if (changed) {
++                    this.onLayout(left, top, right, bottom);
++                }
++                // fired after super.onLayout: the RecyclerView is done computing its layout
++                this.runPendingRefresh();
++            },
+             onMeasure: (widthMeasureSpec, heightMeasureSpec) => this.onMeasure(widthMeasureSpec, heightMeasureSpec)
+         });
+         this.spanSize = this._getSpanSize;
+@@ -242,6 +248,9 @@ export class CollectionView extends CollectionViewBase {
+         this.recycledViewPoolDisposeListener = null;
+         this.recycledViewPool = null;
+         this.detachScrollListenerIfNecessary(true);
++        this.removePendingRefreshListener();
++        this._pendingRefresh = null;
++        this._frozenItems = null;
+         nativeView.sizeChangedListener = null;
+         nativeView.layoutManager = null;
+         this._listViewAdapter = null;
+@@ -921,6 +930,36 @@ export class CollectionView extends CollectionViewBase {
+         }
+         return -1;
+     }
++    runPendingRefresh() {
++        const pending = this._pendingRefresh;
++        if (!pending) {
++            return;
++        }
++        this._pendingRefresh = null;
++        this._frozenItems = null;
++        this.removePendingRefreshListener();
++        this.refresh(pending.forceRefresh, pending.updateSpanCountRequestsLayout);
++    }
++    removePendingRefreshListener() {
++        if (!this._pendingRefreshListener) {
++            return;
++        }
++        this.nativeViewProtected?.getViewTreeObserver().removeOnPreDrawListener(this._pendingRefreshListener);
++        this._pendingRefreshListener = null;
++    }
++    // a bind can also replace `items` while scrolling, and a scroll is not followed by a layout
++    addPendingRefreshListener() {
++        if (this._pendingRefreshListener) {
++            return;
++        }
++        this._pendingRefreshListener = new android.view.ViewTreeObserver.OnPreDrawListener({
++            onPreDraw: () => {
++                this.runPendingRefresh();
++                return true;
++            }
++        });
++        this.nativeViewProtected.getViewTreeObserver().addOnPreDrawListener(this._pendingRefreshListener);
++    }
+     refresh(forceRefresh = false, updateSpanCountRequestsLayout = false) {
+         if (this.mInPropertiesSet) {
+             this.mShouldRefresh = true;
+@@ -937,6 +976,21 @@ export class CollectionView extends CollectionViewBase {
+             this._isDataDirty = true;
+             return;
+         }
++        // notifyDataSetChanged throws while the RecyclerView computes its layout, which happens
++        // when a binding replaces `items` from onBindViewHolder. Run it once the pass is over.
++        if (view.isComputingLayout()) {
++            this._isDataDirty = true;
++            this._pendingRefresh = { forceRefresh, updateSpanCountRequestsLayout };
++            // the running pass keeps asking for the positions it started with
++            if (!this._frozenItems && this._replacedItems) {
++                this._frozenItems = this._replacedItems;
++            }
++            this.addPendingRefreshListener();
++            return;
++        }
++        this._pendingRefresh = null;
++        this._frozenItems = null;
++        this.removePendingRefreshListener();
+         this._isDataDirty = false;
+         this._lastLayoutKey = this._innerWidth + '_' + this._innerHeight;
+         let adapter = this._listViewAdapter;
+@@ -1026,10 +1080,12 @@ export class CollectionView extends CollectionViewBase {
+         return adapter;
+     }
+     getItemCount() {
+-        return this.items ? this.items.length : 0;
++        const items = this.currentItems;
++        return items ? items.length : 0;
+     }
+     getItem(i) {
+-        if (this.items && i < this.items.length) {
++        const items = this.currentItems;
++        if (items && i < items.length) {
+             return this.getItemAtIndex(i);
+         }
+         return null;
+diff --git a/platforms/android/native-api-usage.json b/platforms/android/native-api-usage.json
+index 319fe9419e4dfb5b202915555a160722a030dc53..7bc0879449e4cd70261561adf6360aaf6fe42238 100644
+--- a/platforms/android/native-api-usage.json
++++ b/platforms/android/native-api-usage.json
+@@ -4,6 +4,7 @@
+         "android.view:View.OnClickListener",
+         "android.view:View.OnLayoutChangeListener",
+         "android.view:ViewGroup.LayoutParams",
++        "android.view:ViewTreeObserver.OnPreDrawListener",
+         "androidx.core.view:GestureDetectorCompat",
+         "androidx.recyclerview.widget:GridLayoutManager",
+         "androidx.recyclerview.widget:GridLayoutManager.SpanSizeLookup",

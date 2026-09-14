@@ -1612,12 +1612,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-collectionview@npm:6.0.26, @nativescript-community/ui-collectionview@npm:^6.0.26":
+"@nativescript-community/ui-collectionview@npm:6.0.26":
   version: 6.0.26
   resolution: "@nativescript-community/ui-collectionview@npm:6.0.26"
   dependencies:
     "@nativescript-community/arraybuffers": "npm:^1.1.5"
   checksum: 10/02de27ce2b3dc2e0a2dcc46dc291d616e86ab23cb1a73234b97c6c7b39fe9c9fa506637553f86f8d69bf1aa31b639bd8ca2f96f9c16de810f8e0b4ee889a29cb
+  languageName: node
+  linkType: hard
+
+"@nativescript-community/ui-collectionview@patch:@nativescript-community/ui-collectionview@npm%3A6.0.26#~/.yarn/patches/@nativescript-community-ui-collectionview-npm-6.0.26-965d6b7bd6.patch":
+  version: 6.0.26
+  resolution: "@nativescript-community/ui-collectionview@patch:@nativescript-community/ui-collectionview@npm%3A6.0.26#~/.yarn/patches/@nativescript-community-ui-collectionview-npm-6.0.26-965d6b7bd6.patch::version=6.0.26&hash=1243c6"
+  dependencies:
+    "@nativescript-community/arraybuffers": "npm:^1.1.5"
+  checksum: 10/c5721f4c52b170ac8f472ce5f6a19e50d5f7f6119fedb8af5911235e5b155ff22c2681893286962b7a108f1efce5f9e4686137e501429c3425046bd9e0debc2b
   languageName: node
   linkType: hard
 
@@ -11124,7 +11133,7 @@ __metadata:
     "@nativescript-community/ui-canvas": "npm:4.6.52"
     "@nativescript-community/ui-canvaslabel": "npm:1.2.55"
     "@nativescript-community/ui-checkbox": "npm:2.0.18"
-    "@nativescript-community/ui-collectionview": "npm:6.0.26"
+    "@nativescript-community/ui-collectionview": "patch:@nativescript-community/ui-collectionview@npm%3A6.0.26#~/.yarn/patches/@nativescript-community-ui-collectionview-npm-6.0.26-965d6b7bd6.patch"
     "@nativescript-community/ui-collectionview-swipemenu": "npm:6.0.26"
     "@nativescript-community/ui-document-picker": "npm:1.1.29"
     "@nativescript-community/ui-image": "npm:4.6.20"

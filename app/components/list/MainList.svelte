@@ -1274,8 +1274,9 @@
             showError(error);
         }
     }
-    function itemTemplateSpanSize(item: Item) {
-        if (item.type === 'folders') {
+    function itemTemplateSpanSize(item?: Item) {
+        // the item can be gone already: a layout pass still asks for positions of the previous data
+        if (item?.type === 'folders') {
             return $nbColumns;
         }
         return 1;
