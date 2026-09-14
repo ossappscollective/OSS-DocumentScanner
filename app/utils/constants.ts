@@ -172,4 +172,5 @@ export const EVENT_SYNC_PROGRESS = 'syncProgress';
 export const FOLDERS_DATA_FILENAME = 'folders.json';
 export const DOCUMENT_DATA_FILENAME = 'data.json';
 export const DELETED_DOCUMENTS_DATA_FILENAME = 'deleted_documents.json';
+export const DELETED_FOLDERS_DATA_FILENAME = 'deleted_folders.json';
 export const VALID_MARKER_FILENAME = '.valid';

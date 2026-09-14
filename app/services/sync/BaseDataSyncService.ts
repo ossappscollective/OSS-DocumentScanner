@@ -5,12 +5,12 @@ import { BaseSyncService, BaseSyncServiceOptions } from './BaseSyncService';
 import { SilentError } from '@akylas/nativescript-app-utils/error';
 import { lc } from '@nativescript-community/l';
 import { basename } from '~/utils/path';
-import { DELETED_DOCUMENTS_DATA_FILENAME, DOCUMENT_DATA_FILENAME, VALID_MARKER_FILENAME } from '~/utils/constants';
+import { DELETED_DOCUMENTS_DATA_FILENAME, DELETED_FOLDERS_DATA_FILENAME, DOCUMENT_DATA_FILENAME, VALID_MARKER_FILENAME } from '~/utils/constants';
 import { ResponseData, ResponseDataDetailed } from '~/services/sync/interfaces';
-import { type DeletedDocumentEntry, mergeDeletedDocumentTombstones } from '~/services/sync/deletedDocuments';
+import { type DeletedDocumentEntry, type DeletedFolderEntry, mergeDeletedDocumentTombstones } from '~/services/sync/deletedDocuments';
 
 export type BaseDataSyncServiceOptions = BaseSyncServiceOptions;
-export type { DeletedDocumentEntry };
+export type { DeletedDocumentEntry, DeletedFolderEntry };
 
 export abstract class BaseDataSyncService extends BaseSyncService {
     allowToRemoveOnRemote: boolean = true;
@@ -40,6 +40,20 @@ export abstract class BaseDataSyncService extends BaseSyncService {
 
     async putDeletedDocumentsManifest(entries: DeletedDocumentEntry[]): Promise<void> {
         await this.putFileContentsFromData(DELETED_DOCUMENTS_DATA_FILENAME, JSON.stringify(entries), { overwrite: true });
+    }
+
+    async getDeletedFoldersManifest(): Promise<DeletedFolderEntry[]> {
+        try {
+            const deletedFolders = JSON.parse(await this.getFileFromRemote(DELETED_FOLDERS_DATA_FILENAME));
+            return Array.isArray(deletedFolders) ? deletedFolders.filter((entry) => entry?.id !== undefined && typeof entry.deletedDate === 'number') : [];
+        } catch (error) {
+            console.warn('invalid deleted folders manifest', error?.message || error);
+            return [];
+        }
+    }
+
+    async putDeletedFoldersManifest(entries: DeletedFolderEntry[]): Promise<void> {
+        await this.putFileContentsFromData(DELETED_FOLDERS_DATA_FILENAME, JSON.stringify(entries), { overwrite: true });
     }
 
     async importFolderFromRemote(remoteRelativePath: string, folder: Folder, ignores?: string[]) {
