@@ -441,7 +441,12 @@
         refreshFolders();
     }
     function onFolderDeleted(event: FolderDeletedEventData) {
-        refreshFolders();
+        if (folder && event.folders.some((deletedFolder) => deletedFolder.id === folder.id)) {
+            actionBarOnGoBack();
+            return;
+        }
+        // documents kept out of the deleted folders are unfiled now: the whole list must be rebuilt
+        refresh();
     }
     async function onDocumentsDeleted(event: DocumentDeletedEventData) {
         // DEV_LOG &&
