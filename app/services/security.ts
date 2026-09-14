@@ -36,9 +36,8 @@ export default class SecurityService extends Observable {
         Application.on(Application.foregroundEvent, this.onAppForeground, this);
         Application.on(Application.backgroundEvent, this.onAppBackground, this);
         // Application.on(Application.exitEvent, this.onAppExit, this);
-        const r = await this.biometricAuth.available();
-        this.biometricsAvailable = !!(r.biometrics || r.touch || r.face);
-        if (this.biometricsAvailable) {
+        await this.updateBiometricsAvailable();
+        if (this.biometricsAvailable || this.biometricEnabled) {
             await this.validateSecurityOrClose();
         }
     }
@@ -111,8 +110,23 @@ export default class SecurityService extends Observable {
         }
     }
 
+    async updateBiometricsAvailable() {
+        try {
+            const result = await this.biometricAuth.available();
+            // on Android `any` is true as soon as the device is secure (biometrics enrolled or device credential)
+            this.biometricsAvailable = !!result.any;
+        } catch (error) {
+            DEV_LOG && console.error('updateBiometricsAvailable', error);
+            this.biometricsAvailable = false;
+        }
+        return this.biometricsAvailable;
+    }
+
     async enableBiometric() {
         DEV_LOG && console.log('enableBiometric');
+        if (!(await this.updateBiometricsAvailable())) {
+            throw new Error(lc('no_device_lock_setup'));
+        }
         this.biometricEnabled = await this.verifyFingerprint({});
         return this.biometricEnabled;
     }
@@ -210,7 +224,13 @@ export default class SecurityService extends Observable {
     async verifyFingerprint(options: VerifyBiometricOptions = {}) {
         try {
             DEV_LOG && console.log('verifyFingerprint', options);
-            const result = await this.biometricAuth.verifyBiometric({ message: lc('authenticate_security'), ...options });
+            const result = await this.biometricAuth.verifyBiometric({
+                title: lc('biometric_lock'),
+                message: lc('authenticate_security'),
+                // pinFallback lets the prompt accept the device credential (PIN/pattern/password) and not only enrolled biometrics
+                ...(__ANDROID__ ? { pinFallback: true } : {}),
+                ...options
+            });
             return result.code === ERROR_CODES.SUCCESS;
         } catch (error) {
             console.error(error, error.stack);
