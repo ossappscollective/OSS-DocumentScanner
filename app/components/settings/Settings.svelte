@@ -206,7 +206,6 @@
                                 id: 'biometric_lock',
                                 title: lc('biometric_lock'),
                                 description: lc('biometric_lock_desc'),
-                                enabled: securityService.biometricsAvailable,
                                 value: securityService.biometricEnabled
                             },
                             {
@@ -214,7 +213,6 @@
                                 id: 'biometric_auto_lock',
                                 title: lc('biometric_auto_lock'),
                                 description: lc('biometric_auto_lock_desc'),
-                                enabled: securityService.biometricsAvailable,
                                 value: securityService.biometricEnabled && securityService.autoLockEnabled
                             }
                         ]
@@ -1346,8 +1344,8 @@
                     try {
                         await securityService.enableBiometric();
                     } catch (error) {
-                        const errorMessage = (error.message as string).split(':').pop();
-                        showError(errorMessage, { showAsSnack: true });
+                        const errorMessage = typeof error?.message === 'string' ? error.message.replace(/^[\w.$]+(Exception|Error):\s*/, '') : null;
+                        showError(errorMessage || error, { showAsSnack: true });
                         const checkboxView = event.object as CheckBox;
                         checkboxView.checked = item.value = false;
                         // showError(error);

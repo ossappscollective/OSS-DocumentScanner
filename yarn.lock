@@ -1870,6 +1870,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@nativescript/biometrics@patch:@nativescript/biometrics@npm%3A1.3.1#~/.yarn/patches/@nativescript-biometrics-npm-1.3.1-b5d39a8970.patch":
+  version: 1.3.1
+  resolution: "@nativescript/biometrics@patch:@nativescript/biometrics@npm%3A1.3.1#~/.yarn/patches/@nativescript-biometrics-npm-1.3.1-b5d39a8970.patch::version=1.3.1&hash=d43ddb"
+  checksum: 10/853316598d714af3b8b548c26f12b00cbc2da3b2489f74c5fd6dc592f0e3ff7b6483b8ef39b2b2506c69d31156a1dc8900058bdd5b074ca2d0a256816470afbd
+  languageName: node
+  linkType: hard
+
 "@nativescript/core@npm:9.0.20":
   version: 9.0.20
   resolution: "@nativescript/core@npm:9.0.20"
@@ -11151,7 +11158,7 @@ __metadata:
     "@nativescript-community/ui-webview": "npm:1.6.2"
     "@nativescript-community/ui-zoomimage": "npm:4.6.20"
     "@nativescript/android-quickjs-ng": "npm:9.1.0-alpha.0"
-    "@nativescript/biometrics": "npm:1.3.1"
+    "@nativescript/biometrics": "patch:@nativescript/biometrics@npm%3A1.3.1#~/.yarn/patches/@nativescript-biometrics-npm-1.3.1-b5d39a8970.patch"
     "@nativescript/core": "npm:9.0.20"
     "@nativescript/datetimepicker": "npm:3.0.2"
     "@nativescript/imagepicker": "npm:5.0.0"
