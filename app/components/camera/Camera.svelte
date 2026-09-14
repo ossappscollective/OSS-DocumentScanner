@@ -37,6 +37,7 @@
         SETTINGS_IMAGE_EXPORT_FORMAT,
         getImageExportSettings
     } from '~/utils/constants';
+    import { ZOOM_SLIDER_STEPS, clampZoom, percentToZoom, zoomToPercent } from '~/utils/cameraZoom';
     import { recycleImages } from '~/utils/images';
     import { confirmGoBack, goToDocumentAfterScan, hideLoading, onBackButton, processCameraImage, requestCameraPermission, showLoading, showSettings } from '~/utils/ui';
     import { checkAvailableStorage } from '~/utils/utils';
@@ -476,7 +477,8 @@
     }
     const onZoom = debounce(
         function onZoom(event) {
-            zoom = event.zoom;
+            // the native pinch handler reports the uncoerced ratio
+            zoom = clampZoom(event.zoom, minZoom, maxZoom, neutralZoom);
             ApplicationSettings.setNumber('defaultZoom', zoom);
             updateFloatZoom(zoom);
         },
@@ -498,14 +500,19 @@
         floatZoom = value;
         const view = zoomSlider?.nativeView;
         if (view) {
-            const zoomPercent = (floatZoom - minZoom) / (maxZoom - minZoom);
+            const zoomPercent = zoomToPercent(floatZoom, minZoom, maxZoom) / ZOOM_SLIDER_STEPS;
             const parentWidth = Utils.layout.toDeviceIndependentPixels(view.getMeasuredWidth()) - 40;
             zoomPercentDelta = parentWidth * zoomPercent;
         }
     }
     function onZoomValue(e) {
-        updateFloatZoom(e.value);
-        setZoomThrottled(floatZoom);
+        const value = percentToZoom(e.value, minZoom, maxZoom, neutralZoom);
+        // the slider also notifies on programmatic value changes
+        if (Math.abs(value - zoom) < 1e-3) {
+            return;
+        }
+        updateFloatZoom(value);
+        setZoomThrottled(value);
     }
 
     let autoScan = ApplicationSettings.getBoolean('autoScan', AUTO_SCAN_ENABLED);
@@ -671,12 +678,15 @@
 
     let maxZoom = 1;
     let minZoom = 1;
+    let neutralZoom = 1;
     let cameraOpened = false;
     function onCameraOpen({ object }: { object: CameraView }) {
         try {
-            zoom = ApplicationSettings.getNumber('defaultZoom', cameraView.nativeView.neutralZoom);
             minZoom = cameraView.nativeView.minZoom;
             maxZoom = Math.min(cameraView.nativeView.maxZoom, 16);
+            neutralZoom = clampZoom(cameraView.nativeView.neutralZoom, minZoom, maxZoom, minZoom);
+            zoom = clampZoom(ApplicationSettings.getNumber('defaultZoom', neutralZoom), minZoom, maxZoom, neutralZoom);
+            updateFloatZoom(zoom);
             DEV_LOG && console.log('onCameraOpen', minZoom, maxZoom, zoom);
             if (__ANDROID__) {
                 if (!usingUserDefinedCameraResolution) {
@@ -762,10 +772,10 @@
             <slider
                 bind:this={zoomSlider}
                 backgroundColor={colorBackground}
-                maxValue={maxZoom}
-                minValue={minZoom}
+                maxValue={ZOOM_SLIDER_STEPS}
+                minValue={0}
                 thumbColor="transparent"
-                value={zoom}
+                value={zoomToPercent(zoom, minZoom, maxZoom)}
                 on:valueChange={onZoomValue}
                 on:layoutChanged={(e) => updateFloatZoom(zoom)}
             />
