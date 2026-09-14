@@ -90,7 +90,7 @@
         "@nativescript-community/ui-svg": "0.2.24",
         "@nativescript-community/ui-webview": "1.6.2",
         "@nativescript-community/ui-zoomimage": "4.6.20",
-        "@nativescript/biometrics": "1.3.1",
+        "@nativescript/biometrics": "patch:@nativescript/biometrics@npm%3A1.3.1#~/.yarn/patches/@nativescript-biometrics-npm-1.3.1-b5d39a8970.patch",
         "@nativescript/datetimepicker": "3.0.2",
         "@nativescript/imagepicker": "5.0.0",
         "buffer": "^6.0.3",

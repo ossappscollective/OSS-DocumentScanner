@@ -1,0 +1,87 @@
+diff --git a/index.android.js b/index.android.js
+index ff4a964e607e70bc141ce05d82983de066129418..ec181e9fdd763f81f79b552739a0ebefd9c7dd39 100644
+--- a/index.android.js
++++ b/index.android.js
+@@ -5,6 +5,15 @@ const sdkVersion = parseInt(Device.sdkVersion);
+ const KEY_NAME = 'biometricprintauth';
+ const SECRET_BYTE_ARRAY = Array.create('byte', 16);
+ const REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS = 788; // arbitrary
++// the JS peer of the callback can be collected while the device credential UI is in front.
++// keep the pending call in module scope so a recreated peer still resolves the right promise.
++let pendingAuthentication = null;
++function getAuthenticationState(instance) {
++    if (instance && typeof instance.reject === 'function') {
++        return instance;
++    }
++    return pendingAuthentication;
++}
+ const AuthenticationCallback = androidx.biometric.BiometricPrompt.AuthenticationCallback.extend({
+     resolve: null,
+     reject: null,
+@@ -32,7 +41,12 @@ const AuthenticationCallback = androidx.biometric.BiometricPrompt.Authentication
+                 message = error;
+             }
+         }
+-        this.reject({
++        const state = getAuthenticationState(this);
++        pendingAuthentication = null;
++        if (!state) {
++            return;
++        }
++        state.reject({
+             code: returnCode,
+             message,
+         });
+@@ -42,22 +56,29 @@ const AuthenticationCallback = androidx.biometric.BiometricPrompt.Authentication
+     },
+     onAuthenticationSucceeded(result) {
+         var _a;
++        const state = getAuthenticationState(this);
++        pendingAuthentication = null;
++        if (!state) {
++            return;
++        }
+         try {
+-            const options = this.options;
++            const options = state.options;
+             let cipher;
+-            if (!this.pinFallBack) {
++            if (!state.pinFallBack) {
+                 if (((_a = options === null || options === void 0 ? void 0 : options.android) === null || _a === void 0 ? void 0 : _a.validityDuration) > 0) {
+                     cipher = BiometricAuth.getAndInitSecretKey(options);
+                 }
+                 else {
+-                    cipher = result.getCryptoObject().getCipher();
++                    // no crypto object when authenticating with the device credential
++                    const cryptoObject = result.getCryptoObject();
++                    cipher = cryptoObject ? cryptoObject.getCipher() : null;
+                 }
+             }
+-            BiometricAuth.performCrypto(options, cipher, this.resolve);
++            BiometricAuth.performCrypto(options, cipher, state.resolve);
+         }
+         catch (error) {
+             console.log(`Error in onAuthenticationSucceeded: ${error}`);
+-            this.reject({
++            state.reject({
+                 code: ERROR_CODES.UNEXPECTED_ERROR,
+                 message: error,
+             });
+@@ -225,6 +246,8 @@ export class BiometricAuth {
+                         authCallback.toDecrypt = (_c = options === null || options === void 0 ? void 0 : options.android) === null || _c === void 0 ? void 0 : _c.decryptText;
+                         authCallback.pinFallBack = pinFallback;
+                         authCallback.options = options;
++                        this.authCallback = authCallback;
++                        pendingAuthentication = { resolve, reject, options, pinFallBack: pinFallback };
+                         this.biometricPrompt = new androidx.biometric.BiometricPrompt(this.getActivity(), executor, authCallback);
+                         if (pinFallback && sdkVersion < 30) {
+                             this.promptForPin(resolve, reject, options);
+@@ -291,7 +314,7 @@ export class BiometricAuth {
+             const decryptedBytes = cipher.doFinal(nativeBytes);
+             decrypted = new java.lang.String(decryptedBytes, java.nio.charset.StandardCharsets.UTF_8).toString();
+         }
+-        else if (!(options === null || options === void 0 ? void 0 : options.pinFallback)) {
++        else if (!(options === null || options === void 0 ? void 0 : options.pinFallback) && cipher) {
+             cipher.doFinal(SECRET_BYTE_ARRAY);
+         }
+         resolve({
