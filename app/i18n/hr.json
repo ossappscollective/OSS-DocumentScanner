@@ -195,6 +195,7 @@
     "ok": "OK",
     "on": "uključeno",
     "open": "otvori",
+    "open_trash": "otvoreno smeće",
     "orientation": "orijentacija",
     "page": "stranica",
     "page_layout": "izgled stranice",
@@ -286,6 +287,5 @@
     "webdav_sync_desc": "uključite webdav da biste sinkronizirali vaše dokumente (backup)",
     "whitepaper": "bijeli papir",
     "whitepaper_desc": "unaprijeđenje za klasično crno bijelo skeniranje",
-    "wrong_passcode": "neispravna lozinka",
-    "open_trash": "otvoreno smeće"
+    "wrong_passcode": "neispravna lozinka"
 }
