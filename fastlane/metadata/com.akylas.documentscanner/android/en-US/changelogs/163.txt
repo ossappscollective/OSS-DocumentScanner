@@ -1,0 +1,14 @@
+Features:
+- add folder deletion in the data layer
+- add folder management screen
+- keep deleted folders deleted across devices
+
+Bug fixes:
+- create PKPass passType column on fresh install
+- keep zoom slider off the ultra-wide lens
+- show the parent of a subfolder created in one step
+- refresh the document list when a folder is deleted
+- survive an items change during a RecyclerView layout pass
+- send folders to the remote as objects
+- allow device credential for the app lock
+- Translations updat
