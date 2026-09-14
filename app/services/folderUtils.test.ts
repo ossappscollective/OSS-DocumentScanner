@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { type FolderLike, collectFoldersToDelete, filterEmptyFolders, isFolderDescendant } from './folderUtils';
+import { type FolderLike, collectFoldersToDelete, filterEmptyFolders, folderAncestorNames, isFolderDescendant, missingFolderAncestors } from './folderUtils';
 
 // Folders are tags whose hierarchy only exists in the name ("work/2024"), so
 // deleting a folder must take its descendants with it — and nothing else.
@@ -48,5 +48,38 @@ describe('collectFoldersToDelete', () => {
 describe('filterEmptyFolders', () => {
     it('keeps folders without documents, including those with no count', () => {
         expect(filterEmptyFolders(folders)).toEqual([work2024Q1, home]);
+    });
+});
+
+describe('folderAncestorNames', () => {
+    it('lists every parent from the shallowest', () => {
+        expect(folderAncestorNames('work/2024/q1')).toEqual(['work', 'work/2024']);
+    });
+
+    it('returns nothing for a top level folder', () => {
+        expect(folderAncestorNames('work')).toEqual([]);
+    });
+
+    it('never returns an empty ancestor', () => {
+        expect(folderAncestorNames('/work/2024')).toEqual(['/work']);
+        expect(folderAncestorNames('work/')).toEqual(['work']);
+    });
+});
+
+describe('missingFolderAncestors', () => {
+    it('reports the parents a folder list never declares', () => {
+        expect(missingFolderAncestors(['work/2024'], ['work/2024'])).toEqual(['work']);
+    });
+
+    it('stays quiet when every parent exists', () => {
+        expect(missingFolderAncestors(['work', 'work/2024'], ['work/2024'])).toEqual([]);
+    });
+
+    it('reports a missing parent only once across folders', () => {
+        expect(missingFolderAncestors([], ['work/2024', 'work/2025'])).toEqual(['work']);
+    });
+
+    it('reports intermediate levels too, shallowest first', () => {
+        expect(missingFolderAncestors([], ['work/2024/q1'])).toEqual(['work', 'work/2024']);
     });
 });

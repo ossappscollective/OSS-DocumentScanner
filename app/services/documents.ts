@@ -9,6 +9,7 @@ import { DocFolder, Document, IDocFolder, OCRDocument, OCRPage, Page, Tag } from
 import { PKPass, PKPassType } from '~/models/PKPass';
 import { EVENT_DOCUMENT_DELETED, EVENT_DOCUMENT_RESTORED, EVENT_DOCUMENT_TRASHED, EVENT_DOCUMENT_USE_COUNT, EVENT_FOLDER_DELETED, SETTINGS_ROOT_DATA_FOLDER } from '~/utils/constants';
 import { groupByArray } from '@shared/utils';
+import { missingFolderAncestors } from '~/services/folderUtils';
 import { StorageSizes } from '~/utils/originals';
 import DatabaseInterface from 'kiss-orm/dist/Databases/DatabaseInterface';
 import QueryIdentifier from 'kiss-orm/dist/Queries/QueryIdentifier';
@@ -166,7 +167,21 @@ export class FolderRepository extends BaseRepository<DocFolder, IDocFolder> {
     }
     migrations = {
         addModifDate: addColumn(sql`ALTER TABLE Folder ADD COLUMN modifiedDate BIGINT`),
-        fillNullModifDate: sql`UPDATE Folder SET modifiedDate = (round((julianday('now') - 2440587.5)*86400000)) WHERE modifiedDate IS NULL;`
+        fillNullModifDate: sql`UPDATE Folder SET modifiedDate = (round((julianday('now') - 2440587.5)*86400000)) WHERE modifiedDate IS NULL;`,
+        createMissingFolderAncestors: async (sequenceDb: DatabaseInterface) => {
+            const rows = (await sequenceDb.query(sql`SELECT id, name FROM Folder`)) as { id: number; name: string }[];
+            const names = rows.map((row) => row.name);
+            const missing = missingFolderAncestors(names, names);
+            const usedIds = new Set(rows.map((row) => row.id));
+            let id = Date.now();
+            for (let index = 0; index < missing.length; index++) {
+                while (usedIds.has(id)) {
+                    id++;
+                }
+                usedIds.add(id);
+                await sequenceDb.query(sql`INSERT INTO Folder ( id, name, modifiedDate ) VALUES(${id}, ${missing[index]}, ${Date.now()})`);
+            }
+        }
     };
 
     async createTables() {
@@ -232,6 +247,26 @@ COUNT(d.id) AS count`,
             })
             .flat();
     }
+    // the folder list only shows a subfolder through its parent, so every ancestor needs a real row
+    async ensureAncestors(names: string[]) {
+        const existing = await this.search();
+        const missing = missingFolderAncestors(
+            existing.map((folder) => folder.name),
+            names
+        );
+        const usedIds = new Set(existing.map((folder) => folder.id));
+        const created: DocFolder[] = [];
+        let id = Date.now();
+        for (let index = 0; index < missing.length; index++) {
+            while (usedIds.has(id)) {
+                id++;
+            }
+            usedIds.add(id);
+            created.push(await this.create({ id, name: missing[index], modifiedDate: Date.now() }));
+        }
+        return created;
+    }
+
     // unlike findFolders this keeps subfolders as their own entries: folder management works on real rows
     async findAllFolders() {
         return this.search({
