@@ -32,6 +32,7 @@
         DocumentMovedFolderEventData,
         DocumentPageUpdatedEventData,
         DocumentUpdatedEventData,
+        FolderDeletedEventData,
         FolderUpdatedEventData,
         documentsService
     } from '~/services/documents';
@@ -54,6 +55,7 @@
         EVENT_DOCUMENT_TRASHED,
         EVENT_DOCUMENT_UPDATED,
         EVENT_FOLDER_ADDED,
+        EVENT_FOLDER_DELETED,
         EVENT_FOLDER_UPDATED,
         EVENT_STATE,
         EVENT_SYNC_STATE,
@@ -438,6 +440,9 @@
         // DEV_LOG && console.log('onFolderUpdated', event.folder);
         refreshFolders();
     }
+    function onFolderDeleted(event: FolderDeletedEventData) {
+        refreshFolders();
+    }
     async function onDocumentsDeleted(event: DocumentDeletedEventData) {
         // DEV_LOG &&
         //     console.log(
@@ -529,6 +534,7 @@
             documentsService.on(EVENT_DOCUMENT_RESTORED, refreshSimple);
             documentsService.on(EVENT_FOLDER_ADDED, onFolderAdded);
             documentsService.on(EVENT_FOLDER_UPDATED, onFolderUpdated);
+            documentsService.on(EVENT_FOLDER_DELETED, onFolderDeleted);
             syncService.on(EVENT_SYNC_STATE, onSyncState);
             syncService.on(EVENT_STATE, refreshSimple);
         }
@@ -553,6 +559,7 @@
             documentsService.off(EVENT_DOCUMENT_RESTORED, refreshSimple);
             documentsService.off(EVENT_FOLDER_ADDED, onFolderAdded);
             documentsService.off(EVENT_FOLDER_UPDATED, onFolderUpdated);
+            documentsService.off(EVENT_FOLDER_DELETED, onFolderDeleted);
             syncService.off(EVENT_SYNC_STATE, onSyncState);
             syncService.off(EVENT_STATE, refreshSimple);
         }

@@ -7,7 +7,7 @@ import SqlQuery from 'kiss-orm/dist/Queries/SqlQuery';
 import CrudRepository from 'kiss-orm/dist/Repositories/CrudRepository';
 import { DocFolder, Document, IDocFolder, OCRDocument, OCRPage, Page, Tag } from '~/models/OCRDocument';
 import { PKPass, PKPassType } from '~/models/PKPass';
-import { EVENT_DOCUMENT_DELETED, EVENT_DOCUMENT_RESTORED, EVENT_DOCUMENT_TRASHED, EVENT_DOCUMENT_USE_COUNT, SETTINGS_ROOT_DATA_FOLDER } from '~/utils/constants';
+import { EVENT_DOCUMENT_DELETED, EVENT_DOCUMENT_RESTORED, EVENT_DOCUMENT_TRASHED, EVENT_DOCUMENT_USE_COUNT, EVENT_FOLDER_DELETED, SETTINGS_ROOT_DATA_FOLDER } from '~/utils/constants';
 import { groupByArray } from '@shared/utils';
 import { StorageSizes } from '~/utils/originals';
 import DatabaseInterface from 'kiss-orm/dist/Databases/DatabaseInterface';
@@ -231,6 +231,19 @@ COUNT(d.id) AS count`,
                 return toReturn;
             })
             .flat();
+    }
+    // unlike findFolders this keeps subfolders as their own entries: folder management works on real rows
+    async findAllFolders() {
+        return this.search({
+            select: sql`f.*,
+COUNT(d.id) AS count`,
+            from: sql`Folder f`,
+            postfix: sql`
+LEFT JOIN DocumentsFolders df ON f.id = df.folder_id
+LEFT JOIN Document d ON d.id = df.document_id AND d.trashedDate IS NULL`,
+            groupBy: sql`f.id`,
+            orderBy: sql`f.name COLLATE NOCASE`
+        });
     }
     async findFolderById(id: number) {
         return (
@@ -876,6 +889,9 @@ export interface DocumentDeletedEventData extends DocumentEventData {
     documents?: OCRDocument[];
     folders?: number[];
 }
+export interface FolderDeletedEventData extends DocumentEventData {
+    folders: DocFolder[];
+}
 export interface DocumentTrashedEventData extends DocumentEventData {
     documents?: OCRDocument[];
 }
@@ -1036,6 +1052,19 @@ WHERE d.trashedDate IS NULL`);
         // await OCRDocument.delete(docs.map((d) => d.id));
         // documents.forEach((doc) => doc.removeFromDisk());
         // this.notify({ eventName: EVENT_DOCUMENT_DELETED, documents } as DocumentDeletedEventData);
+    }
+    async deleteFolders(folders: DocFolder[]) {
+        if (!folders.length) {
+            return;
+        }
+        const ids = SqlQuery.join(
+            folders.map((folder) => sql`${folder.id}`),
+            sql`,`
+        );
+        // foreign keys are off on this database: the ON DELETE CASCADE on DocumentsFolders never fires
+        await this.db.query(sql`DELETE FROM DocumentsFolders WHERE folder_id IN (${ids})`);
+        await this.db.query(sql`DELETE FROM Folder WHERE id IN (${ids})`);
+        this.notify({ eventName: EVENT_FOLDER_DELETED, folders } as FolderDeletedEventData);
     }
     async trashDocuments(documents: OCRDocument[]) {
         DEV_LOG &&
