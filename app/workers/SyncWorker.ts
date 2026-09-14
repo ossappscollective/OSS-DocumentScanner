@@ -488,7 +488,7 @@ export default class SyncWorker extends BaseWorker {
                                     }
                                 } else {
                                     DEV_LOG && console.log('creating remote folder', folder.id);
-                                    remoteFolders.push(folder.toString());
+                                    remoteFolders.push(folder.toJSON());
                                     changed = true;
                                 }
                             }
