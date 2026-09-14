@@ -64,8 +64,8 @@
         "@nativescript-community/ui-canvas": "4.6.52",
         "@nativescript-community/ui-canvaslabel": "1.2.55",
         "@nativescript-community/ui-checkbox": "2.0.18",
-        "@nativescript-community/ui-collectionview": "patch:@nativescript-community/ui-collectionview@npm%3A6.0.26#~/.yarn/patches/@nativescript-community-ui-collectionview-npm-6.0.26-965d6b7bd6.patch",
-        "@nativescript-community/ui-collectionview-swipemenu": "6.0.26",
+        "@nativescript-community/ui-collectionview": "6.0.27",
+        "@nativescript-community/ui-collectionview-swipemenu": "6.0.27",
         "@nativescript-community/ui-document-picker": "1.1.29",
         "@nativescript-community/ui-image": "4.6.20",
         "@nativescript-community/ui-image-colorfilter": "4.6.20",
@@ -127,8 +127,5 @@
         "./plugin-nativeprocessor",
         "./webpdfviewer"
     ],
-    "packageManager": "yarn@4.9.4+sha512.7b1cb0b62abba6a537b3a2ce00811a843bea02bcf53138581a6ae5b1bf563f734872bd47de49ce32a9ca9dcaff995aa789577ffb16811da7c603dcf69e73750b",
-    "resolutions": {
-        "@nativescript-community/ui-collectionview@npm:^6.0.26": "patch:@nativescript-community/ui-collectionview@npm%3A6.0.26#~/.yarn/patches/@nativescript-community-ui-collectionview-npm-6.0.26-965d6b7bd6.patch"
-    }
+    "packageManager": "yarn@4.9.4+sha512.7b1cb0b62abba6a537b3a2ce00811a843bea02bcf53138581a6ae5b1bf563f734872bd47de49ce32a9ca9dcaff995aa789577ffb16811da7c603dcf69e73750b"
 }
