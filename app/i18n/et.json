@@ -169,6 +169,7 @@
     "ok": "Okei",
     "on": "peal",
     "open": "avatud",
+    "open_trash": "ava prügikast",
     "orientation": "orientatsiooni",
     "page_layout": "Lehe kujunduse",
     "page_margin": "lehe veeris",
@@ -251,6 +252,5 @@
     "webdav_sync_desc": "lubage webdav dokumentide sünkroonimiseks (varukoopia)",
     "whitepaper": "Valge paber",
     "whitepaper_desc": "valgepaberi tüüpi dokumentide täiustamine",
-    "wrong_passcode": "vale parool",
-    "open_trash": "ava prügikast"
+    "wrong_passcode": "vale parool"
 }
