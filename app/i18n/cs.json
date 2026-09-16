@@ -217,6 +217,7 @@
     "ok": "OK",
     "on": "zap",
     "open": "otevřít",
+    "open_trash": "otevřený odpadkový koš",
     "orientation": "otočení",
     "page_layout": "rozvržení stránky",
     "page_margin": "odsazení stránky",
@@ -299,6 +300,5 @@
     "webdav_sync_desc": "povolte webdav pro synchronizaci (zálohu) vašich dokumentů",
     "whitepaper": "bílý papír",
     "whitepaper_desc": "vylepšení pro dokumenty na bílém papíru",
-    "wrong_passcode": "nesprávné heslo",
-    "open_trash": "otevřený odpadkový koš"
+    "wrong_passcode": "nesprávné heslo"
 }
