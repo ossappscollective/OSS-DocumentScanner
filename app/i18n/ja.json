@@ -110,6 +110,7 @@
     "confirm_delete_document": "このドキュメントを削除しますか？",
     "confirm_delete_documents_one": "選択された%1$s件のドキュメントを削除しますか？",
     "confirm_delete_documents_other": "選択された%1$s件のドキュメントを削除しますか？",
+    "confirm_delete_folders_one": "本当にこのフォルダーを削除しますか？",
     "confirm_delete_page": "%1$s枚のページを削除してもよろしいですか?",
     "confirm_delete_pages_one": "選択中の%1$s枚のページを削除してもよろしいですか?",
     "confirm_delete_pages_other": "選択中の%1$s枚のページを削除してもよろしいですか?",
