@@ -19,7 +19,9 @@ export function mergeTombstones<Id extends string | number>(entries: TombstoneEn
             return;
         }
         const existing = tombstones.get(entry.id);
-        if (!existing || existing.deletedDate < entry.deletedDate) {
+        if (!existing) {
+            tombstones.set(entry.id, { id: entry.id, deletedDate: entry.deletedDate });
+        } else if (existing.deletedDate < entry.deletedDate) {
             tombstones.set(entry.id, { id: entry.id, deletedDate: entry.deletedDate });
             hasChanged = true;
         }
