@@ -26,6 +26,15 @@ test('reports hasChanged = true when new entries are added', () => {
     expect(hasChanged).toBe(true);
 });
 
+test('reports hasChanged = false when there are no new ids to tombstone', () => {
+    // SyncWorker only re-uploads the tombstone manifest when hasChanged is true
+    // (see syncDataDocuments). Replaying the same stored tombstones with no new
+    // deletions must not trigger a write on every sync pass.
+    const [result, hasChanged] = mergeDeletedDocumentTombstones([{ id: 'doc-a', deletedDate: 2000 }], [], 9999);
+    expect(result).toEqual([{ id: 'doc-a', deletedDate: 2000 }]);
+    expect(hasChanged).toBe(false);
+});
+
 test('merges tombstones from multiple ids without duplicates', () => {
     const [result] = mergeDeletedDocumentTombstones([], ['doc-a', 'doc-b', 'doc-a'], 500);
     expect(result).toHaveLength(2);
