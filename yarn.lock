@@ -1856,10 +1856,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript/android-quickjs-ng@npm:9.1.0-alpha.0":
-  version: 9.1.0-alpha.0
-  resolution: "@nativescript/android-quickjs-ng@npm:9.1.0-alpha.0"
-  checksum: 10/696efa6d6b8f8f3c93f49144d6174b9cbc04c11e29b8776b3b8a2c79ebdac8b48f96a7009deb6078565cd523216538ac11a4f18d639e87c14f7d64e371ffb29e
+"@nativescript/android-quickjs-ng@npm:9.0.0-alpha.5":
+  version: 9.0.0-alpha.5
+  resolution: "@nativescript/android-quickjs-ng@npm:9.0.0-alpha.5"
+  checksum: 10/c66a932604e234909bac37e6d76f02f69e9af03b3a1df82dc0aa8bb3468da7ab1a120031dc4bb656ce53dfd9514811824ef0381c4ea628086715693976f74938
+  languageName: node
+  linkType: hard
+
+"@nativescript/android@npm:9.1.1":
+  version: 9.1.1
+  resolution: "@nativescript/android@npm:9.1.1"
+  checksum: 10/97dc91516fe64be1731d3c142441b091f32465420a8663c3b268312de0b99fdd946a901ba9ad2efde78d5eff9f580ee2484561c3c3dcdabd6cbe0557c1f7baef
   languageName: node
   linkType: hard
 
@@ -11157,7 +11164,8 @@ __metadata:
     "@nativescript-community/ui-svg": "npm:0.2.24"
     "@nativescript-community/ui-webview": "npm:1.6.2"
     "@nativescript-community/ui-zoomimage": "npm:4.6.20"
-    "@nativescript/android-quickjs-ng": "npm:9.1.0-alpha.0"
+    "@nativescript/android": "npm:9.1.1"
+    "@nativescript/android-quickjs-ng": "npm:9.0.0-alpha.5"
     "@nativescript/biometrics": "patch:@nativescript/biometrics@npm%3A1.3.1#~/.yarn/patches/@nativescript-biometrics-npm-1.3.1-b5d39a8970.patch"
     "@nativescript/core": "npm:9.0.20"
     "@nativescript/datetimepicker": "npm:3.0.2"

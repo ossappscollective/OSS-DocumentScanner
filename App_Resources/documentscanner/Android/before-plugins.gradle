@@ -1,5 +1,4 @@
 ext {
-    nsBytecodeDisabled = true
     minSdk = 24
     compileSdk = 36
     targetSdk = 36

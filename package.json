@@ -110,7 +110,8 @@
     "devDependencies": {
         "@akylas/nativescript-ios-runtime": "9.0.3",
         "@akylas/nativescript-webpack": "5.0.35",
-        "@nativescript/android-quickjs-ng": "9.1.0-alpha.0",
+        "@nativescript/android": "9.1.1",
+        "@nativescript/android-quickjs-ng": "9.0.0-alpha.5",
         "@nativescript/core": "9.0.20",
         "merge-properties-files": "1.1.6",
         "mini-css-extract-plugin": "2.10.0",
