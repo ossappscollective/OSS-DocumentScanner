@@ -15,6 +15,7 @@ initVariables({
         hasCamera.set(deviceHasCamera());
     },
     keepSurfaceContainerHigh: __IOS__,
+    tintWindow: __IOS__,
     getTheme: (colorTheme) => {
         const theme = require(`~/themes/${__APP_ID__}/${colorTheme}.json`);
         return __IOS__ ? withSystemColors(theme) : theme;
