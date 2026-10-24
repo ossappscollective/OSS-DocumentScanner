@@ -147,9 +147,9 @@
     />
     <RemoteFolderTextField columns="*" row={3} text={$store.remoteFolder} on:returnPress={testConnection} on:textChange={(e) => ($store.remoteFolder = e['value'])} />
     <gridlayout columns="*,*" row={4} rows="auto">
-        <!-- <mdbutton text={lc('save')} verticalAlignment="middle" on:tap={save} /> -->
+        <!-- <uibutton text={lc('save')} verticalAlignment="middle" on:tap={save} /> -->
         <gridlayout col={1} columns="auto" horizontalAlignment="right" rows="auto" verticalAlignment="middle">
-            <mdbutton
+            <uibutton
                 backgroundColor={testConnectionSuccess < 0 ? colorError : testConnectionSuccess > 0 ? 'lightgreen' : colorSecondary}
                 color={colorOnError}
                 text={testConnectionSuccess < 0 ? lc('failed') : testConnectionSuccess > 0 ? lc('successful') : lc('test')}

@@ -61,7 +61,7 @@
 </script>
 
 <gesturerootview {...$$restProps} {padding} rows="auto,auto,auto,auto" on:layoutChanged={(e) => (closeCallback = e.object['bindingContext']?.closeCallback)}>
-    <mdbutton height={30} horizontalAlignment="left" margin="2" text={topFolder} visibility={topFolder ? 'visible' : 'collapse'} />
+    <uibutton height={30} horizontalAlignment="left" margin="2" text={topFolder} visibility={topFolder ? 'visible' : 'collapse'} />
     <textfield
         autocapitalizationType="none"
         autocorrect={false}
@@ -78,7 +78,7 @@
         <label marginTop={15} row={2} text={lc('existing_folders')} />
         <wraplayout margin={5} row={3}>
             {#each foundFolders as group (group.id)}
-                <mdbutton height={30} margin="2" text={group.name} on:tap={() => onFolderTap(group)} />
+                <uibutton height={30} margin="2" text={group.name} on:tap={() => onFolderTap(group)} />
             {/each}
         </wraplayout>
     {/if}

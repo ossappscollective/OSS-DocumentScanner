@@ -175,10 +175,10 @@
 
     <stacklayout slot="fab" class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal" row={2}>
         {#if nbSelected > 0}
-            <mdbutton id="fab" class="fab" verticalAlignment="center" on:tap={throttle(() => importSelectedDocuments(), 500)}>
+            <uibutton id="fab" class="fab" verticalAlignment="center" on:tap={throttle(() => importSelectedDocuments(), 500)}>
                 <cspan fontFamily={$fonts.mdi} fontSize={24} text="mdi-check  " />
                 <cspan text={lc('import_documents')} />
-            </mdbutton>
+            </uibutton>
         {/if}
     </stacklayout>
     <stacklayout slot="abovecollectionview" horizontalAlignment="left" row={1}>

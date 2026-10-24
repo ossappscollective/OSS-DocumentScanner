@@ -93,7 +93,7 @@
         </SyncSettingsCollectionView>
 
         <CActionBar canGoBack modalWindow={true} title={lc('data_sync_settings')}>
-            <mdbutton text={lc('save')} variant="text" verticalAlignment="middle" on:tap={save} />
+            <uibutton text={lc('save')} variant="text" verticalAlignment="middle" on:tap={save} />
         </CActionBar>
     </gridlayout>
 </page>

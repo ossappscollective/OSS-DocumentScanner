@@ -128,7 +128,7 @@
 
     <gridlayout columns="*,*" margin="5 0 0 0" rows="auto">
         <gridlayout col={1} columns="auto" horizontalAlignment="right" rows="auto" verticalAlignment="middle">
-            <mdbutton
+            <uibutton
                 backgroundColor={testConnectionSuccess < 0 ? colorError : testConnectionSuccess > 0 ? 'lightgreen' : colorSecondary}
                 color={colorOnError}
                 text={testConnectionSuccess < 0 ? lc('failed') : testConnectionSuccess > 0 ? lc('successful') : lc('test')}

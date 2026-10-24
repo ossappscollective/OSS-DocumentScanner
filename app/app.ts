@@ -1,22 +1,23 @@
+import { startWindowHelper } from '@shared/utils/window';
 import { GestureRootView, install as installGestures } from '@nativescript-community/gesturehandler';
 import { installMixins as installUIMixins } from '@nativescript-community/systemui';
 import { overrideSpanAndFormattedString } from '@nativescript-community/text';
 import SwipeMenuElement from '@nativescript-community/ui-collectionview-swipemenu/svelte';
 import CollectionViewElement from '@nativescript-community/ui-collectionview/svelte';
-import SegmentedBarElement from '@nativescript-community/ui-material-segmentedbar/svelte/SegmentedBarElement';
+import { register as registerAppBar } from '@nativescript-community/ui-appbar/svelte';
 import DrawerElement from '@nativescript-community/ui-drawer/svelte';
 import { ImagePipeline, ImageViewTraceCategory, getImagePipeline, initialize } from '@nativescript-community/ui-image';
 import { installMixins as installColorFilters } from '@nativescript-community/ui-image-colorfilter';
 import { Label } from '@nativescript-community/ui-label';
-import { install as installBottomSheets } from '@nativescript-community/ui-material-bottomsheet';
-import { installMixins, themer } from '@nativescript-community/ui-material-core';
+import { install as installBottomSheets } from '@nativescript-community/ui-bottomsheet';
+import { installMixins, themer } from '@nativescript-community/ui-core';
 import { Pager } from '@nativescript-community/ui-pager';
 import PagerElement from '@nativescript-community/ui-pager/svelte';
 import { Application, ApplicationSettings, Frame, NavigatedData, Page, Trace } from '@nativescript/core';
 import { startSentry } from '@shared/utils/sentry';
 import { showError } from '@shared/utils/showError';
 import { CropView } from 'plugin-nativeprocessor/CropView';
-import { FrameElement, PageElement, createElement, navigate, registerElement, registerNativeViewElement } from '@nativescript-community/svelte-native/dom';
+import { FrameElement, NativeElementPropType, PageElement, createElement, navigate, registerElement, registerNativeViewElement } from '@nativescript-community/svelte-native/dom';
 import { NestedScrollView } from '@shared/components/NestedScrollView';
 import { getCurrentISO3Language, lc } from '~/helpers/locale';
 import { start as startThemeHelper } from '~/helpers/theme';
@@ -81,15 +82,19 @@ try {
     registerNativeViewElement('GridLayout', () => require('@nativescript/core').GridLayout);
     registerNativeViewElement('ScrollView', () => NestedScrollView as any);
     registerNativeViewElement('StackLayout', () => require('@nativescript/core').StackLayout);
-    registerNativeViewElement('Switch', () => require('@nativescript-community/ui-material-switch').Switch);
+    registerNativeViewElement('Switch', () => require('@nativescript-community/ui-switch').Switch);
     registerNativeViewElement('Span', () => require('@nativescript/core').Span);
 
-    registerNativeViewElement('slider', () => require('@nativescript-community/ui-material-slider').Slider, null, {}, { override: true });
-    registerNativeViewElement('textview', () => require('@nativescript-community/ui-material-textview').TextView, null, {}, { override: true });
-    registerNativeViewElement('textfield', () => require('@nativescript-community/ui-material-textfield').TextField, null, {}, { override: true });
-    registerNativeViewElement('mdbutton', () => require('@nativescript-community/ui-material-button').Button);
-    registerNativeViewElement('activityIndicator', () => require('@nativescript-community/ui-material-activityindicator').ActivityIndicator);
-    registerNativeViewElement('progress', () => require('@nativescript-community/ui-material-progress').Progress);
+    registerNativeViewElement('slider', () => require('@nativescript-community/ui-slider').Slider, null, {}, { override: true });
+    registerNativeViewElement('textview', () => require('@nativescript-community/ui-textview').TextView, null, {}, { override: true });
+    registerNativeViewElement('textfield', () => require('@nativescript-community/ui-textfield').TextField, null, {}, { override: true });
+    registerAppBar();
+    registerNativeViewElement('uibutton', () => require('@nativescript-community/ui-button').Button);
+    registerNativeViewElement('uifloatingactionbutton', () => require('@nativescript-community/ui-floatingactionbutton').FloatingActionButton);
+    // the shared components still use the mdbutton tag
+    registerNativeViewElement('mdbutton', () => require('@nativescript-community/ui-button').Button);
+    registerNativeViewElement('activityIndicator', () => require('@nativescript-community/ui-activityindicator').ActivityIndicator);
+    registerNativeViewElement('progress', () => require('@nativescript-community/ui-progress').Progress);
     registerNativeViewElement('label', () => Label);
     registerNativeViewElement('image', () => require('@nativescript-community/ui-image').Img);
     registerNativeViewElement('zoomimage', () => require('@nativescript-community/ui-zoomimage').ZoomImg);
@@ -103,13 +108,14 @@ try {
     registerNativeViewElement('gesturerootview', () => require('@nativescript-community/gesturehandler').GestureRootView);
     registerNativeViewElement('awebview', () => require('@nativescript-community/ui-webview').AWebView);
     registerNativeViewElement('lottie', () => require('@nativescript-community/ui-lottie').LottieView);
+    registerNativeViewElement('segmentedbar', () => require('@nativescript-community/ui-segmentedbar').SegmentedBar, null, { items: NativeElementPropType.Array }, { override: true });
+    registerNativeViewElement('segmentedbaritem', () => require('@nativescript-community/ui-segmentedbar').SegmentedBarItem, 'items', {}, { override: true });
     registerNativeViewElement('pagerindicator', () => require('@nativescript-community/ui-pager-indicator').PagerIndicator);
     registerNativeViewElement('svgview', () => require('@nativescript-community/ui-svg').SVGView);
     // registerNativeViewElement('blurview', () => require('@nativescript-community/ui-blurview').BlurView);
 
     PagerElement.register();
     CollectionViewElement.register();
-    SegmentedBarElement.register();
     SwipeMenuElement.register();
     DrawerElement.register();
     const shouldEnableSentry = ApplicationSettings.getBoolean(SETTINGS_ENABLE_CRASH_REPORT, PLAY_STORE_BUILD);
@@ -152,6 +158,16 @@ try {
     Application.on(Application.launchEvent, async () => {
         // DEV_LOG && console.log('launch');
         startThemeHelper();
+        startWindowHelper({
+            startWidth: 1300,
+            startHeight: 940,
+            minWidth: 480,
+            minHeight: 560,
+            commands: [
+                { id: 'search', title: lc('search'), input: 'f', menu: 'edit' },
+                { id: 'preferences', title: lc('preferences'), input: ',', menu: 'preferences' }
+            ]
+        });
         launched = true;
         start();
     });

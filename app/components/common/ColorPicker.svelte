@@ -15,7 +15,7 @@
     import { lc, lu } from '@nativescript-community/l';
     import { Template } from '@nativescript-community/svelte-native/components';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-    import { closeBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
+    import { closeBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { onMount } from 'svelte';
     import { colors, screenWidthDips } from '~/variables';
     const SLIDER_HEIGHT = 32;
@@ -732,7 +732,7 @@
 <!-- <page actionBarHidden={true}> -->
 <gesturerootview rows="auto,*" {...$$restProps}>
     <!-- <CActionBar title="Color Picker">
-        <mdbutton class="actionBarButton" text="mdi-eyedropper-variant" variant="text" on:tap={startScreenPicker} />
+        <uibutton class="actionBarButton" text="mdi-eyedropper-variant" variant="text" on:tap={startScreenPicker} />
     </CActionBar> -->
     <gridlayout padding={16} row={1} rows="auto,*, auto, auto, auto, auto">
         <!-- <gridlayout backgroundColor={hsvaToHex()} borderRadius="18" height="90" /> -->
@@ -813,7 +813,7 @@
                     }}
                 />
 
-                <mdbutton col={1} text={lc('select')} verticalAlignment="center" on:tap={(e) => closeBottomSheet(currentColor)} />
+                <uibutton col={1} text={lc('select')} verticalAlignment="center" on:tap={(e) => closeBottomSheet(currentColor)} />
             </gridlayout>
         </stacklayout>
     </gridlayout>

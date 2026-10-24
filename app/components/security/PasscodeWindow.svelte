@@ -263,7 +263,7 @@
                 <label colSpan={4} color="white" fontSize={16} fontWeight="bold" paddingBottom={30} text={message} textAlignment="center" verticalAlignment="bottom" />
             </gridlayout>
             {#each { length: 10 } as _, j (j)}
-                <mdbutton
+                <uibutton
                     backgroundColor="transparent"
                     borderRadius={30}
                     col={j === 1 ? 1 : (j - 2) % 3}
@@ -278,7 +278,7 @@
                     on:tap={() => onButtonTap(j - 1 + '')}
                 />
             {/each}
-            <mdbutton class="mdi" backgroundColor="transparent" borderRadius={30} col={2} fontSize={30} height={60} row={4} text="mdi-close" variant="flat" width="60" on:tap={() => clear()} />
+            <uibutton class="mdi" backgroundColor="transparent" borderRadius={30} col={2} fontSize={30} height={60} row={4} text="mdi-close" variant="flat" width="60" on:tap={() => clear()} />
         </gridlayout>
     {:else}
         <gridlayout on:layoutChanged={onLayoutChanged}>

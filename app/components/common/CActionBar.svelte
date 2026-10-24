@@ -66,7 +66,7 @@
     />
     <stacklayout col={0} orientation="horizontal">
         <slot name="left" />
-        <mdbutton class={'actionBarButton ' + clazz} defaultVisualState={buttonsDefaultVisualState} text={menuIcon} variant="text" visibility={menuIconVisibility} on:tap={onMenuIcon} />
+        <uibutton class={'actionBarButton ' + clazz} defaultVisualState={buttonsDefaultVisualState} text={menuIcon} variant="text" visibility={menuIconVisibility} on:tap={onMenuIcon} />
     </stacklayout>
     <stacklayout col={2} orientation="horizontal">
         <slot />

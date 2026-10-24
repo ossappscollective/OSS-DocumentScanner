@@ -2,7 +2,7 @@
     import { Template } from '@nativescript-community/svelte-native/components';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import { CollectionView } from '@nativescript-community/ui-collectionview';
-    import { confirm } from '@nativescript-community/ui-material-dialogs';
+    import { confirm } from '@nativescript-community/ui-dialogs';
     import { VerticalPosition } from '@nativescript-community/ui-popover';
     import { ApplicationSettings, ObservableArray } from '@nativescript/core';
     import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
@@ -223,7 +223,7 @@
             <SelectionToolbar onAction={handleSelectionAction} options={getSelectionToolbarOptions()} row={1} />
         {/if}
         <CActionBar canGoBack onGoBack={nbSelected ? unselectAll : null} title={nbSelected ? lcp('selected', nbSelected) : lc('manage_folders')}>
-            <mdbutton class="actionBarButton" text="mdi-dots-vertical" variant="text" on:tap={showOptions} />
+            <uibutton class="actionBarButton" text="mdi-dots-vertical" variant="text" on:tap={showOptions} />
         </CActionBar>
     </gridlayout>
 </page>

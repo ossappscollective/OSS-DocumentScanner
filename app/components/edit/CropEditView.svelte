@@ -60,11 +60,11 @@
     <gridlayout class="pageContent" backgroundColor={visualState} rows="auto,*,auto,auto" android:paddingBottom={$windowInset.bottom}>
         <CropView bind:this={cropView} {...cropItem ? cropItem : null} row={1} bind:quadChanged bind:quads on:undosChanged={onUndosChanged} />
         <label color={textColor} fontSize={13} padding={10} row={2} text={lc('crop_edit_doc')} textAlignment="center" textWrap={true} />
-        <mdbutton class="fab" elevation={0} horizontalAlignment="center" margin="0" row={3} text="mdi-check" variant="text" on:tap={() => onRecropTapFinish()} />
-        <mdbutton class="icon-btn" color={textColor} horizontalAlignment="right" marginRight={10} row={3} text="mdi-arrow-expand-all" variant="text" verticalAlignment="center" on:tap={resetCrop} />
+        <uibutton class="fab" elevation={0} horizontalAlignment="center" margin="0" row={3} text="mdi-check" variant="text" on:tap={() => onRecropTapFinish()} />
+        <uibutton class="icon-btn" color={textColor} horizontalAlignment="right" marginRight={10} row={3} text="mdi-arrow-expand-all" variant="text" verticalAlignment="center" on:tap={resetCrop} />
         <CActionBar backgroundColor="transparent" buttonsDefaultVisualState={visualState} modalWindow={true} title={null}>
-            <mdbutton class="actionBarButton" defaultVisualState={visualState} isEnabled={cropItem?.undos.length > 0} text="mdi-undo" variant="text" on:tap={onUndo} />
-            <mdbutton class="actionBarButton" defaultVisualState={visualState} isEnabled={cropItem?.redos.length > 0} text="mdi-redo" variant="text" on:tap={onRedo} />
+            <uibutton class="actionBarButton" defaultVisualState={visualState} isEnabled={cropItem?.undos.length > 0} text="mdi-undo" variant="text" on:tap={onUndo} />
+            <uibutton class="actionBarButton" defaultVisualState={visualState} isEnabled={cropItem?.redos.length > 0} text="mdi-redo" variant="text" on:tap={onRedo} />
         </CActionBar>
     </gridlayout>
 </page>

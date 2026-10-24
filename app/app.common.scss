@@ -51,8 +51,8 @@
     font-family: $mdiFontFamily;
 }
 
-mdtextfield,
-mdtextview {
+textfield,
+textview {
     stroke-color: var(--colorOutline);
     placeholder-color: var(--colorOutline);
     color: var(--colorOnBackground);
@@ -64,8 +64,8 @@ checkbox {
     fill-color: var(--colorPrimary);
 }
 
-mdbutton[variant='flat'],
-mdbutton[variant='contained'] {
+button[variant='flat'],
+button[variant='contained'] {
     background-color: var(--colorPrimary);
     color: var(--colorOnPrimary);
 }
@@ -86,7 +86,7 @@ htmllabel {
     // white-space: normal;
 }
 
-// mdtextfield {
+// textfield {
 //     color: black;
 //     // background-color: white;
 //     // placeholder-color: black;
@@ -152,7 +152,7 @@ frame {
 label,
 canvaslabel,
 htmllabel,
-mdtextfield,
+textfield,
 .actionBarTitle,
 .actionBarSubtitle {
     &:black,

@@ -101,5 +101,5 @@
         visibility={code?.length && !validCode ? 'visible' : 'collapse'}
     />
 
-    <mdbutton colSpan={2} horizontalAlignment="right" isEnabled={name?.length > 0} row={5} text={lc('add')} variant="text" on:tap={add} />
+    <uibutton colSpan={2} horizontalAlignment="right" isEnabled={name?.length > 0} row={5} text={lc('add')} variant="text" on:tap={add} />
 </gesturerootview>

@@ -221,7 +221,7 @@ vi.mock('@nativescript-community/ui-svg/canvas', () => ({
     SVGView: class SVGView {}
 }));
 
-vi.mock('@nativescript-community/ui-material-dialogs', () => ({
+vi.mock('@nativescript-community/ui-dialogs', () => ({
     alert: vi.fn(),
     confirm: vi.fn(),
     prompt: vi.fn(),

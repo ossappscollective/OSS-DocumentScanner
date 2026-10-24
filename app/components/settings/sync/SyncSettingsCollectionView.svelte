@@ -4,8 +4,8 @@
     import { CheckBox } from '@nativescript-community/ui-checkbox';
     import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { Label } from '@nativescript-community/ui-label';
-    import { prompt } from '@nativescript-community/ui-material-dialogs';
-    import { TextField } from '@nativescript-community/ui-material-textfield';
+    import { prompt } from '@nativescript-community/ui-dialogs';
+    import { TextField } from '@nativescript-community/ui-textfield';
     import { ObservableArray, View } from '@nativescript/core';
     import { showError } from '@shared/utils/showError';
     import { Writable } from 'svelte/store';
@@ -222,7 +222,7 @@
     <Template key="textfield" let:item>
         <gridlayout columns="*" margin={5} row={3} rows="auto" on:tap={(e) => item.onTap(item, e)}>
             <textfield isUserInteractionEnabled={false} text={item.text} {variant} {...item.textFieldProperties} on:loaded={onTextChange} />
-            <mdbutton
+            <uibutton
                 class="icon-btn"
                 color={colorOnSurfaceVariant}
                 horizontalAlignment="right"

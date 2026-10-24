@@ -5,6 +5,8 @@ const playstoreBuild = !!process.env['PLAY_STORE_BUILD'];
 
 const id = process.env['APP_ID'];
 const CARD_APP = id === 'com.akylas.cardwallet';
+// the akylas runtime lacks the Mac Catalyst fixes of @nativescript/ios 9.1
+const catalystBuild = process.argv.includes('catalyst');
 module.exports = {
     ignoredNativeDependencies: [].concat(sentryEnabled ? [] : ['@nativescript-community/sentry']).concat(playstoreBuild ? [] : ['@akylas/nativescript-inapp-purchase']),
     id: id || 'com.akylas.documentscanner',
@@ -21,7 +23,7 @@ module.exports = {
         defaultLanguage: 'en'
     },
     ios: {
-        runtimePackageName: '@akylas/nativescript-ios-runtime'
+        runtimePackageName: catalystBuild ? '@nativescript/ios' : '@akylas/nativescript-ios-runtime'
     },
     android: {
         ignoredNativeDependencies: ['@akylas/nativescript-inapp-purchase'],

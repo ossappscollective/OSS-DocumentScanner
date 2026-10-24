@@ -1,7 +1,7 @@
 import { isObject, isString, wrapNativeException } from '@nativescript/core/utils';
 import { Optional } from '@nativescript/core/utils/typescript-utils';
 import { ApplicationSettings, EventData, File, Folder, Observable, knownFolders, path } from '@nativescript/core';
-import NSQLDatabase from '@shared/db/NSQLDatabase';
+import NSQLDatabase from '~/db/NSQLDatabase';
 import { doInBatch } from '@shared/utils/batch';
 import SqlQuery from 'kiss-orm/dist/Queries/SqlQuery';
 import CrudRepository from 'kiss-orm/dist/Repositories/CrudRepository';

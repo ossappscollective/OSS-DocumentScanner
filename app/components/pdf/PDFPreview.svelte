@@ -2,7 +2,7 @@
     import { Paint } from '@nativescript-community/ui-canvas';
     import { CheckBox } from '@nativescript-community/ui-checkbox';
     import DrawerElement from '@nativescript-community/ui-drawer/svelte';
-    import { prompt } from '@nativescript-community/ui-material-dialogs';
+    import { prompt } from '@nativescript-community/ui-dialogs';
     import { Pager } from '@nativescript-community/ui-pager';
     import { VerticalPosition } from '@nativescript-community/ui-popover';
     import { ApplicationSettings, ObservableArray, Utils, View, knownFolders } from '@nativescript/core';
@@ -354,10 +354,10 @@
 
                 <gridlayout columns="*,*" row={2}>
                     {#if saveFunction}
-                        <mdbutton text={lc('save')} on:tap={() => saveFunction(pdfCanvas.options)} />
+                        <uibutton text={lc('save')} on:tap={() => saveFunction(pdfCanvas.options)} />
                     {:else}
-                        <mdbutton text={lc('export')} on:tap={exportPDF} />
-                        <mdbutton col={1} text={lc('open')} on:tap={openPDF} />
+                        <uibutton text={lc('export')} on:tap={exportPDF} />
+                        <uibutton col={1} text={lc('open')} on:tap={openPDF} />
                     {/if}
                 </gridlayout>
             </gridlayout>
@@ -438,9 +438,9 @@
 
         <CActionBar modalWindow={true} title={lc('pdf_preview')}>
             {#if __ANDROID__}
-                <mdbutton class="actionBarButton" text="mdi-printer" variant="text" on:tap={onPrintPDF} />
+                <uibutton class="actionBarButton" text="mdi-printer" variant="text" on:tap={onPrintPDF} />
             {/if}
-            <mdbutton class="actionBarButton" text="mdi-cog" variant="text" on:tap={showPDFSettings} />
+            <uibutton class="actionBarButton" text="mdi-cog" variant="text" on:tap={showPDFSettings} />
         </CActionBar>
     </gridlayout>
 </page>
