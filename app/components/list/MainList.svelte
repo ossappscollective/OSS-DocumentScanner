@@ -1398,7 +1398,7 @@
         bind:this={appBar}
         scrollBehavior="lift"
         searchable={!isTrash && !onlyForImport && nbSelected === 0}
-        scrollTarget={__IOS__ ? collectionView?.nativeView : undefined}
+        scrollTargetId="documentsCollectionView"
         searchHint={lc('search')}
         searchMode="inline"
         searchPlacement="integrated"
@@ -1410,6 +1410,9 @@
         on:searchChange={onSearchChange}
         on:searchCancel={onSearchCancel}
     >
+        {#if __ANDROID__}
+            <appBarSearchField><textfield backgroundColor="transparent" floating={false} fontSize={16} hint={lc('search')} returnKeyType="search" variant="none" /></appBarSearchField>
+        {/if}
         {#if (__ANDROID__ && nbSelected > 0) || modal || (__ANDROID__ && canGoBack)}
             <navigationButton {...{ 'android.systemIcon': nbSelected > 0 ? 'ic_menu_close_clear_cancel' : 'ic_menu_back' }} on:tap={nbSelected > 0 ? unselectAll : actionBarOnGoBack} />
         {/if}
@@ -1447,6 +1450,7 @@
     <gridlayout class="pageContent" rows="auto,auto,*">
         <slot name="abovecollectionview" />
         <collectionView
+            id="documentsCollectionView"
             bind:this={collectionView}
             {colWidth}
             on:itemLoading={onCollectionViewItemLoading}
