@@ -1554,10 +1554,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/systemui@npm:1.1.25":
-  version: 1.1.25
-  resolution: "@nativescript-community/systemui@npm:1.1.25"
-  checksum: 10/42fd950e7d6de803f8f88144a6acd79a75a1f03517a1798441970e307b6461c985c32eb65af006700e40be51534f0f897c93e49edde016520bedc0390230a343
+"@nativescript-community/systemui@npm:1.1.26":
+  version: 1.1.26
+  resolution: "@nativescript-community/systemui@npm:1.1.26"
+  checksum: 10/52af4c822672b3cb1a026d18ebf31480f8930b9cd4e1bcf29d73aacb7fbf69d2182982ff7c8b332107fe08e71683e8916846688fb8e541e3ccbf7864801fbd55
   languageName: node
   linkType: hard
 
@@ -11163,7 +11163,7 @@ __metadata:
     "@nativescript-community/sentry": "npm:4.6.49"
     "@nativescript-community/sqlite": "npm:3.5.9"
     "@nativescript-community/svelte-native": "npm:1.0.32"
-    "@nativescript-community/systemui": "npm:1.1.25"
+    "@nativescript-community/systemui": "npm:1.1.26"
     "@nativescript-community/text": "npm:1.6.25"
     "@nativescript-community/ui-activityindicator": "npm:1.1.0"
     "@nativescript-community/ui-appbar": "npm:1.1.0"
