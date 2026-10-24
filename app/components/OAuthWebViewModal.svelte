@@ -57,7 +57,7 @@
             <activityindicator busy={loading} visibility={loading ? 'visible' : 'collapse'} />
         </gridlayout>
         <CActionBar canGoBack={false} modalWindow={true} title={lc('authentication')}>
-            <mdbutton text={lc('cancel')} variant="text" verticalAlignment="middle" on:tap={onCancel} />
+            <uibutton text={lc('cancel')} variant="text" verticalAlignment="middle" on:tap={onCancel} />
         </CActionBar>
     </gridlayout>
 </page>

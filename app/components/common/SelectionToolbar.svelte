@@ -64,10 +64,10 @@
     <stacklayout col={hasOverflow ? 1 : 0} horizontalAlignment="center" orientation="horizontal">
         {#each visibleOptions as option, index}
             {@const color = typeof option.color === 'function' ? option['color'](options) : option.color}
-            <mdbutton class="selectionToolbarButton" color={color || colorOnSurface} text={option.icon} variant="text" on:tap={(event) => handleAction(event, option)} />
+            <uibutton class="selectionToolbarButton" color={color || colorOnSurface} text={option.icon} variant="text" on:tap={(event) => handleAction(event, option)} />
         {/each}
     </stacklayout>
     {#if hasOverflow}
-        <mdbutton class="selectionToolbarButton" col={2} color={colorOnSurface} text="mdi-dots-vertical" variant="text" on:tap={showMoreOptions} />
+        <uibutton class="selectionToolbarButton" col={2} color={colorOnSurface} text="mdi-dots-vertical" variant="text" on:tap={showMoreOptions} />
     {/if}
 </gridlayout>

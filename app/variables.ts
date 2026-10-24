@@ -8,12 +8,18 @@ export * from '@shared/variables';
 
 import { deviceHasCamera } from '@nativescript-community/ui-cameraview';
 import { initVariables } from '@shared/variables';
+import { withSystemColors } from '~/utils/iosSystemColors';
 
 initVariables({
     onInitRootView: () => {
         hasCamera.set(deviceHasCamera());
     },
-    getTheme: (colorTheme) => require(`~/themes/${__APP_ID__}/${colorTheme}.json`)
+    keepSurfaceContainerHigh: __IOS__,
+    tintWindow: __IOS__,
+    getTheme: (colorTheme) => {
+        const theme = require(`~/themes/${__APP_ID__}/${colorTheme}.json`);
+        return __IOS__ ? withSystemColors(theme) : theme;
+    }
 });
 
 export const startOnCam = ApplicationSettings.getBoolean(SETTINGS_START_ON_CAM, START_ON_CAM);

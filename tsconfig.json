@@ -26,5 +26,5 @@
         "plugin-shared/*.ts",
         "plugin-shared/typings"
     ],
-    "exclude": ["app/**/*.test.ts"]
+    "exclude": ["app/**/*.test.ts", "tools/app/db/**/*"]
 }

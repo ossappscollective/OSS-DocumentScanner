@@ -235,7 +235,7 @@
             <SelectionToolbar onAction={handleSelectionAction} options={getSelectionToolbarOptions()} row={2} />
         {/if}
         <CActionBar canGoBack onGoBack={nbSelected ? unselectAll : null} title={nbSelected ? lcp('selected', nbSelected) : lc('documents_storage')}>
-            <mdbutton class="actionBarButton" text="mdi-dots-vertical" variant="text" on:tap={showOptions} />
+            <uibutton class="actionBarButton" text="mdi-dots-vertical" variant="text" on:tap={showOptions} />
         </CActionBar>
     </gridlayout>
 </page>

@@ -5,12 +5,13 @@
     import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { Img } from '@nativescript-community/ui-image';
     import { createNativeAttributedString } from '@nativescript-community/ui-label';
-    import { confirm, prompt } from '@nativescript-community/ui-material-dialogs';
+    import { confirm, prompt } from '@nativescript-community/ui-dialogs';
     import { VerticalPosition } from '@nativescript-community/ui-popover';
-    import { AnimationDefinition, Application, ApplicationSettings, Color, EventData, Frame, NavigatedData, ObservableArray, Page, Screen, StackLayout } from '@nativescript/core';
+    import { isCatalyst, windowCommandEvent } from '@shared/utils/window';
+    import { setContextMenu } from '@nativescript-community/ui-menu';
+    import { AnimationDefinition, Application, ApplicationSettings, Color, EventData, Frame, NavigatedData, ObservableArray, Page, ProxyViewContainer, Screen, StackLayout, View } from '@nativescript/core';
     import { AndroidActivityBackPressedEventData } from '@nativescript/core/application/application-interfaces';
     import { debounce, throttle } from '@nativescript/core/utils';
-    import ActionBarSearch from '@shared/components/ActionBarSearch.svelte';
     import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
     import { OptionType } from '@shared/components/OptionSelect.svelte';
     import { prefs } from '@shared/services/preferences';
@@ -18,10 +19,11 @@
     import { closeModal, fade, goBack, navigate } from '@shared/utils/svelte/ui';
     import { onDestroy, onMount } from 'svelte';
     import { writable } from 'svelte/store';
-    import CActionBar from '~/components/common/CActionBar.svelte';
+    import type { AppBar } from '@nativescript-community/ui-appbar';
+    import type { MenuItem } from '@nativescript-community/ui-menu';
+    import { appIcon } from '~/utils/appIcons';
     import EditNameActionBar from '~/components/common/EditNameActionBar.svelte';
     import SelectedIndicator from '~/components/common/SelectedIndicator.svelte';
-    import SelectionToolbar from '~/components/common/SelectionToolbar.svelte';
     import { l, lc, lcp, lp } from '~/helpers/locale';
     import { getRealTheme, isEInk, onThemeChanged } from '~/helpers/theme';
     import { DocFolder, OCRDocument, OCRPage } from '~/models/OCRDocument';
@@ -138,11 +140,14 @@
     let foldersCollectionView: NativeViewElementNode<CollectionView>;
     // let lottieView: NativeViewElementNode<LottieView>;
     export let fabHolder: NativeViewElementNode<StackLayout> = null;
-    let search: ActionBarSearch;
+    let searchTimer: ReturnType<typeof setTimeout>;
+    let appBar: NativeViewElementNode<AppBar>;
 
     export let folder: DocFolder = null;
     export let title: string;
     export let modal: boolean = false;
+    // iOS has no FAB: `primary` goes to the bottom toolbar, the others to the "+" menu of the bar
+    export let actions: { text: string; icon: string; primary?: boolean; onTap: () => void }[] = [];
     export let itemTemplateSelector = (viewStyle, item?: Item) => item?.type || 'default';
     export let viewStyles: { [k: string]: { name: string; icon?: string; type?: string; boxType?: string } };
     export let folderViewStyles: { [k: string]: { name: string; icon?: string; type?: string; boxType?: string } } = {};
@@ -179,7 +184,9 @@
     $: updateTitle(folder);
 
     export let updateTitle = (folder) => {
-        if (folder) {
+        if (folder && __IOS__) {
+            title = folder.name;
+        } else if (folder) {
             // DEV_LOG && console.log('updateTitle', $fontScale, folder);
             title = createNativeAttributedString(
                 {
@@ -226,8 +233,6 @@
 
     prefs.on(`key:${SETTINGS_NB_COLUMNS}`, () => updateColumns($isLandscape));
     prefs.on(`key:${SETTINGS_NB_COLUMNS_LANDSCAPE}`, () => updateColumns($isLandscape));
-
-    $: if (nbSelected > 0) search.unfocusSearch();
 
     // Animate FAB visibility when selection changes
     $: if (fabHolder?.nativeView) {
@@ -514,8 +519,22 @@
         }
     }
 
+    function onWindowCommand(event: EventData & { commandId: string }) {
+        if (Frame.topmost()?.currentPage !== page?.nativeView) {
+            return;
+        }
+        if (event.commandId === 'search') {
+            appBar?.nativeView?.focusSearch();
+        } else if (event.commandId === 'preferences') {
+            openPreferences();
+        }
+    }
+
     onMount(() => {
         mounted = true;
+        if (__IOS__) {
+            Application.on(windowCommandEvent, onWindowCommand);
+        }
         // DEV_LOG && console.log('MainList', 'onMount', documentsService.id, viewStyle);
         updateColumns($isLandscape);
         Application.on('snackMessageAnimation', onSnackMessageAnimation);
@@ -547,6 +566,9 @@
     });
     onDestroy(() => {
         DEV_LOG && console.log('MainList', 'onDestroy');
+        if (__IOS__) {
+            Application.off(windowCommandEvent, onWindowCommand);
+        }
         Application.off('snackMessageAnimation', onSnackMessageAnimation);
         if (__ANDROID__) {
             Application.android.off(Application.android.activityBackPressedEvent, onAndroidBackButton);
@@ -606,7 +628,6 @@
     }
     function onNavigatingFrom() {
         // shown = false;
-        search.unfocusSearch();
     }
     function selectItem(item: Item) {
         if (!item.selected) {
@@ -769,17 +790,14 @@
                 data.cancel = true;
             }
             editingTitle = false;
-        } else if (showSearch) {
+        } else if (appBar?.nativeView?.closeSearch()) {
             if (data) {
                 data.cancel = true;
             }
-            search.hideSearch();
         }
     }
     function actionBarOnGoBack() {
-        if (showSearch) {
-            search.hideSearch();
-        } else if (modal) {
+        if (modal) {
             closeModal();
         } else if (Frame.topmost().canGoBack()) {
             goBack();
@@ -962,102 +980,61 @@
         }
     }
 
-    async function showViewOptions(event) {
-        try {
-            const options = new ObservableArray(
-                ([{ type: 'header', title: lc('view_style') }] as any)
-                    .concat(
-                        Object.keys(viewStyles).map((k) => ({
-                            id: k,
-                            ...viewStyles[k],
-                            boxType: 'circle',
-                            type: 'checkbox',
-                            value: viewStyle === k,
-                            group: 'viewStyle',
-                            color: (item) => (item.value ? colorPrimary : undefined)
-                        }))
-                    )
-                    .concat(
-                        Object.keys(folderViewStyles).length > 1
-                            ? [
-                                  { type: 'header', title: lc('folder_view_style') },
-                                  ...Object.keys(folderViewStyles).map((k) => ({
-                                      id: k,
-                                      ...folderViewStyles[k],
-                                      boxType: 'circle',
-                                      type: 'checkbox',
-                                      value: folderViewStyle === k,
-                                      group: 'folderViewStyle',
-                                      color: (item) => (item.value ? colorPrimary : undefined)
-                                  }))
-                              ]
-                            : []
-                    )
-                    .concat([{ type: 'header', title: lc('sort') }])
-                    .concat(
-                        Object.keys(sortKeys).map((k) => ({
-                            id: k,
-                            ...sortKeys[k],
-                            boxType: 'circle',
-                            type: 'checkbox',
-                            value: sortOrder.includes(k),
-                            group: 'sort'
-                            // color: (item) => (!!item.value ? colorPrimary : undefined)
-                        }))
-                    )
-                    .concat([{ type: 'checkbox', title: lc('ascending'), id: 'ascending', value: sortOrder.indexOf('ASC') !== -1 }])
-            );
-            // const options = Object.keys(OPTIONS[option]).map((k) => ({ ...OPTIONS[option][k], id: k }));
-            await showPopoverMenu({
-                anchor: event.object,
-                options,
-                vertPos: VerticalPosition.BELOW,
-                props: {
-                    width: 200 * $fontScale,
-                    autoSizeListItem: true,
-                    onCheckBox: (item, value) => {
-                        if (item.group === 'viewStyle') {
-                            const changed = viewStyleChanged(item.id, viewStyle);
-
-                            viewStyle = item.id;
-                            ApplicationSettings.setString(SETTINGS_VIEW_STYLE, viewStyle);
-                            updateColumns($isLandscape);
-                            if (changed) {
-                                collectionView?.nativeView.refresh();
-                            }
-                        } else if (item.group === 'folderViewStyle') {
-                            const changed = folderViewStyleChanged(item.id, folderViewStyle);
-
-                            folderViewStyle = item.id;
-                            ApplicationSettings.setString(SETTINGS_FOLDER_VIEW_STYLE, folderViewStyle);
-                            if (changed) {
-                                refresh();
-                            }
-                        } else if (item.group === 'sort') {
-                            if (item.id === 'useCount') {
-                                // Most-used is always descending (most used first)
-                                sortOrder = 'useCount DESC';
-                            } else {
-                                const currentAscending = sortOrder.indexOf('ASC') !== -1;
-                                sortOrder = `${item.id} ${currentAscending ? 'ASC' : 'DESC'}`;
-                            }
-                            ApplicationSettings.setString(SETTINGS_SORT_ORDER, sortOrder);
-                            refreshThrottle();
-                        } else if (item.id === 'ascending') {
-                            const currentKey = sortOrder.split(' ')[0];
-                            if (currentKey !== 'useCount') {
-                                sortOrder = `${currentKey} ${value ? 'ASC' : 'DESC'}`;
-                                ApplicationSettings.setString(SETTINGS_SORT_ORDER, sortOrder);
-                                refreshThrottle();
-                            }
-                        }
-                    }
-                }
-            });
-        } catch (error) {
-            showError(error);
+    function selectViewStyle(id: string) {
+        const changed = viewStyleChanged(id, viewStyle);
+        viewStyle = id;
+        ApplicationSettings.setString(SETTINGS_VIEW_STYLE, viewStyle);
+        updateColumns($isLandscape);
+        if (changed) {
+            collectionView?.nativeView.refresh();
         }
     }
+    function selectFolderViewStyle(id: string) {
+        const changed = folderViewStyleChanged(id, folderViewStyle);
+        folderViewStyle = id;
+        ApplicationSettings.setString(SETTINGS_FOLDER_VIEW_STYLE, folderViewStyle);
+        if (changed) {
+            refresh();
+        }
+    }
+    function selectSortKey(id: string) {
+        if (id === 'useCount') {
+            // Most-used is always descending (most used first)
+            sortOrder = 'useCount DESC';
+        } else {
+            const currentAscending = sortOrder.indexOf('ASC') !== -1;
+            sortOrder = `${id} ${currentAscending ? 'ASC' : 'DESC'}`;
+        }
+        ApplicationSettings.setString(SETTINGS_SORT_ORDER, sortOrder);
+        refreshThrottle();
+    }
+    function toggleAscending() {
+        const currentKey = sortOrder.split(' ')[0];
+        if (currentKey !== 'useCount') {
+            sortOrder = `${currentKey} ${sortOrder.indexOf('ASC') !== -1 ? 'DESC' : 'ASC'}`;
+            ApplicationSettings.setString(SETTINGS_SORT_ORDER, sortOrder);
+            refreshThrottle();
+        }
+    }
+    function getViewOptionsMenu(currentViewStyle: string, currentFolderViewStyle: string, currentSortOrder: string): MenuItem[] {
+        const folderViewStyleKeys = Object.keys(folderViewStyles);
+        return [
+            { title: lc('view_style'), disabled: true },
+            ...Object.keys(viewStyles).map((key) => ({ title: viewStyles[key].name, checked: currentViewStyle === key, onSelect: () => selectViewStyle(key) })),
+            ...(folderViewStyleKeys.length > 1
+                ? [
+                      { separator: true },
+                      { title: lc('folder_view_style'), disabled: true },
+                      ...folderViewStyleKeys.map((key) => ({ title: folderViewStyles[key].name, checked: currentFolderViewStyle === key, onSelect: () => selectFolderViewStyle(key) }))
+                  ]
+                : []),
+            { separator: true },
+            { title: lc('sort'), disabled: true },
+            ...Object.keys(sortKeys).map((key) => ({ title: sortKeys[key].name, checked: currentSortOrder.includes(key), onSelect: () => selectSortKey(key) })),
+            { title: lc('ascending'), checked: currentSortOrder.indexOf('ASC') !== -1, onSelect: toggleAscending }
+        ];
+    }
+    $: viewOptionsMenu = getViewOptionsMenu(viewStyle, folderViewStyle, sortOrder);
 
     async function syncDocuments() {
         try {
@@ -1138,6 +1115,62 @@
     async function showImageExportPopover(event) {
         const selection = await getSelectedPagesAndPossibleSingleDocument();
         return showImagePopoverMenu(selection[0], event.object, { vertPos: VerticalPosition.ABOVE });
+    }
+
+    const contextMenuItems = new WeakMap<View, Item>();
+
+    function findCurrentItem(item: Item) {
+        const items = item.folder && folderViewStyle === 'horizontal' ? folderItems : documents;
+        return items?.slice().find((current) => (item.folder ? current.folder === item.folder : current.doc === item.doc)) ?? item;
+    }
+
+    async function handleContextMenuAction(view: View, item: Item, optionId: string) {
+        if (optionId === 'open') {
+            return onItemTap(item);
+        }
+        if (optionId === 'select') {
+            return onItemLongPress(item);
+        }
+        if (!item.selected) {
+            unselectAll();
+            selectItem(findCurrentItem(item));
+        }
+        return handleSelectionAction({ object: view }, { id: optionId, name: optionId });
+    }
+
+    function getContextMenuItems(view: View) {
+        const item = contextMenuItems.get(view);
+        if (!item?.doc && !item?.folder) {
+            return [];
+        }
+        const options = getSelectionToolbarOptions().filter((option) => option.id !== 'select_all' && option.id !== 'rename');
+        if (!isTrash && (nbSelected === 0 || (nbSelected === 1 && item.selected))) {
+            options.splice(options.findIndex((option) => option.id === 'delete') + 1, 0, { icon: 'mdi-rename', id: 'rename', name: lc('rename') });
+        }
+        return [
+            ...(isTrash ? [] : [{ id: 'open', title: lc('open'), icon: appIcon('open') }]),
+            { id: 'select', title: lc('select'), icon: appIcon('select') },
+            { separator: true },
+            ...options.map((option) => ({ id: option.id, title: option.name, icon: appIcon(option.id), destructive: option.id.startsWith('delete') }))
+        ];
+    }
+
+    // right click on Mac Catalyst, long press keeps selecting on the other platforms
+    function onCollectionViewItemLoading(event: { view: View; bindingContext: Item }) {
+        if (!isCatalyst || !event.bindingContext) {
+            return;
+        }
+        const view = event.view instanceof ProxyViewContainer ? event.view.getChildAt(0) : event.view;
+        if (!view) {
+            return;
+        }
+        if (!contextMenuItems.has(view)) {
+            setContextMenu(view, {
+                items: () => getContextMenuItems(view),
+                onSelect: (menuItem) => handleContextMenuAction(view, contextMenuItems.get(view), menuItem.id as string)
+            });
+        }
+        contextMenuItems.set(view, event.bindingContext);
     }
 
     function getSelectionToolbarOptions() {
@@ -1287,61 +1320,64 @@
         })
     );
 
-    async function showOptions(event) {
-        try {
-            const options = (
-                !isTrash && trashEnabled
-                    ? [
-                          {
-                              icon: 'mdi-trash-can-outline',
-                              id: 'open_trash',
-                              name: lc('open_trash')
-                          }
-                      ]
-                    : []
-            ).concat([
+    const openPreferences = tryCatchFunction(async () => {
+        const Settings = (await import('~/components/settings/Settings.svelte')).default;
+        navigate({ page: Settings });
+    });
+    const openTrash = tryCatchFunction(async () => {
+        const TrashList = (await import('~/components/list/TrashList.svelte')).default;
+        navigate({ page: TrashList });
+    });
+    $: primaryAction = actions.find((action) => action.primary);
+    $: secondaryActions = actions.filter((action) => !action.primary);
+    $: plusMenu = secondaryActions.map((action) => ({ title: action.text, icon: appIcon(action.icon), onSelect: action.onTap }));
+    function getSelectionBottomItems(options: OptionType[]) {
+        const toolbarIds = isTrash ? options.map((option) => option.id) : ['pdf', 'share', 'delete'];
+        const toolbarOptions = options.filter((option) => toolbarIds.includes(option.id));
+        const menuOptions = options.filter((option) => !toolbarIds.includes(option.id));
+        const onAction = (option: OptionType) => handleSelectionAction({ object: collectionView?.nativeView }, option);
+        const items: any[] = toolbarOptions.flatMap((option) => [{ spacer: true }, { text: option.name, icon: appIcon(option.id), onTap: () => onAction(option) }]);
+        if (menuOptions.length) {
+            items.push(
+                { spacer: true },
                 {
-                    icon: 'mdi-cogs',
-                    id: 'preferences',
-                    name: lc('preferences')
+                    text: lc('more_options'),
+                    icon: appIcon('more'),
+                    menu: menuOptions.map((option) => ({ title: option.name, icon: appIcon(option.id), onSelect: () => onAction(option) }))
                 }
-            ]);
-
-            await showPopoverMenu({
-                options,
-                anchor: event.object,
-                vertPos: VerticalPosition.BELOW,
-                props: {
-                    width: 220 * $fontScale,
-                    maxHeight: Screen.mainScreen.heightDIPs - $actionBarHeight
-                    // autoSizeListItem: true
-                },
-
-                onClose: async (item) => {
-                    try {
-                        if (item) {
-                            switch (item.id) {
-                                case 'preferences':
-                                    const Settings = (await import('~/components/settings/Settings.svelte')).default;
-                                    navigate({ page: Settings });
-                                    break;
-                                case 'open_trash':
-                                    const TrashList = (await import('~/components/list/TrashList.svelte')).default;
-                                    navigate({ page: TrashList });
-                                    break;
-                            }
-                        }
-                    } catch (error) {
-                        showError(error);
-                    } finally {
-                        hideLoading();
-                    }
-                }
-            });
-        } catch (error) {
-            showError(error);
+            );
         }
+        return items.concat({ spacer: true });
     }
+    $: bottomItems =
+        nbSelected > 0
+            ? getSelectionBottomItems(getSelectionToolbarOptions())
+            : __IOS__ && primaryAction
+              ? [{ search: true }, { text: primaryAction.text, icon: appIcon(primaryAction.icon), onTap: primaryAction.onTap }]
+              : [];
+    let iosMenu: MenuItem[];
+    $: iosMenu = [
+        { title: lc('view_style'), icon: appIcon('view_style'), items: viewOptionsMenu },
+        ...(!isTrash && trashEnabled ? [{ title: lc('open_trash'), icon: appIcon('trash'), onSelect: openTrash }] : [])
+    ];
+    let optionsMenu: MenuItem[];
+    $: optionsMenu = [...(!isTrash && trashEnabled ? [{ title: lc('open_trash'), icon: appIcon('trash'), onSelect: openTrash }] : []), { title: lc('preferences'), icon: appIcon('settings'), onSelect: openPreferences }];
+
+    function onSearchChange(event: { text: string }) {
+        const query = event.text?.toLowerCase();
+        showSearch = !!query;
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => refresh(false, query?.length > 1 ? query : undefined), 500);
+    }
+    function onSearchCancel() {
+        clearTimeout(searchTimer);
+        showSearch = false;
+        refresh(false, undefined);
+    }
+    let canGoBack = false;
+    onMount(() => {
+        canGoBack = !!folder || isTrash || !!Frame.topmost()?.canGoBack();
+    });
 
     const emptyTrash = tryCatchFunction(async () => {
         const confirmed = await confirm({
@@ -1357,12 +1393,67 @@
     });
 </script>
 
-<page bind:this={page} id="documentList" actionBarHidden={true} on:navigatedTo={onNavigatedTo} on:navigatingFrom={onNavigatingFrom}>
+<appPage bind:this={page} id="documentList" on:navigatedTo={onNavigatedTo} on:navigatingFrom={onNavigatingFrom}>
+    <appBar
+        bind:this={appBar}
+        scrollBehavior="lift"
+        searchable={!isTrash && !onlyForImport && nbSelected === 0}
+        scrollTargetId="documentsCollectionView"
+        searchHint={lc('search')}
+        searchMode="inline"
+        searchPlacement="integrated"
+        {bottomItems}
+        size="small"
+        titleAlignment="leading"
+        class="listAppBar"
+        title={nbSelected > 0 ? lp('selected', nbSelected) : __IOS__ || isTrash ? title : folder?.name}
+        on:searchChange={onSearchChange}
+        on:searchCancel={onSearchCancel}
+    >
+        {#if __ANDROID__}
+            <appBarSearchField><textfield backgroundColor="transparent" floating={false} fontSize={16} hint={lc('search')} returnKeyType="search" variant="none" /></appBarSearchField>
+        {/if}
+        {#if (__ANDROID__ && nbSelected > 0) || modal || (__ANDROID__ && canGoBack)}
+            <navigationButton {...{ 'android.systemIcon': nbSelected > 0 ? 'ic_menu_close_clear_cancel' : 'ic_menu_back' }} on:tap={nbSelected > 0 ? unselectAll : actionBarOnGoBack} />
+        {/if}
+        {#if nbSelected === 0}
+            {#if isTrash}
+                <appBarItem icon={appIcon('empty_trash')} ios.position="right" text={lc('empty_trash')} on:tap={emptyTrash} />
+            {:else if !onlyForImport}
+                {#if folder}
+                    {#if __IOS__ && plusMenu.length > 1}
+                        <appBarItem icon={appIcon('add')} ios.position="right" menu={plusMenu} text={lc('add')} />
+                    {/if}
+                    <appBarItem icon={appIcon('color')} ios.position="right" text={lc('color')} on:tap={setFolderColor} />
+                {:else}
+                    {#if syncEnabled}
+                        <appBarItem icon={appIcon('sync')} ios.position="right" text={lc('sync')} on:tap={syncDocuments} />
+                    {/if}
+                    {#if __IOS__}
+                        {#if plusMenu.length > 1}
+                            <appBarItem icon={appIcon('add')} ios.position="right" menu={plusMenu} text={lc('add')} />
+                        {:else if plusMenu.length === 1}
+                            <appBarItem icon={appIcon('add')} ios.position="right" text={lc('add')} on:tap={secondaryActions[0].onTap} />
+                        {/if}
+                        <appBarItem icon={appIcon('settings')} ios.position="right" text={lc('preferences')} on:tap={openPreferences} />
+                        <appBarItem icon={appIcon('more')} ios.position="right" menu={iosMenu} />
+                    {:else}
+                        <appBarItem icon={appIcon('view_style')} ios.position="right" menu={viewOptionsMenu} text={lc('view_style')} />
+                        <appBarItem icon={appIcon('more')} ios.position="right" menu={optionsMenu} />
+                    {/if}
+                {/if}
+            {/if}
+        {:else if __IOS__}
+            <appBarItem ios.position="right" prominent={true} text={lc('cancel')} on:tap={unselectAll} />
+        {/if}
+    </appBar>
     <gridlayout class="pageContent" rows="auto,auto,*">
         <slot name="abovecollectionview" />
         <collectionView
+            id="documentsCollectionView"
             bind:this={collectionView}
             {colWidth}
+            on:itemLoading={onCollectionViewItemLoading}
             ios:autoReloadItemOnLayout={true}
             itemTemplateSelector={(item) => itemTemplateSelector(viewStyle, item)}
             items={documents}
@@ -1379,7 +1470,7 @@
                     fontWeight="600"
                     item={{ ...item, title: folder ? item.folder.name.replace(folder.name + '/', '') : item.folder.name, subtitle: lcp('documents_count', item.folder.count) }}
                     mainCol={1}
-                    margin="4 8 4 8"
+                    margin={__IOS__ ? '4 16' : '4 8 4 8'}
                     padding="0 10 0 10"
                     subtitleFontSize={12}
                     useExtraPadding={false}
@@ -1401,6 +1492,7 @@
             <Template key="folders" let:item>
                 <collectionView
                     bind:this={foldersCollectionView}
+                    on:itemLoading={onCollectionViewItemLoading}
                     colWidth={150}
                     height={70}
                     items={folderItems}
@@ -1413,8 +1505,8 @@
                             backgroundColor={($folderBackgroundColor && item.folder.color) || isEInk ? 'transparent' : colorSurfaceContainerLow}
                             borderColor={colorOutline}
                             borderRadius={12}
-                            borderWidth={1}
-                            margin="4 8 0 8"
+                            borderWidth={__IOS__ ? 0 : 1}
+                            margin={__IOS__ ? '4 16 0 16' : '4 8 0 8'}
                             rippleColor={colorSurface}
                             on:tap={() => onItemTap(item)}
                             on:longPress={(e) => onItemLongPress(item, e)}
@@ -1466,47 +1558,13 @@
                 />
             </flexlayout>
         {/if}
-        {#if showActionButton}
-            <slot name="fab" />
-        {/if}
-
-        <CActionBar modalWindow={modal || showSearch} onGoBack={actionBarOnGoBack} onTitleTap={folder ? () => (editingTitle = true) : null} {title}>
-            {#if isTrash}
-                <mdbutton class="actionBarButton" text="mdi-delete-empty" variant="text" on:tap={emptyTrash} />
-            {:else}
-                {#if !onlyForImport}
-                    <mdbutton
-                        class="actionBarButton"
-                        class:infinite-rotate={syncRunning}
-                        isEnabled={!syncRunning}
-                        text="mdi-autorenew"
-                        variant="text"
-                        visibility={!folder && syncEnabled ? 'visible' : 'collapse'}
-                        on:tap={syncDocuments}
-                        on:longPress={openSyncSettings}
-                    />
-                {/if}
-                <mdbutton class="actionBarButton" text="mdi-magnify" variant="text" on:tap={() => search.showSearch()} />
-                {#if !onlyForImport}
-                    {#if folder}
-                        <mdbutton class="actionBarButton" testID="settingsBtn" text="mdi-palette" variant="text" on:tap={setFolderColor} />
-                    {:else}
-                        <mdbutton class="actionBarButton" text="mdi-view-dashboard" variant="text" on:tap={showViewOptions} />
-                        <mdbutton class="actionBarButton" testID="settingsBtn" text="mdi-dots-vertical" variant="text" on:tap={showOptions} />
-                    {/if}
-                {/if}
-            {/if}
-
-            <ActionBarSearch bind:this={search} slot="center" {refresh} bind:visible={showSearch} />
-        </CActionBar>
-        {#if nbSelected > 0}
-            <CActionBar forceCanGoBack={true} onGoBack={unselectAll} title={lp('selected', nbSelected)} titleProps={{ autoFontSize: true, maxLines: 1 }} />
-        {/if}
-        {#if !onlyForImport && nbSelected > 0}
-            <SelectionToolbar onAction={handleSelectionAction} options={getSelectionToolbarOptions()} row={2} />
-        {/if}
         {#if !onlyForImport && editingTitle}
             <EditNameActionBar {folder} onRenameSuccessful={() => (folder = folder)} bind:editingTitle />
         {/if}
     </gridlayout>
-</page>
+    <appPageOverlay>
+        {#if showActionButton && !__IOS__}
+            <slot name="fab" />
+        {/if}
+    </appPageOverlay>
+</appPage>

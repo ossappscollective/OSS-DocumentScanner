@@ -4,8 +4,8 @@
     import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { Img } from '@nativescript-community/ui-image';
     import { SVGView } from '@nativescript-community/ui-svg';
-    import { showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
-    import { confirm } from '@nativescript-community/ui-material-dialogs';
+    import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
+    import { confirm } from '@nativescript-community/ui-dialogs';
     import { Pager } from '@nativescript-community/ui-pager';
     import { VerticalPosition } from '@nativescript-community/ui-popover';
     import {
@@ -98,7 +98,7 @@
 
 <script lang="ts">
     import SliderPopover from '../common/SliderPopover.svelte';
-    import { TextField } from '@nativescript-community/ui-material-textfield';
+    import { TextField } from '@nativescript-community/ui-textfield';
     import { Label } from '@nativescript-community/ui-label';
     import { EXTRA_PAPERLESS_ID_KEY } from '~/services/sync/paperless/PaperlessNgxPDFSyncService';
 
@@ -1440,9 +1440,9 @@
             <!-- <gridlayout backgroundColor={colorBackground} borderRadius="10 10 0 0" col={$isLandscape ? 1 : 0} row={$isLandscape ? 1 : 2} rows="auto,auto,*"> -->
             <!-- <stacklayout bind:this={fabHolder} horizontalAlignment="right" orientation="horizontal" rowSpan={3} verticalAlignment="bottom" android:marginBottom={$windowInset.bottom}> -->
             <!-- {#if __IOS__}
-                        <mdbutton class="small-fab" text="mdi-image-plus-outline" verticalAlignment="center" on:tap={throttle(() => importDocument(false), 500)} />
+                        <uibutton class="small-fab" text="mdi-image-plus-outline" verticalAlignment="center" on:tap={throttle(() => importDocument(false), 500)} />
                     {/if}
-                    <mdbutton class="small-fab" horizontalAlignment="center" text="mdi-file-document-plus-outline" on:tap={throttle(() => importDocument(), 500)} /> -->
+                    <uibutton class="small-fab" horizontalAlignment="center" text="mdi-file-document-plus-outline" on:tap={throttle(() => importDocument(), 500)} /> -->
             <!-- </stacklayout> -->
             <gridlayout class="cardViewHolder" col={$isLandscape ? 1 : 0} row={$isLandscape ? 1 : 2}>
                 <collectionview bind:this={collectionViewExtras} itemTemplateSelector={selectTemplate} items={extraItems} paddingBottom={Math.max($windowInset.bottom + FAB_BUTTON_OFFSET)}>
@@ -1546,13 +1546,13 @@
                         </gridlayout>
                     </Template>
                     <Template key="button" let:item>
-                        <mdbutton margin={10} text={item.text} on:tap={(event) => onExtraItemTap(item, event)} />
+                        <uibutton margin={10} text={item.text} on:tap={(event) => onExtraItemTap(item, event)} />
                     </Template>
                 </collectionview>
             </gridlayout>
 
             <!-- </gridlayout> -->
-            <mdbutton
+            <uibutton
                 col={1}
                 margin={10}
                 marginBottom={Math.min(60, $windowInset.bottom + 16)}
@@ -1572,8 +1572,8 @@
             row={2}
             visibility={editing ? 'collapsed' : 'visible'}
         >
-            <mdbutton class="small-fab" text="mdi-pencil" verticalAlignment="center" visibility={isPKPassDocument ? 'collapsed' : 'visible'} on:tap={startEdit} />
-            <mdbutton
+            <uibutton class="small-fab" text="mdi-pencil" verticalAlignment="center" visibility={isPKPassDocument ? 'collapsed' : 'visible'} on:tap={startEdit} />
+            <uibutton
                 class="small-fab"
                 text="mdi-fullscreen"
                 verticalAlignment="center"
@@ -1581,7 +1581,7 @@
                 on:tap={throttle(() => showFullscreen(), 500)}
             />
 
-            <mdbutton
+            <uibutton
                 bind:this={fabHolder}
                 id="fab"
                 class="fab"
@@ -1602,10 +1602,10 @@
             titleProps={{ padding: 0, color: statusBarStyle === 'dark' ? 'white' : 'black' }}
         >
             <!-- {#if editing}
-                <mdbutton class="actionBarButton" defaultVisualState={statusBarStyle} text="mdi-close" variant="text" on:tap={cancelEdit} />
-                <mdbutton class="actionBarButton" defaultVisualState={statusBarStyle} text="mdi-content-save" variant="text" on:tap={saveEdit} />
+                <uibutton class="actionBarButton" defaultVisualState={statusBarStyle} text="mdi-close" variant="text" on:tap={cancelEdit} />
+                <uibutton class="actionBarButton" defaultVisualState={statusBarStyle} text="mdi-content-save" variant="text" on:tap={saveEdit} />
             {:else} -->
-            <mdbutton
+            <uibutton
                 class="actionBarButton"
                 defaultVisualState={statusBarStyle}
                 text="mdi-file-pdf-box"
@@ -1613,7 +1613,7 @@
                 visibility={canBeExportedToPDF ? 'visible' : 'collapse'}
                 on:tap={showPDFPopover}
             />
-            <mdbutton class="actionBarButton" defaultVisualState={statusBarStyle} text="mdi-dots-vertical" variant="text" on:tap={showOptions} />
+            <uibutton class="actionBarButton" defaultVisualState={statusBarStyle} text="mdi-dots-vertical" variant="text" on:tap={showOptions} />
             <!-- {/if} -->
         </CActionBar>
         {#if editingTitle}

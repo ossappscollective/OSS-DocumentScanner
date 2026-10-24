@@ -1,0 +1,213 @@
+name: 'build-native-libs'
+
+# Builds the C++ libraries the app links (OpenCV, tesseract + leptonica + libpng [+ libjpeg-turbo])
+# for Android, iOS (device + simulator) and Mac Catalyst, selected by version number.
+# See scripts/native-libs/README.md. Download the result with scripts/native-libs/fetch.sh.
+
+on:
+    workflow_dispatch:
+        inputs:
+            opencv_version:
+                description: 'OpenCV version (must have an OPENCV_MOBILE_TAG_<ver> pin in scripts/native-libs/versions.env, or exist as an opencv-mobile release)'
+                required: true
+                default: '4.13.0'
+                type: string
+            tesseract_version:
+                description: 'Tesseract version (needs TESSERACT_<ver>_* dependency pins in scripts/native-libs/versions.env)'
+                required: true
+                default: '5.5.1'
+                type: string
+            platforms:
+                description: 'Platforms to build'
+                required: true
+                default: all
+                type: choice
+                options:
+                    - all
+                    - android
+                    - ios
+                    - catalyst
+            variant:
+                description: 'Tesseract variant: release (optimized, stripped), debug (-O1 -g, not stripped, same file names) or both. OpenCV has no debug variant.'
+                required: true
+                default: release
+                type: choice
+                options:
+                    - release
+                    - debug
+                    - both
+            opencv_from_source:
+                description: 'Rebuild OpenCV from the opencv-mobile sources instead of repackaging the prebuilt opencv-mobile binaries'
+                required: true
+                default: false
+                type: boolean
+            release:
+                description: 'Attach the archives to the GitHub release native-libs-<opencv>-<tesseract>'
+                required: true
+                default: false
+                type: boolean
+
+permissions:
+    contents: read
+
+concurrency:
+    group: build-native-libs-${{ inputs.opencv_version }}-${{ inputs.tesseract_version }}
+    cancel-in-progress: false
+
+env:
+    OPENCV_VERSION: ${{ inputs.opencv_version }}
+    TESSERACT_VERSION: ${{ inputs.tesseract_version }}
+    ARTIFACT_SUFFIX: opencv${{ inputs.opencv_version }}-tesseract${{ inputs.tesseract_version }}
+    OPENCV_FROM_SOURCE: ${{ inputs.opencv_from_source && '1' || '0' }}
+
+jobs:
+    android:
+        name: Android
+        if: inputs.platforms == 'all' || inputs.platforms == 'android'
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                variant: ${{ fromJSON(inputs.variant == 'both' && '["release","debug"]' || format('["{0}"]', inputs.variant)) }}
+        timeout-minutes: 120
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Install pinned Android NDK
+              run: |
+                  source scripts/native-libs/versions.env
+                  yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$NATIVE_LIBS_NDK_VERSION" >/dev/null
+                  echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$NATIVE_LIBS_NDK_VERSION" >> "$GITHUB_ENV"
+
+            - name: Cache build output
+              id: cache
+              uses: actions/cache@v4
+              with:
+                  path: build/native-libs/out/android${{ matrix.variant == 'debug' && '-debug' || '' }}
+                  key: native-libs-android${{ matrix.variant == 'debug' && '-debug' || '' }}-${{ env.ARTIFACT_SUFFIX }}-src${{ inputs.opencv_from_source }}-${{ hashFiles('scripts/native-libs/**') }}
+
+            - name: Cache downloads
+              uses: actions/cache@v4
+              with:
+                  path: build/native-libs/downloads
+                  key: native-libs-downloads-${{ env.ARTIFACT_SUFFIX }}-${{ hashFiles('scripts/native-libs/versions.env') }}
+
+            - name: Build
+              if: steps.cache.outputs.cache-hit != 'true'
+              run: scripts/native-libs/build.sh "$OPENCV_VERSION" "$TESSERACT_VERSION" android --variant ${{ matrix.variant }}
+
+            - name: Package (cache hit)
+              if: steps.cache.outputs.cache-hit == 'true'
+              run: scripts/native-libs/package.sh "$OPENCV_VERSION" "$TESSERACT_VERSION" android --variant ${{ matrix.variant }}
+
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: native-libs-android-${{ env.ARTIFACT_SUFFIX }}${{ matrix.variant == 'debug' && '-debug' || '' }}
+                  path: build/native-libs/out/native-libs-android-*.tar.gz*
+                  if-no-files-found: error
+
+    ios:
+        name: iOS (device + simulator) + OpenCV xcframework
+        if: inputs.platforms == 'all' || inputs.platforms == 'ios'
+        runs-on: macos-15
+        strategy:
+            fail-fast: false
+            matrix:
+                variant: ${{ fromJSON(inputs.variant == 'both' && '["release","debug"]' || format('["{0}"]', inputs.variant)) }}
+        timeout-minutes: 180
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Cache build output
+              id: cache
+              uses: actions/cache@v4
+              with:
+                  path: build/native-libs/out/ios${{ matrix.variant == 'debug' && '-debug' || '' }}
+                  key: native-libs-ios${{ matrix.variant == 'debug' && '-debug' || '' }}-${{ env.ARTIFACT_SUFFIX }}-src${{ inputs.opencv_from_source }}-${{ hashFiles('scripts/native-libs/**') }}
+
+            - name: Cache downloads
+              uses: actions/cache@v4
+              with:
+                  path: build/native-libs/downloads
+                  key: native-libs-downloads-${{ env.ARTIFACT_SUFFIX }}-${{ hashFiles('scripts/native-libs/versions.env') }}
+
+            - name: Build
+              if: steps.cache.outputs.cache-hit != 'true'
+              run: scripts/native-libs/build.sh "$OPENCV_VERSION" "$TESSERACT_VERSION" ios --variant ${{ matrix.variant }}
+
+            - name: Package (cache hit)
+              if: steps.cache.outputs.cache-hit == 'true'
+              run: scripts/native-libs/package.sh "$OPENCV_VERSION" "$TESSERACT_VERSION" ios --variant ${{ matrix.variant }}
+
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: native-libs-ios-${{ env.ARTIFACT_SUFFIX }}${{ matrix.variant == 'debug' && '-debug' || '' }}
+                  path: build/native-libs/out/native-libs-ios-*.tar.gz*
+                  if-no-files-found: error
+
+    catalyst:
+        name: Mac Catalyst
+        if: inputs.platforms == 'all' || inputs.platforms == 'catalyst'
+        runs-on: macos-15
+        strategy:
+            fail-fast: false
+            matrix:
+                variant: ${{ fromJSON(inputs.variant == 'both' && '["release","debug"]' || format('["{0}"]', inputs.variant)) }}
+        timeout-minutes: 120
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Cache build output
+              id: cache
+              uses: actions/cache@v4
+              with:
+                  path: build/native-libs/out/catalyst${{ matrix.variant == 'debug' && '-debug' || '' }}
+                  key: native-libs-catalyst${{ matrix.variant == 'debug' && '-debug' || '' }}-${{ env.ARTIFACT_SUFFIX }}-${{ hashFiles('scripts/native-libs/**') }}
+
+            - name: Cache downloads
+              uses: actions/cache@v4
+              with:
+                  path: build/native-libs/downloads
+                  key: native-libs-downloads-${{ env.ARTIFACT_SUFFIX }}-${{ hashFiles('scripts/native-libs/versions.env') }}
+
+            - name: Build
+              if: steps.cache.outputs.cache-hit != 'true'
+              run: scripts/native-libs/build.sh "$OPENCV_VERSION" "$TESSERACT_VERSION" catalyst --variant ${{ matrix.variant }}
+
+            - name: Package (cache hit)
+              if: steps.cache.outputs.cache-hit == 'true'
+              run: scripts/native-libs/package.sh "$OPENCV_VERSION" "$TESSERACT_VERSION" catalyst --variant ${{ matrix.variant }}
+
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: native-libs-catalyst-${{ env.ARTIFACT_SUFFIX }}${{ matrix.variant == 'debug' && '-debug' || '' }}
+                  path: build/native-libs/out/native-libs-catalyst-*.tar.gz*
+                  if-no-files-found: error
+
+    release:
+        name: Attach to GitHub release
+        if: ${{ !cancelled() && !failure() && inputs.release }}
+        needs: [android, ios, catalyst]
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - uses: actions/download-artifact@v4
+              with:
+                  pattern: native-libs-*-${{ env.ARTIFACT_SUFFIX }}*
+                  path: assets
+                  merge-multiple: true
+
+            - name: Create or update the release
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  tag="native-libs-${OPENCV_VERSION}-${TESSERACT_VERSION}"
+                  ls -la assets
+                  if ! gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+                      gh release create "$tag" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+                          --title "Native libs: OpenCV ${OPENCV_VERSION} + Tesseract ${TESSERACT_VERSION}" \
+                          --notes "Prebuilt OpenCV ${OPENCV_VERSION} and Tesseract ${TESSERACT_VERSION} static libraries (Android, iOS, Mac Catalyst); *-debug archives hold tesseract with symbols (extract over the release one). Install with scripts/native-libs/fetch.sh ${OPENCV_VERSION} ${TESSERACT_VERSION} all [--variant both]. Built by the build-native-libs workflow, run ${GITHUB_RUN_ID}." \
+                          --prerelease
+                  fi
+                  gh release upload "$tag" assets/* --repo "$GITHUB_REPOSITORY" --clobber

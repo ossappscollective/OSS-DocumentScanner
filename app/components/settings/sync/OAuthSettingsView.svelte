@@ -85,7 +85,7 @@
 <stacklayout>
     <gridlayout columns="*,auto" rows="auto">
         <label color={colorOnSurfaceVariant} fontSize={13} padding="0 16 0 16" text={isAuthenticated ? lc('authenticated') : lc('not_authenticated')} textWrap={true} verticalAlignment="center" />
-        <mdbutton
+        <uibutton
             col={1}
             margin="0 16 0 0"
             text={isAuthenticated ? lc('re_authenticate') : lc('authenticate')}
@@ -106,7 +106,7 @@
             verticalAlignment="center"
             visibility={testConnectionSuccess !== 0 ? 'visible' : 'collapse'}
         />
-        <mdbutton col={2} horizontalAlignment="right" text={lc('test_connection')} variant="outline" on:tap={testConnectionAction} />
+        <uibutton col={2} horizontalAlignment="right" text={lc('test_connection')} variant="outline" on:tap={testConnectionAction} />
     </gridlayout>
     <RemoteFolderTextField hint={lc('remote_folder')} margin="20 4 10 4" text={$store.remoteFolder} {variant} on:textChange={(e) => ($store.remoteFolder = e['value'])} />
 </stacklayout>

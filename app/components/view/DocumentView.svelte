@@ -1,7 +1,7 @@
 <script context="module" lang="ts">
     import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { Img, getImagePipeline } from '@nativescript-community/ui-image';
-    import { confirm } from '@nativescript-community/ui-material-dialogs';
+    import { confirm } from '@nativescript-community/ui-dialogs';
     import { VerticalPosition } from '@nativescript-community/ui-popover';
     import { AnimationDefinition, Application, ApplicationSettings, ContentView, EventData, ObservableArray, Page, PageTransition, SharedTransition, StackLayout } from '@nativescript/core';
     import { AndroidActivityBackPressedEventData } from '@nativescript/core/application';
@@ -60,7 +60,7 @@
     import EditNameActionBar from '../common/EditNameActionBar.svelte';
     import { prefs } from '@shared/services/preferences';
     import { ROOT_GESTURE_HANDLER_TAG } from '@nativescript-community/gesturehandler/gesturehandler.common';
-    import { showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
+    import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     const rowMargin = 8;
     interface Item {
         page: OCRPage;
@@ -815,16 +815,16 @@
 
         <stacklayout bind:this={fabHolder} class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal" row={1}>
             {#if __IOS__}
-                <mdbutton
+                <uibutton
                     class="small-fab"
                     text="mdi-image-plus-outline"
                     verticalAlignment="center"
                     on:tap={throttle(() => importAndScanImage({ document, importPDFs: false, canGoToView: false, forceGalleryPick: true }), 500)}
                 />
             {/if}
-            <mdbutton class={$hasCamera ? 'small-fab' : 'fab'} text="mdi-file-document-plus-outline" verticalAlignment="center" on:tap={throttle(() => onAddButton(), 500)} />
+            <uibutton class={$hasCamera ? 'small-fab' : 'fab'} text="mdi-file-document-plus-outline" verticalAlignment="center" on:tap={throttle(() => onAddButton(), 500)} />
             {#if $hasCamera}
-                <mdbutton class="fab" text="mdi-camera" verticalAlignment="center" on:tap={throttle(() => addPages(), 500)} on:longPress={() => addPages(true)} />
+                <uibutton class="fab" text="mdi-camera" verticalAlignment="center" on:tap={throttle(() => addPages(), 500)} on:longPress={() => addPages(true)} />
             {/if}
         </stacklayout>
         <CActionBar
@@ -835,8 +835,8 @@
             titleProps={{ padding: 0 }}
         >
             {#if !nbSelected}
-                <mdbutton class="actionBarButton" text="mdi-file-pdf-box" variant="text" on:tap={showPDFPopover} />
-                <mdbutton class="actionBarButton" text="mdi-dots-vertical" variant="text" on:tap={showOptions} />
+                <uibutton class="actionBarButton" text="mdi-file-pdf-box" variant="text" on:tap={showPDFPopover} />
+                <uibutton class="actionBarButton" text="mdi-dots-vertical" variant="text" on:tap={showOptions} />
             {/if}
         </CActionBar>
 

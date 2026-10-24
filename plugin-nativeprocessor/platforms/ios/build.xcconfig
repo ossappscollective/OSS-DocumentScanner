@@ -3,5 +3,6 @@ HEADER_SEARCH_PATHS = $(ROOT)/tesseract/ios/include/** $(ROOT)/tesseract/ios/inc
 LIBRARY_SEARCH_PATHS = $(inherited)  $(ROOT)/tesseract/ios/lib/**
 OTHER_LDFLAGS[sdk=iphoneos*] = $(inherited)  -lc++ -lleptonica-ios -lpng16-ios -ltesseract-ios
 OTHER_LDFLAGS[sdk=iphonesimulator*] = $(inherited)  -lc++ -ltesseract-sim -lpng16-sim -lleptonica-sim
+OTHER_LDFLAGS[sdk=macosx*] = $(inherited)  -lc++ -ltesseract-catalyst -lpng16-catalyst -lleptonica-catalyst
 CLANG_CXX_LANGUAGE_STANDARD = gnu++20
 CLANG_CXX_LIBRARY = libc++

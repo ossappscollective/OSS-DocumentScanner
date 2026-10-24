@@ -1,7 +1,7 @@
 <script lang="ts">
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import CActionBar from './CActionBar.svelte';
-    import { TextField } from '@nativescript-community/ui-material-textfield';
+    import { TextField } from '@nativescript-community/ui-textfield';
     import { DocFolder, OCRDocument } from '~/models/OCRDocument';
     import { shortcutService } from '~/services/shortcuts';
     import { showError } from '@shared/utils/showError';
@@ -76,7 +76,7 @@
             on:returnPress={saveDocumentTitle}
             on:layoutChanged={onTextFieldFocus}
         />
-        <mdbutton class="actionBarButton" col={1} defaultVisualState={buttonsDefaultVisualState} text="mdi-content-save" variant="text" on:tap={saveDocumentTitle} />
+        <uibutton class="actionBarButton" col={1} defaultVisualState={buttonsDefaultVisualState} text="mdi-content-save" variant="text" on:tap={saveDocumentTitle} />
     </gridlayout>
     <slot />
 </CActionBar>

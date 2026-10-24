@@ -6,8 +6,8 @@ import { openFilePicker, pickFolder } from '@nativescript-community/ui-document-
 import { GestureRootView } from '@nativescript-community/gesturehandler';
 import { CheckBox } from '@nativescript-community/ui-checkbox';
 import { Label } from '@nativescript-community/ui-label';
-import { showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
-import { MDCAlertControlerOptions, alert, confirm, prompt } from '@nativescript-community/ui-material-dialogs';
+import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
+import { MDCAlertControlerOptions, alert, confirm, prompt } from '@nativescript-community/ui-dialogs';
 import { HorizontalPosition, PopoverOptions, VerticalPosition } from '@nativescript-community/ui-popover';
 import { closePopover, showPopover } from '@nativescript-community/ui-popover/svelte';
 import {

@@ -62,7 +62,7 @@
 </script>
 
 <ListItemAutoSize item={{ title: lc('sync_folders'), subtitle: lc('sync_folders_desc'), titleProps: { verticalAlignment: 'top' } }} paddingRight={0} rows="auto,auto">
-    <mdbutton
+    <uibutton
         class="icon-btn"
         col={1}
         marginTop={6}

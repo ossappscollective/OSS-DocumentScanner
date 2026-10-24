@@ -502,7 +502,7 @@
         </collectionview>
         <CActionBar canGoBack {title}>
             {#each actionBarButtons as button (button.id)}
-                <mdbutton class="actionBarButton" text={button.icon} variant="text" on:tap={(event) => onTap({ id: button.id }, event)} />
+                <uibutton class="actionBarButton" text={button.icon} variant="text" on:tap={(event) => onTap({ id: button.id }, event)} />
             {/each}
         </CActionBar>
     </gridlayout>

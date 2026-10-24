@@ -340,9 +340,9 @@
             on:textChange={(e) => (text = e.value)}
         />
         <CActionBar backgroundColor="transparent" buttonsDefaultVisualState={visualState} modalWindow={true} title={null}>
-            <mdbutton class="actionBarButton" color={textColor} text="mdi-content-save" variant="text" visibility={showTextView ? 'visible' : 'hidden'} on:tap={saveEdit} />
-            <mdbutton class="actionBarButton" color={textColor} text="mdi-content-copy" variant="text" on:tap={copyText} />
-            <mdbutton class="actionBarButton" color={textColor} text="mdi-image-text" variant="text" on:tap={toggleShowTextView} />
+            <uibutton class="actionBarButton" color={textColor} text="mdi-content-save" variant="text" visibility={showTextView ? 'visible' : 'hidden'} on:tap={saveEdit} />
+            <uibutton class="actionBarButton" color={textColor} text="mdi-content-copy" variant="text" on:tap={copyText} />
+            <uibutton class="actionBarButton" color={textColor} text="mdi-image-text" variant="text" on:tap={toggleShowTextView} />
         </CActionBar>
     </gridlayout>
 </page>

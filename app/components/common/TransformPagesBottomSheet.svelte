@@ -5,7 +5,7 @@
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import { CheckBox } from '@nativescript-community/ui-checkbox';
     import { CollectionView } from '@nativescript-community/ui-collectionview';
-    import { closeBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
+    import { closeBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { VerticalPosition } from '@nativescript-community/ui-popover';
     import { View } from '@nativescript/core';
     import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
@@ -234,6 +234,6 @@
             </collectionview>
         </stacklayout>
     </scrollview>
-    <mdbutton row={1} text={lc('apply')} on:tap={startUpdate} />
-    <mdbutton col={1} margin="12 10 12 10" row={1} text={lc('reset')} variant="outline" on:tap={resetAll} />
+    <uibutton row={1} text={lc('apply')} on:tap={startUpdate} />
+    <uibutton col={1} margin="12 10 12 10" row={1} text={lc('reset')} variant="outline" on:tap={resetAll} />
 </gesturerootview>

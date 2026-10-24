@@ -87,6 +87,7 @@
     "camera_settings": "camera settings",
     "camera_view_size": "view size",
     "cancel": "cancel",
+    "more_options": "more options",
     "capturing": "capturing",
     "cardholder": "card holder",
     "cards": "cards",
@@ -95,6 +96,7 @@
     "choose": "choose",
     "color": "color",
     "color_desc": "improve colors and reduce unwanted color shades",
+    "color_grid": "grid",
     "color_hex_hint": "hex color #",
     "color_theme": {
         "default": "default",
@@ -288,6 +290,7 @@
     },
     "internal_storage": "internal storage",
     "invalid": "invalid",
+    "invalid_color": "invalid color",
     "ios": {
         "info": {
             "plist": {

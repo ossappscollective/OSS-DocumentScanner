@@ -7,7 +7,7 @@ import { documentsService } from '~/services/documents';
 import { ocrService } from '~/services/ocr';
 import { securityService } from '~/services/security';
 import { copyOCRToClipboard, getOCRFromCamera, goToDocumentView, importAndScanImageOrPdfFromUris, importPKPassFromUris, onStartCam, requestStoragePermission } from './index.common';
-import { showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
+import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
 import { screenHeightDips } from '@shared/variables';
 
 export * from './index.common';
@@ -161,7 +161,7 @@ export const onAndroidNewItent = throttle(async function onAndroidNewItent(event
 
 // TODO: move to a plugin
 export async function pickColor(color: Color | string, options: { alpha?: boolean; anchor?: View } = {}) {
-    const view = (await import('~/components/common/ColorPicker.svelte')).default;
+    const view = (await import('@shared/components/ColorPicker.svelte')).default;
     return showBottomSheet({
         view,
         // backgroundOpacity: 1,

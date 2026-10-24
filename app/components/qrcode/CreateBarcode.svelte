@@ -1,6 +1,6 @@
 <script lang="ts">
     import { CollectionView } from '@nativescript-community/ui-collectionview';
-    import { TextField } from '@nativescript-community/ui-material-textfield';
+    import { TextField } from '@nativescript-community/ui-textfield';
     import { ObservableArray } from '@nativescript/core';
     import { closeModal } from '@shared/utils/svelte/ui';
     import { Template } from '@nativescript-community/svelte-native/components';

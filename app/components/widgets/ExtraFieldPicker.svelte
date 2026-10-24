@@ -127,7 +127,7 @@
     <label color={colorOnBackground} fontSize={20} fontWeight="bold" marginBottom={16} text={editing ? lc('edit_extra_field') : lc('add_extra_field')} />
     <gridlayout row={1}>
         <textfield hint={lc('name')} margin={tMargin} paddingLeft={60} row={2} text={currentName} variant="outline" on:textChange={(e) => (currentName = e.value)} />
-        <mdbutton class="icon-btn" color={colorOnSurfaceVariant} horizontalAlignment="left" text="mdi-menu-down" variant="text" verticalAlignment="middle" on:tap={selecteTemplateName} />
+        <uibutton class="icon-btn" color={colorOnSurfaceVariant} horizontalAlignment="left" text="mdi-menu-down" variant="text" verticalAlignment="middle" on:tap={selecteTemplateName} />
     </gridlayout>
     <textfield editable={false} hint={lc('type')} margin={tMargin} row={2} text={lc(currentType)} textTransform="uppercase" variant="outline" on:tap={(e) => selectType(e)} />
 
@@ -143,5 +143,5 @@
         on:tap={(e) => selectDate(e)}
     />
 
-    <mdbutton horizontalAlignment="right" row={4} text={editing ? lc('edit') : lc('add')} variant="text" on:tap={add} />
+    <uibutton horizontalAlignment="right" row={4} text={editing ? lc('edit') : lc('add')} variant="text" on:tap={add} />
 </gesturerootview>

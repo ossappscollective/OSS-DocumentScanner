@@ -107,7 +107,7 @@
             </Template>
         </pager>
         <PageIndicator colSpan={3} horizontalAlignment="right" margin="10 10 0 0" row={2} scale={$fontScale} text={`${currentIndex + 1}/${items.length}`} />
-        <mdbutton
+        <uibutton
             class="icon-btn"
             color={textColor}
             fontSize={46}
@@ -121,7 +121,7 @@
             on:tap={() => changePage(-1)}
         />
         <label col={1} color={textColor} fontSize={13} row={3} text={lc('crop_edit_doc')} textAlignment="center" textWrap={true} verticalAlignment="center" />
-        <mdbutton
+        <uibutton
             class="icon-btn"
             col={2}
             color={textColor}
@@ -135,8 +135,8 @@
             visibility={currentIndex < items.length - 1 ? 'visible' : 'hidden'}
             on:tap={() => changePage(1)}
         />
-        <mdbutton class="fab" colSpan={3} elevation={0} horizontalAlignment="center" row={4} text="mdi-check" variant="text" on:tap={onTapFinish} />
-        <mdbutton
+        <uibutton class="fab" colSpan={3} elevation={0} horizontalAlignment="center" row={4} text="mdi-check" variant="text" on:tap={onTapFinish} />
+        <uibutton
             class="icon-btn"
             colSpan={3}
             color={textColor}
@@ -149,8 +149,8 @@
             on:tap={resetCrop}
         />
         <CActionBar backgroundColor="transparent" buttonsDefaultVisualState={visualState} colSpan={3} modalWindow={true} {onGoBack} title={null}>
-            <mdbutton class="actionBarButton" defaultVisualState={visualState} isEnabled={currentItem?.undos.length > 0} text="mdi-undo" variant="text" on:tap={onUndo} />
-            <mdbutton class="actionBarButton" defaultVisualState={visualState} isEnabled={currentItem?.redos.length > 0} text="mdi-redo" variant="text" on:tap={onRedo} />
+            <uibutton class="actionBarButton" defaultVisualState={visualState} isEnabled={currentItem?.undos.length > 0} text="mdi-undo" variant="text" on:tap={onUndo} />
+            <uibutton class="actionBarButton" defaultVisualState={visualState} isEnabled={currentItem?.redos.length > 0} text="mdi-redo" variant="text" on:tap={onRedo} />
         </CActionBar>
     </gridlayout>
 </page>

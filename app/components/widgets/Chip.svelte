@@ -12,5 +12,5 @@
     <label color={colorOnSurface} fontFamily={$fonts.mdi} fontSize={16} marginRight={4} text={rightIcon} verticalAlignment="middle" visibility={rightIcon ? 'visible' : 'collapse'} />
 
     <label col={1} fontSize={14} paddingBottom={2} {text} verticalAlignment="middle" />
-    <mdbutton col={2} color={colorOnSurface} fontFamily={$fonts.mdi} fontSize={16} marginLeft={4} padding={0} text="mdi-close" variant="text" verticalAlignment="middle" width={20} on:tap />
+    <uibutton col={2} color={colorOnSurface} fontFamily={$fonts.mdi} fontSize={16} marginLeft={4} padding={0} text="mdi-close" variant="text" verticalAlignment="middle" width={20} on:tap />
 </gridlayout>

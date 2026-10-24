@@ -4,10 +4,10 @@
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import { CheckBox } from '@nativescript-community/ui-checkbox';
     import { openFilePicker, pickFolder, saveFile } from '@nativescript-community/ui-document-picker';
-    import { showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
-    import { alert, confirm } from '@nativescript-community/ui-material-dialogs';
-    import { TextField, TextFieldProperties } from '@nativescript-community/ui-material-textfield';
-    import { TextView } from '@nativescript-community/ui-material-textview';
+    import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
+    import { alert, confirm } from '@nativescript-community/ui-dialogs';
+    import { TextField, TextFieldProperties } from '@nativescript-community/ui-textfield';
+    import { TextView } from '@nativescript-community/ui-textview';
     import { ApplicationSettings, File, ObservableArray, Page, ScrollView, StackLayout, knownFolders, path } from '@nativescript/core';
     import { presentInAppSponsorBottomsheet } from '@shared/utils/inapp-purchase';
     import { Sentry, startSentry, stopSentry } from '@shared/utils/sentry';
@@ -1412,7 +1412,7 @@
     bind:refresh>
     <svelte:fragment slot="actionBarButtons">
         {#each actionBarButtons as button (button.id)}
-            <mdbutton class="actionBarButton" text={button.icon} variant="text" on:tap={(event) => onTap({ id: button.id }, event)} />
+            <uibutton class="actionBarButton" text={button.icon} variant="text" on:tap={(event) => onTap({ id: button.id }, event)} />
         {/each}
     </svelte:fragment>
 

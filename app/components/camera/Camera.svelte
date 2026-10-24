@@ -3,9 +3,9 @@
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import { CameraView } from '@nativescript-community/ui-cameraview';
     import { Canvas, CanvasView, Paint, Style } from '@nativescript-community/ui-canvas';
-    import { showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
-    import { confirm } from '@nativescript-community/ui-material-dialogs';
-    import { Slider } from '@nativescript-community/ui-material-slider/slider';
+    import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
+    import { confirm } from '@nativescript-community/ui-dialogs';
+    import { Slider } from '@nativescript-community/ui-slider';
     import { AbsoluteLayout, AndroidActivityBackPressedEventData, Application, ApplicationSettings, Page, Utils, knownFolders, path } from '@nativescript/core';
     import { ImageSource } from '@nativescript/core/image-source';
     import { debounce, wrapNativeException } from '@nativescript/core/utils';
@@ -851,7 +851,7 @@
                 <label color="white" fontSize={20} isUserInteractionEnabled={false} text={nbPages + ''} textAlignment="center" verticalAlignment="middle" visibility={nbPages ? 'visible' : 'hidden'} />
             </gridlayout>
 
-            <mdbutton
+            <uibutton
                 class="fab"
                 accessibilityLabel={lc('finish')}
                 col={4}

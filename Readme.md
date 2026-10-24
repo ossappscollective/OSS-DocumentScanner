@@ -127,8 +127,9 @@ I use dotenv plugin for zsh which automatically loads the `.env` file
 ### 3rd parties
 
 This app also uses opencv and tesseract. I did not include the libraries in git because there are huge and would make the github repo too big.
-There are 2 ways to install them:
+There are 3 ways to install them:
 
+- reproducible, selected by version (Android, iOS and Mac Catalyst): `scripts/native-libs/fetch.sh <opencv_version> <tesseract_version> all` downloads a build of the `build-native-libs` workflow, or build locally with `scripts/native-libs/build.sh`. See [scripts/native-libs/README.md](scripts/native-libs/README.md)
 - download from [here](https://github.com/ossappscollective/OSS-DocumentScanner/releases/tag/dev_resources) and uncompress them at the root
 - build them yourself:
 

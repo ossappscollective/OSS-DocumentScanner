@@ -286,6 +286,6 @@
         <FavoriteIndicator favorite={item.doc.favorite === 1} />
         <!-- </gridlayout> -->
     </gridlayout>
-    <!-- <mdbutton prop:rightDrawer class="mdi" fontSize={40} height={60} text="mdi-fullscreen" variant="text" verticalAlignment="center" width={60} on:tap={() => showImages(item)} />
+    <!-- <uibutton prop:rightDrawer class="mdi" fontSize={40} height={60} text="mdi-fullscreen" variant="text" verticalAlignment="center" width={60} on:tap={() => showImages(item)} />
 </swipemenu> -->
 </gridlayout>

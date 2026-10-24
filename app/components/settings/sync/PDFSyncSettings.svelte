@@ -1,7 +1,7 @@
 <script context="module" lang="ts">
     import { Template } from '@nativescript-community/svelte-native/components';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-    import { TextFieldProperties } from '@nativescript-community/ui-material-textfield';
+    import { TextFieldProperties } from '@nativescript-community/ui-textfield';
     import { ApplicationSettings, Color, ObservableArray, Page } from '@nativescript/core';
     import { closeModal } from '@shared/utils/svelte/ui';
     import { Writable, get, writable } from 'svelte/store';
@@ -178,8 +178,8 @@
         </SyncSettingsCollectionView>
 
         <CActionBar canGoBack modalWindow={true} title={lc('pdf_sync_settings')}>
-            <mdbutton text={lc('save')} variant="text" verticalAlignment="middle" on:tap={save} />
-            <!-- <mdbutton class="actionBarButton" text={lc('save')} variant="text" on:tap={save} /> -->
+            <uibutton text={lc('save')} variant="text" verticalAlignment="middle" on:tap={save} />
+            <!-- <uibutton class="actionBarButton" text={lc('save')} variant="text" on:tap={save} /> -->
         </CActionBar>
     </gridlayout>
 </page>

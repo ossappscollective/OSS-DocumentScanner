@@ -1,10 +1,10 @@
 @import './app.common';
 
-mdbutton {
+button {
     // material3 basic design
     shape: round;
 }
-mdbutton[variant='outline'] {
+button[variant='outline'] {
     ripple-color: var(--colorPrimary);
     color: var(--colorPrimary);
 }
@@ -19,10 +19,8 @@ htmllabel,
 label,
 button,
 textfield,
-mdtextfield,
-mdtextview,
-checkbox,
-mdbutton {
+textview,
+checkbox {
     ios-a11y-adjusts-font-size: true;
 }
 
@@ -33,14 +31,14 @@ checkbox {
     on-tint-color: var(--colorPrimary);
 }
 
-mdswitch {
+switch {
     on-background-color: var(--colorPrimary);
 }
 
-// mdbutton[variant=flat],mdbutton[variant=contained] {
+// button[variant=flat],button[variant=contained] {
 //     color: var(--colorOnPrimary);
 // }
-mdcardview {
+card {
     // material3 basic design
     shape: medium;
 }
@@ -58,6 +56,21 @@ mdcardview {
     // height: calc(40 * var(--fontScale));
 }
 
-mdtextfield[variant='none'] {
+textfield[variant='none'] {
     padding: 0;
+}
+
+.pageContent,
+.pageContent > collectionview {
+    ios-overflow-safe-area: true;
+}
+
+.card {
+    margin: 4 16;
+    border-radius: 12;
+}
+
+.listAppBar {
+    font-size: 30;
+    font-weight: 700;
 }

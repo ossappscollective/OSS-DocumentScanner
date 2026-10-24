@@ -1,6 +1,6 @@
 <script lang="ts">
     import { CollectionView } from '@nativescript-community/ui-collectionview';
-    import { closeBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
+    import { closeBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { HorizontalPosition, VerticalPosition } from '@nativescript-community/ui-popover';
     import { showPopover } from '@nativescript-community/ui-popover/svelte';
     import { View, verticalAlignmentProperty } from '@nativescript/core';
@@ -163,7 +163,7 @@
         {/if}
         {#if onlySettings}
             <ListItemAutoSize item={{ title: lc('languages'), titleProps: { verticalAlignment: 'top' } }} paddingRight={0}>
-                <mdbutton class="icon-btn" col={1} marginTop={6} text="mdi-plus" variant="text" verticalAlignment="top" on:tap={addLanguages} />
+                <uibutton class="icon-btn" col={1} marginTop={6} text="mdi-plus" variant="text" verticalAlignment="top" on:tap={addLanguages} />
                 <wraplayout marginTop={50} verticalAlignment="bottom">
                     {#each languages as language (language)}
                         <Chip rightIcon={downloaded.indexOf(language) !== -1 ? 'mdi-download' : null} text={localizedLanguage(language, OCRLanguages)} on:tap={() => removeLanguage(language)} />
@@ -173,7 +173,7 @@
         {:else}
             <gridlayout columns="*,auto" marginBottom={16} marginTop={15} rows="auto">
                 <label class="sectionBigHeader" text={lc('languages')} verticalAlignment="middle" />
-                <mdbutton class="icon-btn" col={1} padding={0} text="mdi-plus" variant="text" on:tap={addLanguages} />
+                <uibutton class="icon-btn" col={1} padding={0} text="mdi-plus" variant="text" on:tap={addLanguages} />
             </gridlayout>
 
             <wraplayout row={1}>
@@ -186,11 +186,11 @@
             <textfield hint={lc('languages')} placeholder={lc('languages')} returnKeyType="search" variant="none" verticalTextAlignment="center" />
         </gridlayout> -->
         {#if !onlySettings}
-            <mdbutton horizontalAlignment="right" padding="10 16 10 16" row={1} text={lc('start')} on:tap={startOrCloseOCR} />
+            <uibutton horizontalAlignment="right" padding="10 16 10 16" row={1} text={lc('start')} on:tap={startOrCloseOCR} />
         {/if}
 
         {#if showDownloadButton}
-            <mdbutton horizontalAlignment="right" padding="10 16 10 16" row={1} text={lc('download')} on:tap={downloadLanguages} />
+            <uibutton horizontalAlignment="right" padding="10 16 10 16" row={1} text={lc('download')} on:tap={downloadLanguages} />
         {/if}
     </stacklayout>
 </gesturerootview>

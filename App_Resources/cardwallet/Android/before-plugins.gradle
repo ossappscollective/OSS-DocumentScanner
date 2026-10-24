@@ -14,7 +14,7 @@ ext {
     androidXRecyclerViewVersion = "1.4.0"
     androidxViewPager2Version = "1.1.0"
     androidXSwipeRefreshLayoutViewVersion = "1.2.0"
-    androidXMaterial = "1.13.0"
+    androidXMaterial = "1.14.0"
     androidXBrowser = "1.10.0"
     androidXPreferenceVersion = "1.2.1"
     androidXSplashscreenVersion = "1.2.0"

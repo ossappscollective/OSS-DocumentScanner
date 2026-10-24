@@ -3,8 +3,8 @@
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { Img } from '@nativescript-community/ui-image';
-    import { showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
-    import { confirm } from '@nativescript-community/ui-material-dialogs';
+    import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
+    import { confirm } from '@nativescript-community/ui-dialogs';
     import { Pager } from '@nativescript-community/ui-pager';
     import { HorizontalPosition, VerticalPosition } from '@nativescript-community/ui-popover';
     import { showPopover } from '@nativescript-community/ui-popover/svelte';
@@ -771,15 +771,15 @@
         </stacklayout>
 
         <stacklayout borderTopColor={colorOutline} borderTopWidth={1} orientation="horizontal" row={4}>
-            <mdbutton class="icon-btn" text="mdi-crop" variant="text" visibility={currentItem?.sourceImagePath ? 'visible' : 'collapse'} on:tap={() => cropEdit()} />
-            <mdbutton class="icon-btn" text="mdi-rotate-left" variant="text" on:tap={() => rotateImageLeft()} />
-            <mdbutton class="icon-btn" text="mdi-rotate-right" variant="text" on:tap={() => rotateImageRight()} />
-            <mdbutton class="icon-btn" text="mdi-auto-fix" variant="text" on:tap={showEnhancements} />
-            <mdbutton class="icon-btn" text="mdi-brightness-6" variant="text" on:tap={editBrightnessContrast} />
+            <uibutton class="icon-btn" text="mdi-crop" variant="text" visibility={currentItem?.sourceImagePath ? 'visible' : 'collapse'} on:tap={() => cropEdit()} />
+            <uibutton class="icon-btn" text="mdi-rotate-left" variant="text" on:tap={() => rotateImageLeft()} />
+            <uibutton class="icon-btn" text="mdi-rotate-right" variant="text" on:tap={() => rotateImageRight()} />
+            <uibutton class="icon-btn" text="mdi-auto-fix" variant="text" on:tap={showEnhancements} />
+            <uibutton class="icon-btn" text="mdi-brightness-6" variant="text" on:tap={editBrightnessContrast} />
             {#if CARD_APP}
-                <mdbutton class="actionBarButton" text="mdi-qrcode-scan" variant="text" on:tap={detectQRCode} />
+                <uibutton class="actionBarButton" text="mdi-qrcode-scan" variant="text" on:tap={detectQRCode} />
             {/if}
-            <mdbutton class="actionBarButton" text="mdi-text-recognition" variant="text" on:tap={showOCRSettings} />
+            <uibutton class="actionBarButton" text="mdi-text-recognition" variant="text" on:tap={showOCRSettings} />
         </stacklayout>
         <!-- <collectionview bind:this={collectionView} id="filters" colWidth={FILTER_COL_WIDTH} height={FILTER_ROW_HEIGHT} items={filters} orientation="horizontal" row={4}>
             <Template let:item>
@@ -809,8 +809,8 @@
             </Template>
         </collectionview> -->
         <CActionBar {onGoBack} onTitleTap={() => (editingTitle = true)} title={document.name} titleProps={{ autoFontSize: true, padding: 0 }}>
-            <mdbutton class="actionBarButton" text="mdi-file-pdf-box" variant="text" on:tap={showPDFPopover} />
-            <mdbutton class="actionBarButton" text="mdi-delete" variant="text" on:tap={deleteCurrentPage} />
+            <uibutton class="actionBarButton" text="mdi-file-pdf-box" variant="text" on:tap={showPDFPopover} />
+            <uibutton class="actionBarButton" text="mdi-delete" variant="text" on:tap={deleteCurrentPage} />
         </CActionBar>
         {#if editingTitle}
             <EditNameActionBar {document} bind:editingTitle />
