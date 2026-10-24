@@ -95,6 +95,7 @@
     "choose": "wybierz",
     "color": "kolor",
     "color_desc": "popraw kolory i zredukuj niepożądane kolorowe cienie",
+    "color_grid": "siatka",
     "color_hex_hint": "kod szesnastkowy koloru #",
     "color_theme": {
         "default": "domyślne",
@@ -291,6 +292,7 @@
     },
     "internal_storage": "pamięć wewnętrzna",
     "invalid": "niepoprawne",
+    "invalid_color": "nieprawidłowy kolor",
     "ios": {
         "info": {
             "plist": {
@@ -329,6 +331,7 @@
     "missing_remote_folder": "brak folderu zdalnego",
     "missing_storage_perm_settings": "wymagane jest uprawnienie dostępu do plików, aby eksportować ustawienia",
     "missing_webdav_password": "Brak hasła WebDAV. Zauważ, że nie jest ono zapisywane lokalnie, więc należy je podać za każdym razem, gdy modyfikuje się ustawienia",
+    "more_options": "więcej opcji",
     "most_used": "najczęściej używane",
     "move": "przenieś",
     "move_data": "przenieść dane?",
