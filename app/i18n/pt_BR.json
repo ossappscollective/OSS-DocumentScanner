@@ -130,7 +130,7 @@
     "contrast": "contraste",
     "copied": "copiado",
     "crash_report": "ativar relatórios de falhas",
-    "crash_report_desc": "quando ativado, os relatórios de falhas serão enviados para uma instância privada do Sentry. Nenhum dado é compartilhado, e os dados são apagados regularmente. Utilizado apenas para depuração",
+    "crash_report_desc": "quando ativado, os relatórios de falhas serão enviados para uma instância privada do Sentry. Nenhum dado é compartilhado, e os dados são excluídos regularmente. Utilizados apenas para depuração.",
     "create": "criar",
     "create_backup": "criar backup",
     "create_backup_desc": "criar um backup completo de todos os documentos e pastas",
