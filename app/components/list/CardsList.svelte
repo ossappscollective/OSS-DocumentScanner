@@ -4,7 +4,7 @@
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import { Paint } from '@nativescript-community/ui-canvas';
     import { CollectionViewWithSwipeMenu } from '@nativescript-community/ui-collectionview-swipemenu';
-    import { showBottomSheet } from '@nativescript-community/ui-material-bottomsheet/svelte';
+    import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { ApplicationSettings, ObservableArray, StackLayout } from '@nativescript/core';
     import { throttle } from '@nativescript/core/utils';
     import { prefs } from '@shared/services/preferences';
@@ -277,6 +277,7 @@
 </script>
 
 <MainList
+    actions={[{ text: lc('add'), icon: 'add', onTap: () => onAddButton() }]}
     collectionViewOptions={{
         // spanSize: (item) => itemTemplateSpanSize(viewStyle, item),
         swipeMenuId: 'swipeMenu',
@@ -458,8 +459,8 @@
         />
     </Template>
 
-    <stacklayout bind:this={fabHolder} slot="fab" class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal" row={2}>
-        <mdbutton bind:this={fabHolder} class="fab" text="mdi-plus" on:tap={throttle(() => onAddButton(), 500)} />
+    <stacklayout bind:this={fabHolder} slot="fab" class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal">
+        <uibutton bind:this={fabHolder} class="fab" text="mdi-plus" on:tap={throttle(() => onAddButton(), 500)} />
     </stacklayout>
 
     <!-- <canvasview bind:this={canvastest} slot="test" row={2} on:draw={onDrawCanvasTest} on:tap={() => (canvastest.nativeView.visibility = 'hidden')}> </canvasview> -->

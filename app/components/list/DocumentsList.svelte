@@ -99,6 +99,11 @@
 </script>
 
 <MainList
+    actions={[
+        { text: lc('import_from_image'), icon: 'import_image', onTap: () => importImages() },
+        { text: lc('import_from_file'), icon: 'import_file', onTap: () => importDocument() },
+        { text: lc('camera'), icon: 'camera', primary: true, onTap: () => onStartCam() }
+    ]}
     folderViewStyles={{
         horizontal: { name: lc('horizontal') },
         vertical: { name: lc('vertical') }
@@ -152,9 +157,9 @@
         </canvasview>
     </Template>
 
-    <stacklayout bind:this={fabHolder} slot="fab" class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal" row={2}>
-        <mdbutton class="small-fab" horizontalAlignment="center" text="mdi-image-plus-outline" verticalAlignment="center" on:tap={throttle(() => importImages(), 500)} />
-        <mdbutton
+    <stacklayout bind:this={fabHolder} slot="fab" class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal">
+        <uibutton class="small-fab" horizontalAlignment="center" text="mdi-image-plus-outline" verticalAlignment="center" on:tap={throttle(() => importImages(), 500)} />
+        <uibutton
             class={$hasCamera ? 'small-fab' : 'fab'}
             horizontalAlignment="center"
             text="mdi-file-document-plus-outline"
@@ -162,7 +167,7 @@
             on:tap={throttle(() => importDocument(), 500)}
         />
         {#if $hasCamera}
-            <mdbutton id="fab" class="fab" text="mdi-camera" verticalAlignment="center" on:tap={throttle(() => onStartCam(), 500)} on:longPress={() => onStartCam(true)} />
+            <uibutton id="fab" class="fab" text="mdi-camera" verticalAlignment="center" on:tap={throttle(() => onStartCam(), 500)} on:longPress={() => onStartCam(true)} />
         {/if}
     </stacklayout>
 </MainList>
