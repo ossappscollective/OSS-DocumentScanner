@@ -523,6 +523,10 @@ export class OCRDocument extends Observable implements Document {
         }
         return this.save({}, true);
     }
+
+    async reversePages() {
+        return this.save({ pagesOrder: this.pages.map((page) => page.id).reverse() }, true);
+    }
     onPageUpdated(pageIndex: number, page: OCRPage, imageUpdated = false) {
         documentsService.notify({ eventName: EVENT_DOCUMENT_PAGE_UPDATED, doc: this, pageIndex, imageUpdated } as DocumentPageUpdatedEventData);
     }
