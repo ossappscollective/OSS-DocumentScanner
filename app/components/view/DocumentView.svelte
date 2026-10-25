@@ -616,6 +616,7 @@
             { id: 'favorite', name: lc('toggle_favorite'), icon: document.favorite === 1 ? 'mdi-star' : 'mdi-star-outline' },
             { id: 'select_all', name: lc('select_all'), icon: 'mdi-select-all' },
             { id: 'reorder', name: lc('reorder_pages'), icon: 'mdi-reorder-horizontal' },
+            ...(document.pages.length > 1 ? [{ id: 'reverse_pages', name: lc('reverse_pages'), icon: 'mdi-sort-reverse-variant' }] : []),
             { id: 'transform', name: lc('transform_images'), icon: 'mdi-auto-fix' },
             { id: 'ocr', name: lc('ocr_document'), icon: 'mdi-text-recognition' },
             { id: 'delete_originals', name: lc('delete_original_images'), icon: 'mdi-image-remove' },
@@ -655,6 +656,10 @@
                     case 'reorder':
                         unselectAll();
                         switchEditMode();
+                        break;
+                    case 'reverse_pages':
+                        await document.reversePages();
+                        unselectAll();
                         break;
                 }
             }
