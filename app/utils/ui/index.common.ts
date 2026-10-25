@@ -114,6 +114,7 @@ import { colors, fontScale, screenWidthDips } from '~/variables';
 import { MatricesTypes, Matrix } from '../color_matrix';
 import { cleanFilename, saveImage } from '../utils';
 import { buildExportImageNames } from '../exportUtils';
+import { sortByFileName } from '../importOrder';
 
 export { ColorMatricesType, ColorMatricesTypes, getColorMatrix } from '~/utils/matrix';
 
@@ -130,12 +131,14 @@ export async function importAndScanImageOrPdfFromUris({ canGoToView = true, docu
         const resizeThreshold = previewResizeThreshold * 1.5;
         const cropEnabled = ApplicationSettings.getBoolean(SETTINGS_CROP_ENABLED, CROP_ENABLED);
 
-        const [pdf, images, pkpasses] = await uris.reduce(
+        const fileNames = new Map<string, string>();
+        const [unsortedPdf, unsortedImages, pkpasses] = await uris.reduce(
             async (acc, e) => {
                 let testStr = e.toLowerCase();
                 if (__ANDROID__ && e.startsWith(ANDROID_CONTENT)) {
                     testStr = await getFileName(e);
                 }
+                fileNames.set(e, testStr);
                 acc.then((obj) => {
                     if (CARD_APP && (testStr.endsWith(PKPASS_EXT) || testStr.endsWith(ESPASS_EXT))) {
                         obj[2].push(e);
@@ -150,6 +153,8 @@ export async function importAndScanImageOrPdfFromUris({ canGoToView = true, docu
             },
             Promise.resolve([[], [], []] as [string[], string[], string[]])
         );
+        const pdf = sortByFileName(unsortedPdf, (uri) => fileNames.get(uri));
+        const images = sortByFileName(unsortedImages, (uri) => fileNames.get(uri));
         DEV_LOG && console.log('importAndScanImageOrPdfFromUris', pdf, images, pkpasses);
         if (CARD_APP && pkpasses.length) {
             await importPKPassFromUris({ uris: pkpasses, canGoToView: true });
