@@ -95,6 +95,7 @@
     "choose": "Auswählen",
     "color": "Farbe",
     "color_desc": "Verbessert Farben und verringert ungewünschte Farbverläufe",
+    "color_grid": "Raster",
     "color_hex_hint": "hex Farbencode #",
     "color_theme": {
         "default": "Standard",
@@ -130,7 +131,7 @@
     "contrast": "Kontrast",
     "copied": "kopiert",
     "crash_report": "Absturzberichte aktivieren",
-    "crash_report_desc": "Wenn aktiviert, werden Absturzberichte zu einem privaten Datenwachdienst geschickt. Es werden keine Daten weitergegeben, die Daten werden regelmäßig gelöscht. Die Daten werden ausschließlich zur Fehlerbehebung benutzt",
+    "crash_report_desc": "Wenn aktiviert, werden Absturzberichte zu einem privaten Datenwachdienst geschickt. Es werden keine Daten weitergegeben, die Daten werden regelmäßig gelöscht. Die Daten werden ausschließlich zur Fehlerbehebung benutzt.",
     "create": "erstellen",
     "create_backup": "Backup erstellen",
     "create_backup_desc": "Vollständiges Backup aller Dokumente, Ordner und Einstellungen erstellen",
@@ -240,7 +241,7 @@
     "general": "Allgemein",
     "get_app_source_code": "Den App-Quellcode erhalten",
     "green": "grün",
-    "grid": "Gitter",
+    "grid": "Raster",
     "here": "Die Dokumentation",
     "hue": "Farbton",
     "image": "Bild",
@@ -290,6 +291,7 @@
     },
     "internal_storage": "Interner Gerätespeicher",
     "invalid": "ungültig",
+    "invalid_color": "ungültige Farbe",
     "ios": {
         "info": {
             "plist": {
@@ -328,6 +330,7 @@
     "missing_remote_folder": "Fehlender Fernordner",
     "missing_storage_perm_settings": "zum Exportieren der Einstellungen ist eine Speichererlaubnis erforderlich",
     "missing_webdav_password": "Fehlendes WebDAV-Passwort. Beachten Sie, dass das Passwort nicht gespeichert wird und Sie es bei jeder Einstellungsänderung erneut eingeben müssen",
+    "more_options": "weitere Optionen",
     "most_used": "meist genutzt",
     "move": "verschieben",
     "move_data": "Daten verschieben?",
@@ -459,6 +462,7 @@
     "restore_documents": "Dokumente wiederherstellen",
     "restore_failed": "Wiederherstellung fehlgeschlagen",
     "restoring_backup": "Backup wird wiederhergestellt...",
+    "reverse_pages": "Seiten umdrehen",
     "review_application": "App bewerten",
     "save": "Speichern",
     "save_gallery": "Bild in Galerie speichern",

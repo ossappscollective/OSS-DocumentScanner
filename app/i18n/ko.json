@@ -95,6 +95,7 @@
     "choose": "선택",
     "color": "색상",
     "color_desc": "색상을 개선하고 원치 않는 색조 줄이기",
+    "color_grid": "격자",
     "color_hex_hint": "헥스 색상 #",
     "color_theme": {
         "default": "기본",
@@ -288,6 +289,7 @@
     },
     "internal_storage": "내부 저장소",
     "invalid": "잘못됨",
+    "invalid_color": "잘못된 색상",
     "ios": {
         "info": {
             "plist": {
@@ -326,6 +328,7 @@
     "missing_remote_folder": "원격 폴더 누락",
     "missing_storage_perm_settings": "설정을 내보내려면 저장소 권한 필요",
     "missing_webdav_password": "WebDAV 비밀번호가 누락되었습니다. 비밀번호는 로컬에 저장되지 않으므로 설정을 변경할 때마다 입력해야 하니 참고하시기 바랍니다",
+    "more_options": "설정 더보기",
     "most_used": "자주 사용",
     "move": "이동",
     "move_data": "데이터를 이동합니까?",
@@ -457,6 +460,7 @@
     "restore_documents": "문서 복원",
     "restore_failed": "복원 실패",
     "restoring_backup": "백업 복원 중...",
+    "reverse_pages": "페이지 순서 반전",
     "review_application": "애플리케이션 평가",
     "save": "저장",
     "save_gallery": "갤러리에 사진 저장",

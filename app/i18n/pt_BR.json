@@ -95,6 +95,7 @@
     "choose": "escolha",
     "color": "cor",
     "color_desc": "melhora as cores e reduz sombras indesejadas",
+    "color_grid": "grade",
     "color_hex_hint": "cor hex #",
     "color_theme": {
         "default": "padrão",
@@ -290,6 +291,7 @@
     },
     "internal_storage": "armazenamento interno",
     "invalid": "inválido",
+    "invalid_color": "cor inválida",
     "ios": {
         "info": {
             "plist": {
@@ -328,6 +330,7 @@
     "missing_remote_folder": "pasta remota ausente",
     "missing_storage_perm_settings": "permissão de acesso ao armazenamento é necessária para exportar as configurações",
     "missing_webdav_password": "Senha do WebDAV ausente. Observe que ela não é salva localmente, então você precisa inseri-la sempre que modificar as configurações",
+    "more_options": "mais opções",
     "most_used": "mais utilizados",
     "move": "mover",
     "move_data": "mover dados?",
@@ -459,6 +462,7 @@
     "restore_documents": "restaurar documentos",
     "restore_failed": "a restauração falhou",
     "restoring_backup": "restaurando o backup...",
+    "reverse_pages": "páginas invertidas",
     "review_application": "avaliar aplicativo",
     "save": "salvar",
     "save_gallery": "salvar imagem na galeria",
