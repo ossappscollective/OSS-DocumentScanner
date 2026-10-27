@@ -743,7 +743,7 @@
                 jpegQuality={compressQuality}
                 {pictureSize}
                 readyToStartPreview={false}
-                ios:iosCaptureMode="photo"
+                ios:iosCaptureMode="videoWithoutAudio"
                 {stretch}
                 width="100%"
                 {zoom}

@@ -159,7 +159,7 @@ export class OnQRCodeImpl extends NSObject implements OnQRCode {
     callback;
 
     static initWithCallback(callback) {
-        const delegate = OnAutoScanImpl.new() as OnAutoScanImpl;
+        const delegate = OnQRCodeImpl.new() as OnQRCodeImpl;
         delegate.callback = callback;
         return delegate;
     }
