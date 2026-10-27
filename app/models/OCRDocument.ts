@@ -38,7 +38,7 @@ import { PKPass } from './PKPass';
 
 export const sql = SqlQuery.createFromTemplateString;
 
-export const DB_VERSION = 2;
+export const DB_VERSION = 3;
 
 export interface ImportImageData {
     imagePath?: string;
