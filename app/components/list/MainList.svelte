@@ -22,6 +22,7 @@
     import type { AppBar } from '@nativescript-community/ui-appbar';
     import type { MenuItem } from '@nativescript-community/ui-menu';
     import { appIcon } from '~/utils/appIcons';
+    import { optionsToMenuItems } from '~/utils/appMenu';
     import EditNameActionBar from '~/components/common/EditNameActionBar.svelte';
     import SelectedIndicator from '~/components/common/SelectedIndicator.svelte';
     import { l, lc, lcp, lp } from '~/helpers/locale';
@@ -1151,7 +1152,7 @@
             ...(isTrash ? [] : [{ id: 'open', title: lc('open'), icon: appIcon('open') }]),
             { id: 'select', title: lc('select'), icon: appIcon('select') },
             { separator: true },
-            ...options.map((option) => ({ id: option.id, title: option.name, icon: appIcon(option.id), destructive: option.id.startsWith('delete') }))
+            ...optionsToMenuItems(options)
         ];
     }
 
@@ -1343,7 +1344,7 @@
                 {
                     text: lc('more_options'),
                     icon: appIcon('more'),
-                    menu: menuOptions.map((option) => ({ title: option.name, icon: appIcon(option.id), onSelect: () => onAction(option) }))
+                    menu: optionsToMenuItems(menuOptions, onAction)
                 }
             );
         }
