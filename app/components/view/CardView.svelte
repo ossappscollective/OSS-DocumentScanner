@@ -7,7 +7,7 @@
     import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { confirm } from '@nativescript-community/ui-dialogs';
     import { Pager } from '@nativescript-community/ui-pager';
-    import { VerticalPosition } from '@nativescript-community/ui-popover';
+    import type { MenuItem } from '@nativescript-community/ui-menu';
     import {
         AnimationDefinition,
         Application,
@@ -20,7 +20,6 @@
         Page,
         PageTransition,
         SharedTransition,
-        StackLayout,
         View
     } from '@nativescript/core';
     import { AndroidActivityBackPressedEventData } from '@nativescript/core/application';
@@ -31,7 +30,6 @@
     import dayjs from 'dayjs';
     import { QRCodeData, QRCodeSingleData, detectQRCodeFromFile } from 'plugin-nativeprocessor';
     import { onDestroy, onMount } from 'svelte';
-    import CActionBar from '~/components/common/CActionBar.svelte';
     import PageIndicator from '~/components/common/PageIndicator.svelte';
     import RotableImageView from '~/components/common/RotableImageView.svelte';
     import SelectedIndicator from '~/components/common/SelectedIndicator.svelte';
@@ -61,6 +59,8 @@
         QRCODE_RESIZE_THRESHOLD,
         SETTINGS_FORCE_WHITE_BACKGROUND_QRCODE
     } from '~/utils/constants';
+    import { appIcon } from '~/utils/appIcons';
+    import { optionsToMenuItems } from '~/utils/appMenu';
     import { recycleImages } from '~/utils/images';
     import { documentHasPKPassData } from '~/utils/pkpass';
     import {
@@ -72,7 +72,6 @@
         requestCameraPermission,
         showImagePopoverMenu,
         showPDFPopoverMenu,
-        showPopoverMenu,
         showSnack,
         transformPages
     } from '~/utils/ui';
@@ -118,9 +117,7 @@
     let page: NativeViewElementNode<Page>;
     let collectionView: NativeViewElementNode<CollectionView>;
     let collectionViewExtras: NativeViewElementNode<CollectionView>;
-    let fabHolder: NativeViewElementNode<StackLayout>;
     let pager: NativeViewElementNode<Pager>;
-    let statusBarStyle;
     // set hasQRCodes as soon as possible to ensure the layout is correct and does not "jump"
     let hasQRCodes = document.pages.some((p) => p.qrcode?.length > 0);
     $: canBeExportedToPDF = document.pages.some((p) => p.pkpass || p.imagePath);
@@ -139,8 +136,6 @@
               colorBackground);
         return color;
     }
-
-    $: statusBarStyle = new Color(topBackgroundColor).getBrightness() < 145 ? 'dark' : 'light';
 
     let editing = false;
 
@@ -326,16 +321,17 @@
         });
         return selected;
     }
-    async function showPDFPopover(event) {
+    // the popovers still need a view to be anchored to
+    function getAnchor() {
+        return collectionViewExtras?.nativeView ?? page?.nativeView;
+    }
+    async function showPDFPopover() {
         try {
             const pages = nbSelected > 0 ? getSelectedPages() : document.pages.map((p) => ({ page: p, document }));
-            await showPDFPopoverMenu({ pages, document, anchor: event.object, documents: [document] });
+            await showPDFPopoverMenu({ pages, document, anchor: getAnchor(), documents: [document] });
         } catch (err) {
             showError(err);
         }
-    }
-    async function showImageExportPopover(event) {
-        return showImagePopoverMenu(getSelectedPages(), event.object);
     }
 
     async function importDocument(importPDFs = true) {
@@ -659,16 +655,6 @@
         }
     }
 
-    function onSnackMessageAnimation({ animationArgs }: EventData & { animationArgs: AnimationDefinition[] }) {
-        if (fabHolder) {
-            const snackAnimation = animationArgs[0];
-            animationArgs.push({
-                target: fabHolder.nativeView,
-                translate: { x: 0, y: snackAnimation.translate.y === 0 ? -70 : 0 },
-                duration: snackAnimation.duration
-            });
-        }
-    }
     // function onOrientationChanged(event: OrientationChangedEventData) {
     //     orientation = event.newValue;
     //     refreshCollectionView();
@@ -676,7 +662,6 @@
     // }
     onMount(() => {
         updateQRCodes();
-        Application.on('snackMessageAnimation', onSnackMessageAnimation);
         // Application.on('orientationChanged', onOrientationChanged);
         if (__ANDROID__) {
             Application.android.on(Application.android.activityBackPressedEvent, onAndroidBackButton);
@@ -693,7 +678,6 @@
     });
     onDestroy(() => {
         clearQRCodeImages();
-        Application.off('snackMessageAnimation', onSnackMessageAnimation);
         // Application.off('orientationChanged', onOrientationChanged);
         if (__ANDROID__) {
             Application.android.off(Application.android.activityBackPressedEvent, onAndroidBackButton);
@@ -717,7 +701,6 @@
                 await document.movePage(e.index, e.data.targetIndex);
             }
             topBackgroundColor = computeTopBackgroundColor();
-            statusBarStyle = new Color(topBackgroundColor).getBrightness() < 128 ? 'dark' : 'light';
             updateQRCodes();
         } catch (error) {
             showError(error);
@@ -747,159 +730,145 @@
             showError(error);
         }
     }
-    async function showOptions(event) {
-        if (nbSelected > 0) {
-            const pages = getSelectedPagesWithData();
-            // Filter options based on PKPass document
-            const allOptions = [
-                { id: 'share', name: lc('share_images'), icon: 'mdi-share-variant' },
-                { id: 'fullscreen', name: lc('show_fullscreen_images'), icon: 'mdi-fullscreen' }
-            ] as any[];
-
-            if (!isPKPassDocument) {
-                if (pages.some((p) => p.page.imagePath)) {
-                    allOptions.push(
-                        ...[
-                            { id: 'transform', name: lc('transform_images'), icon: 'mdi-auto-fix' },
-                            { id: 'ocr', name: lc('ocr_document'), icon: 'mdi-text-recognition' },
-                            { id: 'qrcode', name: lc('detect_qrcode'), icon: 'mdi-qrcode-scan' }
-                        ]
-                    );
-                }
-            }
-            allOptions.push(...[{ id: 'delete', name: lc('delete'), icon: 'mdi-delete', color: colorError }]);
-
-            // For PKPass documents, only allow share and fullscreen
-            const options = new ObservableArray(allOptions);
-            return showPopoverMenu({
-                options,
-                anchor: event.object,
-                vertPos: VerticalPosition.BELOW,
-
-                onClose: async (item) => {
-                    try {
-                        let result;
-                        DEV_LOG && console.log('item.id', item.id);
-                        switch (item.id) {
-                            case 'share':
-                                result = await showImageExportPopover(event);
-                                if (result) {
-                                    unselectAll();
-                                }
-                                break;
-                            case 'fullscreen':
-                                await fullscreenSelectedPages();
-                                unselectAll();
-                                break;
-                            case 'ocr':
-                                result = await detectOCR({ pages: getSelectedPagesWithData() });
-                                if (result) {
-                                    unselectAll();
-                                }
-                                break;
-                            case 'qrcode':
-                                let found = false;
-                                await Promise.all(
-                                    getSelectedPagesWithData().map((page) =>
-                                        qrcodeService.detectQRcode(document, page.pageIndex).then((r) => {
-                                            found = found || r?.length > 0;
-                                        })
-                                    )
-                                );
-                                if (!found) {
-                                    showSnack({ message: lc('no_qrcode_found') });
-                                }
-
-                                unselectAll();
-                                break;
-                            case 'delete':
-                                result = await deleteSelectedPages();
-                                if (result) {
-                                    unselectAll();
-                                }
-                                break;
-                            case 'transform':
-                                result = await transformPages({ pages: getSelectedPagesWithData() });
-                                if (result) {
-                                    unselectAll();
-                                }
-                                break;
-                        }
-                    } catch (error) {
-                        showError(error);
+    async function runSelectionOption(id: string) {
+        try {
+            let result;
+            DEV_LOG && console.log('runSelectionOption', id);
+            switch (id) {
+                case 'share':
+                    result = await showImagePopoverMenu(getSelectedPages(), getAnchor());
+                    if (result) {
+                        unselectAll();
                     }
-                }
-            });
-        } else {
-            // Filter options based on PKPass document
-
-            const allOptions = [
-                { id: 'rename', name: lc('rename'), icon: 'mdi-rename' },
-                { id: 'favorite', name: lc('toggle_favorite'), icon: document.favorite === 1 ? 'mdi-star' : 'mdi-star-outline' }
-            ] as any[];
-
-            if (!isPKPassDocument) {
-                if (hasImages) {
-                    allOptions.push(
-                        ...[
-                            { id: 'select_all', name: lc('select_all'), icon: 'mdi-select-all' },
-                            { id: 'reorder', name: lc('reorder_pages'), icon: 'mdi-reorder-horizontal' },
-                            ...(document.pages.length > 1 ? [{ id: 'reverse_pages', name: lc('reverse_pages'), icon: 'mdi-sort-reverse-variant' }] : []),
-                            { id: 'transform', name: lc('transform_images'), icon: 'mdi-auto-fix' },
-                            { id: 'ocr', name: lc('ocr_document'), icon: 'mdi-text-recognition' }
-                        ]
-                    );
-                }
-            } else {
-                allOptions.push({ id: 'share', name: lc('share_images'), icon: 'mdi-share-variant' });
-            }
-            allOptions.push(...[{ id: 'delete', name: lc('delete'), icon: 'mdi-delete', color: colorError }]);
-
-            // For PKPass documents, only allow delete (of the whole document)
-            const options = new ObservableArray(allOptions);
-            return showPopoverMenu({
-                options,
-                anchor: event.object,
-                vertPos: VerticalPosition.BELOW,
-
-                onClose: async (item) => {
-                    switch (item.id) {
-                        case 'rename':
-                            editingTitle = true;
-                            break;
-                        case 'favorite':
-                            await document.save({ favorite: document.favorite === 1 ? 0 : 1 }, false, true);
-                            break;
-                        case 'share':
-                            await showImagePopoverMenu(geAllPages(), event.object);
-                            break;
-                        case 'select_all':
-                            selectAll();
-                            break;
-                        case 'ocr':
-                            await detectOCR({ documents: [document] });
-                            unselectAll();
-                            break;
-                        case 'transform':
-                            await transformPages({ documents: [document] });
-                            unselectAll();
-                            break;
-                        case 'delete':
-                            await deleteDoc();
-                            break;
-                        case 'reorder':
-                            unselectAll();
-                            switchEditMode();
-                            break;
-                        case 'reverse_pages':
-                            await document.reversePages();
-                            unselectAll();
-                            break;
+                    break;
+                case 'fullscreen':
+                    await fullscreenSelectedPages();
+                    unselectAll();
+                    break;
+                case 'ocr':
+                    result = await detectOCR({ pages: getSelectedPagesWithData() });
+                    if (result) {
+                        unselectAll();
                     }
+                    break;
+                case 'qrcode': {
+                    let found = false;
+                    await Promise.all(
+                        getSelectedPagesWithData().map((page) =>
+                            qrcodeService.detectQRcode(document, page.pageIndex).then((r) => {
+                                found = found || r?.length > 0;
+                            })
+                        )
+                    );
+                    if (!found) {
+                        showSnack({ message: lc('no_qrcode_found') });
+                    }
+                    unselectAll();
+                    break;
                 }
-            });
+                case 'delete':
+                    result = await deleteSelectedPages();
+                    if (result) {
+                        unselectAll();
+                    }
+                    break;
+                case 'transform':
+                    result = await transformPages({ pages: getSelectedPagesWithData() });
+                    if (result) {
+                        unselectAll();
+                    }
+                    break;
+            }
+        } catch (error) {
+            showError(error);
         }
     }
+    async function runDocumentOption(id: string) {
+        try {
+            switch (id) {
+                case 'rename':
+                    editingTitle = true;
+                    break;
+                case 'select_all':
+                    selectAll();
+                    break;
+                case 'ocr':
+                    await detectOCR({ documents: [document] });
+                    unselectAll();
+                    break;
+                case 'transform':
+                    await transformPages({ documents: [document] });
+                    unselectAll();
+                    break;
+                case 'reorder':
+                    unselectAll();
+                    switchEditMode();
+                    break;
+                case 'reverse_pages':
+                    await document.reversePages();
+                    unselectAll();
+                    break;
+            }
+        } catch (error) {
+            showError(error);
+        }
+    }
+    async function toggleFavorite() {
+        try {
+            await document.save({ favorite: document.favorite === 1 ? 0 : 1 }, false, true);
+        } catch (error) {
+            showError(error);
+        }
+    }
+    function getDocumentMenu(withImages: boolean, pkpass: boolean, nbPages: number): MenuItem[] {
+        const options: { id: string; name: string }[] = [{ id: 'rename', name: lc('rename') }];
+        if (withImages && !pkpass) {
+            options.push(
+                { id: 'select_all', name: lc('select_all') },
+                { id: 'reorder', name: lc('reorder_pages') },
+                ...(nbPages > 1 ? [{ id: 'reverse_pages', name: lc('reverse_pages') }] : []),
+                { id: 'transform', name: lc('transform_images') },
+                { id: 'ocr', name: lc('ocr_document') }
+            );
+        }
+        return optionsToMenuItems(options, (option) => runDocumentOption(option.id));
+    }
+    function getSelectionBottomItems(pkpass: boolean) {
+        const withImages = !pkpass && getSelectedPagesWithData().some((p) => p.page.imagePath);
+        const menuOptions: { id: string; name: string }[] = [{ id: 'fullscreen', name: lc('show_fullscreen_images') }];
+        if (withImages) {
+            menuOptions.push({ id: 'transform', name: lc('transform_images') }, { id: 'ocr', name: lc('ocr_document') }, { id: 'qrcode', name: lc('detect_qrcode') });
+        }
+        return [
+            { spacer: true },
+            { text: lc('share_images'), icon: appIcon('share'), onTap: () => runSelectionOption('share') },
+            { spacer: true },
+            { text: lc('more_options'), icon: appIcon('more'), menu: optionsToMenuItems(menuOptions, (option) => runSelectionOption(option.id)) },
+            { spacer: true },
+            { text: lc('delete'), icon: appIcon('delete'), onTap: () => runSelectionOption('delete') },
+            { spacer: true }
+        ];
+    }
+    function getBottomItems(selected: number, pkpass: boolean, favorite: boolean, withImages: boolean, exportable: boolean, reordering: boolean, isEditing: boolean) {
+        if (selected > 0) {
+            return getSelectionBottomItems(pkpass);
+        }
+        if (reordering || isEditing) {
+            return [];
+        }
+        return [
+            { spacer: true },
+            ...(exportable ? [{ text: lc('share'), icon: appIcon('share'), onTap: () => (pkpass ? showImagePopoverMenu(geAllPages(), getAnchor()) : showPDFPopover()) }, { spacer: true }] : []),
+            { text: lc('toggle_favorite'), icon: appIcon(favorite ? 'favorite_on' : 'favorite_off'), onTap: toggleFavorite },
+            ...(withImages && !pkpass ? [{ text: lc('show_fullscreen_images'), icon: appIcon('fullscreen'), onTap: throttle(() => showFullscreen(), 500) }] : []),
+            ...(pkpass ? [] : [{ text: lc('edit'), icon: appIcon('edit'), onTap: startEdit }]),
+            { spacer: true },
+            { text: lc('delete'), icon: appIcon('delete'), onTap: deleteDoc },
+            { spacer: true }
+        ];
+    }
+    $: documentMenu = getDocumentMenu(hasImages, isPKPassDocument, document.pages.length);
+    $: bottomItems = getBottomItems(nbSelected, isPKPassDocument, document.favorite === 1, hasImages, canBeExportedToPDF, inEditMode, editing);
     async function onAddButton() {
         try {
             const OptionSelect = (await import('@shared/components/OptionSelect.svelte')).default;
@@ -1366,8 +1335,25 @@
     $: pagerHeight = Math.min(screenHeightDips * (editing ? 0.5 : 0.5), 400);
 </script>
 
-<page bind:this={page} id="cardview" actionBarHidden={true} statusBarColor={topBackgroundColor} {statusBarStyle}>
-    <gridlayout class="pageContent" backgroundColor={topBackgroundColor} columns={$isLandscape ? 'auto,*' : '*'} rows={$isLandscape ? 'auto,*' : 'auto,auto,*'}>
+<appPage bind:this={page} id="cardview">
+    <appBar {bottomItems} size="small" title={nbSelected > 0 ? lcp('selected', nbSelected) : inEditMode ? lc('reorder_pages') : document.name}>
+        {#if __ANDROID__}
+            <navigationButton {...{ 'android.systemIcon': nbSelected > 0 || inEditMode ? 'ic_menu_close_clear_cancel' : 'ic_menu_back' }} on:tap={nbSelected > 0 ? unselectAll : inEditMode ? switchEditMode : onGoBack} />
+        {/if}
+        {#if nbSelected > 0}
+            {#if __IOS__}
+                <appBarItem ios.position="right" prominent={true} text={lc('cancel')} on:tap={unselectAll} />
+            {/if}
+        {:else if inEditMode}
+            <appBarItem icon={appIcon('check')} ios.position="right" text={lc('ok')} on:tap={switchEditMode} />
+        {:else if !editing}
+            {#if !isPKPassDocument}
+                <appBarItem icon={appIcon('add')} ios.position="right" text={lc('add')} on:tap={() => onAddButton()} />
+            {/if}
+            <appBarItem icon={appIcon('more')} ios.position="right" menu={documentMenu} />
+        {/if}
+    </appBar>
+    <gridlayout class="pageContent" backgroundColor={colorBackground} columns={$isLandscape ? 'auto,*' : '*'} rows={$isLandscape ? 'auto,*' : 'auto,auto,*'}>
         {#if CARD_APP && isPKPassDocument}
             <pager bind:this={pager} items={document.pages} row={2} transformers="zoomOut" on:selectedIndexChange={onSelectedIndex}>
                 <Template let:item>
@@ -1568,71 +1554,16 @@
                 on:tap={(event) => addOrEditExtraField()}
             />
         {/if}
-        <stacklayout
-            bind:this={fabHolder}
-            class="fabHolder"
-            colSpan={2}
-            marginBottom={Math.min(60, $windowInset.bottom)}
-            orientation="horizontal"
-            row={2}
-            visibility={editing ? 'collapsed' : 'visible'}
-        >
-            <uibutton class="small-fab" text="mdi-pencil" verticalAlignment="center" visibility={isPKPassDocument ? 'collapsed' : 'visible'} on:tap={startEdit} />
-            <uibutton
-                class="small-fab"
-                text="mdi-fullscreen"
-                verticalAlignment="center"
-                visibility={isPKPassDocument || !hasImages ? 'collapsed' : 'visible'}
-                on:tap={throttle(() => showFullscreen(), 500)}
-            />
-
-            <uibutton
-                bind:this={fabHolder}
-                id="fab"
-                class="fab"
-                text={editing ? 'mdi-check' : 'mdi-plus'}
-                visibility={isPKPassDocument ? 'collapsed' : 'visible'}
-                on:tap={throttle(() => onAddButton(), 500)}
-            />
-        </stacklayout>
-        <CActionBar
-            backgroundColor={topBackgroundColor}
-            buttonsDefaultVisualState={statusBarStyle}
-            colSpan={2}
-            forceCanGoBack={inEditMode || nbSelected > 0}
-            labelsDefaultVisualState={statusBarStyle}
-            onGoBack={nbSelected ? unselectAll : inEditMode ? switchEditMode : null}
-            onTitleTap={() => (editingTitle = true)}
-            title={inEditMode ? lc('reorder_pages') : nbSelected ? lcp('selected', nbSelected) : document.name}
-            titleProps={{ padding: 0, color: statusBarStyle === 'dark' ? 'white' : 'black' }}
-        >
-            <!-- {#if editing}
-                <uibutton class="actionBarButton" defaultVisualState={statusBarStyle} text="mdi-close" variant="text" on:tap={cancelEdit} />
-                <uibutton class="actionBarButton" defaultVisualState={statusBarStyle} text="mdi-content-save" variant="text" on:tap={saveEdit} />
-            {:else} -->
-            <uibutton
-                class="actionBarButton"
-                defaultVisualState={statusBarStyle}
-                text="mdi-file-pdf-box"
-                variant="text"
-                visibility={canBeExportedToPDF ? 'visible' : 'collapse'}
-                on:tap={showPDFPopover}
-            />
-            <uibutton class="actionBarButton" defaultVisualState={statusBarStyle} text="mdi-dots-vertical" variant="text" on:tap={showOptions} />
-            <!-- {/if} -->
-        </CActionBar>
         {#if editingTitle}
             <EditNameActionBar
                 autoFocus={!editing}
-                backgroundColor={topBackgroundColor}
-                buttonsDefaultVisualState={statusBarStyle}
+                backgroundColor={colorBackground}
                 colSpan={2}
                 {document}
-                labelsDefaultVisualState={statusBarStyle}
                 onGoBack={onEditActionBarGoBack}
                 onSave={onEditActionBarSave}
                 bind:editingTitle
             ></EditNameActionBar>
         {/if}
     </gridlayout>
-</page>
+</appPage>
