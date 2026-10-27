@@ -13,6 +13,8 @@
 @property (nonatomic, assign) NSInteger  previewResizeThreshold;
 @property (nonatomic, assign) BOOL  detectDocuments;
 @property (nonatomic, assign) BOOL  detectQRCode;
+@property (nonatomic, assign) BOOL  qrCodeDelivered;
+@property (atomic, assign) BOOL  processingFrame;
 @property (nonatomic, assign) NSString* _Nullable  detectQRCodeOptions;
 
 - (instancetype _Nonnull )initWithCropView:(NSCropView*_Nonnull) view;

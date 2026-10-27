@@ -713,9 +713,22 @@ uint32_t bitmapInfo = kCGImageAlphaPremultipliedLast;
   });
 }
 
-- (void)cameraView:(NSCameraView *)cameraView willProcessRawVideoSampleBuffer:(CMSampleBufferRef)sampleBuffer onQueue:(dispatch_queue_t)queue
+- (void)processSampleBuffer:(CMSampleBufferRef)sampleBuffer cameraView:(NSCameraView *)cameraView
 {
-  cv::Mat mat = [self matFromBuffer:sampleBuffer];
+  // reading codes only needs the luma plane: wrap it instead of converting the whole frame (~25ms)
+  CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
+  const OSType pixelFormat = CVPixelBufferGetPixelFormatType(imageBuffer);
+  const BOOL lumaOnly = self.detectQRCode && !self.detectDocuments && CVPixelBufferIsPlanar(imageBuffer) &&
+    (pixelFormat == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange || pixelFormat == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange);
+  cv::Mat mat;
+  if (lumaOnly) {
+    CVPixelBufferLockBaseAddress(imageBuffer, kCVPixelBufferLock_ReadOnly);
+    mat = cv::Mat((int)CVPixelBufferGetHeightOfPlane(imageBuffer, 0), (int)CVPixelBufferGetWidthOfPlane(imageBuffer, 0), CV_8UC1, CVPixelBufferGetBaseAddressOfPlane(imageBuffer, 0), CVPixelBufferGetBytesPerRowOfPlane(imageBuffer, 0));
+  } else {
+    mat = [self matFromBuffer:sampleBuffer];
+  }
+  // readQRCode can shrink mat in place, while its positions are in the original frame
+  const CGSize frameSize = CGSizeMake(mat.cols, mat.rows);
 //  int videoOrientation =  (int)cameraView.videoOrientation;
   UIDeviceOrientation orientation = [[UIDevice currentDevice] orientation];
   int rotation = 0;
@@ -746,28 +759,69 @@ uint32_t bitmapInfo = kCGImageAlphaPremultipliedLast;
 #ifdef WITH_QRCODE
   if (self.detectQRCode) {
     std::string qrcodeResult = readQRCode(mat, 0, std::string([self.detectQRCodeOptions UTF8String]), 1.0);
+    BOOL qrCodeFound = NO;
     if (qrcodeResult.length() > 0) {
       NSString* nsResult = [NSString stringWithUTF8String:qrcodeResult.c_str()];
       NSError *error = nil;
       id qrcodeArray = [NSJSONSerialization JSONObjectWithData:[nsResult dataUsingEncoding:NSUTF8StringEncoding] options:0 error:&error];
-      if (error) {
-        // Handle error
+      if (error || ![qrcodeArray isKindOfClass:[NSArray class]] || [(NSArray*)qrcodeArray count] == 0) {
+        // Handle error, or no code in this frame ("[]")
       } else {
         NSDictionary* qrcode = [((NSArray*)qrcodeArray) objectAtIndex:0];
-        [points addObjectsFromArray:[qrcode objectForKey:@"position"]];
-        if (self.onQRCode) {
-          [self.onQRCode onQRCodes:nsResult];
+        // the crop view draws quads made of CGPoint NSValues, not of [x, y] pairs
+        NSArray* position = [qrcode objectForKey:@"position"];
+        NSMutableArray* quad = [[NSMutableArray alloc] initWithCapacity:[position count]];
+        for (NSArray* corner in position) {
+          [quad addObject:[NSValue valueWithCGPoint:CGPointMake([corner[0] doubleValue], [corner[1] doubleValue])]];
+        }
+        [points addObject:quad];
+        qrCodeFound = YES;
+        // the callback runs JS and closes the scanner: not on the camera queue,
+        // and only once per code, not for every frame it stays visible
+        if (self.onQRCode && !self.qrCodeDelivered) {
+          self.qrCodeDelivered = YES;
+          id<OnQRCode> onQRCode = self.onQRCode;
+          dispatch_async(dispatch_get_main_queue(), ^{
+            [onQRCode onQRCodes:nsResult];
+          });
         }
       }
+    }
+    if (!qrCodeFound) {
+      self.qrCodeDelivered = NO;
     }
     
   }
 #endif
   self.cropView.videoGravity = cameraView.videoGravity;
-  self.cropView.imageSize = CGSizeMake(mat.size().width, mat.size().height);
+  self.cropView.imageSize = frameSize;
   self.cropView.quads = points;
   
   mat.release();
+  if (lumaOnly) {
+    CVPixelBufferUnlockBaseAddress(imageBuffer, kCVPixelBufferLock_ReadOnly);
+  }
+}
+// This is called on the camera session queue, which also runs the session changes (camera toggle, torch...).
+// Processing frames there starves those changes when it is slower than the camera, so process on our own queue
+// and skip the frames received while it is busy.
+- (void)cameraView:(NSCameraView *)cameraView willProcessRawVideoSampleBuffer:(CMSampleBufferRef)sampleBuffer onQueue:(dispatch_queue_t)queue
+{
+  static dispatch_queue_t processingQueue;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    processingQueue = dispatch_queue_create("com.akylas.documentscanner.frameprocessing", DISPATCH_QUEUE_SERIAL);
+  });
+  if (self.processingFrame) {
+    return;
+  }
+  self.processingFrame = YES;
+  CFRetain(sampleBuffer);
+  dispatch_async(processingQueue, ^{
+    [self processSampleBuffer:sampleBuffer cameraView:cameraView];
+    CFRelease(sampleBuffer);
+    self.processingFrame = NO;
+  });
 }
 - (void)cameraView:(NSCameraView *)cameraView renderToCustomContextWithImageBuffer:(CVPixelBufferRef)imageBuffer onQueue:(dispatch_queue_t)queue {
   // we do nothing here
