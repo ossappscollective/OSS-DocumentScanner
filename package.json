@@ -90,6 +90,7 @@
         "@nativescript-community/ui-share-file": "1.3.3",
         "@nativescript-community/ui-slider": "1.1.0",
         "@nativescript-community/ui-snackbar": "1.1.0",
+        "@nativescript-community/ui-surface": "^1.1.0",
         "@nativescript-community/ui-svg": "0.2.24",
         "@nativescript-community/ui-switch": "1.1.0",
         "@nativescript-community/ui-textfield": "1.1.0",

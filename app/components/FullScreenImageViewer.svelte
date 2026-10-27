@@ -16,6 +16,8 @@
     export let keepScreenAwake = false;
     export let refreshOnOrientationChange = false;
     export let screenBrightness = -1;
+    /** shows an edit button in the bar, called with the index of the current image */
+    export let onEdit: (index: number) => void = null;
     export let startPageIndex: number = 0;
     export let backgroundColor = isEInk ? 'white' : 'black';
     export let labelColor = isEInk ? 'black' : 'white';
@@ -163,6 +165,10 @@
         </pager>
         <PageIndicator horizontalAlignment="right" margin={10} row={2} scale={$fontScale} text={`${currentIndex + 1}/${images.length}`} verticalAlignment="bottom" />
 
-        <CActionBar backgroundColor="transparent" buttonsDefaultVisualState={actionBarStyle} titleProps={{ autoFontSize: true, padding: 0 }} />
+        <CActionBar backgroundColor="transparent" buttonsDefaultVisualState={actionBarStyle} titleProps={{ autoFontSize: true, padding: 0 }}>
+            {#if onEdit}
+                <uibutton class="actionBarButton" defaultVisualState={actionBarStyle} text="mdi-pencil" variant="text" on:tap={() => onEdit(currentIndex)} />
+            {/if}
+        </CActionBar>
     </gridlayout>
 </page>

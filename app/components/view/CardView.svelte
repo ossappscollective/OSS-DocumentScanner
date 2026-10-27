@@ -7,7 +7,7 @@
     import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { confirm } from '@nativescript-community/ui-dialogs';
     import { Pager } from '@nativescript-community/ui-pager';
-    import type { MenuItem } from '@nativescript-community/ui-menu';
+    import { MenuItem, setContextMenu } from '@nativescript-community/ui-menu';
     import {
         AnimationDefinition,
         Application,
@@ -32,7 +32,6 @@
     import { onDestroy, onMount } from 'svelte';
     import PageIndicator from '~/components/common/PageIndicator.svelte';
     import RotableImageView from '~/components/common/RotableImageView.svelte';
-    import SelectedIndicator from '~/components/common/SelectedIndicator.svelte';
     import PdfEdit from '~/components/edit/DocumentEdit.svelte';
     import { lc, lcp } from '~/helpers/locale';
     import { colorTheme, isDarkTheme, isEInk, onThemeChanged } from '~/helpers/theme';
@@ -48,7 +47,6 @@
     import { getBarcodeFallbackString, qrcodeService } from '~/services/qrcode';
     import { shortcutService } from '~/services/shortcuts';
     import {
-        CARD_RATIO,
         DEFAULT_FORCE_WHITE_BACKGROUND_QRCODE,
         EVENT_DOCUMENT_DELETED,
         EVENT_DOCUMENT_PAGES_ADDED,
@@ -81,10 +79,8 @@
     import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
     import PKPassView from '~/components/pkpass/PKPassView.svelte';
 
-    const rowMargin = 8;
-    // -10 show just a bit of the one hidden on the right
-    const colWidth = screenWidthDips / 2 - 10;
-    const itemHeight = (colWidth - 2 * rowMargin) * CARD_RATIO + 2 * rowMargin;
+    const FILMSTRIP_HEIGHT = 60;
+    const FILMSTRIP_COL_WIDTH = 48;
     interface Item {
         page: OCRPage;
         selected: boolean;
@@ -101,8 +97,8 @@
     import { Label } from '@nativescript-community/ui-label';
     import { EXTRA_PAPERLESS_ID_KEY } from '~/services/sync/paperless/PaperlessNgxPDFSyncService';
 
-    let { colorBackground, colorError, colorOnBackground, colorOnSurfaceVariant, colorOutline, colorSurface, colorSurfaceContainerHigh, colorTertiary } = $colors;
-    $: ({ colorBackground, colorError, colorOnBackground, colorOnSurfaceVariant, colorOutline, colorSurface, colorSurfaceContainerHigh, colorTertiary } = $colors);
+    let { colorBackground, colorError, colorOnBackground, colorOnSurface, colorOnSurfaceVariant, colorOutline, colorPrimary, colorSurface, colorSurfaceContainerHigh, colorTertiary } = $colors;
+    $: ({ colorBackground, colorError, colorOnBackground, colorOnSurface, colorOnSurfaceVariant, colorOutline, colorPrimary, colorSurface, colorSurfaceContainerHigh, colorTertiary } = $colors);
 
     const forceWhiteBackgroundForQRCode = ApplicationSettings.getBoolean(SETTINGS_FORCE_WHITE_BACKGROUND_QRCODE, DEFAULT_FORCE_WHITE_BACKGROUND_QRCODE);
 
@@ -114,10 +110,13 @@
     let qrcodes: QRCodeItem[];
     let editableQRcodes: ObservableArray<QRCodeItem>;
     let currentQRCodeIndex = 0;
+    let currentImageIndex = 0;
+    let infoOpen = false;
     let page: NativeViewElementNode<Page>;
     let collectionView: NativeViewElementNode<CollectionView>;
     let collectionViewExtras: NativeViewElementNode<CollectionView>;
     let pager: NativeViewElementNode<Pager>;
+    let qrPager: NativeViewElementNode<Pager>;
     // set hasQRCodes as soon as possible to ensure the layout is correct and does not "jump"
     let hasQRCodes = document.pages.some((p) => p.qrcode?.length > 0);
     $: canBeExportedToPDF = document.pages.some((p) => p.pkpass || p.imagePath);
@@ -184,7 +183,7 @@
         } else {
             editableQRcodes = null;
         }
-        if (qrcodes || editableQRcodes) {
+        if (editing && (qrcodes || editableQRcodes)) {
             result.push({
                 type: QRCODES_TYPE,
                 qrcodes: editableQRcodes ?? qrcodes
@@ -265,19 +264,6 @@
             }
             qrcodes = newQrCodes;
             hasQRCodes = qrcodes?.length > 0;
-            if (updateList && !editing) {
-                if (hasQRCodes) {
-                    if (extraItems.getItem(0)?.type !== QRCODES_TYPE) {
-                        extraItems.splice(0, 0, { type: QRCODES_TYPE, qrcodes });
-                    } else {
-                        extraItems.setItem(0, { type: QRCODES_TYPE, qrcodes });
-                    }
-                } else {
-                    if (extraItems.getItem(0)?.type === QRCODES_TYPE) {
-                        extraItems.splice(0, 1);
-                    }
-                }
-            }
             // qrcodes = document.pages.reduce((acc, page) => acc.concat(page.qrcode?.map((qr) => ({ ...qr, color, svg: await getQRCodeImage(qr, color) })) || []), []);
             //we dont recycle images, it will be done in onDestroy
         } catch (error) {
@@ -485,28 +471,125 @@
             if (nbSelected > 0) {
                 toggleSelection(item);
             } else if (item.page.imagePath) {
-                const index = items.findIndex((p) => p.page === item.page);
-                navigate({
-                    page: PdfEdit,
-                    transition:
-                        __ANDROID__ && !CARD_APP
-                            ? SharedTransition.custom(new PageTransition(300, undefined, 10), {
-                                  pageStart: {
-                                      sharedTransitionTags: {
-                                          [`document_${document.id}_${item.page.id}`]: {}
-                                      }
-                                  }
-                              })
-                            : undefined,
-                    props: {
-                        document,
-                        startPageIndex: index
-                    }
-                });
+                pager?.nativeElement?.scrollToIndexAnimated(
+                    items.findIndex((i) => i.page === item.page),
+                    true
+                );
             }
         } catch (error) {
             showError(error);
         }
+    }
+    function editPage(page: OCRPage) {
+        try {
+            if (!page?.imagePath) {
+                return;
+            }
+            navigate({
+                page: PdfEdit,
+                transition:
+                    __ANDROID__ && !CARD_APP
+                        ? SharedTransition.custom(new PageTransition(300, undefined, 10), {
+                              pageStart: {
+                                  sharedTransitionTags: {
+                                      [`document_${document.id}_${page.id}`]: {}
+                                  }
+                              }
+                          })
+                        : undefined,
+                props: {
+                    document,
+                    startPageIndex: items.findIndex((item) => item.page === page)
+                }
+            });
+        } catch (error) {
+            showError(error);
+        }
+    }
+    function editCurrentPage() {
+        editPage(items.getItem(currentImageIndex)?.page ?? document.pages.find((p) => p.imagePath));
+    }
+    // a modal bottom sheet is the Material pattern for the actions of an item (the iOS context menu is registered above)
+    async function onImageLongPress(item: Item) {
+        if (!__ANDROID__) {
+            return;
+        }
+        try {
+            const OptionSelect = (await import('@shared/components/OptionSelect.svelte')).default;
+            const index = items.findIndex((i) => i.page === item.page);
+            const options = [
+                { id: 'fullscreen', name: lc('show_fullscreen_images'), icon: 'mdi-fullscreen' },
+                { id: 'edit', name: lc('edit'), icon: 'mdi-tune' },
+                { id: 'select', name: lc('select'), icon: 'mdi-check-circle-outline' },
+                { id: 'delete', name: lc('delete'), icon: 'mdi-delete', color: colorError }
+            ];
+            const rowHeight = 58;
+            const height = rowHeight * options.length;
+            const option = await showBottomSheet({
+                parent: page,
+                view: OptionSelect,
+                peekHeight: height,
+                ignoreTopSafeArea: true,
+                props: { rowHeight, height, options }
+            });
+            switch (option?.id) {
+                case 'fullscreen':
+                    showFullscreen(index);
+                    break;
+                case 'edit':
+                    editPage(item.page);
+                    break;
+                case 'select':
+                    selectItem(items.getItem(index));
+                    break;
+                case 'delete':
+                    selectItem(items.getItem(index));
+                    await runSelectionOption('delete');
+                    break;
+            }
+        } catch (error) {
+            showError(error);
+        }
+    }
+    function onImagesPagerIndex(event) {
+        currentImageIndex = event.object.selectedIndex;
+        // UIKit aborts when a collection view that has not been laid out is scrolled
+        const strip = collectionView?.nativeView;
+        if (strip?.isLoaded && strip.getMeasuredHeight() > 0) {
+            strip.refreshVisibleItems();
+            strip.scrollToIndex(currentImageIndex, true);
+        }
+    }
+    const imageMenuRemovers = new WeakMap<View, () => void>();
+    function registerImageMenu(event: EventData, item: Item) {
+        const view = event.object;
+        if (!__IOS__ || !(view instanceof View)) {
+            return;
+        }
+        imageMenuRemovers.get(view)?.();
+        imageMenuRemovers.set(
+            view,
+            setContextMenu(view, {
+                items: () => {
+                    const index = items.findIndex((i) => i.page === item.page);
+                    return [
+                        { title: lc('show_fullscreen_images'), icon: appIcon('fullscreen'), onSelect: () => showFullscreen(index) },
+                        { title: lc('edit'), icon: appIcon('tune'), onSelect: () => editPage(item.page) },
+                        { separator: true },
+                        { title: lc('select'), icon: appIcon('select'), onSelect: () => selectItem(items.getItem(index)) },
+                        {
+                            title: lc('delete'),
+                            icon: appIcon('delete'),
+                            destructive: true,
+                            onSelect: async () => {
+                                selectItem(items.getItem(index));
+                                await runSelectionOption('delete');
+                            }
+                        }
+                    ];
+                }
+            })
+        );
     }
     function onGoBack() {
         if (editingTitle) {
@@ -526,6 +609,8 @@
             data.cancel = true;
             if (inEditMode) {
                 switchEditMode();
+            } else if (infoOpen && !editing) {
+                infoOpen = false;
             } else if (nbSelected > 0) {
                 unselectAll();
             } else {
@@ -813,6 +898,9 @@
             showError(error);
         }
     }
+    function toggleInfo() {
+        infoOpen = !infoOpen;
+    }
     async function toggleFavorite() {
         try {
             await document.save({ favorite: document.favorite === 1 ? 0 : 1 }, false, true);
@@ -860,8 +948,12 @@
             { spacer: true },
             ...(exportable ? [{ text: lc('share'), icon: appIcon('share'), onTap: () => (pkpass ? showImagePopoverMenu(geAllPages(), getAnchor()) : showPDFPopover()) }, { spacer: true }] : []),
             { text: lc('toggle_favorite'), icon: appIcon(favorite ? 'favorite_on' : 'favorite_off'), onTap: toggleFavorite },
-            ...(withImages && !pkpass ? [{ text: lc('show_fullscreen_images'), icon: appIcon('fullscreen'), onTap: throttle(() => showFullscreen(), 500) }] : []),
-            ...(pkpass ? [] : [{ text: lc('edit'), icon: appIcon('edit'), onTap: startEdit }]),
+            ...(pkpass
+                ? []
+                : [
+                      { text: lc('info'), icon: appIcon('info'), onTap: toggleInfo },
+                      ...(withImages ? [{ text: lc('adjust'), icon: appIcon('tune'), onTap: editCurrentPage }] : [])
+                  ]),
             { spacer: true },
             { text: lc('delete'), icon: appIcon('delete'), onTap: deleteDoc },
             { spacer: true }
@@ -994,7 +1086,7 @@
                 await updateQRCodes();
                 if (found) {
                     setTimeout(() => {
-                        pager?.nativeElement?.scrollToIndexAnimated(qrcodes?.length - 1, true);
+                        qrPager?.nativeElement?.scrollToIndexAnimated(qrcodes?.length - 1, true);
                     }, 10);
                 }
             }
@@ -1048,7 +1140,7 @@
         }
     }
 
-    async function showFullscreen() {
+    async function showFullscreen(startPageIndex = 0) {
         const component = (await import('~/components/FullScreenImageViewer.svelte')).default;
         navigate({
             page: component,
@@ -1060,7 +1152,10 @@
                     image: page.imagePath,
                     ...page
                 })),
-                startPageIndex: 0
+                keepScreenAwake: true,
+                onEdit: (index: number) => editPage(document.pages[index]),
+                screenBrightness: 1,
+                startPageIndex
             }
         });
     }
@@ -1071,6 +1166,7 @@
         if (editing === false) {
             editing = true;
             editingTitle = true;
+            infoOpen = true;
             refreshExtraItems();
         }
     }
@@ -1332,10 +1428,13 @@
         updateQRCodeView(qrcode, event.object.parent.parent);
     }, 500);
 
-    $: pagerHeight = Math.min(screenHeightDips * (editing ? 0.5 : 0.5), 400);
+    const pagerHeight = Math.min(screenHeightDips * 0.4, 360);
+    $: layoutRows = `auto,${hasQRCodes ? (hasImages ? '3*' : '*') : 'auto'},${hasImages ? (hasQRCodes ? '2*' : '*') : 'auto'}`;
+    $: infoHeight = Math.round(screenHeightDips * (editing ? 0.65 : 0.5));
+    $: nbImages = document.pages.filter((p) => p.imagePath).length;
 </script>
 
-<appPage bind:this={page} id="cardview">
+<appPage bind:this={page} id="cardview" {...{ keepScreenAwake: hasQRCodes && !editing, screenBrightness: hasQRCodes && !editing ? 1 : -1 }}>
     <appBar {bottomItems} size="small" title={nbSelected > 0 ? lcp('selected', nbSelected) : inEditMode ? lc('reorder_pages') : document.name}>
         {#if __ANDROID__}
             <navigationButton {...{ 'android.systemIcon': nbSelected > 0 || inEditMode ? 'ic_menu_close_clear_cancel' : 'ic_menu_back' }} on:tap={nbSelected > 0 ? unselectAll : inEditMode ? switchEditMode : onGoBack} />
@@ -1353,9 +1452,9 @@
             <appBarItem icon={appIcon('more')} ios.position="right" menu={documentMenu} />
         {/if}
     </appBar>
-    <gridlayout class="pageContent" backgroundColor={colorBackground} columns={$isLandscape ? 'auto,*' : '*'} rows={$isLandscape ? 'auto,*' : 'auto,auto,*'}>
+    <gridlayout class="pageContent" backgroundColor={colorBackground} paddingBottom={__ANDROID__ ? $windowInset.bottom + FAB_BUTTON_OFFSET : 0} rows={layoutRows}>
         {#if CARD_APP && isPKPassDocument}
-            <pager bind:this={pager} items={document.pages} row={2} transformers="zoomOut" on:selectedIndexChange={onSelectedIndex}>
+            <pager bind:this={pager} items={document.pages} row={1} rowSpan={2} transformers="zoomOut" on:selectedIndexChange={onSelectedIndex}>
                 <Template let:item>
                     <stacklayout padding="0">
                         <PKPassView {document} pkpass={item.pkpass} />
@@ -1363,196 +1462,279 @@
                 </Template>
             </pager>
         {:else}
-            <collectionview
-                bind:this={collectionView}
-                id="view"
-                ios:autoReloadItemOnLayout={true}
-                colWidth={$isLandscape ? '100%' : '50%'}
-                height={$isLandscape ? undefined : itemHeight}
-                {items}
-                orientation={$isLandscape ? 'vertical' : 'horizontal'}
-                reorderEnabled={true}
+            <gridlayout
+                backgroundColor={qrcodeBackgroundColor}
+                borderColor={colorOutline}
+                borderRadius={28}
+                borderWidth={__ANDROID__ ? 1 : 0}
+                elevation={isEInk || __ANDROID__ ? 0 : 6}
+                margin="8 16 8 16"
                 row={1}
-                rowHeight={itemHeight}
-                visibility={document.pages.length === 1 && !document.pages[0].imagePath ? 'collapsed' : 'visible'}
-                width={$isLandscape ? colWidth : undefined}
-                on:itemReordered={onItemReordered}
-                on:itemReorderStarting={onItemReorderStarting}
+                rows="*,auto"
+                visibility={hasQRCodes ? 'visible' : 'collapsed'}
             >
-                <Template let:index let:item>
-                    <gridlayout
-                        class="cardItemTemplate"
-                        backgroundColor={getItemBackgroundColor(item)}
-                        elevation={isEInk ? 0 : 6}
-                        longPressGestureOptions={(view, tag, rootTag) => ({
-                            simultaneousHandlers: [rootTag, view['PAN_HANDLER_TAG']],
-                            minDurationMs: 300
-                        })}
-                        margin={12}
-                        panGestureOptions={(view, tag, rootTag) => ({
-                            simultaneousHandlers: [rootTag, view['LONGPRESS_HANDLER_TAG']],
-                            minDist: 20
-                        })}
-                        rippleColor={colorSurface}
-                        on:tap={() => onItemTap(item)}
-                        on:touch={(e) => onTouch(item, e)}
-                        on:longPress={(e) => onItemLongPress(item, e)}
-                        on:pan={(e) => onPan(item, e)}
-                    >
-                        <RotableImageView
-                            id="imageView"
-                            borderRadius={12}
-                            decodeWidth={colWidth}
-                            item={item.page}
-                            sharedTransitionTag={`document_${document.id}_${item.page.id}`}
-                            stretch="aspectFit"
-                            width="100%"
-                        />
-                        <label
-                            autoFontSize={true}
-                            color={getItemLabelColor(item)}
-                            fontSize={20}
-                            fontWeight="bold"
-                            lineBreak="end"
-                            margin={16}
-                            maxFontSize={20}
-                            text={document.name}
-                            textAlignment="center"
-                            textWrap={true}
-                            verticalTextAlignment="center"
-                            visibility={item.page.imagePath ? 'hidden' : 'visible'}
-                        />
-                        <SelectedIndicator rowSpan={2} selected={item.selected} />
-                        <label fontFamily={$fonts.mdi} fontSize={24} padding={10} text="mdi-reorder-horizontal" verticalAlignment="bottom" visibility={inEditMode ? 'visible' : 'hidden'} />
-                        <PageIndicator horizontalAlignment="right" margin={2} rowSpan={2} scale={$fontScale} text={index + 1} />
-                    </gridlayout>
-                </Template>
-            </collectionview>
-            <!-- <gridlayout backgroundColor={colorBackground} borderRadius="10 10 0 0" col={$isLandscape ? 1 : 0} row={$isLandscape ? 1 : 2} rows="auto,auto,*"> -->
-            <!-- <stacklayout bind:this={fabHolder} horizontalAlignment="right" orientation="horizontal" rowSpan={3} verticalAlignment="bottom" android:marginBottom={$windowInset.bottom}> -->
-            <!-- {#if __IOS__}
-                        <uibutton class="small-fab" text="mdi-image-plus-outline" verticalAlignment="center" on:tap={throttle(() => importDocument(false), 500)} />
-                    {/if}
-                    <uibutton class="small-fab" horizontalAlignment="center" text="mdi-file-document-plus-outline" on:tap={throttle(() => importDocument(), 500)} /> -->
-            <!-- </stacklayout> -->
-            <gridlayout class="cardViewHolder" col={$isLandscape ? 1 : 0} row={$isLandscape ? 1 : 2}>
-                <collectionview bind:this={collectionViewExtras} itemTemplateSelector={selectTemplate} items={extraItems} paddingBottom={Math.max($windowInset.bottom + FAB_BUTTON_OFFSET)}>
-                    <Template key={QRCODES_TYPE} let:item>
-                        <gridlayout height={pagerHeight} margin={16} rows="*,auto">
-                            <pager bind:this={pager} id="pager" items={item.qrcodes} margin={16} selectedIndex={currentQRCodeIndex} on:selectedIndexChange={onSelectedIndex}>
-                                <Template let:index let:item>
-                                    <gridlayout rows="*,auto" on:tap={onQRCodeTap}>
-                                        <svgview
-                                            id="svgView"
-                                            backgroundColor={qrcodeBackgroundColor}
-                                            height={pagerHeight - (editing ? 100 : 30)}
-                                            marginBottom={10}
-                                            scaleX={item.scale ?? 1}
-                                            scaleY={item.scale ?? 1}
-                                            sharedTransitionTag={'qrcode' + index}
-                                            src={item.svg}
-                                            stretch="aspectFit"
-                                            verticalAlignment="top"
-                                        />
-                                        <gridlayout columns="*,auto" row={1} rows="auto,auto">
-                                            <label
-                                                fontSize={30}
-                                                fontWeight="bold"
-                                                ios:linkColor={colorOnBackground}
-                                                maxLines={2}
-                                                row={1}
-                                                selectable={true}
-                                                sharedTransitionTag={'qrcodelabel' + index}
-                                                text={item?.text}
-                                                textAlignment="center"
-                                                visibility={editing ? 'collapsed' : 'visible'}
-                                            />
-                                            <textfield
-                                                id="textField"
-                                                error={item.error}
-                                                maxLines={1}
-                                                row={1}
-                                                text={item?.text}
-                                                variant="outline"
-                                                verticalAlignment="center"
-                                                visibility={editing ? 'visible' : 'collapsed'}
-                                                on:textChange={(event) => setQRCodeText(item, event)}
-                                            />
-                                            <IconButton
-                                                col={1}
-                                                marginTop={5}
-                                                row={1}
-                                                text="mdi-delete"
-                                                verticalAlignment="center"
-                                                visibility={editing ? 'visible' : 'collapsed'}
-                                                on:tap={(event) => deleteCurrentQRCode(item, event)}
-                                            />
-
-                                            <gridlayout colSpan={2} columns="auto,*,auto" padding={4} rows="auto" visibility={editing ? 'visible' : 'collapsed'} width="100%">
-                                                <label col={0} marginTop={4} text={lc('scale')} verticalAlignment="center" />
-                                                <label id="sliderValue" col={2} text={item.scale ?? 1} textAlignment="center" verticalTextAlignment="center" width={100} />
-                                                <slider col={1} maxValue={10} minValue={1} value={(item.scale ?? 1) * 10} on:valueChange={(event) => setQRCodeScale(item, event.value, event)} />
-                                            </gridlayout>
-                                        </gridlayout>
-                                    </gridlayout>
-                                </Template>
-                            </pager>
-                            <!-- <label rowSpan={3} text={lc('no_qrcode')} textAlignment="center" verticalTextAlignment="center" visibility={hasQRCodes ? 'hidden' : 'visible'} /> -->
-                            <pagerindicator
-                                color={colorSurfaceContainerHigh}
-                                horizontalAlignment="center"
-                                marginBottom={5}
-                                pagerViewId="pager"
-                                row={1}
-                                selectedColor={colorOnSurfaceVariant}
-                                type="worm"
-                                verticalAlignment="bottom"
-                            />
-                        </gridlayout>
-                    </Template>
-                    <Template key="color" let:item>
-                        <ListItemAutoSize item={{ title: lc('color') }} on:tap={(event) => changeColor(item, event)}>
-                            <absolutelayout backgroundColor={topBackgroundColor} borderColor={colorOutline} borderRadius="50%" borderWidth={2} col={1} height={40} marginLeft={10} width={40} />
-                        </ListItemAutoSize>
-                    </Template>
+                <pager bind:this={qrPager} id="qrPager" items={qrcodes} rowSpan={2} selectedIndex={currentQRCodeIndex} on:selectedIndexChange={onSelectedIndex}>
                     <Template let:item>
-                        <gridlayout padding="4 10 4 10">
-                            <textview editable={false} hint={item.name} text={formatItemValue(item)} variant="outline" on:tap={(event) => onExtraFieldTap(item, event)} />
-                            <IconButton
-                                horizontalAlignment="right"
-                                marginTop={5}
-                                text="mdi-delete"
-                                verticalAlignment="center"
-                                visibility={editing ? 'visible' : 'collapsed'}
-                                on:tap={(event) => deleteExtraField(item, event)}
+                        <gridlayout padding="24 24 40 24" rows="*,auto" on:tap={onQRCodeTap}>
+                            <svgview src={item.svg} stretch="aspectFit" />
+                            <label
+                                color={qrcodeColor}
+                                fontSize={22}
+                                fontWeight="bold"
+                                ios:linkColor={qrcodeColor}
+                                marginTop={12}
+                                maxLines={2}
+                                row={1}
+                                selectable={true}
+                                text={item.text}
+                                textAlignment="center"
                             />
                         </gridlayout>
-                        <ListItemAutoSize columns="*,auto,auto" item={{ rightValue: formatItemValue(item), title: item.name }}></ListItemAutoSize>
                     </Template>
-                    <Template key="qrcode" let:item>
-                        <gridlayout columns="auto,*,auto" height={60} padding="4 0 4 10">
-                            <svgview backgroundColor={qrcodeBackgroundColor} src={item.svg} stretch="aspectFit" width={50} />
-                            <label col={1} fontSize={17} fontWeight="bold" maxLines={2} paddingLeft={5} text={item?.text} verticalTextAlignment="center" />
-                            <IconButton col={2} text="mdi-delete" visibility={editing ? 'visible' : 'hidden'} on:tap={(event) => deleteCurrentQRCode(item, event)} />
+                </pager>
+                {#if __IOS__}
+                    <uisurface horizontalAlignment="center" marginBottom={12} padding="8 14" row={1} verticalAlignment="bottom" visibility={qrcodes?.length > 1 ? 'visible' : 'collapsed'}>
+                        <pagerindicator color="rgba(128, 128, 128, 0.45)" height={10} pagerViewId="qrPager" selectedColor={colorOnSurface} type="worm" width={(qrcodes?.length || 0) * 16} />
+                    </uisurface>
+                {:else}
+                    <pagerindicator
+                        color="rgba(128, 128, 128, 0.4)"
+                        height={10}
+                        horizontalAlignment="center"
+                        marginBottom={12}
+                        pagerViewId="qrPager"
+                        row={1}
+                        selectedColor={colorOnSurface}
+                        type="worm"
+                        verticalAlignment="bottom"
+                        visibility={qrcodes?.length > 1 ? 'visible' : 'collapsed'}
+                        width={(qrcodes?.length || 0) * 16} />
+                {/if}
+            </gridlayout>
+            <gridlayout row={2} rows="*,auto" visibility={hasImages ? 'visible' : 'collapsed'}>
+                <pager bind:this={pager} id="imagesPager" {items} spacing={12} on:selectedIndexChange={onImagesPagerIndex}>
+                    <Template let:item>
+                        <gridlayout
+                            margin="8 12 8 12"
+                            visibility={item.page.imagePath ? 'visible' : 'collapsed'}
+                            on:loaded={(e) => registerImageMenu(e, item)}
+                            on:longPress={() => onImageLongPress(item)}
+                            on:tap={() => showFullscreen(items.findIndex((i) => i.page === item.page))}
+                        >
+                            <RotableImageView
+                                id="imageView"
+                                borderRadius={16}
+                                decodeWidth={screenWidthDips}
+                                item={item.page}
+                                sharedTransitionTag={`document_${document.id}_${item.page.id}`}
+                                stretch="aspectFit"
+                                width="100%"
+                            />
                         </gridlayout>
                     </Template>
-                    <Template key="button" let:item>
-                        <uibutton margin={10} text={item.text} on:tap={(event) => onExtraItemTap(item, event)} />
+                </pager>
+                <collectionview
+                    bind:this={collectionView}
+                    id="view"
+                    ios:autoReloadItemOnLayout={true}
+                    colWidth={FILMSTRIP_COL_WIDTH}
+                    height={FILMSTRIP_HEIGHT}
+                    horizontalAlignment="center"
+                    {items}
+                    marginBottom={12}
+                    orientation="horizontal"
+                    reorderEnabled={true}
+                    row={1}
+                    rowHeight={FILMSTRIP_HEIGHT}
+                    visibility={nbImages > 1 ? 'visible' : 'collapsed'}
+                    width={Math.min(nbImages * FILMSTRIP_COL_WIDTH, screenWidthDips - 32)}
+                    on:itemReordered={onItemReordered}
+                    on:itemReorderStarting={onItemReorderStarting}
+                >
+                    <Template let:index let:item>
+                        <gridlayout
+                            class="cardItemTemplate"
+                            backgroundColor={getItemBackgroundColor(item)}
+                            borderRadius={6}
+                            elevation={0}
+                            longPressGestureOptions={(view, tag, rootTag) => ({
+                                simultaneousHandlers: [rootTag, view['PAN_HANDLER_TAG']],
+                                minDurationMs: 300
+                            })}
+                            margin={4}
+                            opacity={index === currentImageIndex ? 1 : 0.55}
+                            panGestureOptions={(view, tag, rootTag) => ({
+                                simultaneousHandlers: [rootTag, view['LONGPRESS_HANDLER_TAG']],
+                                minDist: 20
+                            })}
+                            rippleColor={colorSurface}
+                            scaleX={index === currentImageIndex ? 1 : 0.85}
+                            scaleY={index === currentImageIndex ? 1 : 0.85}
+                            on:tap={() => onItemTap(item)}
+                            on:touch={(e) => onTouch(item, e)}
+                            on:longPress={(e) => onItemLongPress(item, e)}
+                            on:pan={(e) => onPan(item, e)}
+                        >
+                            <RotableImageView
+                                id="imageView"
+                                borderRadius={6}
+                                decodeWidth={FILMSTRIP_COL_WIDTH}
+                                item={item.page}
+                                sharedTransitionTag={`document_${document.id}_${item.page.id}`}
+                                stretch="aspectFill"
+                                width="100%"
+                            />
+                            <gridlayout backgroundColor="rgba(0, 0, 0, 0.3)" borderRadius={6} isUserInteractionEnabled={false} visibility={item.selected ? 'visible' : 'hidden'}>
+                                <label
+                                    backgroundColor={colorPrimary}
+                                    borderColor="white"
+                                    borderRadius={10}
+                                    borderWidth={1.5}
+                                    color="white"
+                                    fontFamily={$fonts.mdi}
+                                    fontSize={13}
+                                    height={20}
+                                    horizontalAlignment="right"
+                                    margin={3}
+                                    text="mdi-check"
+                                    textAlignment="center"
+                                    verticalAlignment="bottom"
+                                    verticalTextAlignment="center"
+                                    width={20} />
+                            </gridlayout>
+                            <label fontFamily={$fonts.mdi} fontSize={20} padding={4} text="mdi-reorder-horizontal" verticalAlignment="bottom" visibility={inEditMode ? 'visible' : 'hidden'} />
+                        </gridlayout>
                     </Template>
                 </collectionview>
             </gridlayout>
-
-            <!-- </gridlayout> -->
-            <uibutton
-                col={1}
-                margin={10}
-                marginBottom={Math.min(60, $windowInset.bottom + 16)}
-                row={2}
-                text={lc('add_extra_field')}
+            <uisurface
+                class="cardViewHolder"
+                borderRadius={28}
+                height={infoHeight}
+                margin={12}
+                row={1}
+                rowSpan={2}
+                rows="auto,*,auto"
                 verticalAlignment="bottom"
-                visibility={editing ? 'visible' : 'collapsed'}
-                on:tap={(event) => addOrEditExtraField()}
-            />
+                visibility={infoOpen || editing ? 'visible' : 'collapsed'}
+            >
+                <gridlayout columns="*,auto,auto" padding="8 8 0 16">
+                    <label fontSize={17} fontWeight="bold" text={lc('info')} verticalAlignment="center" />
+                    <uibutton
+                        accessibilityLabel={lc('edit')}
+                        col={1}
+                        variant="text"
+                        {...{ src: appIcon('edit') }}
+                        visibility={editing ? 'collapsed' : 'visible'}
+                        on:tap={startEdit} />
+                    <uibutton accessibilityLabel={lc('cancel')} col={2} variant="text" {...{ src: appIcon('close') }} visibility={editing ? 'collapsed' : 'visible'} on:tap={() => (infoOpen = false)} />
+                </gridlayout>
+                    <collectionview bind:this={collectionViewExtras} itemTemplateSelector={selectTemplate} items={extraItems} paddingBottom={16} row={1}>
+                        <Template key={QRCODES_TYPE} let:item>
+                            <gridlayout height={pagerHeight} margin={16} rows="*,auto">
+                                <pager id="editPager" items={item.qrcodes} margin={16} selectedIndex={currentQRCodeIndex} on:selectedIndexChange={onSelectedIndex}>
+                                    <Template let:index let:item>
+                                        <gridlayout rows="*,auto" on:tap={onQRCodeTap}>
+                                            <svgview
+                                                id="svgView"
+                                                backgroundColor={qrcodeBackgroundColor}
+                                                height={pagerHeight - (editing ? 100 : 30)}
+                                                marginBottom={10}
+                                                scaleX={item.scale ?? 1}
+                                                scaleY={item.scale ?? 1}
+                                                sharedTransitionTag={'qrcode' + index}
+                                                src={item.svg}
+                                                stretch="aspectFit"
+                                                verticalAlignment="top"
+                                            />
+                                            <gridlayout columns="*,auto" row={1} rows="auto,auto">
+                                                <label
+                                                    fontSize={30}
+                                                    fontWeight="bold"
+                                                    ios:linkColor={colorOnBackground}
+                                                    maxLines={2}
+                                                    row={1}
+                                                    selectable={true}
+                                                    sharedTransitionTag={'qrcodelabel' + index}
+                                                    text={item?.text}
+                                                    textAlignment="center"
+                                                    visibility={editing ? 'collapsed' : 'visible'}
+                                                />
+                                                <textfield
+                                                    id="textField"
+                                                    error={item.error}
+                                                    maxLines={1}
+                                                    row={1}
+                                                    text={item?.text}
+                                                    variant="outline"
+                                                    verticalAlignment="center"
+                                                    visibility={editing ? 'visible' : 'collapsed'}
+                                                    on:textChange={(event) => setQRCodeText(item, event)}
+                                                />
+                                                <IconButton
+                                                    col={1}
+                                                    marginTop={5}
+                                                    row={1}
+                                                    text="mdi-delete"
+                                                    verticalAlignment="center"
+                                                    visibility={editing ? 'visible' : 'collapsed'}
+                                                    on:tap={(event) => deleteCurrentQRCode(item, event)}
+                                                />
+
+                                                <gridlayout colSpan={2} columns="auto,*,auto" padding={4} rows="auto" visibility={editing ? 'visible' : 'collapsed'} width="100%">
+                                                    <label col={0} marginTop={4} text={lc('scale')} verticalAlignment="center" />
+                                                    <label id="sliderValue" col={2} text={item.scale ?? 1} textAlignment="center" verticalTextAlignment="center" width={100} />
+                                                    <slider col={1} maxValue={10} minValue={1} value={(item.scale ?? 1) * 10} on:valueChange={(event) => setQRCodeScale(item, event.value, event)} />
+                                                </gridlayout>
+                                            </gridlayout>
+                                        </gridlayout>
+                                    </Template>
+                                </pager>
+                                <!-- <label rowSpan={3} text={lc('no_qrcode')} textAlignment="center" verticalTextAlignment="center" visibility={hasQRCodes ? 'hidden' : 'visible'} /> -->
+                                <pagerindicator
+                                    color={colorSurfaceContainerHigh}
+                                    horizontalAlignment="center"
+                                    marginBottom={5}
+                                    pagerViewId="editPager"
+                                    row={1}
+                                    selectedColor={colorOnSurfaceVariant}
+                                    type="worm"
+                                    verticalAlignment="bottom"
+                                />
+                            </gridlayout>
+                        </Template>
+                        <Template key="color" let:item>
+                            <ListItemAutoSize item={{ title: lc('color') }} on:tap={(event) => changeColor(item, event)}>
+                                <absolutelayout backgroundColor={topBackgroundColor} borderColor={colorOutline} borderRadius="50%" borderWidth={2} col={1} height={40} marginLeft={10} width={40} />
+                            </ListItemAutoSize>
+                        </Template>
+                        <Template let:item>
+                            <gridlayout padding="4 10 4 10">
+                                <textview editable={false} hint={item.name} text={formatItemValue(item)} variant="outline" on:tap={(event) => onExtraFieldTap(item, event)} />
+                                <IconButton
+                                    horizontalAlignment="right"
+                                    marginTop={5}
+                                    text="mdi-delete"
+                                    verticalAlignment="center"
+                                    visibility={editing ? 'visible' : 'collapsed'}
+                                    on:tap={(event) => deleteExtraField(item, event)}
+                                />
+                            </gridlayout>
+                            <ListItemAutoSize columns="*,auto,auto" item={{ rightValue: formatItemValue(item), title: item.name }}></ListItemAutoSize>
+                        </Template>
+                        <Template key="qrcode" let:item>
+                            <gridlayout columns="auto,*,auto" height={60} padding="4 0 4 10">
+                                <svgview backgroundColor={qrcodeBackgroundColor} src={item.svg} stretch="aspectFit" width={50} />
+                                <label col={1} fontSize={17} fontWeight="bold" maxLines={2} paddingLeft={5} text={item?.text} verticalTextAlignment="center" />
+                                <IconButton col={2} text="mdi-delete" visibility={editing ? 'visible' : 'hidden'} on:tap={(event) => deleteCurrentQRCode(item, event)} />
+                            </gridlayout>
+                        </Template>
+                        <Template key="button" let:item>
+                            <uibutton margin={10} text={item.text} on:tap={(event) => onExtraItemTap(item, event)} />
+                        </Template>
+                    </collectionview>
+                <uibutton margin={10} row={2} text={lc('add_extra_field')} visibility={editing ? 'visible' : 'collapsed'} on:tap={(event) => addOrEditExtraField()} />
+            </uisurface>
         {/if}
         {#if editingTitle}
             <EditNameActionBar
