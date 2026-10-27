@@ -9,6 +9,7 @@ const ICONS: Record<string, string> = __IOS__
     ? {
           add: 'plus',
           arrow_back: 'chevron.backward',
+          batch: 'photo.on.rectangle',
           brightness: 'sun.max',
           camera: 'camera',
           check: 'checkmark',
@@ -24,7 +25,9 @@ const ICONS: Record<string, string> = __IOS__
           flash_auto: 'bolt.badge.automatic.fill',
           flash_off: 'bolt.slash.fill',
           flash_on: 'bolt.fill',
+          folder: 'folder',
           fullscreen: 'arrow.up.left.and.arrow.down.right',
+          image: 'photo',
           import_file: 'doc.badge.plus',
           import_image: 'photo.badge.plus',
           info: 'info.circle',
@@ -53,6 +56,7 @@ const ICONS: Record<string, string> = __IOS__
     : {
           add: 'mdi-plus',
           arrow_back: 'mdi-arrow-left',
+          batch: 'mdi-image-multiple',
           brightness: 'mdi-brightness-6',
           camera: 'mdi-camera',
           check: 'mdi-check',
@@ -68,7 +72,9 @@ const ICONS: Record<string, string> = __IOS__
           flash_auto: 'mdi-flash-auto',
           flash_off: 'mdi-flash-off',
           flash_on: 'mdi-flash',
+          folder: 'mdi-folder',
           fullscreen: 'mdi-fullscreen',
+          image: 'mdi-image',
           import_file: 'mdi-file-document-plus-outline',
           import_image: 'mdi-image-plus-outline',
           info: 'mdi-information-outline',
@@ -97,8 +103,8 @@ const ICONS: Record<string, string> = __IOS__
 
 export type AppIconId = keyof typeof ICONS;
 
-/** the icon of an app id for the app bar and the menus: `sys://` symbol on iOS, ImageSource rendered from the MDI font on Android */
-export function appIcon(id: string) {
+/** the icon of an app id for the app bar and the menus: `sys://` symbol on iOS (tinted by its view), ImageSource rendered from the MDI font on Android, in `color` or the surface text color */
+export function appIcon(id: string, color?: string) {
     const name = ICONS[id];
     if (!name) {
         return undefined;
@@ -106,5 +112,5 @@ export function appIcon(id: string) {
     if (__IOS__) {
         return `sys://${name}`;
     }
-    return ImageSource.fromFontIconCodeSync(name, new Font(get(fonts).mdi, ICON_SIZE), new Color(get(colors).colorOnSurface));
+    return ImageSource.fromFontIconCodeSync(name, new Font(get(fonts).mdi, ICON_SIZE), new Color(color || get(colors).colorOnSurface));
 }
