@@ -1352,8 +1352,10 @@
     $: bottomItems =
         nbSelected > 0
             ? getSelectionBottomItems(getSelectionToolbarOptions())
-            : __IOS__ && primaryAction
-              ? [{ search: true }, { text: primaryAction.text, icon: appIcon(primaryAction.icon), onTap: primaryAction.onTap }]
+            : __IOS__ && !isTrash && !onlyForImport
+              ? primaryAction
+                  ? [{ search: true }, { text: primaryAction.text, icon: appIcon(primaryAction.icon), onTap: primaryAction.onTap }]
+                  : [{ search: true }]
               : [];
     let iosMenu: MenuItem[];
     $: iosMenu = [

@@ -72,41 +72,72 @@
     $: textPaint.textSize = (condensed ? 11 : 14) * $fontScale;
     $: itemRowHeight = getItemRowHeight(viewStyle, $itemHeight, $nbColumns, $isLandscape);
 
+    async function createCard() {
+        try {
+            const CreateCard = (await import('~/components/widgets/CreateCard.svelte')).default;
+            const result = await showBottomSheet({
+                parent: this,
+                view: CreateCard,
+                ignoreTopSafeArea: true
+            });
+            DEV_LOG && console.log('CreateCard', result);
+            if (result) {
+                const document = await OCRDocument.createDocument(
+                    [
+                        {
+                            qrcode: result.code?.length
+                                ? [
+                                      {
+                                          text: result.code,
+                                          format: result.codeFormat
+                                      }
+                                  ]
+                                : undefined
+                        }
+                    ],
+                    folder,
+                    {
+                        name: result.name,
+                        ...(result.color ? { extra: { color: result.color } } : {})
+                    }
+                );
+                await goToDocumentAfterScan(document, -1, true);
+            }
+        } catch (error) {
+            showError(error);
+        }
+    }
+
+    async function onStartCam(inverseUseSystemCamera = false) {
+        try {
+            await importImageFromCamera({ folder, inverseUseSystemCamera });
+        } catch (error) {
+            showError(error);
+        }
+    }
+
     async function onAddButton() {
         DEV_LOG && console.log('onAddButton');
         try {
             const OptionSelect = (await import('@shared/components/OptionSelect.svelte')).default;
             const rowHeight = 58;
-            const options = (
-                $hasCamera
-                    ? [
-                          {
-                              id: 'camera',
-                              name: lc('add_from_camera'),
-                              icon: 'mdi-camera'
-                          }
-                      ]
-                    : []
-            )
-                .concat([
-                    {
-                        id: 'import',
-                        name: lc('import_from_file'),
-                        icon: 'mdi-file-document-plus-outline'
-                    },
-                    {
-                        id: 'import_image',
-                        name: lc('import_from_image'),
-                        icon: 'mdi-image-plus-outline'
-                    }
-                ])
-                .concat([
-                    {
-                        id: 'create',
-                        name: lc('create'),
-                        icon: 'mdi-plus'
-                    }
-                ]);
+            const options = [
+                {
+                    id: 'import',
+                    name: lc('import_from_file'),
+                    icon: 'mdi-file-document-plus-outline'
+                },
+                {
+                    id: 'import_image',
+                    name: lc('import_from_image'),
+                    icon: 'mdi-image-plus-outline'
+                },
+                {
+                    id: 'create',
+                    name: lc('create'),
+                    icon: 'mdi-plus'
+                }
+            ];
             const height = Math.min(rowHeight * options.length, 400);
             const option = await showBottomSheet({
                 parent: this,
@@ -122,9 +153,6 @@
             DEV_LOG && console.log('on add option', option);
             if (option) {
                 switch (option.id) {
-                    case 'camera':
-                        await importImageFromCamera({ inverseUseSystemCamera: false });
-                        break;
                     case 'import':
                         await importDocument();
                         break;
@@ -132,35 +160,7 @@
                         await importImages();
                         break;
                     case 'create':
-                        const CreateCard = (await import('~/components/widgets/CreateCard.svelte')).default;
-                        const result = await showBottomSheet({
-                            parent: this,
-                            view: CreateCard,
-                            ignoreTopSafeArea: true
-                        });
-                        DEV_LOG && console.log('CreateCard', result);
-                        if (result) {
-                            const document = await OCRDocument.createDocument(
-                                [
-                                    {
-                                        qrcode: result.code?.length
-                                            ? [
-                                                  {
-                                                      text: result.code,
-                                                      format: result.codeFormat
-                                                  }
-                                              ]
-                                            : undefined
-                                    }
-                                ],
-                                folder,
-                                {
-                                    name: result.name,
-                                    ...(result.color ? { extra: { color: result.color } } : {})
-                                }
-                            );
-                            await goToDocumentAfterScan(document, -1, true);
-                        }
+                        await createCard();
                         break;
                 }
             }
@@ -277,7 +277,12 @@
 </script>
 
 <MainList
-    actions={[{ text: lc('add'), icon: 'add', onTap: () => onAddButton() }]}
+    actions={[
+        { text: lc('import_from_image'), icon: 'import_image', onTap: () => importImages() },
+        { text: lc('import_from_file'), icon: 'import_file', onTap: () => importDocument() },
+        { text: lc('create'), icon: 'add', onTap: () => createCard() },
+        { text: lc('camera'), icon: 'camera', primary: true, onTap: () => onStartCam() }
+    ]}
     collectionViewOptions={{
         // spanSize: (item) => itemTemplateSpanSize(viewStyle, item),
         swipeMenuId: 'swipeMenu',
@@ -460,7 +465,10 @@
     </Template>
 
     <stacklayout bind:this={fabHolder} slot="fab" class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal">
-        <uibutton bind:this={fabHolder} class="fab" text="mdi-plus" on:tap={throttle(() => onAddButton(), 500)} />
+        <uibutton class={$hasCamera ? 'small-fab' : 'fab'} horizontalAlignment="center" text="mdi-plus" verticalAlignment="center" on:tap={throttle(() => onAddButton(), 500)} />
+        {#if $hasCamera}
+            <uibutton class="fab" text="mdi-camera" verticalAlignment="center" on:tap={throttle(() => onStartCam(), 500)} on:longPress={() => onStartCam(true)} />
+        {/if}
     </stacklayout>
 
     <!-- <canvasview bind:this={canvastest} slot="test" row={2} on:draw={onDrawCanvasTest} on:tap={() => (canvastest.nativeView.visibility = 'hidden')}> </canvasview> -->
