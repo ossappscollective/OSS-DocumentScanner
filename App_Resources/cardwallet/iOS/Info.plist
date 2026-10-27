@@ -147,5 +147,24 @@
         </dict>
       </dict>
     </array>
+    <key>UIApplicationSceneManifest</key>
+    <dict>
+      <key>UIApplicationPreferredDefaultSceneSessionRole</key>
+      <string>UIWindowSceneSessionRoleApplication</string>
+      <key>UIApplicationSupportsMultipleScenes</key>
+      <false/>
+      <key>UISceneConfigurations</key>
+      <dict>
+        <key>UIWindowSceneSessionRoleApplication</key>
+        <array>
+          <dict>
+            <key>UISceneConfigurationName</key>
+            <string>Default Configuration</string>
+            <key>UISceneDelegateClassName</key>
+            <string>SceneDelegate</string>
+          </dict>
+        </array>
+      </dict>
+    </dict>
   </dict>
 </plist>
