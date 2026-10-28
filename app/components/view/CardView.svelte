@@ -85,6 +85,8 @@
     import PKPassView from '~/components/pkpass/PKPassView.svelte';
 
     const PEEK_WIDTH = 44;
+    // Android: the zones overlap the bottom edge of the plate of the name
+    const PLATE_OVERLAP = 44;
     const FILMSTRIP_HEIGHT = 60;
     const FILMSTRIP_COL_WIDTH = 48;
     interface Item {
@@ -103,8 +105,8 @@
     import { Label } from '@nativescript-community/ui-label';
     import { EXTRA_PAPERLESS_ID_KEY } from '~/services/sync/paperless/PaperlessNgxPDFSyncService';
 
-    let { colorBackground, colorError, colorOnBackground, colorOnSurface, colorOnSurfaceVariant, colorOutline, colorOutlineVariant, colorPrimary, colorSurface, colorSurfaceContainerHigh, colorTertiary } = $colors;
-    $: ({ colorBackground, colorError, colorOnBackground, colorOnSurface, colorOnSurfaceVariant, colorOutline, colorOutlineVariant, colorPrimary, colorSurface, colorSurfaceContainerHigh, colorTertiary } = $colors);
+    let { colorBackground, colorError, colorOnBackground, colorOnSurface, colorOnSurfaceVariant, colorOutline, colorOutlineVariant, colorPrimary, colorSurface, colorSurfaceContainerLow, colorSurfaceContainerHigh, colorTertiary } = $colors;
+    $: ({ colorBackground, colorError, colorOnBackground, colorOnSurface, colorOnSurfaceVariant, colorOutline, colorOutlineVariant, colorPrimary, colorSurface, colorSurfaceContainerLow, colorSurfaceContainerHigh, colorTertiary } = $colors);
 
     const forceWhiteBackgroundForQRCode = ApplicationSettings.getBoolean(SETTINGS_FORCE_WHITE_BACKGROUND_QRCODE, DEFAULT_FORCE_WHITE_BACKGROUND_QRCODE);
 
@@ -163,7 +165,7 @@
     $: viewportHeight = scrollHeight ? scrollHeight - insetTop - insetBottom : screenHeightDips - $windowInset.top - $windowInset.bottom - 130;
     // the zones fill the screen, the details peek under them
     $: heroHeight = viewportHeight - (details.length ? 56 : 0);
-    $: photoPagerHeight = Math.max(heroHeight - (hasCustomName ? nameHeight : 0) - (hasQRCodes ? codeZoneHeight + (qrcodes?.length > 1 ? 28 : 0) + 16 : 0) - (nbImages > 1 ? 76 : 0) - 16, 120);
+    $: photoPagerHeight = Math.max(heroHeight - (__ANDROID__ ? Math.max(nameHeight - PLATE_OVERLAP, 0) : hasCustomName ? nameHeight : 0) - (hasQRCodes ? codeZoneHeight + (qrcodes?.length > 1 ? 28 : 0) + 16 : 0) - (nbImages > 1 ? 76 : 0) - 16, 120);
     $: photoZoneHeight = Math.round(Math.min(getPageRatio(items.getItem(currentImageIndex)?.page) * photoZoneWidth(nbImages), photoPagerHeight));
     $: hasHero = hasQRCodes || hasImages;
     // no photo: the card color is the backdrop
@@ -1151,7 +1153,7 @@
 </script>
 
 <appPage bind:this={page} id="cardview" {...{ keepScreenAwake: hasQRCodes, screenBrightness: hasQRCodes ? 1 : -1 }}>
-    <appBar {bottomItems} color={heroGradient ? accent.onAccent : colorOnBackground} scrollBehavior="lift" scrollTargetId="cardScroll" size="small" title={nbSelected > 0 ? lcp('selected', nbSelected) : inEditMode ? lc('reorder_pages') : hasCustomName ? '' : document.name}>
+    <appBar {bottomItems} {...(__ANDROID__ ? { backgroundColor: accent.container } : {})} color={heroGradient ? accent.onAccent : colorOnBackground} scrollBehavior="lift" scrollTargetId="cardScroll" size="small" title={nbSelected > 0 ? lcp('selected', nbSelected) : inEditMode ? lc('reorder_pages') : hasCustomName || __ANDROID__ ? '' : document.name}>
         {#if __ANDROID__}
             <navigationButton {...{ 'android.systemIcon': nbSelected > 0 || inEditMode ? 'ic_menu_close_clear_cancel' : 'ic_menu_back' }} on:tap={nbSelected > 0 ? unselectAll : inEditMode ? switchEditMode : onGoBack} />
         {/if}
@@ -1189,17 +1191,39 @@
             {#if scrollHeight > 0}
             <stacklayout>
                 <stacklayout height={hasHero ? heroHeight : undefined}>
-                {#if hasCustomName}
+                {#if __ANDROID__}
+                    <gridlayout backgroundColor={accent.container} borderRadius="0 0 40 12" columns="*,auto" rows="auto" padding="0 20 {hasHero ? PLATE_OVERLAP + 8 : 24} 20" on:layoutChanged={onNameLayout}>
+                        <stacklayout margin="8 0 0 0">
+                            <label color={colorOnBackground} fontSize={hasCustomName ? 34 : 22} fontWeight="bold" maxLines={3} text={document.name} textWrap={true} />
+                            <label color={colorOnSurfaceVariant} fontSize={15} text={dayjs(document.createdDate).format('LL')} visibility={hasCustomName ? 'visible' : 'collapsed'} />
+                        </stacklayout>
+                        <label
+                            backgroundColor={accent.accent}
+                            borderRadius={24}
+                            color={accent.onAccent}
+                            col={1}
+                            fontSize={22}
+                            fontWeight="bold"
+                            height={48}
+                            margin="8 0 0 12"
+                            text={(document.name || '?').charAt(0).toUpperCase()}
+                            textAlignment="center"
+                            verticalAlignment="top"
+                            verticalTextAlignment="center"
+                            visibility={hasCustomName ? 'visible' : 'collapsed'}
+                            width={48} />
+                    </gridlayout>
+                {:else if hasCustomName}
                     <stacklayout margin="4 20 8 20" on:layoutChanged={onNameLayout}>
                         <label color={heroGradient ? accent.onAccent : colorOnBackground} fontSize={34} fontWeight="bold" maxLines={3} text={document.name} textWrap={true} />
                         <label color={heroGradient ? accent.onAccent : colorOnSurfaceVariant} fontSize={15} opacity={heroGradient ? 0.8 : 1} text={dayjs(document.createdDate).format('LL')} />
                     </stacklayout>
                 {/if}
                 {#if hasQRCodes}
-                    <gridlayout height={codeZoneHeight + (qrcodes?.length > 1 ? 28 : 0)} margin="8 0 8 0" row={1} rows="*,auto">
+                    <gridlayout height={codeZoneHeight + (qrcodes?.length > 1 ? 28 : 0)} margin="{__ANDROID__ ? -PLATE_OVERLAP : 8} {__ANDROID__ && qrcodes?.length <= 1 ? 16 : 0} 8 {__ANDROID__ && qrcodes?.length <= 1 ? 16 : 0}" row={1} rows="*,auto">
                         <pager bind:this={qrPager} id="qrPager" items={qrcodes} peaking={qrcodes?.length > 1 ? PEEK_WIDTH : 0} selectedIndex={currentQRCodeIndex} spacing={12} on:selectedIndexChange={onSelectedIndex}>
                             <Template let:item>
-                                <gridlayout backgroundColor="white" borderRadius={28} elevation={isEInk || __ANDROID__ ? 0 : 6} margin={qrcodes?.length > 1 ? '4 4 8 4' : '4 16 8 16'} padding="20" rows="*,auto" on:tap={onQRCodeTap}>
+                                <gridlayout backgroundColor="white" borderRadius={28} elevation={isEInk || __ANDROID__ ? 0 : 6} margin={qrcodes?.length > 1 ? '4 4 8 4' : __ANDROID__ ? '4 0 8 0' : '4 16 8 16'} padding="20" rows="*,auto" on:tap={onQRCodeTap}>
                                     <svgview src={item.svg} stretch="aspectFit" />
                                     <label color="black" fontSize={17} fontWeight="bold" marginTop={8} maxLines={1} row={1} selectable={true} text={item.text} textAlignment="center" />
                                 </gridlayout>
@@ -1220,7 +1244,7 @@
                     </gridlayout>
                 {/if}
                 {#if hasImages}
-                    <stacklayout margin="8 0 8 0">
+                    <stacklayout margin="{__ANDROID__ && !hasQRCodes ? -PLATE_OVERLAP : 8} 0 8 0">
                 <gridlayout height={photoPagerHeight}>
                 <pager bind:this={pager} id="imagesPager" {items} peaking={nbImages > 1 ? PEEK_WIDTH : 0} spacing={12} on:selectedIndexChange={onImagesPagerIndex}>
                     <Template let:item>
@@ -1326,14 +1350,29 @@
                 {/if}
                 </stacklayout>
                 {#if details.length}
-                    <stacklayout backgroundColor={colorSurface} borderRadius={16} margin="16 16 0 16">
-                        {#each details as detail, index (detail.name)}
-                            <stacklayout borderTopColor={colorOutlineVariant} borderTopWidth={index > 0 ? 0.5 : 0} padding="10 16 10 16">
-                                <label color={colorOnSurfaceVariant} fontSize={13} text={detail.name} />
-                                <label color={colorOnSurface} fontSize={17} selectable={true} text={formatItemValue(detail)} textWrap={true} />
-                            </stacklayout>
-                        {/each}
-                    </stacklayout>
+                    {#if __ANDROID__}
+                        <stacklayout margin="16 16 0 16">
+                            {#each details as detail, index (detail.name)}
+                                <stacklayout
+                                    backgroundColor={colorSurfaceContainerLow}
+                                    borderRadius={details.length === 1 ? 28 : index === 0 ? '28 28 6 6' : index === details.length - 1 ? '6 6 28 28' : 6}
+                                    marginTop={index > 0 ? 2 : 0}
+                                    padding="12 20 12 20">
+                                    <label color={colorOnSurfaceVariant} fontSize={13} text={detail.name} />
+                                    <label color={colorOnSurface} fontSize={17} selectable={true} text={formatItemValue(detail)} textWrap={true} />
+                                </stacklayout>
+                            {/each}
+                        </stacklayout>
+                    {:else}
+                        <stacklayout backgroundColor={colorSurface} borderRadius={16} margin="16 16 0 16">
+                            {#each details as detail, index (detail.name)}
+                                <stacklayout borderTopColor={colorOutlineVariant} borderTopWidth={index > 0 ? 0.5 : 0} padding="10 16 10 16">
+                                    <label color={colorOnSurfaceVariant} fontSize={13} text={detail.name} />
+                                    <label color={colorOnSurface} fontSize={17} selectable={true} text={formatItemValue(detail)} textWrap={true} />
+                                </stacklayout>
+                            {/each}
+                        </stacklayout>
+                    {/if}
                 {/if}
             </stacklayout>
             {/if}
