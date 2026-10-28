@@ -4,10 +4,10 @@
     import { CameraView } from '@nativescript-community/ui-cameraview';
     import { Canvas, CanvasView, Paint, Style } from '@nativescript-community/ui-canvas';
     import { showMenu } from '@nativescript-community/ui-menu';
-    import { closeBottomSheet, isBottomSheetOpened, showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
+    import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { confirm } from '@nativescript-community/ui-dialogs';
     import { Slider } from '@nativescript-community/ui-slider';
-    import { AbsoluteLayout, AndroidActivityBackPressedEventData, Application, ApplicationSettings, Device, EventData, Page, Utils, View, knownFolders, path } from '@nativescript/core';
+    import { AbsoluteLayout, AndroidActivityBackPressedEventData, Application, ApplicationSettings, EventData, Page, Utils, View, knownFolders, path } from '@nativescript/core';
     import { ImageSource } from '@nativescript/core/image-source';
     import { debounce, wrapNativeException } from '@nativescript/core/utils';
     import { showError } from '@shared/utils/showError';
@@ -102,7 +102,7 @@
     }
 
     // the iOS 26 sheets are glass when their content is transparent
-    const glassSheet = __IOS__ && parseInt(Device.osVersion, 10) >= 26;
+    const glassSheet = __IOS__ && Utils.SDK_VERSION >= 26;
 
     async function showCameraSettings() {
         try {
@@ -114,32 +114,23 @@
                 : {};
             // DEV_LOG && console.log('showCameraSettings', JSON.stringify(addedProps), JSON.stringify(get(cameraOptionsStore)));
             const view = (await import('~/components/widgets/ImageProcessingSettingsBottomSheet.svelte')).default;
-            // the sheet inherits the traits of the window: dark glass over the camera
-            const window = glassSheet ? page.nativeView.nativeViewProtected?.window : null;
-            if (window) {
-                window.overrideUserInterfaceStyle = UIUserInterfaceStyle.Dark;
-            }
-            try {
-                await showBottomSheet({
-                    parent: page,
-                    view,
-                    detents: [{ fraction: 0.5 }, 'large'],
-                    disableDimBackground: true,
-                    grabber: true,
-                    largestUndimmedDetentIndex: 0,
-                    transparent: glassSheet,
-                    props: {
-                        glass: glassSheet,
-                        showCameraSettings: true,
-                        cameraOptionsStore,
-                        ...addedProps
-                    }
-                });
-            } finally {
-                if (window) {
-                    window.overrideUserInterfaceStyle = UIUserInterfaceStyle.Unspecified;
+            await showBottomSheet({
+                parent: page,
+                view,
+                detents: [{ fraction: 0.5 }, 'large'],
+                disableDimBackground: true,
+                grabber: true,
+                largestUndimmedDetentIndex: 0,
+                transparent: glassSheet,
+                // dark glass over the camera
+                userInterfaceStyle: glassSheet ? 'dark' : undefined,
+                props: {
+                    glass: glassSheet,
+                    showCameraSettings: true,
+                    cameraOptionsStore,
+                    ...addedProps
                 }
-            }
+            });
         } catch (error) {
             showError(error);
         }
@@ -493,11 +484,6 @@
     }
     function focusCamera(e) {
         try {
-            // the undimmed sheet gives the touches to the preview, whose tap recognizer wins over the sheet's outside tap
-            if (isBottomSheetOpened()) {
-                closeBottomSheet();
-                return;
-            }
             const x = e.getX();
             const y = e.getY();
             DEV_LOG && console.log('focusCamera', x, y);
