@@ -1,5 +1,7 @@
 <script context="module" lang="ts">
     import { lc } from '@nativescript-community/l';
+    import { Template } from '@nativescript-community/svelte-native/components';
+    import { TextField } from '@nativescript-community/ui-textfield';
     import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { showError } from '@shared/utils/showError';
     import dayjs from 'dayjs';
@@ -9,6 +11,7 @@
     import { appIcon } from '~/utils/appIcons';
     import { pickColor } from '~/utils/ui';
     import { colors } from '~/variables';
+    import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
 
     interface CodeRow {
         id: number;
@@ -46,14 +49,28 @@
         .filter((key) => key !== 'color' && key !== 'pkpass' && typeof document.extra[key] === 'object')
         .map((key) => ({ key, name: key, extra: { ...(document.extra[key] as any) }, removed: false }));
 
-    $: visibleCodes = codes.filter((code) => !code.removed);
-    $: visibleFields = fields.filter((field) => !field.removed);
+    // the rows are built again when the structure changes, never when a text is typed: the text fields keep their focus
+    let listItems: any[] = [];
+    function rebuild() {
+        const visibleCodes = codes.filter((code) => !code.removed);
+        const visibleFields = fields.filter((field) => !field.removed);
+        listItems = [
+            { type: 'name' },
+            { type: 'color' },
+            ...(visibleCodes.length ? [{ type: 'sectionheader', title: lc('barcode').toUpperCase() }, ...visibleCodes.map((code) => ({ type: 'code', code }))] : []),
+            { type: 'sectionheader', title: lc('extra_fields').toUpperCase() },
+            ...visibleFields.map((field) => ({ type: 'field', field })),
+            { type: 'add' }
+        ];
+    }
+    rebuild();
+    const itemTemplateSelector = (item) => item.type;
 
     function close(result?: boolean) {
         rootView.nativeView.bindingContext.closeCallback(result);
     }
 
-    async function onCodeText(code: CodeRow, text: string) {
+    async function onCodeText(code: CodeRow, text: string, field: unknown) {
         code.text = text;
         try {
             const svg = await qrcodeService.getQRCodeSVG({ ...code.original, text }, 100, 'black');
@@ -61,17 +78,21 @@
         } catch (error) {
             code.error = lc('unsupported_barcode_value');
         }
-        codes = codes;
+        // the error is set on the field itself: the rows are not built again while typing
+        if (field instanceof TextField) {
+            field.error = code.error;
+        }
     }
     function removeCode(code: CodeRow) {
         code.removed = true;
-        codes = codes;
+        rebuild();
     }
     async function changeColor(event) {
         try {
             const result = await pickColor(color ?? colorPrimary, { anchor: event.object });
             if (result) {
                 color = result.hex;
+                rebuild();
             }
         } catch (error) {
             showError(error);
@@ -99,14 +120,14 @@
             } else {
                 fields.push({ key: null, name: fieldName, extra: others, removed: false });
             }
-            fields = fields;
+            rebuild();
         } catch (error) {
             showError(error);
         }
     }
     function removeField(field: FieldRow) {
         field.removed = true;
-        fields = fields;
+        rebuild();
     }
 
     async function save() {
@@ -150,35 +171,37 @@
         <label col={1} color={colorOnSurface} fontSize={17} fontWeight="bold" text={lc('edit')} textAlignment="center" verticalAlignment="center" />
         <uibutton col={2} text={lc('save')} variant={__IOS__ ? 'prominentGlass' : 'contained'} on:tap={save} />
     </gridlayout>
-    <scrollview row={1}>
-        <stacklayout padding="0 16 32 16">
-            <textfield hint={lc('name')} margin="4 0 4 0" text={name} variant={__IOS__ ? 'none' : 'filled'} on:textChange={(e) => (name = e.value)} />
-            <gridlayout columns="*,auto" margin="8 0 8 0" padding="0 4 0 4" on:tap={changeColor}>
+    <collectionview row={1} {itemTemplateSelector} items={listItems}>
+        <Template key="name" let:item>
+            <textfield hint={lc('name')} margin="4 16 4 16" text={name} variant={__IOS__ ? 'none' : 'filled'} on:textChange={(e) => (name = e.value)} />
+        </Template>
+
+        <Template key="color" let:item>
+            <gridlayout columns="*,auto" margin="8 16 8 16" padding="0 4 0 4" on:tap={changeColor}>
                 <label color={colorOnSurface} fontSize={17} text={lc('color')} verticalAlignment="center" />
                 <absolutelayout backgroundColor={color ?? colorPrimary} borderColor={colorOutlineVariant} borderRadius="50%" borderWidth={2} col={1} height={36} width={36} />
             </gridlayout>
+        </Template>
 
-            {#if visibleCodes.length}
-                <label color={colorOnSurfaceVariant} fontSize={13} margin="16 4 4 4" text={lc('barcode').toUpperCase()} />
-                {#each visibleCodes as code (code.id)}
-                    <gridlayout columns="*,auto" margin="2 0 2 0">
-                        <textfield error={code.error} hint={lc('barcode')} text={code.text} variant={__IOS__ ? 'none' : 'filled'} on:textChange={(e) => onCodeText(code, e.value)} />
-                        <uibutton col={1} variant="text" {...{ src: appIcon('delete') }} on:tap={() => removeCode(code)} />
-                    </gridlayout>
-                {/each}
-            {/if}
+        <Template key="sectionheader" let:item>
+            <label color={colorOnSurfaceVariant} fontSize={13} margin="16 20 4 20" text={item.title} />
+        </Template>
 
-            <label color={colorOnSurfaceVariant} fontSize={13} margin="16 4 4 4" text={lc('extra_fields').toUpperCase()} />
-            {#each visibleFields as field (field.name + (field.key || ''))}
-                <gridlayout columns="*,auto,auto" minHeight={52} padding="0 4 0 4" on:tap={() => editField(field)}>
-                    <stacklayout verticalAlignment="center">
-                        <label color={colorOnSurfaceVariant} fontSize={13} text={field.name} />
-                        <label color={colorOnSurface} fontSize={17} text={formatValue(field.extra)} />
-                    </stacklayout>
-                    <uibutton col={1} variant="text" {...{ src: appIcon('delete') }} on:tap={() => removeField(field)} />
-                </gridlayout>
-            {/each}
-            <uibutton margin="8 0 0 0" text={lc('add_extra_field')} variant={__IOS__ ? 'tinted' : 'text'} on:tap={() => editField()} />
-        </stacklayout>
-    </scrollview>
+        <Template key="code" let:item>
+            <gridlayout columns="*,auto" margin="2 16 2 16">
+                <textfield error={item.code.error} hint={lc('barcode')} text={item.code.text} variant={__IOS__ ? 'none' : 'filled'} on:textChange={(e) => onCodeText(item.code, e.value, e.object)} />
+                <uibutton col={1} variant="text" {...{ src: appIcon('delete') }} on:tap={() => removeCode(item.code)} />
+            </gridlayout>
+        </Template>
+
+        <Template key="field" let:item>
+            <ListItemAutoSize fontSize={17} item={{ title: item.field.name, subtitle: formatValue(item.field.extra) }} on:tap={() => editField(item.field)}>
+                <uibutton col={1} variant="text" {...{ src: appIcon('delete') }} on:tap={() => removeField(item.field)} />
+            </ListItemAutoSize>
+        </Template>
+
+        <Template key="add" let:item>
+            <uibutton margin="8 16 24 16" text={lc('add_extra_field')} variant={__IOS__ ? 'tinted' : 'text'} on:tap={() => editField()} />
+        </Template>
+    </collectionview>
 </gesturerootview>
