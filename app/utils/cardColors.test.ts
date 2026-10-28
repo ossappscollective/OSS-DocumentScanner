@@ -1,10 +1,8 @@
+import { Color } from '@nativescript/core';
 import { describe, expect, it } from 'vitest';
 import { contrastRatio, getCardAccent, getChroma, pickCardColor } from './cardColors';
 
-function rgb(hex: string): [number, number, number] {
-    const value = parseInt(hex.slice(1), 16);
-    return [(value >> 16) & 255, (value >> 8) & 255, value & 255];
-}
+const rgb = (hex: string) => new Color(hex);
 
 describe('getCardAccent', () => {
     it('keeps a color that is already readable', () => {
@@ -14,12 +12,12 @@ describe('getCardAccent', () => {
     it('darkens a pale color on a light page until it holds 3:1', () => {
         const { accent } = getCardAccent('#ffee88', false, '#000000');
         expect(accent).not.toBe('#ffee88');
-        expect(contrastRatio(rgb(accent), [255, 255, 255])).toBeGreaterThanOrEqual(3);
+        expect(contrastRatio(rgb(accent), rgb('#ffffff'))).toBeGreaterThanOrEqual(3);
     });
 
     it('lightens a dark color on a dark page until it holds 3:1', () => {
         const { accent } = getCardAccent('#101830', true, '#000000');
-        expect(contrastRatio(rgb(accent), [0, 0, 0])).toBeGreaterThanOrEqual(3);
+        expect(contrastRatio(rgb(accent), rgb('#000000'))).toBeGreaterThanOrEqual(3);
     });
 
     it('picks an on color with 4.5:1', () => {
@@ -32,7 +30,7 @@ describe('getCardAccent', () => {
     it('uses white for large text on a color that holds 3:1 with white', () => {
         // red: 4.5:1 is not reached with white (small text gets black), 3:1 is (titles get white)
         const { accent, onAccent, onAccentLarge } = getCardAccent('#ee2233', false, '#000000');
-        expect(contrastRatio([255, 255, 255], rgb(accent))).toBeGreaterThanOrEqual(3);
+        expect(contrastRatio(rgb('#ffffff'), rgb(accent))).toBeGreaterThanOrEqual(3);
         expect(onAccentLarge).toBe('#ffffff');
         expect(onAccent).toBe('#000000');
     });

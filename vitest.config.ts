@@ -64,6 +64,8 @@ export default defineConfig({
         },
         include: ['app/**/*.test.ts'],
         setupFiles: ['./vitest.setup.ts'],
+        // the real Color class of core (see vitest.setup.ts) imports its helpers without extension
+        server: { deps: { inline: [/@nativescript\/core\/(color|utils)/] } },
         // Tell vitest to use the test-specific tsconfig that includes *.test.ts files
         typecheck: {
             tsconfig: './tsconfig.test.json'
