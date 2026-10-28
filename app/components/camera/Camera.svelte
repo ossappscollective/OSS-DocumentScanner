@@ -3,10 +3,11 @@
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import { CameraView } from '@nativescript-community/ui-cameraview';
     import { Canvas, CanvasView, Paint, Style } from '@nativescript-community/ui-canvas';
+    import { showMenu } from '@nativescript-community/ui-menu';
     import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { confirm } from '@nativescript-community/ui-dialogs';
     import { Slider } from '@nativescript-community/ui-slider';
-    import { AbsoluteLayout, AndroidActivityBackPressedEventData, Application, ApplicationSettings, Page, Utils, knownFolders, path } from '@nativescript/core';
+    import { AbsoluteLayout, AndroidActivityBackPressedEventData, Application, ApplicationSettings, EventData, Page, Utils, View, knownFolders, path } from '@nativescript/core';
     import { ImageSource } from '@nativescript/core/image-source';
     import { debounce, wrapNativeException } from '@nativescript/core/utils';
     import { showError } from '@shared/utils/showError';
@@ -15,8 +16,6 @@
     import { CropView } from 'plugin-nativeprocessor/CropView';
     import { onDestroy, onMount } from 'svelte';
     import { writable } from 'svelte/store';
-    import CActionBar from '~/components/common/CActionBar.svelte';
-    import IconButton from '@shared/components/IconButton.svelte';
     import { lc } from '~/helpers/locale';
     import { DocFolder, OCRDocument, PageData } from '~/models/OCRDocument';
     import { documentsService } from '~/services/documents';
@@ -38,6 +37,7 @@
         getImageExportSettings
     } from '~/utils/constants';
     import { ZOOM_SLIDER_STEPS, clampZoom, percentToZoom, zoomToPercent } from '~/utils/cameraZoom';
+    import { appIcon } from '~/utils/appIcons';
     import { recycleImages } from '~/utils/images';
     import { confirmGoBack, goToDocumentAfterScan, hideLoading, onBackButton, processCameraImage, requestCameraPermission, showLoading, showSettings } from '~/utils/ui';
     import { checkAvailableStorage } from '~/utils/utils';
@@ -101,6 +101,9 @@
         }
     }
 
+    // the iOS 26 sheets are glass when their content is transparent
+    const glassSheet = __IOS__ && Utils.SDK_VERSION >= 26;
+
     async function showCameraSettings() {
         try {
             const addedProps: any = __ANDROID__
@@ -114,9 +117,15 @@
             await showBottomSheet({
                 parent: page,
                 view,
-                // backgroundOpacity: 0.8,
-                skipCollapsedState: true,
+                detents: [{ fraction: 0.5 }, 'large'],
+                disableDimBackground: true,
+                grabber: true,
+                largestUndimmedDetentIndex: 0,
+                transparent: glassSheet,
+                // dark glass over the camera
+                userInterfaceStyle: glassSheet ? 'dark' : undefined,
                 props: {
+                    glass: glassSheet,
                     showCameraSettings: true,
                     cameraOptionsStore,
                     ...addedProps
@@ -235,6 +244,8 @@
             }
             DEV_LOG && console.log('takePicture done', didAdd);
         } catch (err) {
+            // the error alert must not be presented while the loading dialog is still up, or iOS leaves a stuck dialog
+            await hideLoading();
             // we can get a native error here
             const error = wrapNativeException(err);
             if (__ANDROID__ && /(closed|submit|failed)/.test(error.message)) {
@@ -646,19 +657,41 @@
         }
     }
 
-    function getFlashIcon(flashMode) {
-        switch (flashMode) {
-            case 0:
-                return 'mdi-flash-off';
-            case 1:
-                return 'mdi-flash';
-            case 2:
-                return 'mdi-flash-auto';
-            case 3:
-                return 'mdi-flash-red-eye';
-            case 4:
-                return 'mdi-flashlight';
-        }
+    // translucent glass on iOS, plain white icons over the preview on Android
+    const overlayButtonVariant = __IOS__ ? 'clearGlass' : 'text';
+    const FLASH_ICON_IDS = ['flash_off', 'flash_on', 'flash_auto'];
+
+    let batchMessage: string = null;
+    let batchMessageTimeout: ReturnType<typeof setTimeout>;
+    function toggleBatchMode() {
+        batchMode = !batchMode;
+        batchMessage = `${lc('batch_mode')}: ${batchMode ? lc('on') : lc('off')}`;
+        clearTimeout(batchMessageTimeout);
+        batchMessageTimeout = setTimeout(() => (batchMessage = null), 1500);
+    }
+
+    function showFlashMenu(event: EventData) {
+        const flashTitles = [lc('off'), lc('on'), lc('auto')];
+        showMenu({
+            anchor: event.object instanceof View ? event.object : null,
+            items: [
+                ...FLASH_ICON_IDS.map((iconId, index) => ({ title: flashTitles[index], icon: appIcon(iconId), checked: flashMode === index, onSelect: () => (flashMode = index) })),
+                { separator: true },
+                { title: lc('torch'), icon: appIcon('torch'), checked: torchEnabled, onSelect: switchTorch }
+            ]
+        });
+    }
+
+    function showMoreMenu(event: EventData) {
+        showMenu({
+            anchor: event.object instanceof View ? event.object : null,
+            items: [
+                { title: lc('camera_settings'), icon: appIcon('tune'), disabled: __ANDROID__ && !cameraOpened, onSelect: showCameraSettings },
+                { separator: true },
+                { title: CARD_APP ? lc('cards') : lc('documents'), icon: appIcon('folder'), onSelect: showDocumentsList },
+                { title: lc('preferences'), icon: appIcon('settings'), onSelect: () => showSettings() }
+            ]
+        });
     }
 
     const borderStroke = 3;
@@ -729,8 +762,8 @@
 </script>
 
 <page bind:this={page} id="camera" actionBarHidden={true} statusBarStyle="dark" on:navigatedTo={onNavigatedTo} on:navigatedFrom={onNavigatedFrom}>
-    <gridlayout class="pageContent" backgroundColor="black" rows="auto,*,auto,auto">
-        <absolutelayout rowSpan={viewsize === 'full' ? 4 : 2} on:loaded={onCameraHolderLoaded}>
+    <gridlayout class="pageContent" backgroundColor="black" rows="auto,*,auto">
+        <absolutelayout rowSpan={viewsize === 'full' ? 3 : 2} on:loaded={onCameraHolderLoaded}>
             <cameraView
                 bind:this={cameraView}
                 {aspectRatio}
@@ -756,19 +789,34 @@
         </absolutelayout>
 
         <!-- <canvasView bind:this={canvasView} rowSpan="2" on:draw={onCanvasDraw} on:tap={focusCamera} /> -->
-        <CActionBar backgroundColor="transparent" buttonsDefaultVisualState="black" modalWindow={!startOnCam} {onGoBack} />
-
-        <gridlayout columns="auto,auto,auto,auto,*,auto,auto" row={2}>
-            <IconButton color="white" text={getFlashIcon(flashMode)} tooltip={lc('flash_mode')} on:tap={() => (flashMode = (flashMode + 1) % 3)} />
-            <IconButton col={1} color="white" isSelected={torchEnabled} selectedColor={colorPrimary} text="mdi-flashlight" tooltip={lc('torch')} on:tap={switchTorch} />
-            <IconButton col={2} color="white" text="mdi-camera-flip" tooltip={lc('toggle_camera')} on:tap={toggleCamera} />
-
-            <IconButton col={3} color="white" isEnabled={cameraOpened} row={2} text="mdi-tune" on:tap={showCameraSettings} />
-            {#if startOnCam}
-                <IconButton col={5} color="white" row={2} text="mdi-folder" on:tap={() => showDocumentsList()} />
-                <IconButton col={6} color="white" row={2} text="mdi-cogs" on:tap={() => showSettings()} />
+        <gridlayout columns="auto,*,auto" marginLeft={12} marginRight={12} marginTop={8} android:marginTop={8 + $windowInset.top}>
+            {#if !startOnCam}
+                <uibutton accessibilityLabel={lc('close')} color="white" height={44} variant={overlayButtonVariant} width={44} {...{ src: appIcon('close') }} on:tap={() => onGoBack()} />
             {/if}
+            <stacklayout col={2} orientation="horizontal">
+                <uibutton
+                    accessibilityLabel={lc('flash_mode')}
+                    color="white"
+                    height={44}
+                    margin={4}
+                    variant={overlayButtonVariant}
+                    width={44}
+                    {...{ src: appIcon(FLASH_ICON_IDS[flashMode] ?? 'flash_off') }}
+                    on:tap={showFlashMenu} />
+                <uibutton accessibilityLabel={lc('toggle_camera')} color="white" height={44} margin={4} variant={overlayButtonVariant} width={44} {...{ src: appIcon('switch_camera') }} on:tap={toggleCamera} />
+                <uibutton
+                    accessibilityLabel={startOnCam ? lc('more_options') : lc('camera_settings')}
+                    color="white"
+                    height={44}
+                    isEnabled={startOnCam || __IOS__ || cameraOpened}
+                    margin={4}
+                    variant={overlayButtonVariant}
+                    width={44}
+                    {...{ src: appIcon(startOnCam ? (__IOS__ ? 'more' : 'settings') : 'tune') }}
+                    on:tap={startOnCam ? showMoreMenu : showCameraSettings} />
+            </stacklayout>
         </gridlayout>
+
         <gridlayout
             horizontalAlignment="center"
             marginBottom={5}
@@ -805,65 +853,74 @@
             />
         </gridlayout>
 
-        <gridlayout columns="*,*,auto,*,*" ios:paddingBottom={30} android:marginBottom={30 + $windowInset.bottom} paddingTop={10} row={3} visibility={QRCodeOnly ? 'collapsed' : 'visible'}>
-            {#if !onlyForOCR}
-                <IconButton
-                    colSpan={2}
-                    color="white"
-                    horizontalAlignment="left"
-                    isSelected={batchMode}
-                    marginLeft={16}
-                    marginTop={20}
-                    rounded={false}
-                    selectedColor={colorPrimary}
-                    subtitle={lc('batch_mode')}
-                    text={batchMode ? 'mdi-image-multiple' : 'mdi-image'}
-                    tooltip={lc('batch_mode')}
-                    verticalAlignment="center"
-                    on:tap={() => (batchMode = !batchMode)}
-                />
-            {/if}
+        <label
+            backgroundColor="#99000000"
+            borderRadius={16}
+            color="white"
+            fontSize={14}
+            horizontalAlignment="center"
+            isUserInteractionEnabled={false}
+            marginBottom={60}
+            padding="6 14"
+            row={1}
+            text={batchMessage}
+            verticalAlignment="bottom"
+            visibility={batchMessage ? 'visible' : 'collapsed'} />
 
-            <image
-                borderColor="white"
-                col={3}
-                ios:contextOptions={IMAGE_CONTEXT_OPTIONS}
-                decodeWidth={Utils.layout.toDevicePixels(60)}
-                height={60}
-                horizontalAlignment="center"
-                imageRotation={smallImageRotation}
-                src={smallImage}
-                stretch="aspectFit"
-                verticalAlignment="center"
-            />
-            <gridlayout col={2} height={70} horizontalAlignment="center" opacity={takingPicture ? 0.6 : 1} verticalAlignment="center" width={70}>
+        <gridlayout columns="*,auto,*" ios:paddingBottom={30} android:marginBottom={30 + $windowInset.bottom} paddingTop={10} row={2} visibility={QRCodeOnly ? 'collapsed' : 'visible'}>
+            <stacklayout horizontalAlignment="left" marginLeft={16} orientation="horizontal" verticalAlignment="center">
+                {#if !onlyForOCR}
+                    {#if batchMode}
+                        <uibutton accessibilityLabel={lc('batch_mode')} color="white" height={44} margin={4} variant={__IOS__ ? 'prominentGlass' : 'contained'} width={44} {...{ src: appIcon('batch') }} on:tap={toggleBatchMode} />
+                    {:else}
+                        <uibutton accessibilityLabel={lc('batch_mode')} color="white" height={44} margin={4} variant={overlayButtonVariant} width={44} {...{ src: appIcon('image') }} on:tap={toggleBatchMode} />
+                    {/if}
+                {/if}
+                <gridlayout height={48} margin={4} visibility={smallImage ? 'visible' : 'collapsed'} width={48}>
+                    <image
+                        borderColor="white"
+                        borderRadius={8}
+                        borderWidth={1.5}
+                        ios:contextOptions={IMAGE_CONTEXT_OPTIONS}
+                        decodeWidth={Utils.layout.toDevicePixels(48)}
+                        imageRotation={smallImageRotation}
+                        src={smallImage}
+                        stretch="aspectFill"
+                    />
+                    <label
+                        backgroundColor={colorPrimary}
+                        borderRadius={9}
+                        color="white"
+                        fontSize={11}
+                        height={18}
+                        horizontalAlignment="right"
+                        isUserInteractionEnabled={false}
+                        text={nbPages + ''}
+                        textAlignment="center"
+                        verticalAlignment="top"
+                        visibility={nbPages ? 'visible' : 'hidden'}
+                        width={18} />
+                </gridlayout>
+            </stacklayout>
+
+            <gridlayout col={1} height={70} horizontalAlignment="center" opacity={takingPicture ? 0.6 : 1} verticalAlignment="center" width={70}>
                 <canvasView bind:this={takPictureBtnCanvas} class:infinite-rotate={autoScan} on:draw={drawTakePictureBtnBorder}> </canvasView>
-                <gridlayout
-                    backgroundColor={colorPrimary}
-                    borderRadius={27}
-                    height={54}
-                    horizontalAlignment="center"
-                    rippleColor="white"
-                    width={54}
-                    on:tap={() => takePicture()}
-                    on:longPress={() => toggleAutoScan()}
-                />
-                <label color="white" fontSize={20} isUserInteractionEnabled={false} text={nbPages + ''} textAlignment="center" verticalAlignment="middle" visibility={nbPages ? 'visible' : 'hidden'} />
+                <gridlayout backgroundColor="white" borderRadius={27} height={54} horizontalAlignment="center" rippleColor="black" width={54} on:tap={() => takePicture()} on:longPress={() => toggleAutoScan()} />
             </gridlayout>
 
             <uibutton
-                class="fab"
                 accessibilityLabel={lc('finish')}
-                col={4}
-                elevation={0}
-                horizontalAlignment="center"
-                margin={0}
-                text="mdi-check"
-                variant="text"
+                col={2}
+                color="white"
+                height={56}
+                horizontalAlignment="right"
+                marginRight={16}
+                variant="prominentGlass"
                 verticalAlignment="center"
                 visibility={canSaveDoc ? 'visible' : 'hidden'}
-                on:tap={() => saveCurrentDocument()}
-            />
+                width={56}
+                {...{ src: appIcon('check') }}
+                on:tap={() => saveCurrentDocument()} />
         </gridlayout>
 
         <!-- <image

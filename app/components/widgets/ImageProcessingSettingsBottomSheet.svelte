@@ -3,11 +3,12 @@
 <script lang="ts">
     import { CheckBox } from '@nativescript-community/ui-checkbox';
     import { CollectionView } from '@nativescript-community/ui-collectionview';
-    import { VerticalPosition } from '@nativescript-community/ui-popover';
-    import { ApplicationSettings, View } from '@nativescript/core';
+    import { showMenu } from '@nativescript-community/ui-menu';
+    import { Switch } from '@nativescript-community/ui-switch';
+    import { ApplicationSettings, EventData, View } from '@nativescript/core';
     import { Template } from '@nativescript-community/svelte-native/components';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-    import { Writable } from 'svelte/store';
+    import { Writable, get } from 'svelte/store';
     import { lc } from '~/helpers/locale';
     import { MatricesTypes, Matrix } from '~/utils/color_matrix';
     import {
@@ -28,17 +29,23 @@
     } from '~/utils/constants';
     import { TRANSFORMS } from '~/utils/localized_constant';
     import { showError } from '@shared/utils/showError';
-    import { ColorMatricesTypes, getColorMatrix, showMatrixLevelPopover, showPopoverMenu, showSlidersPopover } from '~/utils/ui';
-    import { colors, screenHeightDips, screenWidthDips, windowInset } from '~/variables';
-    import ListItem from '@shared/components/ListItem.svelte';
+    import { ColorMatricesTypes, getColorMatrix, showMatrixLevelPopover } from '~/utils/ui';
+    import { colors, windowInset } from '~/variables';
     import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
+    import SettingsSlider from '@shared/components/SettingsSlider.svelte';
+    import GlassSliderRow from './GlassSliderRow.svelte';
 
     // technique for only specific properties to get updated on store change
-    $: ({ colorPrimary } = $colors);
-
-    const textFieldWidth = (screenWidthDips - 20 - 22 - 16) / 2;
+    // the glass sheet is always dark, like the camera it covers
+    $: textColor = glass ? 'white' : colorOnSurface;
+    $: secondaryColor = glass ? '#ffffff99' : colorOnSurfaceVariant;
+    $: separatorColor = glass ? '#ffffff33' : colorOutlineVariant;
+    $: groupColor = glass ? '#ffffff1f' : colorSurface;
+    $: ({ colorBackground, colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary, colorSurface } = $colors);
 
     export let showCameraSettings = false;
+    /** iOS 26 sheet drawn as glass (shown with `transparent`): the content must not paint an opaque background */
+    export let glass = false;
 
     export let transforms = ApplicationSettings.getString(SETTINGS_DEFAULT_TRANSFORM, DEFAULT_TRANSFORM).split(TRANSFORMS_SPLIT);
     export let colorType = ApplicationSettings.getString(SETTINGS_DEFAULT_COLORTYPE, DEFAULT_COLORTYPE) as MatricesTypes;
@@ -65,7 +72,8 @@
 
     // $: ({ aspectRatio, stretch, viewsize, pictureSize } = $cameraOptionsStore);
 
-    let collectionView: NativeViewElementNode<CollectionView>;
+    let listView: NativeViewElementNode<CollectionView>;
+    let filtersView: CollectionView;
 
     const filters = ColorMatricesTypes.map((k) => ({
         ...k,
@@ -84,8 +92,13 @@
         DEV_LOG && console.log('addOrRemoveTransform', transforms);
     }
 
+    function onFiltersLoaded(event: EventData) {
+        if (event.object instanceof CollectionView) {
+            filtersView = event.object;
+        }
+    }
     function refreshCollectionView() {
-        collectionView?.nativeView?.refreshVisibleItems();
+        filtersView?.refreshVisibleItems();
     }
 
     function setColorType(type) {
@@ -138,6 +151,7 @@
 
             return state;
         });
+        listView?.nativeView?.refreshVisibleItems();
     }
 
     const OPTIONS: any[] = showCameraSettings
@@ -193,22 +207,21 @@
               )
         : [];
 
-    async function selectOption(item, event, valueTransformer?, fullRefresh = true) {
-        try {
-            const options = Object.keys(item.options).map((k) => ({ ...item.options[k], id: k }));
-            await showPopoverMenu({
-                options,
-                anchor: event.object,
-                onClose: (value) => {
+    function selectOption(item, event) {
+        const currentValue = $cameraOptionsStore[item.id] || item.default;
+        showMenu({
+            anchor: event.object instanceof View ? event.object : null,
+            items: Object.keys(item.options).map((key) => ({
+                title: item.options[key].name,
+                checked: key === currentValue,
+                onSelect: () => {
                     if (item.id === 'pictureSize') {
                         ApplicationSettings.setBoolean(SETTINGS_CAMERA_USER_DEFINED_RESOLUTION, true);
                     }
-                    updateCameraOption(item.id, valueTransformer ? valueTransformer(value.id) : value.id, value);
+                    updateCameraOption(item.id, key, item.options[key]);
                 }
-            });
-        } catch (error) {
-            showError(error);
-        }
+            }))
+        });
     }
 
     let checkboxTapTimer;
@@ -223,15 +236,12 @@
         addOrRemoveTransform(item.id);
     }
     function onTransformTap(item, event) {
-        const checkboxView: CheckBox = (event.object as View).getViewById('checkbox');
+        const checkboxView: CheckBox | Switch = (event.object as View).getViewById('checkbox');
         clearCheckboxTimer();
         checkboxTapTimer = setTimeout(() => {
             checkboxView.checked = !checkboxView.checked;
         }, 10);
     }
-
-    const maxHeight = 40 + (Object.keys(OPTIONS).length / 2) * 50 + 40 + Object.keys(TRANSFORMS).length * 70 + 80;
-    const maxScreenHeight = screenHeightDips - $windowInset.top - $windowInset.bottom;
 
     function onCloseBottomSheet() {
         ApplicationSettings.setString(SETTINGS_DEFAULT_COLORTYPE, colorType);
@@ -252,111 +262,163 @@
         }
         ApplicationSettings.setString(SETTINGS_DEFAULT_TRANSFORM, transforms.join(TRANSFORMS_SPLIT));
     }
-
-    async function editBrightnessContrast(event) {
-        try {
-            await showSlidersPopover({
-                debounceDuration: 0,
-                anchor: event.object,
-                vertPos: VerticalPosition.BELOW,
-                items: [
-                    {
-                        title: lc('brightness'),
-                        icon: 'mdi-brightness-5',
-                        min: -100,
-                        max: 500,
-                        resetValue: 0,
-                        step: __IOS__ ? 1 : undefined,
-                        // value: 0,
-                        formatter: (v) => (v / 100).toFixed(2),
-                        value: Math.round(Math.max(-1, Math.min(brightness ?? DEFAULT_BRIGHTNESS, 5)) * 100),
-                        onChange: (value) => {
-                            brightness = value / 100;
-                        }
-                    },
-                    {
-                        title: lc('contrast'),
-                        icon: 'mdi-contrast-box',
-                        min: 0,
-                        max: 400,
-                        resetValue: 100,
-                        formatter: (v) => (v / 100).toFixed(2),
-                        step: __IOS__ ? 1 : undefined,
-                        // value: 10,
-                        value: Math.round(Math.max(0, Math.min(contrast ?? DEFAULT_CONTRAST, 4)) * 100),
-                        onChange: (value) => {
-                            contrast = value / 100;
-                        }
-                    }
-                ]
-            });
-        } catch (error) {
-            showError(error);
+    const ADJUSTMENTS = [
+        { id: 'brightness', title: lc('brightness'), icon: 'mdi-brightness-5', min: -100, max: 500, defaultValue: 0 },
+        { id: 'contrast', title: lc('contrast'), icon: 'mdi-contrast-box', min: 0, max: 400, defaultValue: 100 }
+    ];
+    function getAdjustmentValue(id: string) {
+        return Math.round(id === 'brightness' ? Math.max(-1, Math.min(brightness ?? DEFAULT_BRIGHTNESS, 5)) * 100 : Math.max(0, Math.min(contrast ?? DEFAULT_CONTRAST, 4)) * 100);
+    }
+    function setAdjustmentValue(id: string, value: number) {
+        if (id === 'brightness') {
+            brightness = value / 100;
+        } else {
+            contrast = value / 100;
         }
     }
+
+    function getOptionValue(item) {
+        const state = get(cameraOptionsStore);
+        return item.options[state[item.id] || item.default]?.name || state[item.id];
+    }
+    // the rows of a group share one rounded background on iOS
+    const GROUP_RADIUS = { single: 12, first: '12 12 0 0', middle: 0, last: '0 0 12 12' };
+    function getGroupProps(item) {
+        return __IOS__ ? { margin: '0 16', backgroundColor: groupColor, borderRadius: GROUP_RADIUS[item.group] } : {};
+    }
+    function getRowItem(item, extra = {}) {
+        return {
+            ...item,
+            color: textColor,
+            subtitleColor: secondaryColor,
+            showBottomLine: __IOS__ && (item.group === 'first' || item.group === 'middle'),
+            ...extra
+        };
+    }
+    function buildItems() {
+        const result = [];
+        const addGroup = (title: string, rows: any[]) => {
+            result.push({ type: 'sectionheader', title });
+            rows.forEach((row, index) => result.push({ ...row, group: rows.length === 1 ? 'single' : index === 0 ? 'first' : index === rows.length - 1 ? 'last' : 'middle' }));
+        };
+        if (showCameraSettings) {
+            addGroup(
+                lc('camera_settings'),
+                OPTIONS.map((option) => ({ ...option, type: 'option' }))
+            );
+        }
+        addGroup(
+            lc('transformations'),
+            TRANSFORMS.map((transform) => ({ ...transform, type: __IOS__ ? 'switch' : 'checkbox' }))
+        );
+        addGroup(
+            lc('adjustments'),
+            ADJUSTMENTS.map((adjustment) => ({ ...adjustment, type: 'slider' }))
+        );
+        result.push({ type: 'sectionheader', title: lc('filters') }, { type: 'filters' });
+        return result;
+    }
+    const listItems = buildItems();
+    const itemTemplateSelector = (item) => item.type;
 </script>
 
-<gesturerootview padding="10 10 0 10" rows={maxHeight < maxScreenHeight ? 'auto' : '*'} on:closedBottomSheet={onCloseBottomSheet}>
-    <scrollview>
-        <stacklayout>
-            {#if showCameraSettings}
-                <label class="sectionHeader" text={lc('camera_settings')} />
-                <wraplayout padding="10 0 10 0">
-                    {#each OPTIONS as item (item.id)}
-                        <textfield
-                            editable={false}
-                            hint={item.title}
-                            margin="4 8 4 8"
-                            text={item.options[$cameraOptionsStore[item.id] || item.default]?.name || $cameraOptionsStore[item.id]}
-                            variant="outline"
-                            width={textFieldWidth}
-                            on:tap={(e) => selectOption(item, e)}
-                        />
-                    {/each}
-                </wraplayout>
+<gesturerootview rows="*" {...(__IOS__ ? { backgroundColor: glass ? 'transparent' : colorBackground } : { padding: '10 10 0 10' })} on:closedBottomSheet={onCloseBottomSheet}>
+    <collectionview bind:this={listView} android:paddingBottom={$windowInset.bottom} {itemTemplateSelector} items={listItems}>
+        <Template key="sectionheader" let:item>
+            <label color={secondaryColor} text={__IOS__ ? item.title.toUpperCase() : item.title} {...(__IOS__ ? { fontSize: 13, margin: '20 32 6 32' } : { class: 'sectionHeader' })} />
+        </Template>
+
+        <Template key="option" let:item>
+            <gridlayout {...getGroupProps(item)}>
+                <ListItemAutoSize fontSize={17} item={getRowItem(item, { rightValue: () => getOptionValue(item) })} on:tap={(event) => selectOption(item, event)} />
+            </gridlayout>
+        </Template>
+
+        <Template key="switch" let:item>
+            <gridlayout {...getGroupProps(item)}>
+                <ListItemAutoSize fontSize={17} item={getRowItem(item)} on:tap={(event) => onTransformTap(item, event)}>
+                    <switch id="checkbox" checked={transforms.indexOf(item.id) !== -1} col={1} marginLeft={12} verticalAlignment="center" on:checkedChange={(event) => onCheckedChanged(item, event)} />
+                </ListItemAutoSize>
+            </gridlayout>
+        </Template>
+
+        <Template key="checkbox" let:item>
+            <ListItemAutoSize fontSize={17} item={getRowItem(item)} on:tap={(event) => onTransformTap(item, event)}>
+                <checkbox id="checkbox" checked={transforms.indexOf(item.id) !== -1} col={1} verticalAlignment="center" on:checkedChange={(event) => onCheckedChanged(item, event)} />
+            </ListItemAutoSize>
+        </Template>
+
+        <Template key="slider" let:item>
+            {#if __ANDROID__}
+                <SettingsSlider
+                    defaultValue={item.defaultValue}
+                    fontSize={17}
+                    formatter={(value) => (value / 100).toFixed(0)}
+                    icon={item.icon}
+                    max={item.max}
+                    min={item.min}
+                    onChange={(value) => setAdjustmentValue(item.id, value)}
+                    title={item.title}
+                    value={getAdjustmentValue(item.id)}
+                    valueFormatter={(value) => (value / 100).toFixed(2)} />
+            {:else}
+                <gridlayout {...getGroupProps(item)}>
+                    <GlassSliderRow
+                        accentColor={colorPrimary}
+                        defaultValue={item.defaultValue}
+                        max={item.max}
+                        min={item.min}
+                        onChange={(value) => setAdjustmentValue(item.id, value)}
+                        {secondaryColor}
+                        {textColor}
+                        title={item.title}
+                        value={getAdjustmentValue(item.id)} />
+                </gridlayout>
             {/if}
-            <label class="sectionHeader" text={lc('transformations')} />
-            <stacklayout>
-                {#each TRANSFORMS as item (item.id)}
-                    <ListItem columns="*,auto" height={70} {item} on:tap={(e) => onTransformTap(item, e)}>
-                        <checkbox
-                            id="checkbox"
-                            checked={transforms.indexOf(item.id) !== -1}
-                            col={2}
-                            ios:marginRight={10}
-                            verticalAlignment="center"
-                            on:checkedChange={(e) => onCheckedChanged(item, e)}
-                        />
-                    </ListItem>
-                {/each}
-                <ListItemAutoSize item={{ title: lc('brightness'), rightValue: brightness.toFixed(2) }} on:tap={editBrightnessContrast} />
-                <ListItemAutoSize item={{ title: lc('contrast'), rightValue: contrast.toFixed(2) }} on:tap={editBrightnessContrast} />
-            </stacklayout>
-            <label class="sectionHeader" text={lc('filters')} />
-            <collectionview bind:this={collectionView} colWidth={FILTER_COL_WIDTH} height={FILTER_ROW_HEIGHT} items={filters} orientation="horizontal">
+        </Template>
+
+        <Template key="filters">
+            <collectionview
+                colWidth={__IOS__ ? 76 : FILTER_COL_WIDTH}
+                height={__IOS__ ? 100 : FILTER_ROW_HEIGHT}
+                items={filters}
+                orientation="horizontal"
+                on:loaded={onFiltersLoaded}>
                 <Template let:item>
-                    <gridlayout padding={2} on:tap={() => setColorType(item.colorType)} on:longPress={(event) => setColorMatrixLevels(item, event)}>
-                        <image
-                            borderColor={colorPrimary}
-                            borderRadius={4}
-                            borderWidth={isCurrentColorType(item) ? 3 : 0}
-                            colorMatrix={getColorMatrix(item.colorType)}
-                            src="~/assets/images/filter_color.png"
-                        />
-                        <label
-                            backgroundImage="linear-gradient(0deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.4) 90%, rgba(0,0,0,0) 100%)"
-                            ios:selectable={true}
-                            borderRadius="0 0 4 4"
-                            color="white"
-                            fontSize={11}
-                            fontWeight="500"
-                            text={item.text}
-                            textAlignment="center"
-                            verticalAlignment="bottom"
-                        />
-                    </gridlayout>
+                    {#if __IOS__}
+                        <gridlayout padding="4 4" rows="auto,auto" on:tap={() => setColorType(item.colorType)} on:longPress={(event) => setColorMatrixLevels(item, event)}>
+                            <image
+                                borderColor={colorPrimary}
+                                borderRadius={8}
+                                borderWidth={isCurrentColorType(item) ? 2.5 : 0}
+                                colorMatrix={getColorMatrix(item.colorType)}
+                                height={64}
+                                src="~/assets/images/filter_color.png"
+                                stretch="aspectFill"
+                                width={64} />
+                            <label color={isCurrentColorType(item) ? colorPrimary : secondaryColor} fontSize={11} marginTop={4} row={1} text={item.text} textAlignment="center" />
+                        </gridlayout>
+                    {:else}
+                        <gridlayout padding={2} on:tap={() => setColorType(item.colorType)} on:longPress={(event) => setColorMatrixLevels(item, event)}>
+                            <image
+                                borderColor={colorPrimary}
+                                borderRadius={4}
+                                borderWidth={isCurrentColorType(item) ? 3 : 0}
+                                colorMatrix={getColorMatrix(item.colorType)}
+                                src="~/assets/images/filter_color.png" />
+                            <label
+                                backgroundImage="linear-gradient(0deg, #000000 0%, #00000066 90%, #00000000 100%)"
+                                borderRadius="0 0 4 4"
+                                color="white"
+                                fontSize={11}
+                                fontWeight="500"
+                                text={item.text}
+                                textAlignment="center"
+                                verticalAlignment="bottom" />
+                        </gridlayout>
+                    {/if}
                 </Template>
             </collectionview>
-        </stacklayout>
-    </scrollview>
+        </Template>
+    </collectionview>
 </gesturerootview>
