@@ -45,6 +45,7 @@ The repo config files are the source of truth — follow them, don't restate the
 Beyond those:
 
 - Comments are rare and short (max 2-3 lines). Only to explain a hack or something not obvious from the code — never narrate what the code plainly does.
+- Layouts are declarative: sizes are constants, `%`, `auto` or star rows/columns. Never compute a size in JS from a measured view (e.g. the height of another block), from image dimensions or ratios — that needs a second render pass and makes the screen jump. One layout per case (with/without code, with/without photos...), the content fits its slot: an image sizes itself (`aspectFit`, centered, `aspectRatio` from the data) and keeps its own rounded corners. The only measure allowed is the height of the page itself.
 - Prefer `const`/`let`, never `var`.
 - NEVER use a single-letter variable name — always prefer an explicit name.
 - Avoid `!` (non-null assertion) and `as SomeType` casts (`as const` is fine). Use type guards, narrowing, or restructured types instead.
