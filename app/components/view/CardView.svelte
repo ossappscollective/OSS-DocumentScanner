@@ -55,14 +55,13 @@
         EVENT_DOCUMENT_PAGE_DELETED,
         EVENT_DOCUMENT_PAGE_UPDATED,
         EVENT_DOCUMENT_UPDATED,
-        FAB_BUTTON_OFFSET,
         QRCODE_RESIZE_THRESHOLD,
         SETTINGS_DOCUMENT_NAME_FORMAT,
         SETTINGS_FORCE_WHITE_BACKGROUND_QRCODE
     } from '~/utils/constants';
     import { appIcon } from '~/utils/appIcons';
     import { optionsToMenuItems } from '~/utils/appMenu';
-    import { getCardAccent } from '~/utils/cardColors';
+    import { getCardAccent, pickCardColor } from '~/utils/cardColors';
     import { recycleImages } from '~/utils/images';
     import { documentHasPKPassData } from '~/utils/pkpass';
     import { getFormatedDateForFilename } from '~/utils/utils.common';
@@ -87,6 +86,9 @@
     const PEEK_WIDTH = 44;
     // Android: the zones overlap the bottom edge of the plate of the name
     const PLATE_OVERLAP = 44;
+    // Android: the 64 dp floating toolbar and its 16 dp margin (the app bar pads the bottom of the scroll view by this and the navigation bar)
+    const FLOATING_TOOLBAR_OFFSET = 80;
+    const CODE_ZONE_HEIGHT = 270;
     const FILMSTRIP_HEIGHT = 60;
     const FILMSTRIP_COL_WIDTH = 48;
     interface Item {
@@ -126,12 +128,13 @@
     // Check if any page in the document has PKPass data
     $: isPKPassDocument = documentHasPKPassData(document);
 
-    $: cardColor = isEInk ? null : typeof document.extra?.color === 'string' ? document.extra.color : document.pages[0]?.extra?.color;
+    // the color set on the card, else the color extracted from its first photo when it is colorful, else the app seed
+    $: firstPhoto = document.pages.find((p) => p.imagePath);
+    $: cardColor = isEInk ? null : pickCardColor(document.extra?.color, [firstPhoto?.extra?.color, ...(firstPhoto?.colors ?? [])]);
     $: accent = getCardAccent(cardColor, isDarkTheme(), colorPrimary);
     $: hasCustomName = document.name !== getFormatedDateForFilename(document.createdDate, ApplicationSettings.getString(SETTINGS_DOCUMENT_NAME_FORMAT, DOCUMENT_NAME_FORMAT), false);
     $: details = getDetails(document);
     $: nbImages = document.pages.filter((p) => p.imagePath).length;
-    $: codeZoneHeight = hasImages ? (details.length ? 150 : 190) : 270;
     // iOS: the content goes under the translucent bars, UIKit insets it: the insets give the visible height and let the backdrop reach under the bars
     let scrollHeight = 0;
     let insetTop = 0;
@@ -144,12 +147,6 @@
         }
     }
     let layoutTimer: ReturnType<typeof setTimeout>;
-    let nameHeight = 0;
-    function onNameLayout(event: EventData) {
-        if (event.object instanceof View) {
-            nameHeight = Utils.layout.toDeviceIndependentPixels(event.object.getMeasuredHeight()) + 12;
-        }
-    }
     function onScrollLayout(event: EventData) {
         const view = event.object;
         if (view instanceof View) {
@@ -162,11 +159,9 @@
             }, 150);
         }
     }
-    $: viewportHeight = scrollHeight ? scrollHeight - insetTop - insetBottom : screenHeightDips - $windowInset.top - $windowInset.bottom - 130;
+    $: viewportHeight = scrollHeight ? scrollHeight - (__ANDROID__ ? FLOATING_TOOLBAR_OFFSET + $windowInset.bottom : insetTop + insetBottom) : screenHeightDips - $windowInset.top - $windowInset.bottom - 130;
     // the zones fill the screen, the details peek under them
     $: heroHeight = viewportHeight - (details.length ? 56 : 0);
-    $: photoPagerHeight = Math.max(heroHeight - (__ANDROID__ ? Math.max(nameHeight - PLATE_OVERLAP, 0) : hasCustomName ? nameHeight : 0) - (hasQRCodes ? codeZoneHeight + (qrcodes?.length > 1 ? 28 : 0) + 16 : 0) - (nbImages > 1 ? 76 : 0) - 16, 120);
-    $: photoZoneHeight = Math.round(Math.min(getPageRatio(items.getItem(currentImageIndex)?.page) * photoZoneWidth(nbImages), photoPagerHeight));
     $: hasHero = hasQRCodes || hasImages;
     // no photo: the card color is the backdrop
     $: heroGradient = __IOS__ && !backdropImage && cardColor ? getBackdropGradient(accent.accent, isDarkTheme()) : null;
@@ -175,25 +170,14 @@
         const rgb = `${(value >> 16) & 255}, ${(value >> 8) & 255}, ${value & 255}`;
         return `linear-gradient(180deg, rgba(${rgb}, ${dark ? 0.7 : 0.85}) 0%, rgba(${rgb}, 0) 42%, rgba(${rgb}, 0) 70%, rgba(${rgb}, 0.35) 100%)`;
     }
+    // the image sizes itself in its slot from this ratio (Android swaps it by itself for a rotated image)
+    function getAspectRatio({ height, rotation, width }: OCRPage) {
+        return width && height ? (__IOS__ && rotation % 180 === 90 ? height / width : width / height) : undefined;
+    }
     let backdropImage = document.pages.find((p) => p.imagePath)?.imagePath;
     function updateBackdrop() {
         backdropImage = items.getItem(currentImageIndex)?.page?.imagePath ?? document.pages.find((p) => p.imagePath)?.imagePath;
     }
-    // the card has the size of its image, so that the rounded corners are the ones of the image
-    function photoZoneWidth(nbCards: number) {
-        return screenWidthDips - (nbCards > 1 ? 2 * PEEK_WIDTH : 32);
-    }
-    function getCardHeight(imagePage: OCRPage, zoneHeight: number) {
-        return Math.min(photoZoneWidth(nbImages) * getPageRatio(imagePage), zoneHeight);
-    }
-    function getCardWidth(imagePage: OCRPage, zoneHeight: number) {
-        return getCardHeight(imagePage, zoneHeight) / getPageRatio(imagePage);
-    }
-    function getPageRatio(imagePage?: OCRPage) {
-        const { height, rotation, width } = imagePage ?? ({} as OCRPage);
-        return !width || !height ? 0.629 : rotation % 180 === 90 ? width / height : height / width;
-    }
-
     onThemeChanged(() => {
         DEV_LOG && console.log('onThemeChanged', $colors.colorOnBackground);
         updateQRCodes();
@@ -356,8 +340,11 @@
     }
 
     let nbSelected = 0;
+    // updating an item reloads the pager, which reports its selected index again as if it was swiped
+    let ignorePagerIndexUntil = 0;
     function selectItem(item: Item) {
         if (!item.selected) {
+            ignorePagerIndexUntil = Date.now() + 300;
             items.some((d, index) => {
                 if (d === item) {
                     nbSelected++;
@@ -370,6 +357,7 @@
     }
     function unselectItem(item: Item) {
         if (item.selected) {
+            ignorePagerIndexUntil = Date.now() + 300;
             items.some((d, index) => {
                 if (d === item) {
                     nbSelected--;
@@ -555,6 +543,9 @@
         }
     }
     function onImagesPagerIndex(event) {
+        if (Date.now() < ignorePagerIndexUntil) {
+            return;
+        }
         currentImageIndex = event.object.selectedIndex;
         updateBackdrop();
         // UIKit aborts when a collection view that has not been laid out is scrolled
@@ -1153,7 +1144,7 @@
 </script>
 
 <appPage bind:this={page} id="cardview" {...{ keepScreenAwake: hasQRCodes, screenBrightness: hasQRCodes ? 1 : -1 }}>
-    <appBar {bottomItems} {...(__ANDROID__ ? { backgroundColor: accent.container } : {})} color={heroGradient ? accent.onAccent : colorOnBackground} scrollBehavior="lift" scrollTargetId="cardScroll" size="small" title={nbSelected > 0 ? lcp('selected', nbSelected) : inEditMode ? lc('reorder_pages') : hasCustomName || __ANDROID__ ? '' : document.name}>
+    <appBar {bottomItems} {...(__ANDROID__ ? { backgroundColor: accent.container } : {})} color={heroGradient ? accent.onBackdrop : colorOnBackground} scrollBehavior="lift" scrollTargetId="cardScroll" size="small" title={nbSelected > 0 ? lcp('selected', nbSelected) : inEditMode ? lc('reorder_pages') : hasCustomName || __ANDROID__ ? '' : document.name}>
         {#if __ANDROID__}
             <navigationButton {...{ 'android.systemIcon': nbSelected > 0 || inEditMode ? 'ic_menu_close_clear_cancel' : 'ic_menu_back' }} on:tap={nbSelected > 0 ? unselectAll : inEditMode ? switchEditMode : onGoBack} />
         {/if}
@@ -1170,7 +1161,7 @@
             <appBarItem icon={appIcon('more')} ios.position="right" menu={documentMenu} />
         {/if}
     </appBar>
-    <gridlayout class="pageContent" backgroundColor={__IOS__ && cardColor ? accent.container : colorBackground} paddingBottom={__ANDROID__ ? $windowInset.bottom + FAB_BUTTON_OFFSET : 0}>
+    <gridlayout class="pageContent" backgroundColor={__IOS__ && cardColor ? accent.container : colorBackground}>
         {#if heroGradient}
             <gridlayout backgroundImage={heroGradient} isUserInteractionEnabled={false} />
         {/if}
@@ -1190,9 +1181,9 @@
             {#key scrollHeight}
             {#if scrollHeight > 0}
             <stacklayout>
-                <stacklayout height={hasHero ? heroHeight : undefined}>
+                <gridlayout height={hasHero ? heroHeight : undefined} rows="auto,auto,*,auto">
                 {#if __ANDROID__}
-                    <gridlayout backgroundColor={accent.container} borderRadius="0 0 40 12" columns="*,auto" rows="auto" padding="0 20 {hasHero ? PLATE_OVERLAP + 8 : 24} 20" on:layoutChanged={onNameLayout}>
+                    <gridlayout backgroundColor={accent.container} borderRadius="0 0 40 12" columns="*,auto" rows="auto" padding="0 20 {hasHero ? PLATE_OVERLAP + 20 : 24} 20">
                         <stacklayout margin="8 0 0 0">
                             <label color={colorOnBackground} fontSize={hasCustomName ? 34 : 22} fontWeight="bold" maxLines={3} text={document.name} textWrap={true} />
                             <label color={colorOnSurfaceVariant} fontSize={15} text={dayjs(document.createdDate).format('LL')} visibility={hasCustomName ? 'visible' : 'collapsed'} />
@@ -1214,13 +1205,13 @@
                             width={48} />
                     </gridlayout>
                 {:else if hasCustomName}
-                    <stacklayout margin="4 20 8 20" on:layoutChanged={onNameLayout}>
-                        <label color={heroGradient ? accent.onAccent : colorOnBackground} fontSize={34} fontWeight="bold" maxLines={3} text={document.name} textWrap={true} />
-                        <label color={heroGradient ? accent.onAccent : colorOnSurfaceVariant} fontSize={15} opacity={heroGradient ? 0.8 : 1} text={dayjs(document.createdDate).format('LL')} />
+                    <stacklayout margin="4 20 8 20">
+                        <label color={heroGradient ? accent.onBackdrop : colorOnBackground} fontSize={34} fontWeight="bold" maxLines={3} text={document.name} textWrap={true} />
+                        <label color={heroGradient ? accent.onBackdrop : colorOnSurfaceVariant} fontSize={15} opacity={heroGradient ? 0.8 : 1} text={dayjs(document.createdDate).format('LL')} />
                     </stacklayout>
                 {/if}
                 {#if hasQRCodes}
-                    <gridlayout height={codeZoneHeight + (qrcodes?.length > 1 ? 28 : 0)} margin="{__ANDROID__ ? -PLATE_OVERLAP : 8} {__ANDROID__ && qrcodes?.length <= 1 ? 16 : 0} 8 {__ANDROID__ && qrcodes?.length <= 1 ? 16 : 0}" row={1} rows="*,auto">
+                    <gridlayout height={CODE_ZONE_HEIGHT + (qrcodes?.length > 1 ? 28 : 0)} margin="{__ANDROID__ ? -PLATE_OVERLAP : 8} {__ANDROID__ && qrcodes?.length <= 1 ? 16 : 0} 8 {__ANDROID__ && qrcodes?.length <= 1 ? 16 : 0}" row={1} rows="*,auto">
                         <pager bind:this={qrPager} id="qrPager" items={qrcodes} peaking={qrcodes?.length > 1 ? PEEK_WIDTH : 0} selectedIndex={currentQRCodeIndex} spacing={12} on:selectedIndexChange={onSelectedIndex}>
                             <Template let:item>
                                 <gridlayout backgroundColor="white" borderRadius={28} elevation={isEInk || __ANDROID__ ? 0 : 6} margin={qrcodes?.length > 1 ? '4 4 8 4' : __ANDROID__ ? '4 0 8 0' : '4 16 8 16'} padding="20" rows="*,auto" on:tap={onQRCodeTap}>
@@ -1244,36 +1235,28 @@
                     </gridlayout>
                 {/if}
                 {#if hasImages}
-                    <stacklayout margin="{__ANDROID__ && !hasQRCodes ? -PLATE_OVERLAP : 8} 0 8 0">
-                <gridlayout height={photoPagerHeight}>
-                <pager bind:this={pager} id="imagesPager" {items} peaking={nbImages > 1 ? PEEK_WIDTH : 0} spacing={12} on:selectedIndexChange={onImagesPagerIndex}>
+                <pager bind:this={pager} id="imagesPager" margin="{__ANDROID__ && !hasQRCodes ? -PLATE_OVERLAP : 8} 0 0 0" peaking={nbImages > 1 ? PEEK_WIDTH : 0} row={2} spacing={12} {items} on:selectedIndexChange={onImagesPagerIndex}>
                     <Template let:item>
-                      <gridlayout>
                         <gridlayout
-                            borderRadius={20}
-                            height={getCardHeight(item.page, photoZoneHeight)}
-                            horizontalAlignment="center"
-                            verticalAlignment="center"
                             visibility={item.page.imagePath ? 'visible' : 'collapsed'}
-                            width={getCardWidth(item.page, photoZoneHeight)}
                             on:loaded={(e) => registerImageMenu(e, item)}
                             on:longPress={() => onImageLongPress(item)}
                             on:tap={() => showFullscreen(items.findIndex((i) => i.page === item.page))}
                         >
                             <RotableImageView
                                 id="imageView"
+                                aspectRatio={getAspectRatio(item.page)}
                                 borderRadius={20}
                                 decodeWidth={screenWidthDips}
+                                horizontalAlignment="center"
                                 item={item.page}
                                 sharedTransitionTag={`document_${document.id}_${item.page.id}`}
-                                stretch="aspectFill"
-                                width="100%"
+                                stretch="aspectFit"
+                                verticalAlignment="center"
                             />
                         </gridlayout>
-                      </gridlayout>
                     </Template>
                 </pager>
-                </gridlayout>
                 <collectionview
                     bind:this={collectionView}
                     id="view"
@@ -1282,9 +1265,10 @@
                     height={FILMSTRIP_HEIGHT}
                     horizontalAlignment="center"
                     {items}
-                    marginTop={8}
+                    margin="8 0 8 0"
                     orientation="horizontal"
                     reorderEnabled={true}
+                    row={3}
                     rowHeight={FILMSTRIP_HEIGHT}
                     visibility={nbImages > 1 ? 'visible' : 'collapsed'}
                     width={Math.min(nbImages * FILMSTRIP_COL_WIDTH, screenWidthDips - 32)}
@@ -1302,7 +1286,6 @@
                                 minDurationMs: 300
                             })}
                             margin={4}
-                            opacity={index === currentImageIndex ? 1 : 0.55}
                             panGestureOptions={(view, tag, rootTag) => ({
                                 simultaneousHandlers: [rootTag, view['LONGPRESS_HANDLER_TAG']],
                                 minDist: 20
@@ -1315,15 +1298,17 @@
                             on:longPress={(e) => onItemLongPress(item, e)}
                             on:pan={(e) => onPan(item, e)}
                         >
-                            <RotableImageView
-                                id="imageView"
-                                borderRadius={6}
-                                decodeWidth={FILMSTRIP_COL_WIDTH}
-                                item={item.page}
-                                sharedTransitionTag={`document_${document.id}_${item.page.id}`}
-                                stretch="aspectFill"
-                                width="100%"
-                            />
+                            <gridlayout opacity={index === currentImageIndex ? 1 : 0.55}>
+                                <RotableImageView
+                                    id="imageView"
+                                    borderRadius={6}
+                                    decodeWidth={FILMSTRIP_COL_WIDTH}
+                                    item={item.page}
+                                    sharedTransitionTag={`document_${document.id}_${item.page.id}`}
+                                    stretch="aspectFill"
+                                    width="100%"
+                                />
+                            </gridlayout>
                             <gridlayout backgroundColor="rgba(0, 0, 0, 0.3)" borderRadius={6} isUserInteractionEnabled={false} visibility={item.selected ? 'visible' : 'hidden'}>
                                 <label
                                     backgroundColor={colorPrimary}
@@ -1346,9 +1331,8 @@
                         </gridlayout>
                     </Template>
                 </collectionview>
-                    </stacklayout>
                 {/if}
-                </stacklayout>
+                </gridlayout>
                 {#if details.length}
                     {#if __ANDROID__}
                         <stacklayout margin="16 16 0 16">
