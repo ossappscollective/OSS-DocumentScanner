@@ -18,7 +18,7 @@ const ICONS: Record<string, string> = __IOS__
           delete: 'trash',
           delete_originals: 'photo.badge.minus',
           delete_permanently: 'trash.slash',
-          edit: 'pencil',
+          edit: 'square.and.pencil',
           empty_trash: 'trash.slash',
           favorite: 'star',
           favorite_off: 'star',
