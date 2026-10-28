@@ -68,13 +68,6 @@
         return item?.imagePath;
     }
 
-    // an image that sizes itself in its parent measures from the size of the loaded image: it needs a new layout once it is known
-    function onFinalImageSet(event) {
-        if (__ANDROID__ && $$restProps.aspectRatio) {
-            event.object.requestLayout();
-        }
-    }
-
     onDestroy(() => {
         if (imageToDestroy) {
             recycleImages(imageToDestroy);
@@ -107,7 +100,6 @@
         src={src || getImageSrc(item)}
         {stretch}
         {...$$restProps}
-        on:finalImageSet={onFinalImageSet}
         on:rotateAnimated={(e) => rotateToRotation(e.rotation, true)}
     />
 {/if}
