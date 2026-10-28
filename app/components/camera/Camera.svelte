@@ -791,7 +791,7 @@
         <!-- <canvasView bind:this={canvasView} rowSpan="2" on:draw={onCanvasDraw} on:tap={focusCamera} /> -->
         <gridlayout columns="auto,*,auto" marginLeft={12} marginRight={12} marginTop={8} android:marginTop={8 + $windowInset.top}>
             {#if !startOnCam}
-                <uibutton accessibilityLabel={lc('close')} color="white" height={44} variant={overlayButtonVariant} width={44} {...{ src: appIcon('close', 'white') }} on:tap={() => onGoBack()} />
+                <uibutton accessibilityLabel={lc('close')} color="white" height={44} variant={overlayButtonVariant} width={44} {...{ src: appIcon('close') }} on:tap={() => onGoBack()} />
             {/if}
             <stacklayout col={2} orientation="horizontal">
                 <uibutton
@@ -801,9 +801,9 @@
                     margin={4}
                     variant={overlayButtonVariant}
                     width={44}
-                    {...{ src: appIcon(FLASH_ICON_IDS[flashMode] ?? 'flash_off', 'white') }}
+                    {...{ src: appIcon(FLASH_ICON_IDS[flashMode] ?? 'flash_off') }}
                     on:tap={showFlashMenu} />
-                <uibutton accessibilityLabel={lc('toggle_camera')} color="white" height={44} margin={4} variant={overlayButtonVariant} width={44} {...{ src: appIcon('switch_camera', 'white') }} on:tap={toggleCamera} />
+                <uibutton accessibilityLabel={lc('toggle_camera')} color="white" height={44} margin={4} variant={overlayButtonVariant} width={44} {...{ src: appIcon('switch_camera') }} on:tap={toggleCamera} />
                 <uibutton
                     accessibilityLabel={startOnCam ? lc('more_options') : lc('camera_settings')}
                     color="white"
@@ -812,7 +812,7 @@
                     margin={4}
                     variant={overlayButtonVariant}
                     width={44}
-                    {...{ src: appIcon(startOnCam ? (__IOS__ ? 'more' : 'settings') : 'tune', 'white') }}
+                    {...{ src: appIcon(startOnCam ? (__IOS__ ? 'more' : 'settings') : 'tune') }}
                     on:tap={startOnCam ? showMoreMenu : showCameraSettings} />
             </stacklayout>
         </gridlayout>
@@ -871,9 +871,9 @@
             <stacklayout horizontalAlignment="left" marginLeft={16} orientation="horizontal" verticalAlignment="center">
                 {#if !onlyForOCR}
                     {#if batchMode}
-                        <uibutton accessibilityLabel={lc('batch_mode')} color="white" height={44} margin={4} variant={__IOS__ ? 'prominentGlass' : 'contained'} width={44} {...{ src: appIcon('batch', 'white') }} on:tap={toggleBatchMode} />
+                        <uibutton accessibilityLabel={lc('batch_mode')} color="white" height={44} margin={4} variant={__IOS__ ? 'prominentGlass' : 'contained'} width={44} {...{ src: appIcon('batch') }} on:tap={toggleBatchMode} />
                     {:else}
-                        <uibutton accessibilityLabel={lc('batch_mode')} color="white" height={44} margin={4} variant={overlayButtonVariant} width={44} {...{ src: appIcon('image', 'white') }} on:tap={toggleBatchMode} />
+                        <uibutton accessibilityLabel={lc('batch_mode')} color="white" height={44} margin={4} variant={overlayButtonVariant} width={44} {...{ src: appIcon('image') }} on:tap={toggleBatchMode} />
                     {/if}
                 {/if}
                 <gridlayout height={48} margin={4} visibility={smallImage ? 'visible' : 'collapsed'} width={48}>
@@ -919,7 +919,7 @@
                 verticalAlignment="center"
                 visibility={canSaveDoc ? 'visible' : 'hidden'}
                 width={56}
-                {...{ src: appIcon('check', 'white') }}
+                {...{ src: appIcon('check') }}
                 on:tap={() => saveCurrentDocument()} />
         </gridlayout>
 

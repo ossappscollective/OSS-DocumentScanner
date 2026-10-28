@@ -24,7 +24,7 @@ beforeEach(() => {
  * types and helpers at the top level (e.g. ApplicationSettings, Screen) can be
  * loaded in a Node/Vitest environment without a device runtime.
  */
-vi.mock('@nativescript/core', () => ({
+vi.mock('@nativescript/core', async () => ({
     ApplicationSettings: {
         getString: vi.fn((key: string, defaultValue?: string) => readSetting(key, defaultValue)),
         getBoolean: vi.fn((key: string, defaultValue?: boolean) => readSetting(key, defaultValue)),
@@ -35,12 +35,8 @@ vi.mock('@nativescript/core', () => ({
         remove: vi.fn((key: string) => settingsStore.delete(key)),
         hasKey: vi.fn((key: string) => settingsStore.has(key))
     },
-    Color: class Color {
-        constructor(public readonly value: string | number) {}
-        toString() {
-            return String(this.value);
-        }
-    },
+    // the real color class: it only needs the shared parsing helpers
+    Color: (await vi.importActual<any>('@nativescript/core/color/color-common')).ColorBase,
     Screen: {
         mainScreen: {
             widthPixels: 1080,

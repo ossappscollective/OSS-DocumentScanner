@@ -1824,6 +1824,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@nativescript-community/ui-surface@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "@nativescript-community/ui-surface@npm:1.1.0"
+  dependencies:
+    "@nativescript-community/ui-core": "npm:^1.1.0"
+  checksum: 10/4f38dfbb0336d93bb730e7713f03a3f038541ed538ad2f6f74eed3f6274a1be052ca17d32e331b176cf10346f97de27ee72b1efcf01d8518c1c65f31bdc1dd08
+  languageName: node
+  linkType: hard
+
 "@nativescript-community/ui-svg@npm:0.2.24":
   version: 0.2.24
   resolution: "@nativescript-community/ui-svg@npm:0.2.24"
@@ -11192,6 +11201,7 @@ __metadata:
     "@nativescript-community/ui-share-file": "npm:1.3.3"
     "@nativescript-community/ui-slider": "npm:1.1.0"
     "@nativescript-community/ui-snackbar": "npm:1.1.0"
+    "@nativescript-community/ui-surface": "npm:^1.1.0"
     "@nativescript-community/ui-svg": "npm:0.2.24"
     "@nativescript-community/ui-switch": "npm:1.1.0"
     "@nativescript-community/ui-textfield": "npm:1.1.0"

@@ -90,6 +90,7 @@ try {
     registerNativeViewElement('textfield', () => require('@nativescript-community/ui-textfield').TextField, null, {}, { override: true });
     registerAppBar();
     registerNativeViewElement('uibutton', () => require('@nativescript-community/ui-button').Button);
+    registerNativeViewElement('uisurface', () => require('@nativescript-community/ui-surface').Surface);
     registerNativeViewElement('uifloatingactionbutton', () => require('@nativescript-community/ui-floatingactionbutton').FloatingActionButton);
     // the shared components still use the mdbutton tag
     registerNativeViewElement('mdbutton', () => require('@nativescript-community/ui-button').Button);
