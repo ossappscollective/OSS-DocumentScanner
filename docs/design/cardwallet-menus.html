@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cardwallet menus: iOS system menu and Android grouped menu</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
+<style>
+:root{--text-primary:#1f1f1e;--text-secondary:#5f5e5a;--border-strong:#c8c6bd;--surface-1:#e9e8e1;--page:#fafaf7}
+@media(prefers-color-scheme:dark){:root{--text-primary:#f1f0ea;--text-secondary:#b0aea5;--border-strong:#4a4944;--surface-1:#34332f;--page:#1c1c1a}}
+body{font-family:system-ui,sans-serif;margin:24px;background:var(--page);color:var(--text-primary);max-width:760px}
+button{font:inherit;font-size:13px;color:var(--text-primary);background:transparent;border:0.5px solid var(--border-strong);border-radius:8px;padding:5px 12px;cursor:pointer}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+</style>
+</head>
+<body>
+<h2 class="sr-only">Menus for Cardwallet: the options menu with view style, folder style and sort groups, a context menu and a select menu, on iOS and Android, with the current square Android menu for comparison.</h2>
+<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 14px">
+<button id="bl">Light</button><button id="bd">Dark</button>
+</div>
+<div id="out"></div>
+<script>
+const S={dark:false};
+const BF='backdrop-filter:blur(22px) saturate(1.7);-webkit-backdrop-filter:blur(22px) saturate(1.7);';
+const ic=(n,sz,c)=>`<i class="ti ti-${n}" style="font-size:${sz||18}px;${c?'color:'+c:''}"></i>`;
+function I(){const d=S.dark;return{page:d?'#000':'#f2f2f7',txt:d?'#fff':'#000',sub:d?'rgba(235,235,245,.6)':'rgba(60,60,67,.6)',menu:d?'rgba(58,58,62,.72)':'rgba(255,255,255,.72)',gb:d?'rgba(255,255,255,.18)':'rgba(255,255,255,.9)',sep:d?'rgba(84,84,88,.55)':'rgba(60,60,67,.14)',gap:d?'rgba(0,0,0,.28)':'rgba(60,60,67,.1)',acc:d?'#6fb3ff':'#0a60ff',danger:d?'#ff6961':'#d70015'}}
+function A(){const d=S.dark;return{page:d?'#131314':'#fdfcfb',txt:d?'#e3e3e3':'#1f1f1f',sub:d?'#c4c7c5':'#5f6368',menu:d?'#2b2c2e':'#e9eef6',low:d?'#1e1f20':'#f6f8fc',cont:d?'#1d3a6a':'#d3e3fd',onCont:d?'#d3e3fd':'#041e49',acc:d?'#a8c7fa':'#0b57d0',onAcc:d?'#062e6f':'#fff',danger:d?'#f2b8b5':'#b3261e',off:d?'#8e918f':'#747775',sep:d?'#444746':'#c4c7c5'}}
+const SORT=[['Name',0],['Date',1],['Most used',0]];
+const VIEW=[['Cardholder',0],['Full',0],['Columns',1],['List',0]];
+const FOLD=[['Horizontal',1],['Vertical',0]];
+function iosItems(r,rows){return rows.map(x=>`<div style="display:flex;align-items:center;height:44px;padding:0 14px;font-size:16px;color:${x.danger?r.danger:r.txt};gap:10px"><span style="width:18px;flex:none;text-align:center;color:${r.txt}">${x.sel?ic('check',17):''}</span><span style="flex:1;white-space:nowrap">${x.t}</span>${x.icon?ic(x.icon,19,x.danger?r.danger:r.txt):''}${x.chev?ic('chevron-right',17,r.sub):''}</div>`).join('')}
+function iosGroup(r,title,rows,first){return`${first?'':`<div style="height:8px;background:${r.gap}"></div>`}${title?`<div style="padding:10px 14px 2px;font-size:12px;color:${r.sub}">${title}</div>`:''}${iosItems(r,rows)}`}
+function iosMenu(r,groups,w){return`<div style="width:${w||214}px;border-radius:20px;overflow:hidden;background:${r.menu};border:1px solid ${r.gb};${BF}box-shadow:0 8px 30px rgba(0,0,0,.18);font-family:-apple-system,system-ui,sans-serif">${groups.map((g,i)=>iosGroup(r,g[0],g[1],i===0)).join('')}</div>`}
+function andItem(r,x,pos,n){const rad=n===1?'20px':pos===0?'20px 20px 6px 6px':pos===n-1?'6px 6px 20px 20px':'6px';const sel=x.sel;return`<div style="display:flex;align-items:center;height:48px;padding:0 14px;gap:12px;border-radius:${rad};background:${sel?r.cont:r.low};color:${sel?r.onCont:(x.danger?r.danger:r.txt)};font-size:15px;margin-bottom:${pos<n-1?2:0}px">${x.icon?ic(x.icon,20):''}<span style="flex:1">${x.t}</span>${sel?ic('check',20):''}${x.chev?ic('chevron-right',20,r.sub):''}${x.sw!=null?`<div style="width:40px;height:24px;border-radius:12px;background:${x.sw?r.acc:'transparent'};border:2px solid ${x.sw?r.acc:r.off};box-sizing:border-box;position:relative"><div style="position:absolute;top:50%;margin-top:-${x.sw?8:6}px;${x.sw?'right:3px':'left:3px'};width:${x.sw?16:12}px;height:${x.sw?16:12}px;border-radius:50%;background:${x.sw?r.onAcc:r.off}"></div></div>`:''}</div>`}
+function andMenu(r,groups,w){return`<div style="width:${w||214}px;border-radius:28px;background:${r.menu};padding:6px;box-shadow:0 6px 20px rgba(0,0,0,.2);font-family:Roboto,system-ui,sans-serif;box-sizing:border-box">${groups.map((g,gi)=>`${g[0]?`<div style="padding:${gi?'12px':'8px'} 12px 6px;font-size:12px;font-weight:500;color:${r.sub}">${g[0]}</div>`:(gi?'<div style="height:6px"></div>':'')}${g[1].map((x,i)=>andItem(r,x,i,g[1].length)).join('')}`).join('')}</div>`}
+function andOld(r,groups,w){const d=S.dark;const cb=on=>`<div style="width:20px;height:20px;border-radius:3px;box-sizing:border-box;${on?`background:${r.acc};color:${r.onAcc}`:`border:2px solid ${r.off}`};display:flex;align-items:center;justify-content:center">${on?ic('check',15):''}</div>`;return`<div style="width:${w||214}px;border-radius:4px;background:${d?'#2b2c2e':'#ededf5'};box-shadow:0 2px 8px rgba(0,0,0,.25);font-family:Roboto,system-ui,sans-serif;box-sizing:border-box">${groups.map((g,gi)=>`${gi?`<div style="height:1px;background:${r.sep}"></div>`:''}${g[0]?`<div style="padding:14px 16px 6px;font-size:13px;color:${r.off}">${g[0]}</div>`:''}${g[1].map(x=>`<div style="display:flex;align-items:center;justify-content:space-between;height:46px;padding:0 16px;font-size:15px;color:${r.txt}"><span>${x.t}</span>${cb(x.sel||x.sw)}</div>`).join('')}`).join('')}</div>`}
+const asRows=g=>g.map(x=>({t:x[0],sel:x[1]}));
+function optGroups(){return[['View style',asRows(VIEW)],['Folder view style',asRows(FOLD)],['Sort',asRows(SORT).concat([{t:'Ascending',sw:1,icon:null}])]]}
+function optGroupsOld(){return[['View style',asRows(VIEW)],['Folder view style',asRows(FOLD)],['Sort',asRows(SORT).concat([{t:'Ascending',sel:1}])]]}
+const CTX=[['',[{t:'Open',icon:'arrow-up-right'},{t:'Share',icon:'share'},{t:'Favorite',icon:'star'},{t:'Move to folder',icon:'folder',chev:1},{t:'Rename',icon:'pencil'}]],['',[{t:'Delete',icon:'trash',danger:1}]]];
+const SEL=[['',[{t:'HD 1280x720'},{t:'Full HD 1920x1080',sel:1},{t:'4K 3840x2160'}]]];
+function back(r,h,inner,plat){const tiles=['#0a60ff','#8a3b4d','#e0b030','#6a4c93'];return`<div style="position:relative;border-radius:20px;overflow:hidden;background:${r.page};padding:14px;min-height:${h}px;box-sizing:border-box;border:0.5px solid var(--border-strong)">${tiles.map((c,i)=>`<div style="position:absolute;left:${10+(i%2)*104}px;top:${12+Math.floor(i/2)*96}px;width:96px;height:62px;border-radius:${plat==='i'?16:20}px;background:${c};opacity:.85"></div>`).join('')}<div style="position:relative">${inner}</div></div>`}
+function render(){const ri=I(),ra=A();const head=t=>`<div style="font-size:12px;color:var(--text-secondary);margin:0 0 6px">${t}</div>`;
+const row1=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px"><div>${head('Android today')}${back(ra,520,`<div style="margin-top:30px">${andOld(ra,optGroupsOld(),204)}</div>`,'a')}</div><div>${head('iOS: system menu, check on the left')}${back(ri,520,`<div style="margin-top:30px">${iosMenu(ri,[['View style',asRows(VIEW)],['Folder view style',asRows(FOLD)],['Sort',asRows(SORT).concat([{t:'Ascending',sel:1}])]],204)}</div>`,'i')}</div><div>${head('Android proposed: grouped, tonal selection')}${back(ra,520,`<div style="margin-top:30px">${andMenu(ra,optGroups(),204)}</div>`,'a')}</div></div>`;
+const row2=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px"><div>${head('iOS: context menu and select menu')}${back(ri,400,`<div style="margin-top:20px">${iosMenu(ri,CTX,204)}</div><div style="margin-top:14px">${iosMenu(ri,SEL,204)}</div>`,'i')}</div><div>${head('Android: context menu and select menu')}${back(ra,400,`<div style="margin-top:20px">${andMenu(ra,CTX,204)}</div><div style="margin-top:14px">${andMenu(ra,SEL,204)}</div>`,'a')}</div><div></div></div>`;
+document.getElementById('out').innerHTML=row1+row2;
+const on=(id,v)=>document.getElementById(id).style.background=v?'var(--surface-1)':'transparent';on('bl',!S.dark);on('bd',S.dark)}
+[['bl',()=>S.dark=false],['bd',()=>S.dark=true]].forEach(x=>document.getElementById(x[0]).onclick=()=>{x[1]();render()});
+render();
+</script>
+</body>
+</html>

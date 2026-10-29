@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cardwallet text fields: options (adopted: iOS capsule, Android notched outlined)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
+<style>
+:root{--text-primary:#1f1f1e;--text-secondary:#5f5e5a;--border-strong:#c8c6bd;--surface-1:#e9e8e1;--page:#fafaf7}
+@media(prefers-color-scheme:dark){:root{--text-primary:#f1f0ea;--text-secondary:#b0aea5;--border-strong:#4a4944;--surface-1:#34332f;--page:#1c1c1a}}
+body{font-family:system-ui,sans-serif;margin:24px;background:var(--page);color:var(--text-primary);max-width:760px}
+button{font:inherit;font-size:13px;color:var(--text-primary);background:transparent;border:0.5px solid var(--border-strong);border-radius:8px;padding:5px 12px;cursor:pointer}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+</style>
+</head>
+<body>
+<h2 class="sr-only">Text field options compared: three iOS shapes and four Android shapes across empty, focused, filled, error, disabled, select and multiline states, on a page or on a transparent glass sheet.</h2>
+<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 14px">
+<button id="bl">Light</button><button id="bd">Dark</button>
+<span style="width:1px;height:20px;background:var(--border-strong)"></span>
+<span style="font-size:13px;color:var(--text-secondary)">Surface</span>
+<button id="sp">Page</button><button id="sg">Transparent sheet</button>
+</div>
+<div id="out"></div>
+<script>
+const S={dark:false,surf:'page'};
+const BF='backdrop-filter:blur(22px) saturate(1.6);-webkit-backdrop-filter:blur(22px) saturate(1.6);';
+const ic=(n,sz,c)=>`<i class="ti ti-${n}" style="font-size:${sz||18}px;${c?'color:'+c:''}"></i>`;
+function K(p){const d=S.dark,g=S.surf==='glass';
+if(g)return{bg:'transparent',txt:'#fff',sub:'rgba(255,255,255,.68)',ph:'rgba(255,255,255,.45)',fill:'rgba(255,255,255,.14)',off:'rgba(255,255,255,.55)',acc:p==='i'?'#7db4ff':'#a8c7fa',danger:'#ff8f87',surf:'rgba(40,42,46,1)'};
+if(p==='i')return{bg:d?'#000':'#fff',txt:d?'#fff':'#000',sub:d?'rgba(235,235,245,.65)':'rgba(60,60,67,.65)',ph:d?'rgba(235,235,245,.3)':'rgba(60,60,67,.3)',fill:d?'rgba(118,118,128,.24)':'rgba(118,118,128,.12)',off:'',acc:d?'#6fb3ff':'#0a60ff',danger:d?'#ff6961':'#d70015',surf:d?'#000':'#fff'};
+return{bg:d?'#131314':'#fdfcfb',txt:d?'#e3e3e3':'#1f1f1f',sub:d?'#c4c7c5':'#5f6368',ph:d?'#c4c7c5':'#5f6368',fill:d?'#2b2c2e':'#e9eef6',off:d?'#8e918f':'#747775',acc:d?'#a8c7fa':'#0b57d0',danger:d?'#f2b8b5':'#b3261e',surf:d?'#131314':'#fdfcfb'}}
+const ST=[['empty','Empty'],['focus','Focused'],['filled','Filled'],['error','Error'],['disabled','Disabled'],['select','Select'],['multi','Multiline']];
+const VAL={empty:'',focus:'martin@lyn',filled:'martin@lyynk.com',error:'martin@',disabled:'martin@lyynk.com',select:'Full HD',multi:'Ask the desk for the PIN, it changes every month'};
+const LABEL={select:'Resolution',multi:'Notes'};
+function trail(st,k){if(st==='focus')return ic('circle-x',18,k.sub);if(st==='error')return ic('alert-circle',18,k.danger);if(st==='select')return ic('chevron-down',18,k.sub);return''}
+function fI(v,st,k){const lab=LABEL[st]||'Email',ph=st==='empty'?(LABEL[st]||'Email or phone'):'';const val=VAL[st];const multi=st==='multi',h=multi?84:48;
+const caret=st==='focus'?`<span style="display:inline-block;width:1.5px;height:17px;background:${k.acc};vertical-align:-3px"></span>`:'';
+const text=st==='empty'?`<span style="color:${k.ph}">${ph}</span>`:`<span>${val}</span>${caret}`;
+if(v==='row'){const col=st==='error'?k.danger:k.sub;return`<div style="border-radius:14px;background:${k.fill};opacity:${st==='disabled'?.45:1};${st==='focus'?`box-shadow:inset 0 0 0 1.5px ${k.acc}`:st==='error'?`box-shadow:inset 0 0 0 1.5px ${k.danger}`:''}"><div style="display:flex;min-height:${h}px;padding:${multi?'12px':'0'} 14px;align-items:${multi?'flex-start':'center'};gap:12px;font-size:15px;color:${k.txt};box-sizing:border-box"><span style="width:52px;color:${col};flex:none;font-size:14px">${lab}</span><span style="flex:1;min-width:0;${multi?'line-height:1.35':'white-space:nowrap;overflow:hidden'}">${text}</span>${trail(st,k)}</div></div>${st==='error'?`<div style="font-size:12px;color:${k.danger};margin:4px 14px 0">Enter a valid email</div>`:''}`}
+const rad=v==='cap'?24:12;const ring=st==='focus'?`box-shadow:inset 0 0 0 1.5px ${k.acc};`:st==='error'?`box-shadow:inset 0 0 0 1.5px ${k.danger};`:'';
+const cap=st==='empty'?'&nbsp;':lab;
+return`<div style="font-size:11px;color:${st==='error'?k.danger:k.sub};margin:0 0 3px ${v==='cap'?18:14}px;height:14px">${cap}</div><div style="min-height:${h}px;box-sizing:border-box;border-radius:${rad}px;background:${k.fill};${ring}opacity:${st==='disabled'?.45:1};padding:${multi?'14px':'0'} ${v==='cap'?18:14}px;display:flex;align-items:${multi?'flex-start':'center'};justify-content:space-between;gap:8px;font-size:16px;color:${k.txt}"><span style="min-width:0;${multi?'line-height:1.35':'white-space:nowrap;overflow:hidden;text-overflow:ellipsis'}">${text}</span>${trail(st,k)}</div>${st==='error'?`<div style="font-size:12px;color:${k.danger};margin:4px 0 0 ${v==='cap'?18:14}px">Enter a valid email</div>`:''}`}
+function fA(v,st,k){const lab=LABEL[st]||'Email',val=VAL[st],multi=st==='multi',h=multi?96:56;const up=st!=='empty';const col=st==='error'?k.danger:st==='focus'?k.acc:k.sub;
+const caret=st==='focus'?`<span style="display:inline-block;width:2px;height:16px;background:${k.acc};vertical-align:-3px"></span>`:'';
+const rad=v==='fill'?'4px 4px 0 0':v==='out'?'4px':'20px 20px 20px 6px';
+const edge=st==='focus'?k.acc:st==='error'?k.danger:k.off;const w=st==='focus'||st==='error'?2:(v==='no'?1.5:1);
+let box=`border-radius:${rad};`;
+if(v==='fill')box+=`background:${k.fill};border-bottom:${w}px solid ${st==='focus'||st==='error'?edge:k.sub};`;
+if(v==='out')box+=`border:${w}px solid ${edge};`;
+if(v==='nf')box+=`background:${k.fill};${st==='focus'||st==='error'?`box-shadow:inset 0 0 0 2px ${edge};`:''}`;
+if(v==='no')box+=`border:${w}px solid ${edge};`;
+const floatOut=v==='out'&&up;
+const labelEl=floatOut?`<span style="position:absolute;left:10px;top:-8px;padding:0 4px;font-size:11px;color:${col};background:${k.surf}">${lab}</span>`:`<div style="font-size:${up?11:16}px;color:${up?col:k.ph};${up?'':`margin-top:${multi?2:0}px`}">${up?lab:(LABEL[st]||'Email')}</div>`;
+const valEl=up?`<div style="font-size:14px;color:${k.txt};${multi?'line-height:1.35;margin-top:2px':'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px'}">${val}${caret}</div>`:'';
+return`<div style="position:relative;min-height:${h}px;box-sizing:border-box;${box}opacity:${st==='disabled'?.38:1};padding:${multi?'10px':'0'} 14px;display:flex;align-items:${multi?'flex-start':'center'};justify-content:space-between;gap:6px;color:${k.txt}">${floatOut?labelEl:''}<div style="min-width:0;flex:1">${floatOut?(up?valEl:`<div style="font-size:16px;color:${k.ph}">${LABEL[st]||'Email'}</div>`):labelEl+valEl}</div>${trail(st,k)}</div>${st==='error'?`<div style="font-size:12px;color:${k.danger};margin:4px 14px 0">Enter a valid email</div>`:''}`}
+function table(p,opts,fn,w){const k=K(p);return`<div style="display:grid;grid-template-columns:62px repeat(${opts.length},${w}px);gap:6px 10px;align-items:start"><div></div>${opts.map(o=>`<div style="font-size:12px;font-weight:500;padding-bottom:4px;color:${S.surf==='glass'?'#fff':'var(--text-primary)'}">${o[1]}${o[2]?` <span style="font-size:10px;padding:1px 6px;border-radius:8px;background:${k.acc};color:${S.surf==='glass'?'#04132e':(S.dark&&p==='i'?'#000':'#fff')};margin-left:4px">adopted</span>`:''}</div>`).join('')}${ST.map(s=>`<div style="font-size:11px;color:${S.surf==='glass'?'rgba(255,255,255,.7)':'var(--text-secondary)'};padding-top:${p==='i'?18:16}px">${s[1]}</div>`+opts.map(o=>`<div style="color:${k.txt};font-family:${p==='i'?'-apple-system,system-ui,sans-serif':'Roboto,system-ui,sans-serif'}">${fn(o[0],s[0],k)}</div>`).join('')).join('')}</div>`}
+function wrap(inner,p){if(S.surf==='glass')return`<div style="position:relative;border-radius:20px;overflow:hidden;margin-bottom:18px"><div style="position:absolute;inset:0;background:#2d2a26"><div style="position:absolute;left:20px;top:10px;width:200px;height:260px;background:#e9e6dc;transform:rotate(-6deg)"></div><div style="position:absolute;left:300px;top:160px;width:140px;height:140px;border-radius:70px;background:#c9a46a"></div><div style="position:absolute;left:60px;top:420px;width:260px;height:150px;background:#5d7a5a"></div><div style="position:absolute;left:420px;top:380px;width:200px;height:240px;background:#e9e6dc;transform:rotate(8deg)"></div><div style="position:absolute;left:10px;top:640px;width:300px;height:160px;background:#c9a46a"></div></div><div style="position:relative;padding:16px;background:rgba(28,29,32,.58);${BF}">${inner}</div></div>`;
+return`<div style="padding:16px;border-radius:20px;background:${K(p).bg};border:0.5px solid var(--border-strong);margin-bottom:18px">${inner}</div>`}
+function render(){const head=t=>`<div style="font-size:14px;font-weight:500;margin:4px 0 10px">${t}</div>`;
+document.getElementById('out').innerHTML=head('iOS')+wrap(table('i',[['cap','Capsule',1],['r12','Rounded 12'],['row','Grouped row']],fI,190),'i')+head('Android')+wrap(table('a',[['fill','Filled M3'],['out','Outlined M3'],['nf','Notched filled'],['no','Notched outlined',1]],fA,142),'a');
+const on=(id,v)=>document.getElementById(id).style.background=v?'var(--surface-1)':'transparent';on('bl',!S.dark);on('bd',S.dark);on('sp',S.surf==='page');on('sg',S.surf==='glass')}
+[['bl',()=>S.dark=false],['bd',()=>S.dark=true],['sp',()=>S.surf='page'],['sg',()=>S.surf='glass']].forEach(x=>document.getElementById(x[0]).onclick=()=>{x[1]();render()});
+render();
+</script>
+</body>
+</html>

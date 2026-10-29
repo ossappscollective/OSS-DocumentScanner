@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cardwallet card view: variants (iOS and Android)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
+<style>
+:root{--text-primary:#1f1f1e;--text-secondary:#5f5e5a;--border-strong:#c8c6bd;--surface-1:#e9e8e1;--page:#fafaf7}
+@media(prefers-color-scheme:dark){:root{--text-primary:#f1f0ea;--text-secondary:#b0aea5;--border-strong:#4a4944;--surface-1:#34332f;--page:#1c1c1a}}
+body{font-family:system-ui,sans-serif;margin:24px;background:var(--page);color:var(--text-primary);max-width:1100px}
+button{font:inherit;font-size:13px;color:var(--text-primary);background:transparent;border:0.5px solid var(--border-strong);border-radius:8px;padding:5px 12px;cursor:pointer}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+</style>
+</head>
+<body>
+<h2 class="sr-only">Cardwallet card view variants with stacked code and photo zones on iOS and Android: photos only, photos with codes and details, photos with codes without details, name with codes, name with details.</h2>
+<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 14px">
+<span style="font-size:13px;color:var(--text-secondary)">Card color</span>
+<div id="sw" style="display:flex;gap:8px"></div>
+<span style="width:1px;height:20px;background:var(--border-strong)"></span>
+<button id="bl">Light</button><button id="bd">Dark</button>
+<span style="width:1px;height:20px;background:var(--border-strong)"></span>
+<button id="mi">iOS</button><button id="ma">Android</button><button id="mb">Both</button>
+</div>
+<div id="out"></div>
+<script>
+const colors=['#3f7a73','#8a3b4d','#44556f','#b08a2e','#6a4c93'];
+const state={hex:colors[0],dark:false,mode:'ios'};
+const hsl=(h,s,l)=>`hsl(${Math.round(((h%360)+360)%360)} ${Math.round(s)}% ${Math.round(l)}%)`;
+function toH(hex){const r=parseInt(hex.slice(1,3),16)/255,g=parseInt(hex.slice(3,5),16)/255,b=parseInt(hex.slice(5,7),16)/255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn,l=(mx+mn)/2;let h=0,s=0;if(d){s=d/(1-Math.abs(2*l-1));if(mx===r)h=((g-b)/d)%6;else if(mx===g)h=(b-r)/d+2;else h=(r-g)/d+4;h*=60;if(h<0)h+=360}return[h,s*100,l*100]}
+const photoCol=i=>{const h=toH(state.hex)[0];return hsl(h+50+i*45,40,state.dark?32:72)};
+function roles(p){const[h,s0]=toH(state.hex),s=Math.min(Math.max(s0,35),70),d=state.dark;
+if(p==='a')return{acc:hsl(h,s,d?80:40),cont:hsl(h,Math.min(s,40),d?26:90),onCont:hsl(h,35,d?90:10),onAcc:d?hsl(h,s,15):'#fff',page:d?hsl(h,8,10):hsl(h,20,98),low:d?hsl(h,8,16):hsl(h,15,94),bar:d?hsl(h,10,22):hsl(h,18,90),txt:d?hsl(h,10,92):hsl(h,10,10),sub:d?hsl(h,8,72):hsl(h,6,38)};
+const l=d?66:42;return{acc:hsl(h,s,l),onAcc:l>=60?'#000':'#fff',page:d?'#000':'#f2f2f7',row:d?'#1c1c1e':'#fff',txt:d?'#fff':'#000',sub:d?'rgba(235,235,245,.65)':'rgba(60,60,67,.65)',glass:d?'rgba(70,70,76,.42)':'rgba(255,255,255,.42)',gb:d?'rgba(255,255,255,.22)':'rgba(255,255,255,.8)',sep:d?'rgba(84,84,88,.6)':'rgba(60,60,67,.18)'}}
+const BF='backdrop-filter:blur(18px) saturate(1.7);-webkit-backdrop-filter:blur(18px) saturate(1.7);';
+const ic=(n,sz,c)=>`<i class="ti ti-${n}" style="font-size:${sz||20}px;${c?'color:'+c:''}"></i>`;
+function lcg(seed){let v=seed;return()=>{v=(v*1103515245+12345)%2147483648;return v/2147483648}}
+function qr(sz,seed){const n=21,c=sz/n,rnd=lcg(seed);let s='';
+for(let y=0;y<n;y++)for(let x=0;x<n;x++){const f=(x<8&&y<8)||(x>12&&y<8)||(x<8&&y>12);if(!f&&rnd()>.52)s+=`<rect x="${x*c}" y="${y*c}" width="${c}" height="${c}" fill="#000"/>`}
+const fin=(x,y)=>`<rect x="${x*c}" y="${y*c}" width="${7*c}" height="${7*c}" fill="#000"/><rect x="${(x+1)*c}" y="${(y+1)*c}" width="${5*c}" height="${5*c}" fill="#fff"/><rect x="${(x+2)*c}" y="${(y+2)*c}" width="${3*c}" height="${3*c}" fill="#000"/>`;
+return`<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}">${s}${fin(0,0)}${fin(14,0)}${fin(0,14)}</svg>`}
+function bars(w,h,seed){const rnd=lcg(seed);let x=0,s='';while(x<w){const bw=1+Math.floor(rnd()*3);if(rnd()>.4)s+=`<rect x="${x}" y="0" width="${bw}" height="${h}" fill="#000"/>`;x+=bw+1}return`<svg width="${w}" height="${h}">${s}</svg>`}
+const NAMES={A:{name:'Passport',sub:'ID card',rows:[['Number','19AB27711'],['Expires','2031']]},B:{name:'Decathlon',sub:'Loyalty card',rows:[['Member','Martin G.'],['Expires','12/2027']]},E:{name:'Decathlon',sub:'Loyalty card'},C:{name:'Gym club',sub:'Membership',rows:[['Member','Martin G.'],['Since','2023']]},D:{name:'City library',sub:'Added 27 Oct',rows:[['Card no.','0042 1187'],['Valid until','06/2028'],['PIN','••••'],['Notes','Ask desk']]}};
+const CFG={A:{codes:[],photos:2,details:true},B:{codes:['q','b'],photos:2,details:true,sz:'c'},E:{codes:['q'],photos:2,details:false,sz:'m'},C:{codes:['q','b'],photos:0,details:true,sz:'l'},D:{codes:[],photos:0,details:true}};
+const PW=240,PG=8,S=638;
+const hCode=(k,sz)=>k==='q'?(sz==='l'?236:sz==='m'?176:140):(sz==='l'?150:sz==='m'?130:110);
+function tile(k,sz,plat){const h=hCode(k,sz),sh=plat==='i'?'box-shadow:0 6px 22px rgba(0,0,0,.14);':'';let inner;
+if(k==='q'&&sz==='c')inner=`<div style="display:flex;align-items:center;gap:16px">${qr(100,7)}<div><div style="font-size:11px;color:#6b6b70">QR code</div><div style="font-size:16px;font-weight:500;letter-spacing:.5px;margin-top:4px;line-height:1.3">4821<br>7730</div></div></div>`;
+else if(k==='q')inner=`${qr(sz==='l'?150:116,7)}<div style="font-size:15px;font-weight:500;letter-spacing:.5px">4821 7730</div>`;
+else inner=`${bars(196,sz==='l'?66:sz==='m'?52:40,3)}<div style="font-size:14px;font-weight:500;letter-spacing:.5px">5901234 123457</div>`;
+return`<div style="width:${PW}px;height:${h}px;box-sizing:border-box;border-radius:28px;background:#fff;${sh}display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#000">${inner}</div>`}
+function pagerZone(items,sel,top,H){let out='';items.forEach((it,i)=>{const x=16+(i-sel)*(PW+PG);if(x>300||x<-PW+8)return;out+=`<div style="position:absolute;left:${x}px;top:${top+(H-it.h)/2}px">${it.html}</div>`});return out}
+function dots(r,plat,n,sel,top){const ds=Array.from({length:n},(_,i)=>`<span style="height:6px;width:${i===sel?16:6}px;border-radius:3px;background:${i===sel?r.acc:r.sub};opacity:${i===sel?1:.5}"></span>`).join('');const wrap=plat==='i'?`padding:6px 9px;border-radius:12px;background:${r.glass};border:1px solid ${r.gb};${BF}`:'';return`<div style="position:absolute;left:0;right:0;top:${top}px;display:flex;justify-content:center"><div style="display:inline-flex;gap:5px;align-items:center;${wrap}">${ds}</div></div>`}
+function codeZone(r,plat,codes,sel,top,sz){const items=codes.map(k=>({h:hCode(k,sz),html:tile(k,sz,plat)})),H=items[sel].h;let out=pagerZone(items,sel,top,H),b=top+H;if(codes.length>1){out+=dots(r,plat,codes.length,sel,b+8);b+=26}return{html:out,bottom:b}}
+function thumbs(r,plat,n,sel,top){const th=Array.from({length:n},(_,i)=>`<div style="width:${plat==='i'?44:48}px;height:${plat==='i'?30:32}px;border-radius:${plat==='i'?8:10}px;background:${photoCol(i)};${i===sel?`outline:2px solid ${r.acc};outline-offset:${plat==='i'?1:2}px`:''}"></div>`).join('');const wrap=plat==='i'?`gap:8px;padding:5px;border-radius:16px;background:${r.glass};border:1px solid ${r.gb};${BF}`:'gap:10px;padding:3px';return`<div style="position:absolute;left:0;right:0;top:${top}px;display:flex;justify-content:center"><div style="display:inline-flex;${wrap}">${th}</div></div>`}
+function photoZone(r,plat,n,sel,top){const items=Array.from({length:n},(_,i)=>({h:152,html:`<div style="width:${PW}px;height:152px;border-radius:28px;background:${photoCol(i)};display:flex;align-items:center;justify-content:center;gap:6px;color:${r.sub};font-size:13px">${ic('photo',18)}</div>`}));let out=pagerZone(items,sel,top,152),b=top+152;if(n>1){out+=thumbs(r,plat,n,sel,b+10);b+=50}return{html:out,bottom:b}}
+function stack(r,plat,c,top){let html='',y=top;if(c.codes.length){const z=codeZone(r,plat,c.codes,0,y,c.sz||'l');html+=z.html;y=z.bottom+12}if(c.photos){const z=photoZone(r,plat,c.photos,0,y);html+=z.html;y=z.bottom}return{html,bottom:y}}
+const frame=(inner,r,p)=>`<div style="width:300px;height:650px;border-radius:${p==='i'?46:36}px;background:${r.page};border:6px solid #17171a;box-sizing:border-box;position:relative;overflow:hidden;font-family:${p==='i'?'-apple-system,system-ui,sans-serif':'Roboto,system-ui,sans-serif'};color:${r.txt}"><div style="position:absolute;top:8px;${p==='i'?'left:50%;margin-left:-42px;width:84px;height:24px':'left:50%;margin-left:-7px;width:14px;height:14px'};border-radius:12px;background:#000;z-index:9"></div>${inner}</div>`;
+const glassBtn=(r,n)=>`<div style="width:40px;height:40px;border-radius:50%;background:${r.glass};border:1px solid ${r.gb};${BF}display:flex;align-items:center;justify-content:center;color:${r.txt}">${ic(n,20)}</div>`;
+const rowsHtml=(r,rows,fs)=>rows.map((x,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;height:38px;margin:0 20px;border-top:${i?'0.5px solid '+r.sep:'none'};font-size:${fs||14}px"><span style="color:${r.sub}">${x[0]}</span><span>${x[1]}</span></div>`).join('');
+function iosPhone(v,r){const d=NAMES[v],c=CFG[v],dk=state.dark;
+const ink=c.photos?photoCol(0):r.acc;
+const np=!c.photos,onc=np?r.onAcc:r.txt;
+const amb=np?`<div style="position:absolute;left:-70px;top:-60px;width:440px;height:380px;border-radius:50%;background:${r.acc};opacity:${dk?.7:.85};filter:blur(44px)"></div><div style="position:absolute;right:-90px;top:380px;width:240px;height:240px;border-radius:50%;background:${r.acc};opacity:.4;filter:blur(44px)"></div>`:`<div style="position:absolute;left:-60px;top:40px;width:280px;height:280px;border-radius:50%;background:${ink};opacity:${dk?.5:.6};filter:blur(44px)"></div><div style="position:absolute;right:-90px;top:360px;width:240px;height:240px;border-radius:50%;background:${r.acc};opacity:${dk?.4:.45};filter:blur(44px)"></div>`;
+const nav=`<div style="position:absolute;left:14px;top:44px">${glassBtn(r,'chevron-left')}</div><div style="position:absolute;right:14px;top:44px">${glassBtn(r,'dots')}</div>`;
+const nameBlock=(size,top)=>`<div style="position:absolute;left:20px;right:20px;top:${top}px"><div style="font-size:${size}px;font-weight:700;line-height:1.1;color:${onc}">${d.name}</div><div style="display:inline-block;margin-top:6px;padding:3px 10px;border-radius:12px;${np?`background:${r.acc};color:${r.onAcc}`:`background:color-mix(in srgb,${r.acc} 32%,transparent);border:1px solid ${r.gb}`};font-size:12px">${d.sub}</div></div>`;
+const tool=`<div style="position:absolute;left:14px;right:14px;bottom:16px;height:52px;border-radius:26px;background:${r.glass};border:1px solid ${r.gb};${BF}display:flex;align-items:center;justify-content:space-between;padding:0 6px 0 16px;z-index:4"><div style="display:flex;gap:18px;color:${r.txt}">${ic('share',21)}${ic('star',21)}</div><div style="display:flex;align-items:center;gap:14px;color:${r.txt}"><div style="width:76px;height:40px;border-radius:20px;background:${r.acc};color:${r.onAcc};display:flex;align-items:center;justify-content:center">${ic('pencil',20)}</div>${ic('dots',21)}<span style="width:2px"></span></div></div>`;
+const sheet=(top,rows,extra)=>`<div style="position:absolute;left:0;right:0;top:${top}px;bottom:0;border-radius:28px 28px 0 0;background:${r.glass};border-top:1px solid ${r.gb};${BF}z-index:2"><div style="width:36px;height:5px;border-radius:3px;background:${r.sep};margin:8px auto 6px"></div>${rowsHtml(r,rows)}${extra||''}</div>`;
+if(v==='D')return frame(amb+nav+nameBlock(44,92)+sheet(190,d.rows,`<div style="height:38px;margin:0 20px;border-top:0.5px solid ${r.sep};display:flex;align-items:center;color:${r.acc};font-size:14px;gap:6px">${ic('plus',18)} Add field</div>`)+tool,r,'i');
+const st=stack(r,'i',c,160);let sh='';if(c.details){const top=st.bottom+14,n=Math.max(0,Math.min(d.rows.length,Math.floor((S-top-22-74)/38)));sh=sheet(top,d.rows.slice(0,n))}
+return frame(amb+nav+nameBlock(32,92)+st.html+sh+tool,r,'i')}
+function aList(r,top,items){const n=items.length;return`<div style="position:absolute;left:16px;right:16px;top:${top}px;display:flex;flex-direction:column;gap:2px">${items.map((it,i)=>{const rad=n===1?'22px':i===0?'22px 22px 6px 6px':i===n-1?'6px 6px 22px 22px':'6px';return`<div style="height:44px;border-radius:${rad};background:${r.low};display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:14px"><span style="color:${r.sub}">${it[0]}</span><span>${it[1]}</span></div>`}).join('')}</div>`}
+function aPlate(r,d,h,top,size){return`<div style="position:absolute;top:0;left:0;right:0;height:${h}px;background:${r.cont};border-radius:0 0 40px 12px"></div><div style="position:absolute;left:16px;right:16px;top:34px;display:flex;justify-content:space-between;color:${r.onCont}">${ic('arrow-left',24)}${ic('dots-vertical',24)}</div><div style="position:absolute;left:22px;right:90px;top:${top}px;color:${r.onCont}"><div style="font-size:${size}px;font-weight:600;line-height:1.05">${d.name}</div><div style="font-size:14px;margin-top:6px;opacity:.75">${d.sub}</div></div><div style="position:absolute;right:22px;top:${top+2}px;width:46px;height:46px;border-radius:16px;background:${r.acc};color:${r.onAcc};transform:rotate(12deg);display:flex;align-items:center;justify-content:center"><span style="transform:rotate(-12deg);font-size:20px;font-weight:600">${d.name[0]}</span></div>`}
+function androidPhone(v,r){const d=NAMES[v],c=CFG[v];
+const tool=`<div style="position:absolute;left:14px;right:14px;bottom:16px;height:56px;display:flex;gap:10px;align-items:center;z-index:4"><div style="flex:1;height:56px;border-radius:28px;background:${r.bar};display:flex;align-items:center;justify-content:space-around;color:${r.txt}">${ic('share',22)}${ic('star',22)}${ic('dots',22)}</div><div style="width:56px;height:56px;border-radius:18px;background:${r.acc};color:${r.onAcc};display:flex;align-items:center;justify-content:center">${ic('pencil',24)}</div></div>`;
+if(v==='D')return frame(aPlate(r,{...d,name:'City<br>library'},264,112,44)+aList(r,284,d.rows)+`<div style="position:absolute;left:16px;top:480px;height:44px;padding:0 20px;border-radius:22px;background:${r.cont};color:${r.onCont};display:flex;align-items:center;gap:6px;font-size:14px">${ic('plus',18)} Add field</div>`+tool,r,'a');
+const st=stack(r,'a',c,160);return frame(aPlate(r,d,206,82,32)+st.html+(c.details?aList(r,st.bottom+16,d.rows):'')+tool,r,'a')}
+const LAB={A:'Photos',B:'Photos + codes + details',E:'Photos + code, no details',C:'Name + codes',D:'Name + details'};
+function scaled(html,label,sc){return`<div style="width:${300*sc}px"><div style="width:${300*sc}px;height:${650*sc}px"><div style="width:300px;height:650px;transform:scale(${sc});transform-origin:0 0">${html}</div></div><div style="font-size:12px;color:var(--text-secondary);text-align:center;margin-top:6px">${label}</div></div>`}
+function render(){const ri=roles('i'),ra=roles('a'),both=state.mode==='both',sc=both?.43:.66,gap=both?8:12,order=['A','B','E','C','D'];
+const row=(title,fn,r)=>`<div style="font-size:14px;font-weight:500;margin:6px 0 8px">${title}</div><div style="display:flex;flex-wrap:wrap;gap:${gap}px;margin-bottom:18px">${order.map(v=>scaled(fn(v,r),LAB[v],sc)).join('')}</div>`;
+document.getElementById('out').innerHTML=(state.mode!=='android'?row('iOS 26',iosPhone,ri):'')+(state.mode!=='ios'?row('Android M3 Expressive',androidPhone,ra):'');
+document.querySelectorAll('#sw button').forEach(x=>x.style.outline=x.dataset.c===state.hex?'2px solid var(--text-primary)':'none');
+document.getElementById('bl').style.background=state.dark?'transparent':'var(--surface-1)';
+document.getElementById('bd').style.background=state.dark?'var(--surface-1)':'transparent';
+[['mi','ios'],['ma','android'],['mb','both']].forEach(x=>document.getElementById(x[0]).style.background=state.mode===x[1]?'var(--surface-1)':'transparent')}
+document.getElementById('sw').innerHTML=colors.map(c=>`<button data-c="${c}" aria-label="Card color ${c}" style="width:26px;height:26px;padding:0;border-radius:50%;background:${c};border:none;outline-offset:2px"></button>`).join('');
+document.querySelectorAll('#sw button').forEach(x=>x.onclick=()=>{state.hex=x.dataset.c;render()});
+document.getElementById('bl').onclick=()=>{state.dark=false;render()};
+document.getElementById('bd').onclick=()=>{state.dark=true;render()};
+[['mi','ios'],['ma','android'],['mb','both']].forEach(x=>document.getElementById(x[0]).onclick=()=>{state.mode=x[1];render()});
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cardwallet card list: view styles (iOS and Android)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
+<style>
+:root{--text-primary:#1f1f1e;--text-secondary:#5f5e5a;--border-strong:#c8c6bd;--surface-1:#e9e8e1;--page:#fafaf7}
+@media(prefers-color-scheme:dark){:root{--text-primary:#f1f0ea;--text-secondary:#b0aea5;--border-strong:#4a4944;--surface-1:#34332f;--page:#1c1c1a}}
+body{font-family:system-ui,sans-serif;margin:24px;background:var(--page);color:var(--text-primary);max-width:720px}
+button{font:inherit;font-size:13px;color:var(--text-primary);background:transparent;border:0.5px solid var(--border-strong);border-radius:8px;padding:5px 12px;cursor:pointer}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+</style>
+</head>
+<body>
+<h2 class="sr-only">Cardwallet card list on iOS and Android: columns, list, cardholder and full view styles, horizontal or vertical folders, selection mode, empty state and tile anatomy.</h2>
+<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 14px">
+<button id="bl">Light</button><button id="bd">Dark</button>
+<span style="width:1px;height:20px;background:var(--border-strong)"></span>
+<button id="pi">iOS</button><button id="pa">Android</button>
+<span style="width:1px;height:20px;background:var(--border-strong)"></span>
+<span style="font-size:13px;color:var(--text-secondary)">Folders</span>
+<button id="fh">Horizontal</button><button id="fv">Vertical</button>
+</div>
+<div id="out"></div>
+<script>
+const S={dark:false,plat:'ios',fold:'h'};
+const hsl=(h,s,l)=>`hsl(${Math.round(h)} ${Math.round(s)}% ${Math.round(l)}%)`;
+function toH(hex){const r=parseInt(hex.slice(1,3),16)/255,g=parseInt(hex.slice(3,5),16)/255,b=parseInt(hex.slice(5,7),16)/255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn,l=(mx+mn)/2;let h=0,s=0;if(d){s=d/(1-Math.abs(2*l-1));if(mx===r)h=((g-b)/d)%6;else if(mx===g)h=(b-r)/d+2;else h=(r-g)/d+4;h*=60;if(h<0)h+=360}return[h,s*100,l*100]}
+const lum=hex=>(0.299*parseInt(hex.slice(1,3),16)+0.587*parseInt(hex.slice(3,5),16)+0.114*parseInt(hex.slice(5,7),16))/255;
+function roles(){const d=S.dark;if(S.plat==='ios')return{acc:d?'#6fb3ff':'#0a60ff',onAcc:d?'#000':'#fff',page:d?'#000':'#f2f2f7',row:d?'#1c1c1e':'#fff',txt:d?'#fff':'#000',sub:d?'rgba(235,235,245,.65)':'rgba(60,60,67,.65)',glass:d?'rgba(70,70,76,.5)':'rgba(255,255,255,.55)',chip:d?'rgba(40,40,44,.66)':'rgba(255,255,255,.7)',gb:d?'rgba(255,255,255,.2)':'rgba(255,255,255,.85)',sep:d?'rgba(84,84,88,.6)':'rgba(60,60,67,.18)'};
+return{acc:d?'#a8c7fa':'#0b57d0',onAcc:d?'#062e6f':'#fff',cont:d?'#1d3a6a':'#d3e3fd',onCont:d?'#d3e3fd':'#041e49',page:d?'#131314':'#fdfcfb',low:d?'#1e1f20':'#f3f3f6',bar:d?'#2b2c2e':'#e9eef6',txt:d?'#e3e3e3':'#1f1f1f',sub:d?'#c4c7c5':'#5f6368',chip:d?'#1d3a6a':'#d3e3fd'}}
+const BF='backdrop-filter:blur(18px) saturate(1.7);-webkit-backdrop-filter:blur(18px) saturate(1.7);';
+const ic=(n,sz,c)=>`<i class="ti ti-${n}" style="font-size:${sz||20}px;${c?'color:'+c:''}"></i>`;
+const CARDS=[
+{k:'code',name:'Decathlon',col:'#0a60ff',fav:1},
+{k:'image',name:'Passport',photos:2,tone:0},
+{k:'doc',name:'',date:'Oct 27',full:'10/27/2026, 11:39 PM'},
+{k:'imagecode',name:'IKEA Family',photos:2,tone:2},
+{k:'code',name:'Gym club',col:'#6a4c93'},
+{k:'image',name:'',date:'Oct 28',full:'10/28/2026, 12:14 AM',tone:1},
+{k:'name',name:'City library',col:'#8a3b4d'},
+{k:'pass',name:'Boarding pass'}];
+const sub=c=>({code:'Code',name:'Details only',pass:'Wallet pass',doc:'1 photo',image:(c.photos||1)+(c.photos>1?' photos':' photo'),imagecode:'Photos and code'}[c.k]);
+function chip(r,a,html,x){return`<div style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:${a?10:12}px;font-size:11px;font-weight:600;white-space:nowrap;${a?`background:${r.chip};color:${r.onCont}`:`background:${r.chip};border:1px solid ${r.gb};${BF}color:${r.txt}`};${x||''}">${html}</div>`}
+function tile(c,r,w,h,o){o=o||{};const a=S.plat==='android',rad=o.rad==null?(a?20:18):o.rad;let bg='#888',inner='',tx='#000';
+if(c.k==='code'||c.k==='name'){const hs=toH(c.col);if(a){bg=hsl(hs[0],Math.min(hs[1],55),S.dark?30:84);tx=hsl(hs[0],40,S.dark?92:12)}else{bg=c.col;tx=lum(c.col)>.6?'#000':'#fff'}inner=`<div style="position:absolute;left:12px;right:12px;top:${o.label==='t'?'auto':'10px'};${o.label==='t'?'bottom:10px;':''}font-size:${o.fs||15}px;font-weight:700;line-height:1.15;color:${tx}">${c.name}</div>${c.k==='code'?`<div style="position:absolute;right:10px;${o.label==='t'?'top':'bottom'}:8px;color:${tx};opacity:.75">${ic('qrcode',18)}</div>`:''}`}
+else if(c.k==='pass'){bg='#1d2b4a';inner=`<div style="position:absolute;left:12px;top:10px;color:#fff"><div style="font-size:9px;letter-spacing:.8px;opacity:.7">BOARDING PASS</div><div style="font-size:${o.fs||15}px;font-weight:700;margin-top:2px">CDG to JFK</div></div><div style="position:absolute;right:12px;bottom:10px;color:#fff;opacity:.8">${ic('plane',18)}</div>`}
+else if(c.k==='doc'){bg='repeating-linear-gradient(#f7f7f2 0 7px,#d6d6cc 7px 8px)'}
+else{const hue=[210,130,30][c.tone||0];bg=`hsl(${hue} 30% ${S.dark?30:68}%)`;inner=`<div style="position:absolute;left:0;right:0;bottom:0;height:42%;background:hsl(${hue} 32% ${S.dark?22:52}%)"></div>`}
+const photo=c.k==='image'||c.k==='doc'||c.k==='imagecode';let lab='';
+if(o.label&&photo){const txt=c.name||c.date;const auto=!c.name;lab=`<div style="position:absolute;left:8px;${o.label==='t'?'top':'bottom'}:8px">${chip(r,a,auto?`${ic('calendar',11)}${txt}`:txt,auto?'font-weight:500':'')}</div>`}
+const bdg=[];if(photo&&c.photos>1)bdg.push(`${ic('stack-2',12)}${c.photos}`);if(c.k==='imagecode')bdg.push(ic('qrcode',12));
+const badges=bdg.length&&o.label?`<div style="position:absolute;right:8px;${o.label==='t'?'top':'bottom'}:8px">${chip(r,a,bdg.join(' '))}</div>`:'';
+const fav=c.fav&&o.label?`<div style="position:absolute;right:8px;${o.label==='t'?'bottom':'top'}:8px;width:22px;height:22px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:${r.chip};color:${a?r.onCont:r.txt};${a?'':BF}">${ic('star',13)}</div>`:'';
+const sel=o.sel?`<div style="position:absolute;left:8px;top:8px;width:22px;height:22px;border-radius:11px;background:${r.acc};color:${r.onAcc};display:flex;align-items:center;justify-content:center;border:2px solid ${a?r.page:'#fff'};box-sizing:content-box;margin:-2px 0 0 -2px">${ic('check',13)}</div>`:'';
+return`<div style="position:relative;width:${w}px;height:${h}px;border-radius:${rad}px;overflow:hidden;background:${bg};${o.shadow||''}${o.sel?'transform:scale(.95);':''}">${inner}${lab}${badges}${fav}${sel}</div>`}
+const frame=(inner,r)=>{const i=S.plat==='ios';return`<div style="width:300px;height:650px;border-radius:${i?46:36}px;background:${r.page};border:6px solid #17171a;box-sizing:border-box;position:relative;overflow:hidden;font-family:${i?'-apple-system,system-ui,sans-serif':'Roboto,system-ui,sans-serif'};color:${r.txt}"><div style="position:absolute;top:8px;${i?'left:50%;margin-left:-42px;width:84px;height:24px':'left:50%;margin-left:-7px;width:14px;height:14px'};border-radius:12px;background:#000;z-index:100"></div>${inner}</div>`};
+const Z='z-index:50;';
+function chrome(r,o){o=o||{};const i=S.plat==='ios';
+if(i){const glass=`background:${r.glass};border:1px solid ${r.gb};${BF}`;
+const head=o.sel?`<div style="position:absolute;left:20px;top:58px;font-size:26px;font-weight:700;${Z}">3 selected</div><div style="position:absolute;right:14px;top:52px;height:44px;padding:0 18px;border-radius:22px;${glass}display:flex;align-items:center;font-size:15px;color:${r.acc};font-weight:600;${Z}">Done</div>`:`<div style="position:absolute;left:20px;top:58px;font-size:32px;font-weight:700;${Z}">Cards</div><div style="position:absolute;right:14px;top:52px;height:44px;width:128px;border-radius:22px;${glass}display:flex;align-items:center;justify-content:space-around;${Z}">${ic('plus',22)}${ic('settings',22,r.acc)}${ic('dots',22)}</div>`;
+const foot=o.sel?`<div style="position:absolute;left:14px;right:14px;bottom:16px;height:52px;border-radius:26px;${glass}display:flex;align-items:center;justify-content:space-around;${Z}">${ic('share',22)}${ic('star',22)}${ic('folder',22)}${ic('trash',22,'#ff453a')}</div>`:`<div style="position:absolute;left:16px;right:76px;bottom:16px;height:48px;border-radius:24px;${glass}display:flex;align-items:center;gap:8px;padding:0 16px;color:${r.sub};font-size:15px;${Z}">${ic('search',19,r.txt)} Search</div><div style="position:absolute;right:16px;bottom:16px;width:48px;height:48px;border-radius:24px;${glass}display:flex;align-items:center;justify-content:center;${Z}">${ic('camera',22)}</div>`;
+return head+foot}
+const head=o.sel?`<div style="position:absolute;left:0;right:0;top:36px;height:60px;background:${r.cont};display:flex;align-items:center;gap:16px;padding:0 16px;color:${r.onCont};${Z}">${ic('x',24)}<span style="font-size:20px;flex:1">3</span>${ic('star',24)}${ic('folder',24)}${ic('trash',24)}${ic('dots-vertical',24)}</div>`:`<div style="position:absolute;left:16px;right:16px;top:44px;height:52px;border-radius:26px;background:${r.bar};display:flex;align-items:center;gap:14px;padding:0 16px;color:${r.txt};${Z}">${ic('menu-2',22)}<span style="flex:1;font-size:15px;color:${r.sub}">Search cards</span><span style="width:30px;height:30px;border-radius:15px;background:${r.cont};color:${r.onCont};display:flex;align-items:center;justify-content:center">${ic('user',17)}</span></div>`;
+const fab=o.sel?'':`<div style="position:absolute;right:16px;bottom:18px;height:56px;padding:0 20px;border-radius:18px;background:${r.cont};color:${r.onCont};display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600;${Z}">${ic('camera',22)} Scan</div>`;
+return head+fab}
+const FO=[['Travel',3],['Loyalty',12],['Work',1]];
+function folders(r,top){const a=S.plat==='android';
+if(S.fold==='h'){let x=16,out='';FO.forEach((f,i)=>{out+=`<div style="position:absolute;left:${x}px;top:${top}px;width:132px;height:54px;border-radius:${a?20:16}px;background:${a?r.low:r.row};display:flex;align-items:center;gap:8px;padding:0 10px"><div style="width:32px;height:32px;border-radius:${a?12:16}px;background:${a?r.cont:'color-mix(in srgb,'+r.acc+' 20%,transparent)'};color:${a?r.onCont:r.acc};display:flex;align-items:center;justify-content:center">${ic('folder',18)}</div><div><div style="font-size:13px;font-weight:600">${f[0]}</div><div style="font-size:11px;color:${r.sub}">${f[1]} cards</div></div></div>`;x+=140});return{html:out,bottom:top+66}}
+const rows=FO.slice(0,2).map((f,i)=>`<div style="height:46px;display:flex;align-items:center;gap:10px;padding:0 14px;${a?`border-radius:${i===0?'20px 20px 6px 6px':'6px 6px 20px 20px'};background:${r.low};margin-bottom:${i===0?2:0}px`:`border-top:${i?'0.5px solid '+r.sep:'none'}`}"><div style="width:30px;height:30px;border-radius:${a?11:15}px;background:${a?r.cont:'color-mix(in srgb,'+r.acc+' 20%,transparent)'};color:${a?r.onCont:r.acc};display:flex;align-items:center;justify-content:center">${ic('folder',17)}</div><span style="flex:1;font-size:14px;font-weight:600">${f[0]}</span><span style="font-size:12px;color:${r.sub}">${f[1]}</span>${ic('chevron-right',16,r.sub)}</div>`).join('');
+return{html:`<div style="position:absolute;left:16px;right:16px;top:${top}px;${a?'':`border-radius:18px;background:${r.row};overflow:hidden`}">${rows}</div>`,bottom:top+(a?98:96)+12}}
+function viewColumns(r,top,o){const f=folders(r,top);let out=f.html,y=f.bottom;const w=122,h=77;CARDS.slice(0,8).forEach((c,i)=>{const x=16+(i%2)*(w+12),yy=y+Math.floor(i/2)*(h+12);out+=`<div style="position:absolute;left:${x}px;top:${yy}px">${tile(c,r,w,h,{label:'b',fs:14,sel:o&&o.sel&&(i===1||i===3||i===4)})}</div>`});return out}
+function viewList(r,top){const f=folders(r,top),a=S.plat==='android';let y=f.bottom;const rows=CARDS.slice(0,7).map((c,i)=>{const n=7,rad=a?(i===0?'20px 20px 6px 6px':i===n-1?'6px 6px 20px 20px':'6px'):'0';return`<div style="height:66px;display:flex;align-items:center;gap:12px;padding:0 12px;${a?`background:${r.low};border-radius:${rad};margin-bottom:2px`:`border-top:${i?'0.5px solid '+r.sep:'none'}`}">${tile(c,r,88,56,{rad:10,fs:11,label:null})}<div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name||c.full}</div><div style="font-size:12px;color:${r.sub};margin-top:2px">${sub(c)}${c.name?'':' · scan'}</div></div>${c.fav?ic('star',16,r.acc):''}${ic('chevron-right',16,r.sub)}</div>`}).join('');
+return f.html+`<div style="position:absolute;left:16px;right:16px;top:${y}px;${a?'':`border-radius:18px;background:${r.row};overflow:hidden`}">${rows}</div>`}
+function viewStack(r,top,vis){const f=folders(r,top);let out=f.html;const w=268,h=170,y0=f.bottom;const a=S.plat==='android';CARDS.slice(0,7).forEach((c,i)=>{out+=`<div style="position:absolute;left:16px;top:${y0+i*vis}px;z-index:${i}">${tile(c,r,w,h,{label:'t',fs:20,shadow:`box-shadow:0 -3px 10px rgba(0,0,0,${a?.14:.2});`})}</div>`});return out}
+function empty(r){const a=S.plat==='android';return`<div style="position:absolute;left:0;right:0;top:230px;text-align:center;padding:0 36px"><div style="width:84px;height:84px;margin:0 auto 18px;border-radius:${a?'30px':'42px'};${a?`background:${r.cont};color:${r.onCont}`:`background:${r.glass};border:1px solid ${r.gb};${BF}color:${r.acc}`};display:flex;align-items:center;justify-content:center">${ic('wallet',40)}</div><div style="font-size:20px;font-weight:700">Add your first card</div><div style="font-size:14px;color:${r.sub};margin-top:6px;line-height:1.4">Scan a loyalty card, a pass or an ID, or import one.</div><div style="display:inline-block;margin-top:18px;padding:12px 24px;border-radius:${a?'18px':'24px'};background:${r.acc};color:${r.onAcc};font-size:15px;font-weight:600">Scan a card</div></div>`}
+function phone(kind){const r=roles();let body='';const top=110;
+if(kind==='columns')body=viewColumns(r,top);if(kind==='list')body=viewList(r,top);if(kind==='cardholder')body=viewStack(r,top,68);if(kind==='full')body=viewStack(r,top,49);if(kind==='sel')body=viewColumns(r,top,{sel:true});if(kind==='empty')body=empty(r);
+return frame(body+chrome(r,{sel:kind==='sel'}),r)}
+const scaled=(html,label)=>`<div style="width:160px"><div style="width:160px;height:347px"><div style="width:300px;height:650px;transform:scale(.5333);transform-origin:0 0">${html}</div></div><div style="font-size:12px;color:var(--text-secondary);text-align:center;margin-top:6px">${label}</div></div>`;
+function anatomy(){const r=roles();const T=[['Photo, named',{k:'image',name:'Passport',tone:0}],['Photo, auto name',{k:'doc',name:'',date:'Oct 27'}],['Photo, 2 pages, code',{k:'imagecode',name:'IKEA Family',photos:2,tone:2}],['Favorite, selected',{k:'image',name:'Waterfall',tone:1,fav:1},1],['Name and code',{k:'code',name:'Decathlon',col:'#0a60ff'}],['Name only',{k:'name',name:'City library',col:'#8a3b4d'}],['Wallet pass',{k:'pass',name:'Boarding pass'}],['Label on dark photo',{k:'image',name:'Skogafoss',tone:1}]];
+return`<div style="display:grid;grid-template-columns:repeat(4,150px);gap:14px 12px">${T.map(t=>`<div>${tile(t[1],r,150,95,{label:'b',fs:16,sel:t[2]})}<div style="font-size:12px;color:var(--text-secondary);margin-top:6px">${t[0]}</div></div>`).join('')}</div>`}
+function render(){const row=(items)=>`<div style="display:flex;gap:12px;margin-bottom:18px">${items.map(x=>scaled(phone(x[0]),x[1])).join('')}</div>`;
+document.getElementById('out').innerHTML=row([['columns','Columns'],['list','List'],['cardholder','Cardholder'],['full','Full']])+row([['sel','Selection'],['empty','Empty']])+`<div style="font-size:14px;font-weight:500;margin:6px 0 10px">Tile anatomy</div>`+anatomy();
+const on=(id,v)=>document.getElementById(id).style.background=v?'var(--surface-1)':'transparent';on('bl',!S.dark);on('bd',S.dark);on('pi',S.plat==='ios');on('pa',S.plat==='android');on('fh',S.fold==='h');on('fv',S.fold==='v')}
+[['bl',()=>S.dark=false],['bd',()=>S.dark=true],['pi',()=>S.plat='ios'],['pa',()=>S.plat='android'],['fh',()=>S.fold='h'],['fv',()=>S.fold='v']].forEach(x=>document.getElementById(x[0]).onclick=()=>{x[1]();render()});
+render();
+</script>
+</body>
+</html>

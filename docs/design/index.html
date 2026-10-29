@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design system mockups</title>
+<style>
+:root{--text:#1f1f1e;--sub:#5f5e5a;--border:#c8c6bd;--card:#fff;--page:#fafaf7;--acc:#0b57d0}
+@media(prefers-color-scheme:dark){:root{--text:#f1f0ea;--sub:#b0aea5;--border:#4a4944;--card:#262522;--page:#1c1c1a;--acc:#a8c7fa}}
+body{font-family:system-ui,sans-serif;margin:32px auto;max-width:720px;padding:0 16px;background:var(--page);color:var(--text)}
+h1{font-size:22px;margin:0 0 4px}p.lead{color:var(--sub);margin:0 0 24px;font-size:14px}
+h2{font-size:13px;letter-spacing:.5px;text-transform:uppercase;color:var(--sub);margin:28px 0 8px}
+a.card{display:block;padding:12px 16px;margin:0 0 8px;border:0.5px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);text-decoration:none}
+a.card:hover{border-color:var(--acc)}a.card b{display:block;font-size:15px;font-weight:500}a.card span{font-size:13px;color:var(--sub)}
+</style>
+</head>
+<body>
+<h1>Design system mockups</h1>
+<p class="lead">Cardwallet and Document Scanner. The mockups are schematic (drawn 300 wide): take values from the markdown specs. Each mockup has light/dark controls.</p>
+<h2>Mockups</h2>
+<a class="card" href="cardwallet-card-view-variants.html"><b>Card view: variants</b><span>Photos, codes, details, name only; iOS and Android; card color</span></a>
+<a class="card" href="cardwallet-card-view-ios-states.html"><b>Card view: iOS states</b><span>Photo swipe, sheet detents, menu, edit, pages list, fullscreen code, Reduce Transparency</span></a>
+<a class="card" href="cardwallet-card-list.html"><b>Card list</b><span>Columns, list, cardholder, full; folders; selection; empty state; tile anatomy</span></a>
+<a class="card" href="cardwallet-components.html"><b>Components</b><span>Buttons, text fields, chips, selection, sheets (opaque and transparent)</span></a>
+<a class="card" href="cardwallet-textfields.html"><b>Text fields</b><span>Options compared; adopted: iOS capsule, Android notched outlined</span></a>
+<a class="card" href="cardwallet-menus.html"><b>Menus</b><span>Options, context and select menus; Android today against proposed</span></a>
+<h2>Specs (markdown)</h2>
+<a class="card" href="cardwallet-design-rules.md"><b>Design rules</b><span>Exact values for every component and state; wins on conflicts</span></a>
+<a class="card" href="cardwallet-card-view.md"><b>Card view, list and components</b><span>Principles, tokens, hero zones, platform specs, implementation status</span></a>
+<a class="card" href="README.md"><b>README</b><span>Index and how to read the mockups</span></a>
+</body>
+</html>
