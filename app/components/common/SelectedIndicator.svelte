@@ -2,15 +2,17 @@
     import { colors, fonts } from '~/variables';
     export let selected: boolean = false;
     // technique for only specific properties to get updated on store change
-    $: ({ colorOnPrimary, colorPrimary } = $colors);
+    $: ({ colorBackground, colorOnPrimary, colorPrimary } = $colors);
 </script>
 
 <label
     backgroundColor={colorPrimary}
+    borderColor={__IOS__ ? '#ffffff' : colorBackground}
     borderRadius={13}
+    borderWidth={2}
     color={colorOnPrimary}
     fontFamily={$fonts.mdi}
-    fontSize={18}
+    fontSize={14}
     height={26}
     horizontalAlignment="left"
     margin={5}
