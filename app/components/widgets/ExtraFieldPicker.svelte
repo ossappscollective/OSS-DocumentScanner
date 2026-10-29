@@ -16,6 +16,8 @@
     $: ({ colorOnSurfaceVariant, colorOutlineVariant } = $colors);
 
     export let editing = false;
+    /** the form is shown inside another sheet instead of its own: called with the result (undefined when cancelled) */
+    export let onClose: (result?: any) => void = undefined;
     export let name = null;
     export let value = null;
     export let type: ExtraFieldType = ExtraFieldType.Date;
@@ -94,6 +96,10 @@
     }
 
     function close() {
+        if (onClose) {
+            onClose();
+            return;
+        }
         rootView.nativeView.bindingContext.closeCallback();
     }
 
@@ -102,11 +108,16 @@
             if (!currentName || (!currentValue && currentType !== ExtraFieldType.Date)) {
                 throw new SilentError(lc('need_fill_fields'));
             }
-            rootView.nativeView.bindingContext.closeCallback({
+            const result = {
                 type: currentType,
                 name: currentName,
                 value: currentType === ExtraFieldType.Date ? currentTime.valueOf() : currentType === ExtraFieldType.Number ? parseFloat(currentValue) : currentValue
-            });
+            };
+            if (onClose) {
+                onClose(result);
+            } else {
+                rootView.nativeView.bindingContext.closeCallback(result);
+            }
         } catch (error) {
             showError(error);
         }
@@ -129,7 +140,7 @@
     }
 </script>
 
-<gesturerootview bind:this={rootView} rows="auto,auto">
+<gesturerootview bind:this={rootView} rows="auto,auto" {...$$restProps}>
     <SheetHeader doneText={editing ? lc('edit') : lc('add')} onCancel={close} onDone={add} title={editing ? lc('edit_extra_field') : lc('add_extra_field')} />
     <stacklayout padding="0 16 16 16" row={1}>
         <gridlayout columns="*,auto">
@@ -148,16 +159,19 @@
             />
         </gridlayout>
         <textfield editable={false} hint={lc('type')} margin={tMargin} text={lc(currentType)} textTransform="uppercase" variant="outline" on:tap={(e) => selectType(e)} />
-        <textview
-            editable={currentType !== ExtraFieldType.Date}
-            hint={lc('value')}
-            keyboardType={getKeyboardType(currentType)}
-            margin={tMargin}
-            text={currentType === ExtraFieldType.Date ? formatDate(currentTime, 'LL') : currentValue}
-            use:focusState
-            variant="outline"
-            on:textChange={(e) => (currentValue = e.value)}
-            on:tap={(e) => selectDate(e)}
-        />
+        {#if currentType === ExtraFieldType.Date}
+            <!-- a date is picked, not typed: a tap field -->
+            <textfield editable={false} hint={lc('value')} margin={tMargin} text={formatDate(currentTime, 'LL')} variant="outline" on:tap={(e) => selectDate(e)} />
+        {:else}
+            <textview
+                hint={lc('value')}
+                keyboardType={getKeyboardType(currentType)}
+                margin={tMargin}
+                text={currentValue}
+                use:focusState
+                variant="outline"
+                on:textChange={(e) => (currentValue = e.value)}
+            />
+        {/if}
     </stacklayout>
 </gesturerootview>

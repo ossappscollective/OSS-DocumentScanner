@@ -2,13 +2,11 @@
     import { lc } from '@nativescript-community/l';
     import { Template } from '@nativescript-community/svelte-native/components';
     import SheetHeader from '~/components/common/SheetHeader.svelte';
-    import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { showError } from '@shared/utils/showError';
     import dayjs from 'dayjs';
     import { ExtraFieldType, OCRDocument } from '~/models/OCRDocument';
     import { shortcutService } from '~/services/shortcuts';
     import { appIcon } from '~/utils/appIcons';
-    import { SHEET_SOFT_INPUT_MODE } from '~/utils/constants';
     import { pickColor } from '~/utils/ui';
     import { colors } from '~/variables';
     import CardEditCodeRow from '~/components/view/CardEditCodeRow.svelte';
@@ -89,30 +87,30 @@
     function formatValue(extra) {
         return extra?.type === ExtraFieldType.Date ? dayjs(extra.value).format(extra.format || 'LL') : (extra?.value ?? '');
     }
+    // the form of a field replaces the content of this sheet: no second sheet over it
+    let fieldForm: { field?: FieldRow; ExtraFieldPicker: any } = null;
     async function editField(field?: FieldRow) {
         try {
             const ExtraFieldPicker = (await import('~/components/widgets/ExtraFieldPicker.svelte')).default;
-            const result = await showBottomSheet({
-                parent: rootView,
-                skipCollapsedState: true,
-                view: ExtraFieldPicker,
-                windowSoftInputMode: SHEET_SOFT_INPUT_MODE,
-                props: { editing: !!field, name: field?.name, ...(field?.extra || {}) }
-            });
-            if (!result) {
-                return;
-            }
-            const { name: fieldName, ...others } = result;
-            if (field) {
-                field.name = fieldName;
-                field.extra = others;
-            } else {
-                fields.push({ key: null, name: fieldName, extra: others, removed: false });
-            }
-            rebuild();
+            fieldForm = { field, ExtraFieldPicker };
         } catch (error) {
             showError(error);
         }
+    }
+    function onFieldFormClose(result?: any) {
+        const field = fieldForm?.field;
+        fieldForm = null;
+        if (!result) {
+            return;
+        }
+        const { name: fieldName, ...others } = result;
+        if (field) {
+            field.name = fieldName;
+            field.extra = others;
+        } else {
+            fields.push({ key: null, name: fieldName, extra: others, removed: false });
+        }
+        rebuild();
     }
     function removeField(field: FieldRow) {
         field.removed = true;
@@ -155,8 +153,20 @@
 </script>
 
 <gesturerootview bind:this={rootView} rows="auto,*">
-    <SheetHeader actionIcon={appIcon('add')} actionLabel={lc('add_extra_field')} doneText={lc('save')} onAction={() => editField()} onCancel={() => close(false)} onDone={save} title={lc('edit')} />
-    <collectionview row={1} {itemTemplateSelector} items={listItems}>
+    {#if fieldForm}
+        <svelte:component this={fieldForm.ExtraFieldPicker} editing={!!fieldForm.field} name={fieldForm.field?.name} onClose={onFieldFormClose} rowSpan={2} {...fieldForm.field?.extra || {}} />
+    {/if}
+    <SheetHeader
+        visibility={fieldForm ? 'collapse' : 'visible'}
+        actionIcon={appIcon('add')}
+        actionLabel={lc('add_extra_field')}
+        doneText={lc('save')}
+        onAction={() => editField()}
+        onCancel={() => close(false)}
+        onDone={save}
+        title={lc('edit')}
+    />
+    <collectionview row={1} {itemTemplateSelector} items={listItems} visibility={fieldForm ? 'collapse' : 'visible'}>
         <Template key="name" let:item>
             <textfield hint={lc('name')} margin="6 16" text={name} use:focusState variant="outline" on:textChange={(e) => (name = e.value)} />
         </Template>
