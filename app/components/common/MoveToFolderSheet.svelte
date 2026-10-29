@@ -1,4 +1,5 @@
 <script context="module" lang="ts">
+    import { Template } from '@nativescript-community/svelte-native/components';
     import { Color } from '@nativescript/core';
     import { showError } from '@shared/utils/showError';
     import CardIcon from '~/components/common/CardIcon.svelte';
@@ -6,7 +7,7 @@
     import { lc } from '~/helpers/locale';
     import { DocFolder } from '~/models/OCRDocument';
     import { appIcon } from '~/utils/appIcons';
-    import { getRowCorners, getRowPosition } from '~/utils/groupedRows';
+    import { type RowPosition, getRowCorners, getRowPosition } from '~/utils/groupedRows';
     import { promptForText } from '~/utils/ui';
     import { colors, windowInset } from '~/variables';
 
@@ -24,6 +25,9 @@
         icon: string;
         color?: string;
         checked?: boolean;
+        position?: RowPosition;
+        iconColor?: string;
+        iconBackground?: string;
     }
 </script>
 
@@ -41,13 +45,30 @@
 
     $: showSearch = folders.length > SEARCH_MIN_FOLDERS;
     $: lowerFilter = filter.trim().toLowerCase();
-    $: rows = [
-        ...(currentFolder ? [{ id: 'root', name: '', title: lc('remove_from_folder'), icon: appIcon('close') }] : []),
-        ...folders
-            .filter((folder) => !lowerFilter || folder.name.toLowerCase().includes(lowerFilter))
-            .map((folder) => ({ id: 'folder_' + folder.id, name: folder.name, title: folder.name, icon: appIcon('folder_outline'), color: folder.color, checked: folder.id === currentFolder?.id })),
-        { id: 'new', name: undefined, title: lc('new_folder'), icon: appIcon('new_folder') }
-    ] as Row[];
+    $: rows = (
+        [
+            ...(currentFolder ? [{ id: 'root', name: '', title: lc('remove_from_folder'), icon: appIcon('close') }] : []),
+            ...folders
+                .filter((folder) => !lowerFilter || folder.name.toLowerCase().includes(lowerFilter))
+                .map((folder) => ({
+                    id: 'folder_' + folder.id,
+                    name: folder.name,
+                    title: folder.name,
+                    icon: appIcon('folder_outline'),
+                    color: folder.color,
+                    checked: folder.id === currentFolder?.id
+                })),
+            { id: 'new', name: undefined, title: lc('new_folder'), icon: appIcon('new_folder') }
+        ] as Row[]
+    ).map((row, index, all) => {
+        const iconColor = row.color || colorPrimary;
+        return {
+            ...row,
+            position: getRowPosition(index === 0, index === all.length - 1),
+            iconColor,
+            iconBackground: Color.mix(new Color(colorSurfaceContainerHigh), new Color(iconColor), 16).hex
+        };
+    });
     $: listHeight = Math.min(rows.length, MAX_VISIBLE_ROWS) * (ROW_HEIGHT + ROW_GAP);
 
     function close(name?: string) {
@@ -89,43 +110,33 @@
         visibility={showSearch ? 'visible' : 'collapsed'}
         on:textChange={(e) => (filter = e['value'])}
     />
-    <scrollview height={listHeight} marginBottom={$windowInset.bottom + 16} row={2}>
-        <stacklayout>
-            {#each rows as row, index (row.id)}
-                {@const position = getRowPosition(index === 0, index === rows.length - 1)}
-                {@const iconColor = row.color || colorPrimary}
-                <gridlayout
-                    backgroundColor={colorSurfaceContainerHigh}
-                    {...getRowCorners(position, __IOS__)}
-                    columns="auto,*,auto"
-                    height={ROW_HEIGHT}
-                    margin="{__IOS__ ? 0 : 1} 16"
-                    padding="0 14"
-                    rippleColor={colorOnSurface}
-                    on:tap={() => onRowTap(row)}
-                >
-                    <gridlayout
-                        backgroundColor={Color.mix(new Color(colorSurfaceContainerHigh), new Color(iconColor), 16).hex}
-                        borderRadius={ICON_SIZE / 2}
-                        height={ICON_SIZE}
-                        verticalAlignment="center"
-                        width={ICON_SIZE}
-                    >
-                        <CardIcon color={iconColor} horizontalAlignment="center" size={20} src={row.icon} verticalAlignment="center" />
-                    </gridlayout>
-                    <label col={1} color={colorOnSurface} fontSize={16} fontWeight="500" lineBreak="end" marginLeft={10} maxLines={1} text={row.title} verticalAlignment="center" />
-                    <CardIcon col={2} color={colorPrimary} size={16} src={appIcon('check')} verticalAlignment="center" visibility={row.checked ? 'visible' : 'collapsed'} />
-                    <gridlayout
-                        backgroundColor={colorOutlineVariant}
-                        colSpan={3}
-                        height={0.5}
-                        marginLeft={46}
-                        marginRight={-14}
-                        verticalAlignment="bottom"
-                        visibility={__IOS__ && index < rows.length - 1 ? 'visible' : 'collapsed'}
-                    />
+    <collectionview height={listHeight} items={rows} marginBottom={$windowInset.bottom + 16} row={2}>
+        <Template let:item>
+            <gridlayout
+                backgroundColor={colorSurfaceContainerHigh}
+                {...getRowCorners(item.position, __IOS__)}
+                columns="auto,*,auto"
+                height={ROW_HEIGHT}
+                margin="{__IOS__ ? 0 : 1} 16"
+                padding="0 14"
+                rippleColor={colorOnSurface}
+                on:tap={() => onRowTap(item)}
+            >
+                <gridlayout backgroundColor={item.iconBackground} borderRadius={ICON_SIZE / 2} height={ICON_SIZE} verticalAlignment="center" width={ICON_SIZE}>
+                    <CardIcon color={item.iconColor} horizontalAlignment="center" size={20} src={item.icon} verticalAlignment="center" />
                 </gridlayout>
-            {/each}
-        </stacklayout>
-    </scrollview>
+                <label col={1} color={colorOnSurface} fontSize={16} fontWeight="500" lineBreak="end" marginLeft={10} maxLines={1} text={item.title} verticalAlignment="center" />
+                <CardIcon col={2} color={colorPrimary} size={16} src={appIcon('check')} verticalAlignment="center" visibility={item.checked ? 'visible' : 'collapsed'} />
+                <gridlayout
+                    backgroundColor={colorOutlineVariant}
+                    colSpan={3}
+                    height={0.5}
+                    marginLeft={46}
+                    marginRight={-14}
+                    verticalAlignment="bottom"
+                    visibility={__IOS__ && (item.position === 'first' || item.position === 'middle') ? 'visible' : 'collapsed'}
+                />
+            </gridlayout>
+        </Template>
+    </collectionview>
 </gesturerootview>
