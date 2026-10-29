@@ -6,6 +6,7 @@
     import { navigate } from '@shared/utils/svelte/ui';
     import { Writable } from 'svelte/store';
     import RotableImageView from '~/components/common/RotableImageView.svelte';
+    import RowSelectionMarker from '~/components/common/RowSelectionMarker.svelte';
     import SelectedIndicator from '~/components/common/SelectedIndicator.svelte';
     import SyncIndicator from '~/components/common/SyncIndicator.svelte';
     import CardIcon from '~/components/common/CardIcon.svelte';
@@ -15,7 +16,9 @@
     import { isEInk } from '~/helpers/theme';
     import { lc, lcp } from '~/helpers/locale';
     import { appIcon } from '~/utils/appIcons';
-    import { selectionMode } from '~/utils/svelte/store';
+    import { getRowCorners } from '~/utils/groupedRows';
+    import { selectionTransition } from '~/utils/svelte/actions';
+    import { rowMarkerWidth, selectionMode } from '~/utils/svelte/store';
     import { getTileColors, pickCardColor } from '~/utils/cardColors';
     import { CARD_RATIO } from '~/utils/constants';
     import { colors } from '~/variables';
@@ -25,8 +28,8 @@
 </script>
 
 <script lang="ts">
-    let { colorBackground, colorOnSurface, colorOnSurfaceVariant, colorPrimary, colorSecondaryContainer, colorSurfaceContainerLow } = $colors;
-    $: ({ colorBackground, colorOnSurface, colorOnSurfaceVariant, colorPrimary, colorSecondaryContainer, colorSurfaceContainerLow } = $colors);
+    let { colorBackground, colorOnSurface, colorOnSurfaceVariant, colorPrimary, colorOutlineVariant, colorSecondaryContainer, colorSurfaceContainerLow } = $colors;
+    $: ({ colorBackground, colorOnSurface, colorOnSurfaceVariant, colorPrimary, colorOutlineVariant, colorSecondaryContainer, colorSurfaceContainerLow } = $colors);
 
     export let collectionView: NativeViewElementNode<CollectionViewWithSwipeMenu>;
     export let itemWidth: number;
@@ -118,6 +121,9 @@
         };
     }
 
+    // rows of a group touch on iOS, Android keeps 2 between them
+    const rowGap = __IOS__ ? 0 : 2;
+    $: groupStart = item.position === 'first' || item.position === 'only';
     $: page = item.doc.pages[0];
     $: hasImage = !!page?.imagePath;
     $: hasCode = !!page?.qrcode?.length;
@@ -223,39 +229,67 @@
     {...$$restProps}
     on:start={(e) => onFullCardItemTouch(item, { action: 'down' })}
     on:close={(e) => onFullCardItemTouch(item, { action: 'up' })}> -->
-<gridlayout {height} width="100%" {...$$restProps}>
+<gridlayout height={layout === 'list' ? height + rowGap + (groupStart ? 8 : 0) : height} width="100%" {...$$restProps}>
     {#if layout === 'list'}
         <gridlayout
             backgroundColor={isEInk ? 'transparent' : item.selected ? colorSecondaryContainer : colorSurfaceContainerLow}
-            borderRadius={__IOS__ ? 14 : 6}
-            columns="auto,*,auto,auto,auto"
-            margin="1 16"
+            {...getRowCorners(item.position, __IOS__)}
+            {height}
+            margin="{rowGap / 2} 16"
             padding="0 12 0 8"
             rippleColor={colorOnSurface}
+            verticalAlignment="bottom"
             on:tap
             on:longPress
         >
-            <gridlayout
-                backgroundColor={pkPassCell ? (page?.pkpass?.passData?.backgroundColor ?? tile.fill) : hasImage ? null : tile.fill}
-                borderRadius={11}
-                height={60}
-                verticalAlignment="center"
-                width={96}
-            >
-                {#if hasImage}
-                    <RotableImageView {...getItemRotableImageParams(item)} borderRadius={11} decodeWidth={Utils.layout.toDevicePixels(96)} />
-                {:else if !pkPassCell}
-                    <label color={tile.text} fontSize={12} fontWeight="bold" lineBreak="end" margin="4 6" maxLines={3} text={label} textAlignment="center" verticalAlignment="center" />
-                {/if}
+            <gridlayout columns="auto,*,auto,auto" paddingLeft={$rowMarkerWidth} use:selectionTransition>
+                <gridlayout
+                    backgroundColor={pkPassCell ? (page?.pkpass?.passData?.backgroundColor ?? tile.fill) : hasImage ? null : tile.fill}
+                    borderRadius={11}
+                    height={60}
+                    verticalAlignment="center"
+                    width={96}
+                >
+                    {#if hasImage}
+                        <RotableImageView {...getItemRotableImageParams(item)} borderRadius={11} decodeWidth={Utils.layout.toDevicePixels(96)} />
+                    {:else if !pkPassCell}
+                        <label color={tile.text} fontSize={12} fontWeight="bold" lineBreak="end" margin="4 6" maxLines={3} text={label} textAlignment="center" verticalAlignment="center" />
+                    {/if}
+                </gridlayout>
+                <gridlayout col={1} margin="0 12" rows="auto,auto" verticalAlignment="center">
+                    <label color={colorOnSurface} fontSize={__IOS__ ? 17 : 16} fontWeight={__IOS__ ? '600' : '500'} lineBreak="end" maxLines={1} text={item.doc.name || label} />
+                    <stacklayout orientation="horizontal" row={1} visibility={subtitle || hasCode ? 'visible' : 'collapsed'}>
+                        <label color={colorOnSurfaceVariant} fontSize={14} text={subtitle} verticalAlignment="center" visibility={subtitle ? 'visible' : 'collapsed'} />
+                        <CardIcon
+                            color={colorOnSurfaceVariant}
+                            marginLeft={subtitle ? 6 : 0}
+                            size={16}
+                            src={appIcon('qrcode')}
+                            verticalAlignment="center"
+                            visibility={hasCode ? 'visible' : 'collapsed'}
+                        />
+                    </stacklayout>
+                </gridlayout>
+                <CardIcon
+                    col={3}
+                    color={colorPrimary}
+                    marginRight={8}
+                    size={16}
+                    src={appIcon('favorite_on')}
+                    verticalAlignment="center"
+                    visibility={item.doc.favorite === 1 ? 'visible' : 'collapsed'}
+                />
+                <CardIcon col={3} color={colorOnSurfaceVariant} size={16} src={appIcon('chevron')} verticalAlignment="center" visibility={$selectionMode || __ANDROID__ ? 'collapsed' : 'visible'} />
             </gridlayout>
-            <label col={1} color={colorOnSurface} lineBreak="end" margin="0 12" textWrap={true} verticalAlignment="center">
-                <span fontSize={__IOS__ ? 17 : 16} fontWeight={__IOS__ ? '600' : '500'} text={item.doc.name || label} />
-                <span color={colorOnSurfaceVariant} fontSize={14} text={subtitle ? '\n' + subtitle : ''} />
-            </label>
-            <CardIcon col={2} color={colorOnSurfaceVariant} marginRight={8} size={16} src={appIcon('qrcode')} verticalAlignment="center" visibility={hasCode ? 'visible' : 'collapsed'} />
-            <CardIcon col={3} color={colorPrimary} marginRight={8} size={16} src={appIcon('favorite_on')} verticalAlignment="center" visibility={item.doc.favorite === 1 ? 'visible' : 'collapsed'} />
-            <CardIcon col={4} color={colorOnSurfaceVariant} size={16} src={appIcon('chevron')} verticalAlignment="center" visibility={$selectionMode || __ANDROID__ ? 'collapsed' : 'visible'} />
-            <SelectedIndicator margin="12 0 0 12" selected={item.selected} />
+            <RowSelectionMarker selected={item.selected} />
+            <gridlayout
+                backgroundColor={colorOutlineVariant}
+                height={0.5}
+                marginLeft={108 + $rowMarkerWidth}
+                marginRight={-12}
+                verticalAlignment="bottom"
+                visibility={__IOS__ && (item.position === 'first' || item.position === 'middle') ? 'visible' : 'collapsed'}
+            />
         </gridlayout>
     {:else}
         <gridlayout id="cardItemTemplate" class="cardItemTemplate" prop:mainContent {...getItemHolderParams(layout, item, $nbColumns, tile.fill, item.selected)} on:tap on:longPress>

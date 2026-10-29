@@ -13,6 +13,7 @@
         AnimationDefinition,
         Application,
         ApplicationSettings,
+        ChangedData,
         Color,
         EventData,
         Frame,
@@ -36,6 +37,7 @@
     import type { AppBar } from '@nativescript-community/ui-appbar';
     import type { MenuItem } from '@nativescript-community/ui-menu';
     import { appIcon } from '~/utils/appIcons';
+    import { type RowPosition, updateRowPositions } from '~/utils/groupedRows';
     import { selectionMode } from '~/utils/svelte/store';
     import CardsEmpty from '~/components/list/CardsEmpty.svelte';
     import FolderCell from '~/components/list/FolderCell.svelte';
@@ -116,6 +118,7 @@
         folder?: DocFolder;
         selected: boolean;
         startingSide?: string;
+        position?: RowPosition;
     }
 </script>
 
@@ -242,6 +245,12 @@
     let loading = false;
     export let nbSelected = 0;
     $: selectionMode.set(nbSelected > 0);
+    // iOS cells do not lay out again when their content changes: the visible ones are bound again to leave or enter selection mode
+    let wasSelecting = false;
+    $: if (__IOS__ && wasSelecting !== nbSelected > 0) {
+        wasSelecting = nbSelected > 0;
+        setTimeout(() => refreshVisibleItems());
+    }
     let editingTitle = false;
     export let nbColumns = writable(1);
     export let updateColumns = function (isLandscape, orientationChanged: boolean = false) {
@@ -261,6 +270,23 @@
             opacity: nbSelected > 0 ? 0 : 1,
             duration: 200
         });
+    }
+
+    // rows are grouped: the first and last of a run have the outer corners, so a change of the list updates its neighbors
+    let positionedItems: ObservableArray<Item>;
+    const getItems = (list: ObservableArray<Item>) => Array.from({ length: list.length }, (_, index) => list.getItem(index));
+    function onItemsChange(event: ChangedData<Item>) {
+        if (event.action !== 'update') {
+            updateRowPositions(getItems(positionedItems)).forEach((index) => positionedItems.setItem(index, positionedItems.getItem(index)));
+        }
+    }
+    $: if (documents !== positionedItems) {
+        positionedItems?.off('change', onItemsChange);
+        positionedItems = documents;
+        if (documents) {
+            updateRowPositions(getItems(documents));
+            documents.on('change', onItemsChange);
+        }
     }
 
     export async function refresh(force = true, filter?: string) {
@@ -1526,7 +1552,8 @@
                     <FolderCell
                         name={folder ? item.folder.name.replace(folder.name + '/', '') : item.folder.name}
                         {item}
-                        margin="4 {folderMargin}"
+                        marginLeft={folderMargin}
+                        marginRight={folderMargin}
                         tile={false}
                         on:longPress={(e) => onItemLongPress(item, e)}
                         on:tap={() => onItemTap(item)}

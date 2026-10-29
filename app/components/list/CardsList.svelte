@@ -200,7 +200,7 @@
             case 'cardholder':
                 return itemHeight * (isLandscape ? 0.6 : 0.4);
             case 'list':
-                return isLandscape ? itemHeight : 74;
+                return isLandscape ? itemHeight : 72;
             default:
                 return itemHeight;
         }

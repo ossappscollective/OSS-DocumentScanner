@@ -1,4 +1,4 @@
-import { type StartStopNotifier, type Writable, writable } from 'svelte/store';
+import { type StartStopNotifier, type Writable, derived, writable } from 'svelte/store';
 
 export function notifyWhenChanges<T>(store: Writable<T>, callback) {
     let init = false;
@@ -10,3 +10,6 @@ export function notifyWhenChanges<T>(store: Writable<T>, callback) {
 
 /** a list has selected items: its rows hide their chevron (set by the list, read by its cells) */
 export const selectionMode = writable(false);
+
+/** width of the leading selection marker of the rows: they are pushed right by it while selecting */
+export const rowMarkerWidth = derived(selectionMode, (value) => (value ? 36 : 0));
