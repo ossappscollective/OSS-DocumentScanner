@@ -5,6 +5,7 @@
     import { FORMATS, getBarcodeFallbackString, qrcodeService } from '~/services/qrcode';
     import { pickColor, showPopoverMenu } from '~/utils/ui';
     import { colors } from '~/variables';
+    import SheetHeader from '../common/SheetHeader.svelte';
     import SvgView from '../common/SVGView.svelte';
 </script>
 
@@ -20,6 +21,10 @@
     let svg: string;
     let validCode = true;
     const tMargin = '4 0 4 0';
+
+    function close() {
+        rootView.nativeView.bindingContext.closeCallback();
+    }
 
     async function add() {
         try {
@@ -80,26 +85,34 @@
     }
 </script>
 
-<gesturerootview bind:this={rootView} columns="*,auto" padding={16} rows="auto,auto,auto,auto,auto,auto">
-    <label color={colorOnBackground} fontSize={20} fontWeight="bold" text={lc('create')} verticalAlignment="center" />
-    <stacklayout col={1} orientation="horizontal">
-        <label color={colorOnBackground} fontSize={16} text={lc('color')} verticalAlignment="center" />
-        <absolutelayout backgroundColor={color} borderColor={colorOutline} borderRadius="50%" borderWidth={2} height={40} marginLeft={10} width={40} on:tap={changeColor} />
-    </stacklayout>
-    <textfield colSpan={2} hint={lc('name')} margin={tMargin} row={1} text={name} variant="outline" on:textChange={(e) => (name = e.value)} />
-    <textfield colSpan={2} hint={lc('barcode')} margin={tMargin} row={2} text={code} variant="outline" on:textChange={onCodeTextChange} />
-    <textfield colSpan={2} editable={false} hint={lc('barcode_type')} margin={tMargin} row={3} text={codeFormat} textTransform="uppercase" variant="outline" on:tap={(e) => selectBarcodeFormat(e)} />
-    <SvgView backgroundColor="white" borderRadius={12} colSpan={2} height={100} item={{ svg }} row={4} stretch="aspectFit" visibility={code?.length ? 'visible' : 'collapse'} />
-    <label
-        colSpan={2}
-        fontSize={20}
-        fontWeight="bold"
-        row={4}
-        text={lc('invalid')}
-        textAlignment="center"
-        verticalAlignment="center"
-        visibility={code?.length && !validCode ? 'visible' : 'collapse'}
-    />
-
-    <uibutton colSpan={2} horizontalAlignment="right" isEnabled={name?.length > 0} row={5} text={lc('add')} variant={__IOS__ ? 'prominentGlass' : 'contained'} on:tap={add} />
+<gesturerootview bind:this={rootView} rows="auto,auto">
+    <SheetHeader doneEnabled={name?.length > 0} doneText={lc('add')} onCancel={close} onDone={add} title={lc('create')} />
+    <gridlayout columns="*,auto" padding="0 16 16 16" row={1} rows="auto,auto,auto,auto,auto,auto">
+        <textfield colSpan={2} hint={lc('name')} margin={tMargin} text={name} variant="outline" on:textChange={(e) => (name = e.value)} />
+        <textfield colSpan={2} hint={lc('barcode')} margin={tMargin} row={1} text={code} variant="outline" on:textChange={onCodeTextChange} />
+        <textfield
+            colSpan={2}
+            editable={false}
+            hint={lc('barcode_type')}
+            margin={tMargin}
+            row={2}
+            text={codeFormat}
+            textTransform="uppercase"
+            variant="outline"
+            on:tap={(e) => selectBarcodeFormat(e)}
+        />
+        <label color={colorOnBackground} fontSize={17} margin="8 4" row={3} text={lc('color')} verticalAlignment="center" />
+        <absolutelayout backgroundColor={color} borderColor={colorOutline} borderRadius="50%" borderWidth={2} col={1} height={40} row={3} width={40} on:tap={changeColor} />
+        <SvgView backgroundColor="white" borderRadius={12} colSpan={2} height={100} item={{ svg }} row={4} stretch="aspectFit" visibility={code?.length ? 'visible' : 'collapse'} />
+        <label
+            colSpan={2}
+            fontSize={20}
+            fontWeight="bold"
+            row={4}
+            text={lc('invalid')}
+            textAlignment="center"
+            verticalAlignment="center"
+            visibility={code?.length && !validCode ? 'visible' : 'collapse'}
+        />
+    </gridlayout>
 </gesturerootview>
