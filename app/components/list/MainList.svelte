@@ -9,7 +9,21 @@
     import { VerticalPosition } from '@nativescript-community/ui-popover';
     import { isCatalyst, windowCommandEvent } from '@shared/utils/window';
     import { setContextMenu } from '@nativescript-community/ui-menu';
-    import { AnimationDefinition, Application, ApplicationSettings, Color, EventData, Frame, NavigatedData, ObservableArray, Page, ProxyViewContainer, Screen, StackLayout, View } from '@nativescript/core';
+    import {
+        AnimationDefinition,
+        Application,
+        ApplicationSettings,
+        Color,
+        EventData,
+        Frame,
+        NavigatedData,
+        ObservableArray,
+        Page,
+        ProxyViewContainer,
+        Screen,
+        StackLayout,
+        View
+    } from '@nativescript/core';
     import { AndroidActivityBackPressedEventData } from '@nativescript/core/application/application-interfaces';
     import { debounce, throttle } from '@nativescript/core/utils';
     import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
@@ -22,6 +36,7 @@
     import type { AppBar } from '@nativescript-community/ui-appbar';
     import type { MenuItem } from '@nativescript-community/ui-menu';
     import { appIcon } from '~/utils/appIcons';
+    import { selectionMode } from '~/utils/svelte/store';
     import CardsEmpty from '~/components/list/CardsEmpty.svelte';
     import FolderCell from '~/components/list/FolderCell.svelte';
     import { optionsToMenuItems } from '~/utils/appMenu';
@@ -226,6 +241,7 @@
     let showSearch = false;
     let loading = false;
     export let nbSelected = 0;
+    $: selectionMode.set(nbSelected > 0);
     let editingTitle = false;
     export let nbColumns = writable(1);
     export let updateColumns = function (isLandscape, orientationChanged: boolean = false) {
@@ -384,6 +400,7 @@
             } as Item);
 
             if (event.shouldFocus) {
+                needsReloadOnBack = true;
                 collectionView?.nativeElement?.scrollToIndex(insertIndex, false);
             }
 
@@ -616,7 +633,8 @@
             showError(error);
         }
     }
-    // let needsRefreshOnBack = false;
+    // a card added then opened: iOS shows a recycled cell for it when coming back
+    let needsReloadOnBack = false;
     // let shown = false;
     async function onNavigatedTo(e: NavigatedData) {
         // shown = true;
@@ -629,6 +647,9 @@
             }
         } else if (sortOrder.startsWith('useCount')) {
             refresh();
+        } else if (needsReloadOnBack) {
+            needsReloadOnBack = false;
+            collectionView?.nativeElement?.refresh();
         }
     }
     function onNavigatingFrom() {
@@ -1314,7 +1335,7 @@
     }
     function itemTemplateSpanSize(item?: Item) {
         // the item can be gone already: a layout pass still asks for positions of the previous data
-        if (item?.type === 'folders') {
+        if (item?.type === 'folders' || item?.type === 'folder') {
             return $nbColumns;
         }
         return 1;
@@ -1336,19 +1357,37 @@
     $: primaryAction = actions.find((action) => action.primary);
     $: secondaryActions = actions.filter((action) => !action.primary);
     $: plusMenu = secondaryActions.map((action) => ({ title: action.text, icon: appIcon(action.icon), onSelect: action.onTap }));
+    // the main actions of the selection, in order: the rest goes to the more menu
+    function getSelectionActionIds() {
+        if (isTrash) {
+            return ['select_all', 'restore', 'delete_permanently'];
+        }
+        return CARD_APP ? (__IOS__ ? ['share', 'favorite', 'move_folder', 'delete'] : ['favorite', 'move_folder', 'delete']) : ['pdf', 'share', 'delete'];
+    }
+    function splitSelectionOptions(options: OptionType[]) {
+        const toolbarIds = getSelectionActionIds();
+        return {
+            main: toolbarIds.map((id) => options.find((option) => option.id === id)).filter(Boolean),
+            more: options.filter((option) => !toolbarIds.includes(option.id))
+        };
+    }
+    const onSelectionAction = (option: OptionType) => handleSelectionAction({ object: collectionView?.nativeView }, option);
+    // Android: the actions are in the top bar while selecting, iOS: in the bottom toolbar
+    $: selectionOptions = nbSelected > 0 ? splitSelectionOptions(getSelectionToolbarOptions()) : { main: [], more: [] };
+    $: selectionMoreMenu = optionsToMenuItems(selectionOptions.more, onSelectionAction);
     function getSelectionBottomItems(options: OptionType[]) {
-        const toolbarIds = isTrash ? options.map((option) => option.id) : ['pdf', 'share', 'delete'];
-        const toolbarOptions = options.filter((option) => toolbarIds.includes(option.id));
-        const menuOptions = options.filter((option) => !toolbarIds.includes(option.id));
-        const onAction = (option: OptionType) => handleSelectionAction({ object: collectionView?.nativeView }, option);
-        const items: any[] = toolbarOptions.flatMap((option) => [{ spacer: true }, { text: option.name, icon: appIcon(option.id), onTap: () => onAction(option) }]);
-        if (menuOptions.length) {
+        if (__ANDROID__) {
+            return [];
+        }
+        const { main, more } = splitSelectionOptions(options);
+        const items: any[] = main.flatMap((option) => [{ spacer: true }, { text: option.name, icon: appIcon(option.id), onTap: () => onSelectionAction(option) }]);
+        if (more.length) {
             items.push(
                 { spacer: true },
                 {
                     text: lc('more_options'),
                     icon: appIcon('more'),
-                    menu: optionsToMenuItems(menuOptions, onAction)
+                    menu: optionsToMenuItems(more, onSelectionAction)
                 }
             );
         }
@@ -1368,7 +1407,10 @@
         ...(!isTrash && trashEnabled ? [{ title: lc('open_trash'), icon: appIcon('trash'), onSelect: openTrash }] : [])
     ];
     let optionsMenu: MenuItem[];
-    $: optionsMenu = [...(!isTrash && trashEnabled ? [{ title: lc('open_trash'), icon: appIcon('trash'), onSelect: openTrash }] : []), { title: lc('preferences'), icon: appIcon('settings'), onSelect: openPreferences }];
+    $: optionsMenu = [
+        ...(!isTrash && trashEnabled ? [{ title: lc('open_trash'), icon: appIcon('trash'), onSelect: openTrash }] : []),
+        { title: lc('preferences'), icon: appIcon('settings'), onSelect: openPreferences }
+    ];
 
     function onSearchChange(event: { text: string }) {
         const query = event.text?.toLowerCase();
@@ -1403,6 +1445,7 @@
 <appPage bind:this={page} id="documentList" on:navigatedTo={onNavigatedTo} on:navigatingFrom={onNavigatingFrom}>
     <appBar
         bind:this={appBar}
+        android:backgroundColor={nbSelected > 0 ? colorPrimaryContainer : undefined}
         scrollBehavior="lift"
         searchable={!isTrash && !onlyForImport && nbSelected === 0}
         scrollTargetId="documentsCollectionView"
@@ -1452,6 +1495,13 @@
             {/if}
         {:else if __IOS__}
             <appBarItem ios.position="right" prominent={true} text={lc('cancel')} on:tap={unselectAll} />
+        {:else}
+            {#each selectionOptions.main as option (option.id)}
+                <appBarItem icon={appIcon(option.id)} text={option.name} on:tap={() => onSelectionAction(option)} />
+            {/each}
+            {#if selectionMoreMenu.length}
+                <appBarItem icon={appIcon('more')} menu={selectionMoreMenu} />
+            {/if}
         {/if}
     </appBar>
     <gridlayout class="pageContent" rows="auto,auto,*">

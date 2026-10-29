@@ -322,9 +322,11 @@ textfield,
 }
 
 .cardChip {
+    height: 22;
     horizontal-align: left;
+    min-width: 22;
+    padding: 0;
     vertical-align: middle;
-    padding: 4 8;
 }
 
 .cardsEmptyIcon {
