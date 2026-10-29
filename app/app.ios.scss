@@ -87,6 +87,22 @@ button[variant='contained'] {
     text-align: center;
 }
 
-.cardFormSheet {
-    background-color: var(--colorBackground);
+// capsule text fields: the system fill, 12% gray in light and 24% in dark
+textfield[variant='outline'],
+textview[variant='outline'] {
+    background-color: #7878801f;
+    border-radius: 24;
+    padding: 0 16;
+
+    .ns-dark &,
+    .ns-black & {
+        background-color: #7878803d;
+    }
+}
+textfield[variant='outline'] {
+    height: 48;
+}
+textview[variant='outline'] {
+    min-height: 84;
+    padding: 12 16;
 }

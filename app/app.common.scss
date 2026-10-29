@@ -321,9 +321,16 @@ textfield,
     }
 }
 
-// the rows of a form: a label and its value, grouped
-.cardFormGroup {
-    background-color: var(--colorSurfaceContainerLow);
-    border-radius: 16;
-    margin: 0 16 16 16;
+.cardChip {
+    horizontal-align: left;
+    vertical-align: middle;
+    padding: 4 8;
+}
+
+.cardsEmptyIcon {
+    border-radius: 42;
+    height: 84;
+    horizontal-align: center;
+    margin-bottom: 18;
+    width: 84;
 }

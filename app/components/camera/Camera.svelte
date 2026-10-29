@@ -808,7 +808,7 @@
                     accessibilityLabel={startOnCam ? lc('more_options') : lc('camera_settings')}
                     color="white"
                     height={44}
-                    isEnabled={startOnCam || __IOS__ || cameraOpened}
+                    isEnabled={startOnCam || cameraOpened}
                     margin={4}
                     variant={overlayButtonVariant}
                     width={44}

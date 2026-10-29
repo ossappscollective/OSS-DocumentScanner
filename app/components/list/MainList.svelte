@@ -22,6 +22,8 @@
     import type { AppBar } from '@nativescript-community/ui-appbar';
     import type { MenuItem } from '@nativescript-community/ui-menu';
     import { appIcon } from '~/utils/appIcons';
+    import CardsEmpty from '~/components/list/CardsEmpty.svelte';
+    import FolderCell from '~/components/list/FolderCell.svelte';
     import { optionsToMenuItems } from '~/utils/appMenu';
     import EditNameActionBar from '~/components/common/EditNameActionBar.svelte';
     import SelectedIndicator from '~/components/common/SelectedIndicator.svelte';
@@ -131,6 +133,8 @@
 
     let folders: DocFolder[] = [];
     export let collectionViewOptions = {};
+    export let contentPadding = 0;
+    $: folderMargin = Math.max(0, 16 - contentPadding);
     export let documents: ObservableArray<Item> = null;
     export let folderItems: ObservableArray<Item> = null;
     let nbDocuments: number = 0;
@@ -1461,71 +1465,97 @@
             itemTemplateSelector={(item) => itemTemplateSelector(viewStyle, item)}
             items={documents}
             paddingBottom={Math.max($windowInset.bottom, BOTTOM_BUTTON_OFFSET)}
+            paddingLeft={contentPadding}
+            paddingRight={contentPadding}
             row={2}
             spanSize={itemTemplateSpanSize}
             {...collectionViewOptions}
         >
             <Template key="folder" let:item>
-                <ListItemAutoSize
-                    class="card"
-                    columns="auto,*"
-                    fontSize={17}
-                    fontWeight="600"
-                    item={{ ...item, title: folder ? item.folder.name.replace(folder.name + '/', '') : item.folder.name, subtitle: lcp('documents_count', item.folder.count) }}
-                    mainCol={1}
-                    margin={__IOS__ ? '4 16' : '4 8 4 8'}
-                    padding="0 10 0 10"
-                    subtitleFontSize={12}
-                    useExtraPadding={false}
-                    on:longPress={(e) => onItemLongPress(item, e)}
-                    on:tap={() => onItemTap(item)}
-                >
-                    <label
-                        col={0}
-                        color={!$folderBackgroundColor && item.folder.color ? item.folder.color : colorOutline}
-                        fontFamily={$fonts.mdi}
-                        fontSize={24}
-                        padding="0 10 0 0"
-                        text="mdi-folder "
-                        verticalAlignment="center"
+                {#if CARD_APP}
+                    <FolderCell
+                        name={folder ? item.folder.name.replace(folder.name + '/', '') : item.folder.name}
+                        {item}
+                        margin="4 {folderMargin}"
+                        tile={false}
+                        on:longPress={(e) => onItemLongPress(item, e)}
+                        on:tap={() => onItemTap(item)}
                     />
-                    <SelectedIndicator col={0} horizontalAlignment="left" margin="10 0 10 0" selected={item.selected} verticalAlignment="top" />
-                </ListItemAutoSize>
+                {:else}
+                    <ListItemAutoSize
+                        class="card"
+                        columns="auto,*"
+                        fontSize={17}
+                        fontWeight="600"
+                        item={{ ...item, title: folder ? item.folder.name.replace(folder.name + '/', '') : item.folder.name, subtitle: lcp('documents_count', item.folder.count) }}
+                        mainCol={1}
+                        margin={__IOS__ ? '4 16' : '4 8 4 8'}
+                        padding="0 10 0 10"
+                        subtitleFontSize={12}
+                        useExtraPadding={false}
+                        on:longPress={(e) => onItemLongPress(item, e)}
+                        on:tap={() => onItemTap(item)}
+                    >
+                        <label
+                            col={0}
+                            color={!$folderBackgroundColor && item.folder.color ? item.folder.color : colorOutline}
+                            fontFamily={$fonts.mdi}
+                            fontSize={24}
+                            padding="0 10 0 0"
+                            text="mdi-folder "
+                            verticalAlignment="center"
+                        />
+                        <SelectedIndicator col={0} horizontalAlignment="left" margin="10 0 10 0" selected={item.selected} verticalAlignment="top" />
+                    </ListItemAutoSize>
+                {/if}
             </Template>
             <Template key="folders" let:item>
                 <collectionView
                     bind:this={foldersCollectionView}
-                    on:itemLoading={onCollectionViewItemLoading}
-                    colWidth={150}
-                    height={70}
+                    colWidth={CARD_APP ? 140 : 150}
+                    height={CARD_APP ? 62 : 70}
                     items={folderItems}
                     orientation="horizontal"
+                    paddingLeft={CARD_APP ? Math.max(0, folderMargin - 4) : 0}
                     row={1}
                     visibility={folders?.length ? 'visible' : 'collapsed'}
+                    on:itemLoading={onCollectionViewItemLoading}
                 >
                     <Template let:item>
-                        <canvasview
-                            backgroundColor={($folderBackgroundColor && item.folder.color) || isEInk ? 'transparent' : colorSurfaceContainerLow}
-                            borderColor={colorOutline}
-                            borderRadius={12}
-                            borderWidth={__IOS__ ? 0 : 1}
-                            margin={__IOS__ ? '4 16 0 16' : '4 8 0 8'}
-                            rippleColor={colorSurface}
-                            on:tap={() => onItemTap(item)}
-                            on:longPress={(e) => onItemLongPress(item, e)}
-                            on:draw={(e) => onFolderCanvasDraw(item, e)}
-                        >
-                            <SelectedIndicator horizontalAlignment="right" margin={10} selected={item.selected} verticalAlignment="top" />
-                            <!-- <SyncIndicator synced={item.doc._synced} visible={syncEnabled} /> -->
-                            <!-- <PageIndicator horizontalAlignment="right" margin={10} text={item.doc.pages.length} /> -->
-                        </canvasview>
+                        {#if CARD_APP}
+                            <FolderCell
+                                name={folder ? item.folder.name.replace(folder.name + '/', '') : item.folder.name}
+                                {item}
+                                margin={4}
+                                on:longPress={(e) => onItemLongPress(item, e)}
+                                on:tap={() => onItemTap(item)}
+                            />
+                        {:else}
+                            <canvasview
+                                backgroundColor={($folderBackgroundColor && item.folder.color) || isEInk ? 'transparent' : colorSurfaceContainerLow}
+                                borderColor={colorOutline}
+                                borderRadius={12}
+                                borderWidth={__IOS__ ? 0 : 1}
+                                margin={__IOS__ ? '4 16 0 16' : '4 8 0 8'}
+                                rippleColor={colorSurface}
+                                on:tap={() => onItemTap(item)}
+                                on:longPress={(e) => onItemLongPress(item, e)}
+                                on:draw={(e) => onFolderCanvasDraw(item, e)}
+                            >
+                                <SelectedIndicator horizontalAlignment="right" margin={10} selected={item.selected} verticalAlignment="top" />
+                                <!-- <SyncIndicator synced={item.doc._synced} visible={syncEnabled} /> -->
+                                <!-- <PageIndicator horizontalAlignment="right" margin={10} text={item.doc.pages.length} /> -->
+                            </canvasview>
+                        {/if}
                     </Template>
                 </collectionView>
             </Template>
             <slot />
         </collectionView>
         <progress backgroundColor="transparent" busy={true} indeterminate={true} row={2} verticalAlignment="top" visibility={loading ? 'visible' : 'hidden'} />
-        {#if showNoDocument}
+        {#if showNoDocument && CARD_APP && !isTrash && !(lastRefreshFilter && showSearch)}
+            <CardsEmpty marginBottom="15%" onScan={() => actions.find((action) => action.primary)?.onTap()} row={2} verticalAlignment="center" />
+        {:else if showNoDocument}
             <flexlayout
                 flexDirection="column"
                 horizontalAlignment="center"

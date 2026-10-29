@@ -13,10 +13,17 @@ button[variant='contained'] {
     margin-left: 8;
 }
 
-.cardFormGroup {
-    border-radius: 28;
+// a tonal chip: the surface has no glass here
+.cardChip {
+    background-color: var(--colorPrimaryContainer);
+    border-color: transparent;
+    border-radius: 10;
+    border-width: 1;
 }
 
-.cardFormSheet {
-    background-color: var(--colorSurface);
+.cardsEmptyIcon {
+    background-color: var(--colorPrimaryContainer);
+    border-color: transparent;
+    border-radius: 30;
+    border-width: 1;
 }

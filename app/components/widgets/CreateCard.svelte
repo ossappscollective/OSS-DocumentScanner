@@ -5,14 +5,13 @@
     import { FORMATS, getBarcodeFallbackString, qrcodeService } from '~/services/qrcode';
     import { pickColor, showPopoverMenu } from '~/utils/ui';
     import { colors } from '~/variables';
-    import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
     import SheetHeader from '../common/SheetHeader.svelte';
     import SvgView from '../common/SVGView.svelte';
 </script>
 
 <script lang="ts">
-    let { colorOutline, colorPrimary } = $colors;
-    $: ({ colorOutline, colorPrimary } = $colors);
+    let { colorOnBackground, colorOutline, colorPrimary } = $colors;
+    $: ({ colorOnBackground, colorOutline, colorPrimary } = $colors);
 
     export let name = null;
     export let color = colorPrimary;
@@ -21,6 +20,7 @@
     let rootView;
     let svg: string;
     let validCode = true;
+    const tMargin = '4 0 4 0';
 
     function close() {
         rootView.nativeView.bindingContext.closeCallback();
@@ -85,24 +85,34 @@
     }
 </script>
 
-<gesturerootview bind:this={rootView} class="cardFormSheet" rows="auto,auto">
+<gesturerootview bind:this={rootView} rows="auto,auto">
     <SheetHeader doneEnabled={name?.length > 0} doneText={lc('add')} onCancel={close} onDone={add} title={lc('create')} />
-    <stacklayout row={1}>
-        <stacklayout class="cardFormGroup">
-            <ListItemAutoSize columns="auto,*" fontSize={17} item={{ title: lc('name') }} showBottomLine={true}>
-                <textfield col={1} floating={false} hint={lc('name')} text={name} textAlignment="right" variant="none" verticalAlignment="center" on:textChange={(e) => (name = e.value)} />
-            </ListItemAutoSize>
-            <ListItemAutoSize columns="auto,*" fontSize={17} item={{ title: lc('barcode') }} showBottomLine={true}>
-                <textfield col={1} floating={false} hint={lc('barcode')} text={code} textAlignment="right" variant="none" verticalAlignment="center" on:textChange={onCodeTextChange} />
-            </ListItemAutoSize>
-            <ListItemAutoSize fontSize={17} item={{ title: lc('barcode_type'), rightValue: codeFormat.toUpperCase() }} showBottomLine={true} on:tap={(e) => selectBarcodeFormat(e)} />
-            <ListItemAutoSize columns="*,auto" fontSize={17} item={{ title: lc('color') }} on:tap={changeColor}>
-                <absolutelayout backgroundColor={color} borderColor={colorOutline} borderRadius="50%" borderWidth={2} col={1} height={36} width={36} />
-            </ListItemAutoSize>
-        </stacklayout>
-        <gridlayout height={100} margin="0 16 16 16" visibility={code?.length ? 'visible' : 'collapse'}>
-            <SvgView backgroundColor="white" borderRadius={12} item={{ svg }} stretch="aspectFit" />
-            <label fontSize={20} fontWeight="bold" text={lc('invalid')} textAlignment="center" verticalAlignment="center" visibility={!validCode ? 'visible' : 'collapse'} />
-        </gridlayout>
-    </stacklayout>
+    <gridlayout columns="*,auto" padding="0 16 16 16" row={1} rows="auto,auto,auto,auto,auto,auto">
+        <textfield colSpan={2} hint={lc('name')} margin={tMargin} text={name} variant="outline" on:textChange={(e) => (name = e.value)} />
+        <textfield colSpan={2} hint={lc('barcode')} margin={tMargin} row={1} text={code} variant="outline" on:textChange={onCodeTextChange} />
+        <textfield
+            colSpan={2}
+            editable={false}
+            hint={lc('barcode_type')}
+            margin={tMargin}
+            row={2}
+            text={codeFormat}
+            textTransform="uppercase"
+            variant="outline"
+            on:tap={(e) => selectBarcodeFormat(e)}
+        />
+        <label color={colorOnBackground} fontSize={17} margin="8 4" row={3} text={lc('color')} verticalAlignment="center" />
+        <absolutelayout backgroundColor={color} borderColor={colorOutline} borderRadius="50%" borderWidth={2} col={1} height={40} row={3} width={40} on:tap={changeColor} />
+        <SvgView backgroundColor="white" borderRadius={12} colSpan={2} height={100} item={{ svg }} row={4} stretch="aspectFit" visibility={code?.length ? 'visible' : 'collapse'} />
+        <label
+            colSpan={2}
+            fontSize={20}
+            fontWeight="bold"
+            row={4}
+            text={lc('invalid')}
+            textAlignment="center"
+            verticalAlignment="center"
+            visibility={code?.length && !validCode ? 'visible' : 'collapse'}
+        />
+    </gridlayout>
 </gesturerootview>

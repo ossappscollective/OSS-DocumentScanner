@@ -4,7 +4,6 @@
     import { showError } from '@shared/utils/showError';
     import dayjs from 'dayjs';
     import { formatDate } from '~/helpers/locale';
-    import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
     import SheetHeader from '~/components/common/SheetHeader.svelte';
     import { ExtraFieldType } from '~/models/OCRDocument';
     import { pickDate, showPopoverMenu } from '~/utils/ui';
@@ -12,8 +11,8 @@
 </script>
 
 <script lang="ts">
-    let { colorOnSurfaceVariant } = $colors;
-    $: ({ colorOnSurfaceVariant } = $colors);
+    let { colorOnSurfaceVariant, colorOutlineVariant } = $colors;
+    $: ({ colorOnSurfaceVariant, colorOutlineVariant } = $colors);
 
     export let editing = false;
     export let name = null;
@@ -24,6 +23,7 @@
     let currentName = name;
     let currentType = type;
     let rootView;
+    const tMargin = '4 0 4 0';
 
     async function selectDate(e) {
         try {
@@ -128,26 +128,23 @@
     }
 </script>
 
-<gesturerootview bind:this={rootView} class="cardFormSheet" rows="auto,auto">
+<gesturerootview bind:this={rootView} rows="auto,auto">
     <SheetHeader doneText={editing ? lc('edit') : lc('add')} onCancel={close} onDone={add} title={editing ? lc('edit_extra_field') : lc('add_extra_field')} />
-    <stacklayout class="cardFormGroup" row={1}>
-        <ListItemAutoSize columns="auto,*,auto" fontSize={17} item={{ title: lc('name') }} showBottomLine={true}>
-            <textfield col={1} floating={false} hint={lc('name')} text={currentName} textAlignment="right" variant="none" verticalAlignment="center" on:textChange={(e) => (currentName = e.value)} />
-            <uibutton class="icon-btn" col={2} color={colorOnSurfaceVariant} text="mdi-menu-down" variant="text" verticalAlignment="middle" on:tap={selecteTemplateName} />
-        </ListItemAutoSize>
-        <ListItemAutoSize fontSize={17} item={{ title: lc('type'), rightValue: lc(currentType) }} showBottomLine={true} on:tap={(e) => selectType(e)} />
-        <ListItemAutoSize columns="auto,*" fontSize={17} item={{ title: lc('value') }}>
-            <textview
-                col={1}
-                editable={currentType !== ExtraFieldType.Date}
-                hint={lc('value')}
-                keyboardType={getKeyboardType(currentType)}
-                text={currentType === ExtraFieldType.Date ? formatDate(currentTime, 'LL') : currentValue}
-                textAlignment="right"
-                variant="none"
-                on:textChange={(e) => (currentValue = e.value)}
-                on:tap={(e) => selectDate(e)}
-            />
-        </ListItemAutoSize>
+    <stacklayout padding="0 16 16 16" row={1}>
+        <gridlayout>
+            <textfield hint={lc('name')} margin={tMargin} paddingLeft={60} text={currentName} variant="outline" on:textChange={(e) => (currentName = e.value)} />
+            <uibutton class="icon-btn" color={colorOnSurfaceVariant} horizontalAlignment="left" text="mdi-menu-down" variant="text" verticalAlignment="middle" on:tap={selecteTemplateName} />
+        </gridlayout>
+        <textfield editable={false} hint={lc('type')} margin={tMargin} text={lc(currentType)} textTransform="uppercase" variant="outline" on:tap={(e) => selectType(e)} />
+        <textview
+            editable={currentType !== ExtraFieldType.Date}
+            hint={lc('value')}
+            keyboardType={getKeyboardType(currentType)}
+            margin={tMargin}
+            text={currentType === ExtraFieldType.Date ? formatDate(currentTime, 'LL') : currentValue}
+            variant="outline"
+            on:textChange={(e) => (currentValue = e.value)}
+            on:tap={(e) => selectDate(e)}
+        />
     </stacklayout>
 </gesturerootview>
