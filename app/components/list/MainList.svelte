@@ -5,6 +5,7 @@
     import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { Img } from '@nativescript-community/ui-image';
     import { createNativeAttributedString } from '@nativescript-community/ui-label';
+    import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { confirm, prompt } from '@nativescript-community/ui-dialogs';
     import { VerticalPosition } from '@nativescript-community/ui-popover';
     import { isCatalyst, windowCommandEvent } from '@shared/utils/window';
@@ -86,7 +87,8 @@
         SETTINGS_NB_COLUMNS_LANDSCAPE,
         SETTINGS_SORT_ORDER,
         SETTINGS_TRASH_ENABLED,
-        SETTINGS_VIEW_STYLE
+        SETTINGS_VIEW_STYLE,
+        SHEET_SOFT_INPUT_MODE
     } from '~/utils/constants';
     import {
         deleteDocumentsWithConfirm,
@@ -99,7 +101,6 @@
         onAndroidNewItent,
         onBackButton,
         pickFolderColor,
-        promptForFolderName,
         showImagePopoverMenu,
         showPDFPopoverMenu,
         showPopoverMenu,
@@ -1329,16 +1330,20 @@
                     break;
                 case 'move_folder':
                     const selected = await getSelectedDocuments();
-                    let defaultFolder;
-                    DEV_LOG && console.log('move_folder', folders);
-                    const folderName = await promptForFolderName(
-                        defaultFolder,
-                        Object.values(folders).filter((g) => g.name !== 'none')
-                    );
+                    const MoveToFolderSheet = (await import('~/components/common/MoveToFolderSheet.svelte')).default;
+                    const folderName = await showBottomSheet({
+                        parent: this,
+                        view: MoveToFolderSheet,
+                        windowSoftInputMode: SHEET_SOFT_INPUT_MODE,
+                        ignoreTopSafeArea: true,
+                        props: {
+                            folders: (await documentsService.folderRepository.findAllFolders()).filter((f) => f.name !== 'none'),
+                            currentFolder: folder
+                        }
+                    });
                     if (typeof folderName === 'string') {
                         for (let index = 0; index < selected.length; index++) {
-                            const doc = selected[index];
-                            await doc.setFolder({ folderName: folderName === 'none' ? undefined : folderName });
+                            await selected[index].setFolder({ folderName: folderName || undefined });
                         }
                         unselectAll();
                     }

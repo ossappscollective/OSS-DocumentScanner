@@ -2183,28 +2183,6 @@ export function getNameFormatHTMLArgs() {
         `<a href="https://day.js.org/docs/en/display/format">${l('here')}</a>`
     ];
 }
-export async function promptForFolderName(defaultGroup: string, groups?: DocFolder[]): Promise<string> {
-    const TagView = (await import('~/components/common/FolderView.svelte')).default;
-    const componentInstanceInfo = resolveComponentElement(TagView, { groups, defaultGroup });
-    const modalView: View = componentInstanceInfo.element.nativeView;
-    const result = await confirm({
-        title: lc('move_folder'),
-        message: lc('move_folder_desc'),
-        view: modalView,
-        okButtonText: lc('move'),
-        cancelButtonText: lc('cancel')
-    });
-    const currentFolderText = componentInstanceInfo.viewInstance['currentFolderText'];
-    try {
-        modalView._tearDownUI();
-        componentInstanceInfo.viewInstance.$destroy(); // don't let an exception in destroy kill the promise callback
-    } catch (error) {}
-    if (result) {
-        return currentFolderText || 'none';
-    }
-    return null;
-}
-
 export async function showCustomAlert<T>(component, options, props = {}): Promise<any> {
     const componentInstanceInfo = resolveComponentElement(component, props);
     const modalView: View = componentInstanceInfo.element.nativeView;
