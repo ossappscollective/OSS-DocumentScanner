@@ -426,7 +426,6 @@
             } as Item);
 
             if (event.shouldFocus) {
-                needsReloadOnBack = true;
                 collectionView?.nativeElement?.scrollToIndex(insertIndex, false);
             }
 
@@ -659,8 +658,6 @@
             showError(error);
         }
     }
-    // a card added then opened: iOS shows a recycled cell for it when coming back
-    let needsReloadOnBack = false;
     // let shown = false;
     async function onNavigatedTo(e: NavigatedData) {
         // shown = true;
@@ -673,9 +670,6 @@
             }
         } else if (sortOrder.startsWith('useCount')) {
             refresh();
-        } else if (needsReloadOnBack) {
-            needsReloadOnBack = false;
-            collectionView?.nativeElement?.refresh();
         }
     }
     function onNavigatingFrom() {
