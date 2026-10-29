@@ -200,7 +200,7 @@
             case 'cardholder':
                 return itemHeight * (isLandscape ? 0.6 : 0.4);
             case 'list':
-                return isLandscape ? itemHeight : 72;
+                return isLandscape ? itemHeight : 74;
             default:
                 return itemHeight;
         }
@@ -472,7 +472,7 @@
         />
     </Template>
 
-    <stacklayout bind:this={fabHolder} slot="fab" class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal">
+    <stacklayout bind:this={fabHolder} slot="fab" class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)}>
         <uibutton class="addFab" {...{ src: appIcon('add') }} variant="contained" verticalAlignment="center" on:tap={throttle(() => onAddButton(), 500)} />
         {#if $hasCamera}
             <!-- the button puts no space between its icon and its text -->

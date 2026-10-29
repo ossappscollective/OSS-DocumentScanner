@@ -25,8 +25,8 @@
 </script>
 
 <script lang="ts">
-    let { colorBackground, colorOnSurface, colorOnSurfaceVariant, colorPrimary, colorSurfaceContainerLow } = $colors;
-    $: ({ colorBackground, colorOnSurface, colorOnSurfaceVariant, colorPrimary, colorSurfaceContainerLow } = $colors);
+    let { colorBackground, colorOnSurface, colorOnSurfaceVariant, colorPrimary, colorSecondaryContainer, colorSurfaceContainerLow } = $colors;
+    $: ({ colorBackground, colorOnSurface, colorOnSurfaceVariant, colorPrimary, colorSecondaryContainer, colorSurfaceContainerLow } = $colors);
 
     export let collectionView: NativeViewElementNode<CollectionViewWithSwipeMenu>;
     export let itemWidth: number;
@@ -125,18 +125,23 @@
     // the default name is a timestamp: a tile only shows its date
     $: autoName = !item.doc.name || /\d+:\d+:\d+/.test(item.doc.name);
     $: label = autoName ? dayjs(item.doc.createdDate).format('ll') : item.doc.name;
+    $: infoSegments = [
+        ...(item.doc.pages.length > 1 ? [{ icon: appIcon('pages'), text: item.doc.pages.length + '' }] : []),
+        ...(hasCode ? [{ icon: appIcon('qrcode') }] : []),
+        ...(item.doc.favorite === 1 ? [{ icon: appIcon('favorite_on') }] : [])
+    ];
     $: showLabel = !hasImage || !autoName || alwaysShowNames;
     $: cardColor = isEInk ? null : pickCardColor(item.doc.extra?.color, [page?.extra?.color, ...(page?.colors ?? [])]);
     $: tile = getTileColors(cardColor, colorPrimary);
-    $: subtitle = pkPassCell ? lc('wallet_pass') : hasImage ? lcp('photos_count', item.doc.pages.length) : hasCode ? '' : lc('details_only');
+    $: subtitle = pkPassCell ? lc('wallet_pass') : hasImage ? lcp('photos_count', item.doc.pages.length) : '';
 
     function getItemHolderParams(layout, item: Item, nbColumns, tileFill: string, selected: boolean) {
         const imagePage = item.doc.pages[0];
         const result = {
             backgroundColor: isEInk ? null : imagePage?.imagePath ? new Color(imagePage.extra?.color ?? imagePage.colors?.[1] ?? colorBackground) : new Color(tileFill),
             borderRadius: tileRadius,
-            scaleX: selected ? 0.95 : 1,
-            scaleY: selected ? 0.95 : 1
+            scaleX: selected && layout === 'columns' ? 0.95 : 1,
+            scaleY: selected && layout === 'columns' ? 0.95 : 1
         };
         switch (layout) {
             case 'cardholder':
@@ -221,7 +226,7 @@
 <gridlayout {height} width="100%" {...$$restProps}>
     {#if layout === 'list'}
         <gridlayout
-            backgroundColor={isEInk ? 'transparent' : colorSurfaceContainerLow}
+            backgroundColor={isEInk ? 'transparent' : item.selected ? colorSecondaryContainer : colorSurfaceContainerLow}
             borderRadius={__IOS__ ? 14 : 6}
             columns="auto,*,auto,auto,auto"
             margin="1 16"
@@ -232,24 +237,24 @@
         >
             <gridlayout
                 backgroundColor={pkPassCell ? (page?.pkpass?.passData?.backgroundColor ?? tile.fill) : hasImage ? null : tile.fill}
-                borderRadius={10}
-                height={56}
+                borderRadius={11}
+                height={60}
                 verticalAlignment="center"
-                width={88}
+                width={96}
             >
                 {#if hasImage}
-                    <RotableImageView {...getItemRotableImageParams(item)} borderRadius={10} decodeWidth={Utils.layout.toDevicePixels(88)} />
+                    <RotableImageView {...getItemRotableImageParams(item)} borderRadius={11} decodeWidth={Utils.layout.toDevicePixels(96)} />
                 {:else if !pkPassCell}
                     <label color={tile.text} fontSize={12} fontWeight="bold" lineBreak="end" margin="4 6" maxLines={3} text={label} textAlignment="center" verticalAlignment="center" />
                 {/if}
             </gridlayout>
             <label col={1} color={colorOnSurface} lineBreak="end" margin="0 12" textWrap={true} verticalAlignment="center">
-                <span fontSize={17} fontWeight="600" text={item.doc.name || label} />
-                <span color={colorOnSurfaceVariant} fontSize={13} text={subtitle ? '\n' + subtitle : ''} />
+                <span fontSize={__IOS__ ? 17 : 16} fontWeight={__IOS__ ? '600' : '500'} text={item.doc.name || label} />
+                <span color={colorOnSurfaceVariant} fontSize={14} text={subtitle ? '\n' + subtitle : ''} />
             </label>
             <CardIcon col={2} color={colorOnSurfaceVariant} marginRight={8} size={16} src={appIcon('qrcode')} verticalAlignment="center" visibility={hasCode ? 'visible' : 'collapsed'} />
             <CardIcon col={3} color={colorPrimary} marginRight={8} size={16} src={appIcon('favorite_on')} verticalAlignment="center" visibility={item.doc.favorite === 1 ? 'visible' : 'collapsed'} />
-            <CardIcon col={4} color={colorOnSurfaceVariant} size={16} src={appIcon('chevron')} verticalAlignment="center" visibility={$selectionMode ? 'collapsed' : 'visible'} />
+            <CardIcon col={4} color={colorOnSurfaceVariant} size={16} src={appIcon('chevron')} verticalAlignment="center" visibility={$selectionMode || __ANDROID__ ? 'collapsed' : 'visible'} />
             <SelectedIndicator margin="12 0 0 12" selected={item.selected} />
         </gridlayout>
     {:else}
@@ -268,10 +273,9 @@
                         verticalAlignment={stacked ? 'top' : 'bottom'}
                     />
                 {/if}
-                <stacklayout horizontalAlignment="right" margin={8} marginRight={stacked && item.doc.favorite === 1 ? 38 : 8} orientation="horizontal" verticalAlignment={stacked ? 'top' : 'bottom'}>
-                    <CardChip icon={appIcon('pages')} marginRight={hasCode ? 4 : 0} text={item.doc.pages.length + ''} visibility={item.doc.pages.length > 1 ? 'visible' : 'collapsed'} />
-                    <CardChip icon={appIcon('qrcode')} visibility={hasCode ? 'visible' : 'collapsed'} />
-                </stacklayout>
+                {#if infoSegments.length}
+                    <CardChip horizontalAlignment="right" margin={8} segments={infoSegments} verticalAlignment="top" />
+                {/if}
             {:else}
                 <label
                     color={tile.text}
@@ -291,16 +295,19 @@
                     color={tile.text}
                     horizontalAlignment="right"
                     margin={10}
+                    marginRight={stacked && item.doc.favorite === 1 ? 40 : 10}
                     opacity={0.75}
                     size={18}
                     src={appIcon('qrcode')}
                     verticalAlignment={stacked ? 'top' : 'bottom'}
                     visibility={hasCode ? 'visible' : 'collapsed'}
                 />
+                {#if item.doc.favorite === 1}
+                    <CardChip horizontalAlignment="right" icon={appIcon('favorite_on')} margin={8} verticalAlignment="top" />
+                {/if}
             {/if}
             <SelectedIndicator selected={item.selected} />
             <SyncIndicator {syncColors} verticalAlignment="top" visible={syncEnabled} />
-            <CardChip horizontalAlignment="right" icon={appIcon('favorite_on')} margin={8} verticalAlignment="top" visibility={item.doc.favorite === 1 ? 'visible' : 'collapsed'} />
         </gridlayout>
         <!-- <uibutton prop:rightDrawer class="mdi" fontSize={40} height={60} text="mdi-fullscreen" variant="text" verticalAlignment="center" width={60} on:tap={() => showImages(item)} />
 </swipemenu> -->
