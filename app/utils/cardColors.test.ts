@@ -69,21 +69,12 @@ describe('pickCardColor', () => {
 });
 
 describe('getTileColors', () => {
-    it('keeps the card color on iOS with the most readable text', () => {
-        expect(getTileColors('#0a60ff', false, false, '#000000')).toEqual({ fill: '#0a60ff', text: '#ffffff' });
-        expect(getTileColors('#ffee88', false, false, '#000000')).toEqual({ fill: '#ffee88', text: '#000000' });
-    });
-
-    it('uses a quiet tone of the hue on Android, light on a light page and dark on a dark one', () => {
-        const light = getTileColors('#0a60ff', false, true, '#000000');
-        const dark = getTileColors('#0a60ff', true, true, '#000000');
-        expect(new Color(light.fill).isLight()).toBe(true);
-        expect(new Color(dark.fill).isLight()).toBe(false);
-        expect(contrastRatio(rgb(light.text), rgb(light.fill))).toBeGreaterThanOrEqual(4.5);
-        expect(contrastRatio(rgb(dark.text), rgb(dark.fill))).toBeGreaterThanOrEqual(4.5);
+    it('keeps the card color with the most readable text', () => {
+        expect(getTileColors('#0a60ff', '#000000')).toEqual({ fill: '#0a60ff', text: '#ffffff' });
+        expect(getTileColors('#ffee88', '#000000')).toEqual({ fill: '#ffee88', text: '#000000' });
     });
 
     it('falls back when the card has no usable color', () => {
-        expect(getTileColors(undefined, false, false, '#006a65').fill).toBe('#006a65');
+        expect(getTileColors(undefined, '#006a65').fill).toBe('#006a65');
     });
 });

@@ -91,50 +91,14 @@ export interface TileColors {
     text: string;
 }
 
-function toHsl(color: Color) {
-    const red = color.r / 255;
-    const green = color.g / 255;
-    const blue = color.b / 255;
-    const max = Math.max(red, green, blue);
-    const min = Math.min(red, green, blue);
-    const delta = max - min;
-    const lightness = (max + min) / 2;
-    if (delta === 0) {
-        return { hue: 0, saturation: 0, lightness };
-    }
-    const saturation = delta / (1 - Math.abs(2 * lightness - 1));
-    let hue: number;
-    if (max === red) {
-        hue = ((green - blue) / delta + 6) % 6;
-    } else if (max === green) {
-        hue = (blue - red) / delta + 2;
-    } else {
-        hue = (red - green) / delta + 4;
-    }
-    return { hue: hue * 60, saturation, lightness };
-}
-
-function fromHsl(hue: number, saturation: number, lightness: number) {
-    const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
-    const channel = (offset: number) => {
-        const position = (offset + hue / 30) % 12;
-        return Math.round(255 * (lightness - (chroma / 2) * Math.max(-1, Math.min(position - 3, 9 - position, 1))));
-    };
-    return toHex(new Color(255, channel(0), channel(8), channel(4)));
-}
-
 function getReadableText(background: Color) {
     return contrastRatio(new Color('#ffffff'), background) >= contrastRatio(new Color('#000000'), background) ? '#ffffff' : '#000000';
 }
 
 /**
- * The look of a tile with no photo: the card color itself with the text color of best contrast (iOS), or a quiet tone of its hue (Android: light 84, dark 30, as the plate of the card view)
+ * The look of a tile with no photo: the card color itself with the text color of best contrast
  */
-export function getTileColors(color: string | null | undefined, dark: boolean, tonal: boolean, fallback: string): TileColors {
+export function getTileColors(color: string | null | undefined, fallback: string): TileColors {
     const base = toColor(color) ?? toColor(fallback) ?? new Color('#006a65');
-    if (!tonal) {
-        return { fill: toHex(base), text: getReadableText(base) };
-    }
-    const { hue, saturation } = toHsl(base);
-    return { fill: fromHsl(hue, Math.min(saturation, 0.55), dark ? 0.3 : 0.84), text: fromHsl(hue, Math.min(saturation, 0.4), dark ? 0.92 : 0.12) };
+    return { fill: toHex(base), text: getReadableText(base) };
 }

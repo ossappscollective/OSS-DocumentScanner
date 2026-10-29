@@ -12,7 +12,7 @@
     import CardChip from '~/components/common/CardChip.svelte';
     import { Item } from '~/components/list/MainList.svelte';
     import PKPassCardCell from '~/components/pkpass/PKPassCardCell.svelte';
-    import { isDarkTheme, isEInk } from '~/helpers/theme';
+    import { isEInk } from '~/helpers/theme';
     import { lc, lcp } from '~/helpers/locale';
     import { appIcon } from '~/utils/appIcons';
     import { getTileColors, pickCardColor } from '~/utils/cardColors';
@@ -126,7 +126,7 @@
     $: label = autoName ? dayjs(item.doc.createdDate).format('ll') : item.doc.name;
     $: showLabel = !hasImage || !autoName || alwaysShowNames;
     $: cardColor = isEInk ? null : pickCardColor(item.doc.extra?.color, [page?.extra?.color, ...(page?.colors ?? [])]);
-    $: tile = getTileColors(cardColor, isDarkTheme(), __ANDROID__, colorPrimary);
+    $: tile = getTileColors(cardColor, colorPrimary);
     $: subtitle = pkPassCell ? lc('wallet_pass') : [hasImage ? lcp('photos_count', item.doc.pages.length) : null, hasCode ? lc('code') : null].filter(Boolean).join(' · ') || lc('details_only');
 
     function getItemHolderParams(layout, item: Item, nbColumns, tileFill: string, selected: boolean) {
