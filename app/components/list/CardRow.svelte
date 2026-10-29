@@ -69,7 +69,6 @@
                 </stacklayout>
             </gridlayout>
             <CardIcon col={2} color={colorPrimary} marginRight={8} size={16} src={appIcon('favorite_on')} verticalAlignment="center" visibility={item.doc.favorite === 1 ? 'visible' : 'collapsed'} />
-            <CardIcon col={3} color={colorOnSurfaceVariant} size={16} src={appIcon('chevron')} verticalAlignment="center" visibility={$selectionMode || __ANDROID__ ? 'collapsed' : 'visible'} />
         </gridlayout>
         <RowSelectionMarker {selectionMode} selected={item.selected} />
         <gridlayout
