@@ -181,7 +181,7 @@
                 <gridlayout class="extraFieldRow" on:tap={() => editField(item.field)}>
                     <stacklayout verticalAlignment="center">
                         <label color={colorOnSurfaceVariant} fontSize={12} text={item.field.name} />
-                        <label color={colorOnSurface} fontSize={17} lineBreak="end" maxLines={1} text={formatValue(item.field.extra) + ''} />
+                        <label color={colorOnSurface} fontSize={17} text={formatValue(item.field.extra) + ''} textWrap={true} />
                     </stacklayout>
                 </gridlayout>
                 <uibutton
