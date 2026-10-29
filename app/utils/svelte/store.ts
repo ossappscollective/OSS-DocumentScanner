@@ -7,6 +7,3 @@ export function notifyWhenChanges<T>(store: Writable<T>, callback) {
         else init = true;
     });
 }
-
-/** a list has selected items: its rows hide their chevron (set by the list, read by its cells) */
-export const selectionMode = writable(false);

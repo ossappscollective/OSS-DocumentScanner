@@ -32,11 +32,11 @@
     import { showError } from '@shared/utils/showError';
     import { closeModal, fade, goBack, navigate } from '@shared/utils/svelte/ui';
     import { onDestroy, onMount } from 'svelte';
-    import { writable } from 'svelte/store';
+    import { type Writable, writable } from 'svelte/store';
     import type { AppBar } from '@nativescript-community/ui-appbar';
     import type { MenuItem } from '@nativescript-community/ui-menu';
     import { appIcon } from '~/utils/appIcons';
-    import { selectionMode } from '~/utils/svelte/store';
+    import { type RowPosition, updateRowPositions } from '~/utils/groupedRows';
     import CardsEmpty from '~/components/list/CardsEmpty.svelte';
     import FolderCell from '~/components/list/FolderCell.svelte';
     import { optionsToMenuItems } from '~/utils/appMenu';
@@ -116,6 +116,7 @@
         folder?: DocFolder;
         selected: boolean;
         startingSide?: string;
+        position?: RowPosition;
     }
 </script>
 
@@ -241,7 +242,15 @@
     let showSearch = false;
     let loading = false;
     export let nbSelected = 0;
+    // read by the cells, which are not children of this component: the list of the current page, not a global
+    export let selectionMode: Writable<boolean> = writable(false);
     $: selectionMode.set(nbSelected > 0);
+    // iOS cells do not lay out again when their content changes: the visible ones are bound again to leave or enter selection mode
+    let wasSelecting = false;
+    $: if (__IOS__ && wasSelecting !== nbSelected > 0) {
+        wasSelecting = nbSelected > 0;
+        setTimeout(() => refreshVisibleItems());
+    }
     let editingTitle = false;
     export let nbColumns = writable(1);
     export let updateColumns = function (isLandscape, orientationChanged: boolean = false) {
@@ -261,6 +270,16 @@
             opacity: nbSelected > 0 ? 0 : 1,
             duration: 200
         });
+    }
+
+    // rows are grouped: the first and last of a run have the outer corners. After an item is inserted or removed in place at `index`,
+    // only the rows next to it can change place: those are bound again, the others are left alone
+    function updatePositions(index?: number) {
+        if (documents) {
+            const getItem = (position: number) => documents.getItem(position);
+            const changed = index === undefined ? updateRowPositions(getItem, documents.length) : updateRowPositions(getItem, documents.length, index - 1, index + 1);
+            changed.forEach((position) => documents.setItem(position, documents.getItem(position)));
+        }
     }
 
     export async function refresh(force = true, filter?: string) {
@@ -285,17 +304,11 @@
                 r = await documentsService.documentRepository.findDocuments({ filter, folder, omitThoseWithFolders: true, order: sortOrder });
                 await refreshFolders(filter);
             }
-            documents = new ObservableArray(
-                (!isTrash && folderItems.length ? (folderViewStyle === 'vertical' ? [...folderItems] : [{ type: 'folders', selected: false }]) : []).concat(
-                    r.map(
-                        (doc) =>
-                            ({
-                                doc,
-                                selected: false
-                            }) as any
-                    )
-                )
+            const items: Item[] = (!isTrash && folderItems.length ? (folderViewStyle === 'vertical' ? [...folderItems] : [{ type: 'folders', selected: false }]) : []).concat(
+                r.map((doc) => ({ doc, selected: false }) as Item)
             );
+            updateRowPositions((index) => items[index], items.length);
+            documents = new ObservableArray(items);
             // DEV_LOG &&
             //     console.log(
             //         'documents',
@@ -346,6 +359,7 @@
                         documents.splice(0, documents.length, ...folderItems);
                     }
                 }
+                updatePositions();
             }
         } catch (error) {
             showError(error);
@@ -387,6 +401,7 @@
             const existingIndex = documents.findIndex((d) => d.doc?.id === event.doc.id);
             if (existingIndex !== -1) {
                 documents.splice(existingIndex, 1);
+                updatePositions(existingIndex);
             }
 
             // Find where documents start (works for both vertical/horizontal folder styles)
@@ -398,6 +413,7 @@
                 doc: event.doc,
                 selected: false
             } as Item);
+            updatePositions(insertIndex);
 
             if (event.shouldFocus) {
                 collectionView?.nativeElement?.scrollToIndex(insertIndex, false);
@@ -443,6 +459,7 @@
         if (index >= 0) {
             if (folder && doc.folders && doc.folders.indexOf(folder.id) === -1) {
                 documents.splice(index, 1);
+                updatePositions(index);
             } else {
                 const item = documents?.getItem(index);
                 if (item) {
@@ -486,6 +503,7 @@
             const index = documents.findIndex((item) => item.doc && item.doc.id === id);
             if (index !== -1) {
                 documents.splice(index, 1);
+                updatePositions(index);
                 if (nbSelected > 0) {
                     nbSelected = Math.max(nbSelected - 1, 0);
                 }
@@ -1518,9 +1536,11 @@
             <Template key="folder" let:item>
                 {#if CARD_APP}
                     <FolderCell
+                        {selectionMode}
                         name={folder ? item.folder.name.replace(folder.name + '/', '') : item.folder.name}
                         {item}
-                        margin="4 {folderMargin}"
+                        marginLeft={folderMargin}
+                        marginRight={folderMargin}
                         tile={false}
                         on:longPress={(e) => onItemLongPress(item, e)}
                         on:tap={() => onItemTap(item)}
@@ -1568,6 +1588,7 @@
                     <Template let:item>
                         {#if CARD_APP}
                             <FolderCell
+                                {selectionMode}
                                 name={folder ? item.folder.name.replace(folder.name + '/', '') : item.folder.name}
                                 {item}
                                 margin={4}
