@@ -1,6 +1,6 @@
 import type { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
+import type { Readable } from 'svelte/store';
 import { CoreTypes, type TextBase, type View } from '@nativescript/core';
-import { selectionMode } from '~/utils/svelte/store';
 
 /** css has no `:focus`: the field gets the `focused` pseudo class while it has the focus */
 export function focusState(node: NativeViewElementNode<TextBase>) {
@@ -17,7 +17,7 @@ export function focusState(node: NativeViewElementNode<TextBase>) {
 }
 
 /** the row is laid out for the current selection mode: when it changes, the content slides from where it was (`shift`) instead of jumping */
-export function selectionTransition(node: NativeViewElementNode<View>, { shift = 36 } = {}) {
+export function selectionTransition(node: NativeViewElementNode<View>, { selectionMode, shift = 36 }: { selectionMode: Readable<boolean>; shift?: number }) {
     let initialized = false;
     const unsubscribe = selectionMode.subscribe((selecting) => {
         const view = node.nativeView;
