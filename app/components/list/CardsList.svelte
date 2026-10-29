@@ -22,18 +22,21 @@
         SETTINGS_NB_COLUMNS,
         SETTINGS_NB_COLUMNS_LANDSCAPE
     } from '~/utils/constants';
+    import { appIcon } from '~/utils/appIcons';
     import { documentHasPKPassData } from '~/utils/pkpass';
     import { goToDocumentAfterScan, importImageFromCamera } from '~/utils/ui';
     import { colors, fontScale, hasCamera, isLandscape, screenHeightDips, screenWidthDips, windowInset } from '~/variables';
     import MainList, { Item } from './MainList.svelte';
 
     const textPaint = new Paint();
-    const rowMargin = 8;
+    // 16 from the screen edge to a tile, 12 between two tiles
+    const rowMargin = 6;
+    const columnsPadding = 10;
 </script>
 
 <script lang="ts">
-    let { colorOnBackground, colorOnPrimary, colorOnSurfaceVariant, colorSurface } = $colors;
-    $: ({ colorOnBackground, colorOnPrimary, colorOnSurfaceVariant, colorSurface } = $colors);
+    let { colorOnBackground, colorOnPrimary, colorOnPrimaryContainer, colorOnSurfaceVariant, colorPrimaryContainer, colorSurface } = $colors;
+    $: ({ colorOnBackground, colorOnPrimary, colorOnPrimaryContainer, colorOnSurfaceVariant, colorPrimaryContainer, colorSurface } = $colors);
     let fabHolder: NativeViewElementNode<StackLayout>;
     let collectionView: NativeViewElementNode<CollectionViewWithSwipeMenu>;
     let viewStyle: string;
@@ -57,12 +60,13 @@
     $: condensed = viewStyle === 'condensed';
 
     const title = lc('cards');
-    let itemWidth = (($isLandscape ? screenHeightDips : screenWidthDips) - $windowInset.left - $windowInset.right) / $nbColumns - 2 * rowMargin;
+    let itemWidth = (($isLandscape ? screenHeightDips : screenWidthDips) - $windowInset.left - $windowInset.right - 2 * columnsPadding) / $nbColumns - 2 * rowMargin;
     const itemHeight = writable(itemWidth * CARD_RATIO + 2 * rowMargin);
 
     let folderItems: ObservableArray<Item>;
     let documents: ObservableArray<Item>;
-    $: itemWidth = (($isLandscape ? screenHeightDips : screenWidthDips) - $windowInset.left - $windowInset.right) / $nbColumns - 2 * rowMargin;
+    $: contentPadding = viewStyle === 'columns' ? columnsPadding : 0;
+    $: itemWidth = (($isLandscape ? screenHeightDips : screenWidthDips) - $windowInset.left - $windowInset.right - 2 * contentPadding) / $nbColumns - 2 * rowMargin;
     $: {
         $itemHeight = itemWidth * CARD_RATIO + 2 * rowMargin;
         refreshCollectionView?.();
@@ -193,6 +197,8 @@
         switch (viewStyle) {
             case 'cardholder':
                 return itemHeight * (isLandscape ? 0.6 : 0.4);
+            case 'list':
+                return isLandscape ? itemHeight : 68;
             default:
                 return itemHeight;
         }
@@ -289,6 +295,7 @@
         itemOverlap: getItemOverlap(viewStyle, $itemHeight),
         'on:swipeMenuClose': (e) => handleTouchAction(e.index, { action: 'up' })
     }}
+    {contentPadding}
     folderViewStyles={{
         horizontal: { name: lc('horizontal') },
         vertical: { name: lc('vertical') }
@@ -321,6 +328,7 @@
     <Template key="cardholder" let:item>
         <absolutelayout height={itemRowHeight}>
             <CardListCell
+                {alwaysShowNames}
                 {collectionView}
                 height={$itemHeight}
                 {item}
@@ -334,7 +342,6 @@
                 on:tap={() => onItemTap(item)}
                 on:longPress={(e) => onItemLongPress(item, e)}
             />
-            <absolutelayout boxShadow="0 0 8 rgba(1, 0, 0, 1)" height={3} top={itemRowHeight} width="100%" />
         </absolutelayout>
     </Template>
     <Template key="full" let:item>
@@ -406,7 +413,6 @@
                 on:tap={() => onItemTap(item)}
                 on:longPress={(e) => onItemLongPress(item, e)}
             />
-            <absolutelayout boxShadow="0 0 8 rgba(1, 0, 0, 1)" height={3} top={itemRowHeight} width="100%" />
         </absolutelayout>
     </Template>
     <Template key="pkpass_full" let:item>
@@ -467,7 +473,24 @@
     <stacklayout bind:this={fabHolder} slot="fab" class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal">
         <uibutton class={$hasCamera ? 'small-fab' : 'fab'} horizontalAlignment="center" text="mdi-plus" verticalAlignment="center" on:tap={throttle(() => onAddButton(), 500)} />
         {#if $hasCamera}
-            <uibutton class="fab" text="mdi-camera" verticalAlignment="center" on:tap={throttle(() => onStartCam(), 500)} on:longPress={() => onStartCam(true)} />
+            <uibutton
+                backgroundColor={colorPrimaryContainer}
+                borderRadius={18}
+                color={colorOnPrimaryContainer}
+                elevation={3}
+                fontSize={15}
+                fontWeight="600"
+                height={56}
+                margin={16}
+                padding="0 20"
+                rippleColor={colorPrimaryContainer}
+                {...{ src: appIcon('camera') }}
+                text={lc('scan')}
+                variant="contained"
+                verticalAlignment="center"
+                on:tap={throttle(() => onStartCam(), 500)}
+                on:longPress={() => onStartCam(true)}
+            />
         {/if}
     </stacklayout>
 

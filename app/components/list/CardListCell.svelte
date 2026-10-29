@@ -8,19 +8,24 @@
     import RotableImageView from '~/components/common/RotableImageView.svelte';
     import SelectedIndicator from '~/components/common/SelectedIndicator.svelte';
     import SyncIndicator from '~/components/common/SyncIndicator.svelte';
+    import CardIcon from '~/components/common/CardIcon.svelte';
+    import CardChip from '~/components/common/CardChip.svelte';
     import { Item } from '~/components/list/MainList.svelte';
     import PKPassCardCell from '~/components/pkpass/PKPassCardCell.svelte';
-    import { isEInk } from '~/helpers/theme';
+    import { isDarkTheme, isEInk } from '~/helpers/theme';
+    import { lc, lcp } from '~/helpers/locale';
+    import { appIcon } from '~/utils/appIcons';
+    import { getTileColors, pickCardColor } from '~/utils/cardColors';
     import { CARD_RATIO } from '~/utils/constants';
     import { colors } from '~/variables';
+    import dayjs from 'dayjs';
     const rowMargin = 8;
+    const tileRadius = __IOS__ ? 18 : 20;
 </script>
 
 <script lang="ts">
-    import FavoriteIndicator from '~/components/common/FavoriteIndicator.svelte';
-
-    let { colorOnPrimary } = $colors;
-    $: ({ colorOnPrimary } = $colors);
+    let { colorBackground, colorOnSurface, colorOnSurfaceVariant, colorPrimary, colorSurfaceContainerLow } = $colors;
+    $: ({ colorBackground, colorOnSurface, colorOnSurfaceVariant, colorPrimary, colorSurfaceContainerLow } = $colors);
 
     export let collectionView: NativeViewElementNode<CollectionViewWithSwipeMenu>;
     export let itemWidth: number;
@@ -103,7 +108,7 @@
             id: 'imageView',
             document: item.doc,
             // backgroundColor: item.doc.pages[0].colors?.[0] || item.doc.extra?.color,
-            borderRadius: 12,
+            borderRadius: tileRadius,
             decodeWidth: Utils.layout.toDevicePixels(itemWidth) * CARD_RATIO,
             fadeDuration: 100,
             item: item.doc.pages[0],
@@ -112,83 +117,38 @@
         };
     }
 
-    function getItemHolderParams(layout, item: Item, nbColumns) {
-        const page = item.doc.pages[0];
-        const colorArg = page?.extra?.color ?? page.colors?.[1] ?? (typeof item.doc.extra?.color === 'string' ? item.doc.extra?.color : undefined) ?? colorOnPrimary;
-        const color = isEInk ? null : new Color(colorArg);
-        const result = {
-            backgroundColor: color
-        };
-        switch (layout) {
-            case 'cardholder':
-                Object.assign(result, {
-                    boxShadow: isEInk ? 0 : `0 0 ${8 / nbColumns} rgba(0, 0, 0, 0.8)`,
-                    margin: 16 / nbColumns
-                });
-                break;
-            case 'full':
-                Object.assign(result, {
-                    boxShadow: isEInk ? 0 : `0 0 ${8 / nbColumns} rgba(0, 0, 0, 0.8)`,
-                    margin: 16 / nbColumns
-                });
-                break;
-            case 'columns':
-            case 'list':
-                Object.assign(result, {
-                    elevation: isEInk ? 0 : 2,
-                    margin: 4
-                });
-                break;
-        }
-        return result;
-    }
-    function getLabelParams(layout, item: Item, height, itemHeight) {
-        const page = item.doc.pages[0];
-        const hasImage = page.imagePath;
-        const colorArg = page?.extra?.color ?? page.colors?.[1] ?? (typeof item.doc.extra?.color === 'string' ? item.doc.extra?.color : undefined) ?? colorOnPrimary;
-        const color = new Color(colorArg);
-        const result = {
-            color: isEInk ? null : color.getBrightness() < 145 ? 'white' : 'black'
-        };
-        switch (layout) {
-            case 'cardholder':
-                Object.assign(result, {
-                    verticalTextAlignment: 'top',
-                    marginBottom: height - itemHeight - 10,
-                    maxFontSize: 40,
-                    maxLines: 2
-                });
-                break;
-            case 'full':
-                Object.assign(result, {
-                    verticalAlignment: 'top',
-                    padding: 0,
-                    margin: 16,
-                    maxFontSize: 40,
-                    maxLines: 2
-                });
-                break;
-            case 'columns':
-                Object.assign(result, {
-                    verticalTextAlignment: hasImage ? 'top' : 'center',
-                    textAlignment: hasImage ? 'left' : 'center',
-                    padding: hasImage ? 6 : 16,
+    $: page = item.doc.pages[0];
+    $: hasImage = !!page?.imagePath;
+    $: hasCode = !!page?.qrcode?.length;
+    $: stacked = layout === 'cardholder' || layout === 'full';
+    // the default name is a timestamp: a tile only shows its date
+    $: autoName = !item.doc.name || /\d+:\d+:\d+/.test(item.doc.name);
+    $: label = autoName ? dayjs(item.doc.createdDate).format('ll') : item.doc.name;
+    $: showLabel = !hasImage || !autoName || alwaysShowNames;
+    $: cardColor = isEInk ? null : pickCardColor(item.doc.extra?.color, [page?.extra?.color, ...(page?.colors ?? [])]);
+    $: tile = getTileColors(cardColor, isDarkTheme(), __ANDROID__, colorPrimary);
+    $: subtitle = pkPassCell ? lc('wallet_pass') : [hasImage ? lcp('photos_count', item.doc.pages.length) : null, hasCode ? lc('code') : null].filter(Boolean).join(' · ') || lc('details_only');
 
-                    maxFontSize: hasImage ? 20 : 35,
-                    minFontSize: hasImage ? 10 : 20,
-                    fontSize: hasImage ? 20 : 30,
-                    maxLines: 3
+    function getItemHolderParams(layout, item: Item, nbColumns, tileFill: string, selected: boolean) {
+        const imagePage = item.doc.pages[0];
+        const result = {
+            backgroundColor: isEInk ? null : imagePage?.imagePath ? new Color(imagePage.extra?.color ?? imagePage.colors?.[1] ?? colorBackground) : new Color(tileFill),
+            borderRadius: tileRadius,
+            scaleX: selected ? 0.95 : 1,
+            scaleY: selected ? 0.95 : 1
+        };
+        switch (layout) {
+            case 'cardholder':
+            case 'full':
+                Object.assign(result, {
+                    boxShadow: isEInk ? 0 : `0 -3 10 #00000033`,
+                    margin: 16 / nbColumns
                 });
                 break;
+            case 'columns':
             case 'list':
                 Object.assign(result, {
-                    verticalTextAlignment: hasImage ? 'top' : 'center',
-                    padding: hasImage ? 10 : 16,
-                    maxFontSize: hasImage ? 20 : 40,
-                    minFontSize: hasImage ? 10 : 20,
-                    fontSize: hasImage ? 20 : 30,
-                    textAlignment: hasImage ? 'left' : 'center',
-                    maxLines: 3
+                    margin: 6
                 });
                 break;
         }
@@ -244,9 +204,6 @@
     //         }
     //     }
     // }
-    function showCardName(item: Item) {
-        return alwaysShowNames || !item.doc.pages[0].imagePath || (item.doc.name && !item.doc.name.match(/\d+:\d+:\d+/));
-    }
 </script>
 
 <!-- <swipemenu
@@ -261,31 +218,87 @@
     on:start={(e) => onFullCardItemTouch(item, { action: 'down' })}
     on:close={(e) => onFullCardItemTouch(item, { action: 'up' })}> -->
 <gridlayout {height} width="100%" {...$$restProps}>
-    <gridlayout id="cardItemTemplate" class="cardItemTemplate" prop:mainContent {...getItemHolderParams(layout, item, $nbColumns)} on:tap on:longPress>
-        {#if pkPassCell}
-            <PKPassCardCell {item} {itemWidth} {layout} pkpass={item.doc.pages[0]?.pkpass} />
-        {:else}
-            <RotableImageView {...getItemRotableImageParams(item)} />
-            <label
-                autoFontSize={true}
-                autoFontSizeStep={10}
-                fontSize={30}
-                fontWeight="bold"
-                lineBreak="end"
-                maxFontSize={35}
-                minFontSize={20}
-                padding={16}
-                text={item.doc.name}
-                visibility={showCardName(item) ? 'visible' : 'hidden'}
-                {...getLabelParams(layout, item, height, itemHeight)}
-            />
-        {/if}
-        <!-- <gridlayout borderRadius={12}> -->
-        <SelectedIndicator selected={item.selected} />
-        <SyncIndicator {syncColors} verticalAlignment="top" visible={syncEnabled} />
-        <FavoriteIndicator favorite={item.doc.favorite === 1} />
-        <!-- </gridlayout> -->
-    </gridlayout>
-    <!-- <uibutton prop:rightDrawer class="mdi" fontSize={40} height={60} text="mdi-fullscreen" variant="text" verticalAlignment="center" width={60} on:tap={() => showImages(item)} />
+    {#if layout === 'list'}
+        <gridlayout
+            backgroundColor={isEInk ? 'transparent' : colorSurfaceContainerLow}
+            borderRadius={__IOS__ ? 14 : 6}
+            columns="auto,*,auto,auto"
+            margin="1 16"
+            padding="0 12 0 8"
+            rippleColor={colorOnSurface}
+            on:tap
+            on:longPress
+        >
+            <gridlayout
+                backgroundColor={pkPassCell ? (page?.pkpass?.passData?.backgroundColor ?? tile.fill) : hasImage ? null : tile.fill}
+                borderRadius={10}
+                height={56}
+                verticalAlignment="center"
+                width={88}
+            >
+                {#if hasImage}
+                    <RotableImageView {...getItemRotableImageParams(item)} borderRadius={10} decodeWidth={Utils.layout.toDevicePixels(88)} />
+                {/if}
+            </gridlayout>
+            <stacklayout col={1} margin="0 12" verticalAlignment="center">
+                <label color={colorOnSurface} fontSize={15} fontWeight="600" lineBreak="end" maxLines={1} text={item.doc.name || label} />
+                <label color={colorOnSurfaceVariant} fontSize={12} marginTop={2} text={subtitle} />
+            </stacklayout>
+            <CardIcon col={2} color={colorPrimary} marginRight={8} size={16} src={appIcon('favorite_on')} verticalAlignment="center" visibility={item.doc.favorite === 1 ? 'visible' : 'collapsed'} />
+            <CardIcon col={3} color={colorOnSurfaceVariant} size={16} src={appIcon('chevron')} verticalAlignment="center" />
+            <SelectedIndicator margin={4} selected={item.selected} />
+        </gridlayout>
+    {:else}
+        <gridlayout id="cardItemTemplate" class="cardItemTemplate" prop:mainContent {...getItemHolderParams(layout, item, $nbColumns, tile.fill, item.selected)} on:tap on:longPress>
+            {#if pkPassCell}
+                <PKPassCardCell {item} {itemWidth} {layout} pkpass={item.doc.pages[0]?.pkpass} />
+            {:else if hasImage}
+                <RotableImageView {...getItemRotableImageParams(item)} />
+                {#if showLabel}
+                    <CardChip
+                        fontWeight={autoName ? '500' : '600'}
+                        horizontalAlignment="left"
+                        margin={8}
+                        marginLeft={stacked && item.selected ? 40 : 8}
+                        text={label}
+                        verticalAlignment={stacked ? 'top' : 'bottom'}
+                    />
+                {/if}
+                <stacklayout horizontalAlignment="right" margin={8} marginRight={stacked && item.doc.favorite === 1 ? 38 : 8} orientation="horizontal" verticalAlignment={stacked ? 'top' : 'bottom'}>
+                    <CardChip icon={appIcon('pages')} marginRight={hasCode ? 4 : 0} text={item.doc.pages.length + ''} visibility={item.doc.pages.length > 1 ? 'visible' : 'collapsed'} />
+                    <CardChip icon={appIcon('qrcode')} visibility={hasCode ? 'visible' : 'collapsed'} />
+                </stacklayout>
+            {:else}
+                <label
+                    color={tile.text}
+                    fontSize={stacked ? 20 : 15}
+                    fontWeight="bold"
+                    horizontalAlignment="left"
+                    lineBreak="end"
+                    margin="10 12"
+                    marginLeft={item.selected ? 40 : 12}
+                    marginRight={stacked && hasCode ? 44 : 12}
+                    maxLines={stacked ? 2 : 3}
+                    text={label}
+                    textAlignment="left"
+                    verticalAlignment="top"
+                />
+                <CardIcon
+                    color={tile.text}
+                    horizontalAlignment="right"
+                    margin={10}
+                    opacity={0.75}
+                    size={18}
+                    src={appIcon('qrcode')}
+                    verticalAlignment={stacked ? 'top' : 'bottom'}
+                    visibility={hasCode ? 'visible' : 'collapsed'}
+                />
+            {/if}
+            <SelectedIndicator selected={item.selected} />
+            <SyncIndicator {syncColors} verticalAlignment="top" visible={syncEnabled} />
+            <CardChip horizontalAlignment="right" icon={appIcon('favorite_on')} margin={8} verticalAlignment="top" visibility={item.doc.favorite === 1 ? 'visible' : 'collapsed'} />
+        </gridlayout>
+        <!-- <uibutton prop:rightDrawer class="mdi" fontSize={40} height={60} text="mdi-fullscreen" variant="text" verticalAlignment="center" width={60} on:tap={() => showImages(item)} />
 </swipemenu> -->
+    {/if}
 </gridlayout>

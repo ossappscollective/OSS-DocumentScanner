@@ -98,6 +98,7 @@ try {
     registerNativeViewElement('progress', () => require('@nativescript-community/ui-progress').Progress);
     registerNativeViewElement('label', () => Label);
     registerNativeViewElement('image', () => require('@nativescript-community/ui-image').Img);
+    registerNativeViewElement('nsimage', () => require('@nativescript/core').Image);
     registerNativeViewElement('zoomimage', () => require('@nativescript-community/ui-zoomimage').ZoomImg);
     registerNativeViewElement('canvasView', () => require('@nativescript-community/ui-canvas').CanvasView);
     registerNativeViewElement('line', () => require('@nativescript-community/ui-canvas/shapes/line').default);

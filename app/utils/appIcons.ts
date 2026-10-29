@@ -7,6 +7,7 @@ const ICONS: Record<string, string> = __IOS__
           brightness: 'sun.max',
           camera: 'camera',
           check: 'checkmark',
+          chevron: 'chevron.right',
           close: 'xmark',
           color: 'paintbrush',
           crop: 'crop',
@@ -31,6 +32,7 @@ const ICONS: Record<string, string> = __IOS__
           move_folder: 'folder',
           ocr: 'text.viewfinder',
           open: 'arrow.up.forward.square',
+          pages: 'square.on.square',
           pdf: 'doc.richtext',
           qrcode: 'qrcode',
           rename: 'pencil',
@@ -47,7 +49,8 @@ const ICONS: Record<string, string> = __IOS__
           transform: 'wand.and.stars',
           trash: 'trash',
           tune: 'slider.horizontal.3',
-          view_style: 'square.grid.2x2'
+          view_style: 'square.grid.2x2',
+          wallet: 'wallet.bifold'
       }
     : {
           add: 'plus',
@@ -56,6 +59,7 @@ const ICONS: Record<string, string> = __IOS__
           brightness: 'brightness-6',
           camera: 'camera',
           check: 'check',
+          chevron: 'chevron-right',
           close: 'close',
           color: 'palette',
           crop: 'crop',
@@ -80,6 +84,7 @@ const ICONS: Record<string, string> = __IOS__
           move_folder: 'folder-swap',
           ocr: 'text-recognition',
           open: 'open-in-new',
+          pages: 'layers-outline',
           pdf: 'file-pdf-box',
           qrcode: 'qrcode',
           rename: 'rename',
@@ -96,7 +101,8 @@ const ICONS: Record<string, string> = __IOS__
           transform: 'auto-fix',
           trash: 'trash-can-outline',
           tune: 'tune',
-          view_style: 'view-dashboard'
+          view_style: 'view-dashboard',
+          wallet: 'wallet-outline'
       };
 
 export type AppIconId = keyof typeof ICONS;
