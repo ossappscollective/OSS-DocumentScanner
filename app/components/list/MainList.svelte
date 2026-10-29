@@ -209,18 +209,23 @@
     }
     $: updateTitle(folder);
 
-    // iOS: the title of a folder starts with a folder glyph of its color, like on Android
+    // the title of a folder starts with the folder icon of its rows, so the page reads as a folder
     function getFolderFormattedTitle(current: DocFolder, glyphColor: string) {
-        if (!__IOS__ || !current) {
+        if (!current) {
             return null;
         }
         const formatted = new FormattedString();
         const glyph = new Span();
         glyph.fontFamily = $fonts.mdi;
+        glyph.fontSize = (__IOS__ ? 20 : 24) * $fontScale;
         glyph.color = new Color(glyphColor);
         glyph.text = 'mdi-folder-outline';
+        // iOS: the count is the small line next to the icon, the name is the subtitle of the bar (the big line under it)
         const name = new Span();
-        name.text = '  ' + current.name;
+        name.text = '  ' + (__IOS__ ? lcp('documents_count', current.count) : current.name);
+        if (__IOS__) {
+            name.fontSize = 15 * $fontScale;
+        }
         formatted.spans.push(glyph, name);
         return formatted;
     }
@@ -1509,18 +1514,19 @@
     <appBar
         bind:this={appBar}
         android:backgroundColor={nbSelected > 0 ? colorPrimaryContainer : folderAccent?.container}
-        ios:backgroundColor={nbSelected > 0 ? undefined : folderAccent?.container}
+        ios:backgroundColor={nbSelected > 0 ? undefined : folderAccent?.accent}
         color={colorOnBackground}
         iosIconRenderingMode="alwaysTemplate"
         scrollBehavior="lift"
         searchable={!isTrash && !onlyForImport && nbSelected === 0}
         scrollTargetId="documentsCollectionView"
         searchHint={lc('search')}
-        searchMode="inline"
+        searchMode={folder && __ANDROID__ ? 'collapsible' : 'inline'}
         searchPlacement="integrated"
         {bottomItems}
-        formattedTitle={folderTitle}
-        size="small"
+        formattedTitle={nbSelected > 0 ? null : folderTitle}
+        size={folder && __IOS__ ? 'large' : 'small'}
+        subtitle={folder && nbSelected === 0 ? (__IOS__ ? folder.name : lcp('documents_count', folder.count)) : null}
         titleAlignment="leading"
         translucent={__IOS__}
         class="listAppBar"
