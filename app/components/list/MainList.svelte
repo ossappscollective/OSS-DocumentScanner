@@ -1380,7 +1380,10 @@
             return [];
         }
         const { main, more } = splitSelectionOptions(options);
-        const items: any[] = main.flatMap((option) => [{ spacer: true }, { text: option.name, icon: appIcon(option.id), onTap: () => onSelectionAction(option) }]);
+        const items: any[] = main.flatMap((option) => [
+            { spacer: true },
+            { text: option.name, icon: appIcon(option.id), destructive: option.id.startsWith('delete'), onTap: () => onSelectionAction(option) }
+        ]);
         if (more.length) {
             items.push(
                 { spacer: true },
