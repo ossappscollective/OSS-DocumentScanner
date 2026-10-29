@@ -473,23 +473,16 @@
     </Template>
 
     <stacklayout bind:this={fabHolder} slot="fab" class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal">
-        <uibutton class={$hasCamera ? 'small-fab' : 'fab'} horizontalAlignment="center" text="mdi-plus" verticalAlignment="center" on:tap={throttle(() => onAddButton(), 500)} />
+        <uibutton class="addFab" {...{ src: appIcon('add') }} variant="contained" verticalAlignment="center" on:tap={throttle(() => onAddButton(), 500)} />
         {#if $hasCamera}
+            <!-- the button puts no space between its icon and its text -->
             <uibutton
+                class="scanFab"
                 backgroundColor={colorPrimaryContainer}
-                borderRadius={18}
                 color={colorOnPrimaryContainer}
-                android:elevation={3}
-                fontSize={15}
-                fontWeight="600"
-                height={56}
-                margin={16}
-                padding="0 20"
-                rippleColor={colorPrimaryContainer}
                 {...{ src: appIcon('camera') }}
-                text={lc('scan')}
+                text={'\u2002' + lc('scan')}
                 variant="contained"
-                verticalAlignment="center"
                 on:tap={throttle(() => onStartCam(), 500)}
                 on:longPress={() => onStartCam(true)}
             />
