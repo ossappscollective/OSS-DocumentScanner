@@ -320,3 +320,10 @@ textfield,
         border-width: 1;
     }
 }
+
+// the rows of a form: a label and its value, grouped
+.cardFormGroup {
+    background-color: var(--colorSurfaceContainerLow);
+    border-radius: 16;
+    margin: 0 16 16 16;
+}

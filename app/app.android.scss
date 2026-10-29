@@ -7,3 +7,16 @@ checkbox {
 button[variant='contained'] {
     height: 40;
 }
+
+.sheetHeaderTitle {
+    font-size: 22;
+    margin-left: 8;
+}
+
+.cardFormGroup {
+    border-radius: 28;
+}
+
+.cardFormSheet {
+    background-color: var(--colorSurface);
+}

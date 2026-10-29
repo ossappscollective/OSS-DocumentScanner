@@ -76,6 +76,17 @@ textfield[variant='none'] {
 }
 
 // the primary button is a 44 tall capsule
-button[variant='prominentGlass'] {
+button[variant='prominentGlass'],
+button[variant='contained'] {
     height: 44;
+}
+
+.sheetHeaderTitle {
+    font-size: 17;
+    font-weight: bold;
+    text-align: center;
+}
+
+.cardFormSheet {
+    background-color: var(--colorBackground);
 }
