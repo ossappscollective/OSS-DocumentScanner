@@ -132,9 +132,20 @@
 <gesturerootview bind:this={rootView} rows="auto,auto">
     <SheetHeader doneText={editing ? lc('edit') : lc('add')} onCancel={close} onDone={add} title={editing ? lc('edit_extra_field') : lc('add_extra_field')} />
     <stacklayout padding="0 16 16 16" row={1}>
-        <gridlayout>
-            <textfield hint={lc('name')} margin={tMargin} paddingLeft={60} text={currentName} use:focusState variant="outline" on:textChange={(e) => (currentName = e.value)} />
-            <uibutton class="icon-btn" color={colorOnSurfaceVariant} horizontalAlignment="left" text="mdi-menu-down" variant="text" verticalAlignment="middle" on:tap={selecteTemplateName} />
+        <gridlayout columns="*,auto">
+            <textfield hint={lc('name')} margin={tMargin} text={currentName} use:focusState variant="outline" on:textChange={(e) => (currentName = e.value)} />
+            <uibutton
+                accessibilityLabel={lc('name')}
+                class="icon-btn"
+                col={1}
+                color={colorOnSurfaceVariant}
+                height={48}
+                text="mdi-menu-down"
+                variant="text"
+                verticalAlignment="center"
+                width={48}
+                on:tap={selecteTemplateName}
+            />
         </gridlayout>
         <textfield editable={false} hint={lc('type')} margin={tMargin} text={lc(currentType)} textTransform="uppercase" variant="outline" on:tap={(e) => selectType(e)} />
         <textview

@@ -60,3 +60,12 @@ textfield[variant='outline'] {
     margin: 0 16 16 16;
     shape: fab;
 }
+
+// a field with a caption (the name) which is edited in its own sheet: the look of the notched outlined text fields
+.extraFieldRow {
+    border-color: var(--colorOutline);
+    border-radius: 20 20 20 6;
+    border-width: 1.5;
+    min-height: 56;
+    padding: 6 16;
+}

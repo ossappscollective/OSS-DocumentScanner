@@ -3,6 +3,7 @@
     import { SilentError } from '@akylas/nativescript-app-utils/error';
     import { showError } from '@shared/utils/showError';
     import { FORMATS, getBarcodeFallbackString, qrcodeService } from '~/services/qrcode';
+    import { getBarcodeInputRule, sanitizeBarcodeInput } from '~/utils/barcodeInput';
     import { pickColor, showPopoverMenu } from '~/utils/ui';
     import { colors } from '~/variables';
     import { focusState } from '~/utils/svelte/actions';
@@ -53,6 +54,7 @@
                 anchor: event.object,
                 onClose: (item) => {
                     codeFormat = FORMATS[item.id];
+                    code = sanitizeBarcodeInput(codeFormat, code);
                     updateSvg();
                 }
             });
@@ -74,7 +76,10 @@
         }
     }
     function onCodeTextChange(e) {
-        code = e.value;
+        code = sanitizeBarcodeInput(codeFormat, e.value);
+        if (code !== e.value) {
+            e.object.text = code;
+        }
         updateSvg();
     }
     async function changeColor(event) {
@@ -90,7 +95,17 @@
     <SheetHeader doneEnabled={name?.length > 0} doneText={lc('add')} onCancel={close} onDone={add} title={lc('create')} />
     <gridlayout columns="*,auto" padding="0 16 16 16" row={1} rows="auto,auto,auto,auto,auto,auto">
         <textfield colSpan={2} hint={lc('name')} margin={tMargin} text={name} use:focusState variant="outline" on:textChange={(e) => (name = e.value)} />
-        <textfield colSpan={2} hint={lc('barcode')} margin={tMargin} row={1} text={code} use:focusState variant="outline" on:textChange={onCodeTextChange} />
+        <textfield
+            colSpan={2}
+            hint={lc('barcode')}
+            keyboardType={getBarcodeInputRule(codeFormat).numeric ? 'number' : undefined}
+            margin={tMargin}
+            row={1}
+            text={code}
+            use:focusState
+            variant="outline"
+            on:textChange={onCodeTextChange}
+        />
         <textfield
             colSpan={2}
             editable={false}
