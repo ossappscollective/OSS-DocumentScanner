@@ -106,3 +106,14 @@ textview[variant='outline'] {
     min-height: 84;
     padding: 12 16;
 }
+
+// a field: 48 tall and 4 around
+.formRow {
+    height: 56;
+}
+
+textfield[variant='outline']:focused,
+textview[variant='outline']:focused {
+    border-color: var(--colorPrimary);
+    border-width: 1.5;
+}

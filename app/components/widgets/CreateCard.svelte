@@ -5,6 +5,7 @@
     import { FORMATS, getBarcodeFallbackString, qrcodeService } from '~/services/qrcode';
     import { pickColor, showPopoverMenu } from '~/utils/ui';
     import { colors } from '~/variables';
+    import { focusState } from '~/utils/svelte/actions';
     import SheetHeader from '../common/SheetHeader.svelte';
     import SvgView from '../common/SVGView.svelte';
 </script>
@@ -88,8 +89,8 @@
 <gesturerootview bind:this={rootView} rows="auto,auto">
     <SheetHeader doneEnabled={name?.length > 0} doneText={lc('add')} onCancel={close} onDone={add} title={lc('create')} />
     <gridlayout columns="*,auto" padding="0 16 16 16" row={1} rows="auto,auto,auto,auto,auto,auto">
-        <textfield colSpan={2} hint={lc('name')} margin={tMargin} text={name} variant="outline" on:textChange={(e) => (name = e.value)} />
-        <textfield colSpan={2} hint={lc('barcode')} margin={tMargin} row={1} text={code} variant="outline" on:textChange={onCodeTextChange} />
+        <textfield colSpan={2} hint={lc('name')} margin={tMargin} text={name} use:focusState variant="outline" on:textChange={(e) => (name = e.value)} />
+        <textfield colSpan={2} hint={lc('barcode')} margin={tMargin} row={1} text={code} use:focusState variant="outline" on:textChange={onCodeTextChange} />
         <textfield
             colSpan={2}
             editable={false}
@@ -101,8 +102,10 @@
             variant="outline"
             on:tap={(e) => selectBarcodeFormat(e)}
         />
-        <label color={colorOnBackground} fontSize={17} margin="8 4" row={3} text={lc('color')} verticalAlignment="center" />
-        <absolutelayout backgroundColor={color} borderColor={colorOutline} borderRadius="50%" borderWidth={2} col={1} height={40} row={3} width={40} on:tap={changeColor} />
+        <gridlayout class="formRow" colSpan={2} columns="*,auto" row={3} on:tap={changeColor}>
+            <label color={colorOnBackground} fontSize={17} margin="0 4" text={lc('color')} verticalAlignment="center" />
+            <absolutelayout backgroundColor={color} borderColor={colorOutline} borderRadius="50%" borderWidth={2} col={1} height={40} verticalAlignment="center" width={40} />
+        </gridlayout>
         <SvgView backgroundColor="white" borderRadius={12} colSpan={2} height={100} item={{ svg }} row={4} stretch="aspectFit" visibility={code?.length ? 'visible' : 'collapse'} />
         <label
             colSpan={2}

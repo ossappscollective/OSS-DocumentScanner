@@ -10,6 +10,7 @@
     import { qrcodeService } from '~/services/qrcode';
     import { shortcutService } from '~/services/shortcuts';
     import { appIcon } from '~/utils/appIcons';
+    import { SHEET_SOFT_INPUT_MODE } from '~/utils/constants';
     import { pickColor } from '~/utils/ui';
     import { colors } from '~/variables';
     import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
@@ -109,6 +110,7 @@
                 parent: rootView,
                 skipCollapsedState: true,
                 view: ExtraFieldPicker,
+                windowSoftInputMode: SHEET_SOFT_INPUT_MODE,
                 props: { editing: !!field, ...(field?.extra || {}) }
             });
             if (!result) {

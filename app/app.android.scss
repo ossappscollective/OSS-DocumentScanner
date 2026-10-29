@@ -27,3 +27,15 @@ button[variant='contained'] {
     border-radius: 30;
     border-width: 1;
 }
+
+// a field: 56 tall and 4 around
+.formRow {
+    height: 64;
+}
+
+// the outline takes the accent while the field has the focus
+textfield[variant='outline'] {
+    floating-color: var(--colorPrimary);
+    stroke-color: var(--colorPrimary);
+    stroke-inactive-color: var(--colorOutline);
+}
