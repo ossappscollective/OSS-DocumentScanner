@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<inset xmlns:android="http://schemas.android.com/apk/res/android"
-    android:insetLeft="26dp"
-    android:insetTop="26dp"
-    android:insetRight="26dp"
-    android:insetBottom="26dp"
-    android:drawable="@drawable/icon_monochrome"/>

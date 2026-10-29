@@ -2,7 +2,8 @@
 <resources>
     <color name="shortcut_background">#F5F5F5</color>
     <color name="ic_launcher_background">#FFFBFF</color>
-    <color name="seed">#DC3D5D</color>
+    <color name="icon_background">#DA3D5C</color>
+    <color name="seed">#DA3D5C</color>
 
     <color name="md_theme_primary">#B61E44</color>
     <color name="md_theme_onPrimary">#FFFFFF</color>

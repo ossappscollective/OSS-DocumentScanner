@@ -358,3 +358,13 @@ One rule for every screen with a top bar and a bottom toolbar, so a control is n
 - **Reorder pages (card view):** a modal with the pages as a list (88 x 56 thumbnail, "Page n", a handle at the end), reordered by dragging, a long press on a row starts it too. iOS: close at the left, a prominent Save at the right. Android: close, title, a text Save. The card changes only on Save; afterwards the pager and the strip start again from the first page. There is no in-place reorder mode in the card view any more.
 - **Transform pages sheet:** the adjust sheet with a header (Cancel, "transform images", Apply, Reset), a fixed height of 70% of the screen, the list scrolls inside.
 - **Shared transitions:** removed (card view to page edit and fullscreen viewer), they did not hold on either platform.
+
+## 25. App icons and splash
+
+- **Shape rule applies:** the glyphs use only rounded rectangles, circles and round-capped strokes. Masters are full-bleed 100 x 100 squares in `graphics/icon_<app>.svg` (the platforms apply their own mask); `_dark`, `_monochrome` and `_transparent` (glyph only) sit beside them.
+- **Cardwallet:** accent `#DA3D5C`, two stacked cards (the back one tilted 14 degrees), a chip circle and a stripe pill on the front card.
+- **Document Scanner:** accent `#2FBF71`, a document with text pills inside four scan brackets, crossed by a scan bar (dropped in the monochrome variant).
+- **Android:** adaptive icon with the `icon_background` color and the glyph at 78% inside the safe zone; the themed (monochrome) layer is `icon_monochrome`, with the details cut out.
+- **Dark icon:** iOS 18+ uses the `1024-dark.png` entry of a single-size `AppIcon` set. Android has no dark adaptive icon, so `drawable-night/ic_launcher_foreground.xml` and a night `icon_background` are provided; only launchers that resolve the icon with the night configuration use them.
+- **Splash:** the system background (white, dark in dark mode) and the icon centered. Android 12+ shows the glyph on an `icon_background` disc; older versions and iOS show the rounded icon (`splash_icon`, `logo.png`) at 144 / 120.
+- Export the PNGs from the masters; do not edit them by hand.
