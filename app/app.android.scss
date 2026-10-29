@@ -17,3 +17,28 @@ checkbox {
     border-radius: 30;
     border-width: 1;
 }
+
+// the floating buttons are fully round
+.addFab {
+    background-color: var(--colorSecondaryContainer);
+    color: var(--colorOnSecondaryContainer);
+    elevation: 2;
+    font-size: 24;
+    height: 48;
+    margin: 8;
+    padding: 0;
+    shape: round;
+    vertical-align: center;
+    width: 48;
+}
+
+.scanFab {
+    background-color: var(--colorPrimaryContainer);
+    border-radius: 28;
+    elevation: 3;
+    height: 56;
+    margin: 16;
+    padding: 0 20;
+    ripple-color: var(--colorOnPrimaryContainer);
+    vertical-align: center;
+}

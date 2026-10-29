@@ -35,8 +35,8 @@
 </script>
 
 <script lang="ts">
-    let { colorOnBackground, colorOnPrimary, colorOnPrimaryContainer, colorOnSurfaceVariant, colorPrimaryContainer, colorSurface } = $colors;
-    $: ({ colorOnBackground, colorOnPrimary, colorOnPrimaryContainer, colorOnSurfaceVariant, colorPrimaryContainer, colorSurface } = $colors);
+    let { colorOnBackground, colorOnPrimary, colorOnPrimaryContainer, colorOnSurfaceVariant, colorSurface } = $colors;
+    $: ({ colorOnBackground, colorOnPrimary, colorOnPrimaryContainer, colorOnSurfaceVariant, colorSurface } = $colors);
     let fabHolder: NativeViewElementNode<StackLayout>;
     let collectionView: NativeViewElementNode<CollectionViewWithSwipeMenu>;
     let viewStyle: string;
@@ -471,26 +471,12 @@
     </Template>
 
     <stacklayout bind:this={fabHolder} slot="fab" class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal">
-        <uibutton class={$hasCamera ? 'small-fab' : 'fab'} horizontalAlignment="center" text="mdi-plus" verticalAlignment="center" on:tap={throttle(() => onAddButton(), 500)} />
+        <uibutton class="addFab" {...{ src: appIcon('add') }} variant="contained" verticalAlignment="center" on:tap={throttle(() => onAddButton(), 500)} />
         {#if $hasCamera}
-            <uibutton
-                backgroundColor={colorPrimaryContainer}
-                borderRadius={18}
-                color={colorOnPrimaryContainer}
-                android:elevation={3}
-                fontSize={15}
-                fontWeight="600"
-                height={56}
-                margin={16}
-                padding="0 20"
-                rippleColor={colorPrimaryContainer}
-                {...{ src: appIcon('camera') }}
-                text={lc('scan')}
-                variant="contained"
-                verticalAlignment="center"
-                on:tap={throttle(() => onStartCam(), 500)}
-                on:longPress={() => onStartCam(true)}
-            />
+            <stacklayout class="scanFab" orientation="horizontal" on:tap={throttle(() => onStartCam(), 500)} on:longPress={() => onStartCam(true)}>
+                <nsimage height={24} src={appIcon('camera')} tintColor={colorOnPrimaryContainer} verticalAlignment="center" width={24} />
+                <label color={colorOnPrimaryContainer} fontSize={16} fontWeight="600" marginLeft={8} text={lc('scan')} verticalAlignment="center" />
+            </stacklayout>
         {/if}
     </stacklayout>
 
