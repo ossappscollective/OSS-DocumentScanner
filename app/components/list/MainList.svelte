@@ -46,7 +46,8 @@
     import EditNameActionBar from '~/components/common/EditNameActionBar.svelte';
     import SelectedIndicator from '~/components/common/SelectedIndicator.svelte';
     import { l, lc, lcp, lp } from '~/helpers/locale';
-    import { getRealTheme, isEInk, onThemeChanged } from '~/helpers/theme';
+    import { getRealTheme, isDarkTheme, isEInk, onThemeChanged } from '~/helpers/theme';
+    import { getCardAccent } from '~/utils/cardColors';
     import { DocFolder, OCRDocument, OCRPage } from '~/models/OCRDocument';
     import {
         DocumentAddedEventData,
@@ -217,13 +218,15 @@
         const glyph = new Span();
         glyph.fontFamily = $fonts.mdi;
         glyph.color = new Color(glyphColor);
-        glyph.text = 'mdi-folder';
+        glyph.text = 'mdi-folder-outline';
         const name = new Span();
         name.text = '  ' + current.name;
         formatted.spans.push(glyph, name);
         return formatted;
     }
-    $: folderTitle = getFolderFormattedTitle(folder, folder?.color || colorOutline);
+    // the bar takes the tonal color of the folder, like the plate of a card
+    $: folderAccent = folder?.color && !isEInk ? getCardAccent(folder.color, isDarkTheme(), colorPrimary) : null;
+    $: folderTitle = getFolderFormattedTitle(folder, colorOnSurfaceVariant);
 
     export let updateTitle = (folder) => {
         if (folder && __IOS__) {
@@ -235,9 +238,9 @@
                     spans: [
                         {
                             fontFamily: $fonts.mdi,
-                            color: folder.color || colorOutline,
+                            color: colorOnSurfaceVariant,
                             fontSize: 24 * $fontScale,
-                            text: 'mdi-folder'
+                            text: 'mdi-folder-outline'
                         },
                         {
                             text: '  ' + folder.name
@@ -1505,7 +1508,8 @@
 <appPage bind:this={page} id="documentList" on:navigatedTo={onNavigatedTo} on:navigatingFrom={onNavigatingFrom}>
     <appBar
         bind:this={appBar}
-        android:backgroundColor={nbSelected > 0 ? colorPrimaryContainer : undefined}
+        android:backgroundColor={nbSelected > 0 ? colorPrimaryContainer : folderAccent?.container}
+        ios:backgroundColor={nbSelected > 0 ? undefined : folderAccent?.container}
         color={colorOnBackground}
         iosIconRenderingMode="alwaysTemplate"
         scrollBehavior="lift"
