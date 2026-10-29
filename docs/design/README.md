@@ -16,3 +16,11 @@ Read these in order. Everything here is the target design; the implementation st
 - The mockups are schematic, drawn 300 wide. Take values from the markdown, not from mockup pixels (see section 0 of the rules file).
 - The Docs source (editable, with comments): https://claude.ai/artifact/C3YZRi2BodSTFNXz7xWMPg
 - The HTML mockups load the Tabler icon font from a CDN; the real icons are SF Symbols and MDI (rules file, section 13).
+
+## Viewing the mockups
+
+Open `index.html` through a local server (the mockups use JavaScript and a CDN icon font, so serve them instead of opening files from other folders).
+
+- **Claude Code session browser:** start the `design` preview server (`preview_start` with name `design`, defined in `.claude/launch.json`), or run the command below and open `http://127.0.0.1:4173`.
+- **VS Code:** run the task "Design mockups: serve on http://127.0.0.1:4173" (Terminal > Run Task), then Command Palette > "Simple Browser: Show" and enter `http://127.0.0.1:4173`. It opens beside the code so you can compare.
+- **Any terminal:** `python3 -m http.server 4173 --bind 127.0.0.1 --directory docs/design`

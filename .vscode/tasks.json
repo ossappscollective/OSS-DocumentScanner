@@ -1,0 +1,16 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Design mockups: serve on http://127.0.0.1:4173",
+            "type": "shell",
+            "command": "python3 -m http.server 4173 --bind 127.0.0.1 --directory docs/design",
+            "isBackground": true,
+            "problemMatcher": {
+                "pattern": { "regexp": "^$" },
+                "background": { "activeOnStart": true, "beginsPattern": "Serving HTTP", "endsPattern": "Serving HTTP" }
+            },
+            "presentation": { "reveal": "silent", "panel": "dedicated" }
+        }
+    ]
+}
