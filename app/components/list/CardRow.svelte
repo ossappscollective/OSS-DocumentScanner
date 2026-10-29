@@ -56,12 +56,19 @@
             </gridlayout>
             <gridlayout col={1} margin="0 12" rows="auto,auto" verticalAlignment="center">
                 <label color={colorOnSurface} fontSize={__IOS__ ? 17 : 16} fontWeight={__IOS__ ? '600' : '500'} lineBreak="end" maxLines={1} text={item.doc.name || label} />
-                <stacklayout orientation="horizontal" row={1} visibility={subtitle || hasCode ? 'visible' : 'collapsed'}>
+                <stacklayout orientation="horizontal" row={1} visibility={subtitle || (hasCode && hasImage) ? 'visible' : 'collapsed'}>
                     <label color={colorOnSurfaceVariant} fontSize={14} text={subtitle} verticalAlignment="center" visibility={subtitle ? 'visible' : 'collapsed'} />
-                    <CardIcon color={colorOnSurfaceVariant} marginLeft={subtitle ? 6 : 0} size={16} src={appIcon('qrcode')} verticalAlignment="center" visibility={hasCode ? 'visible' : 'collapsed'} />
+                    <CardIcon
+                        color={colorOnSurfaceVariant}
+                        marginLeft={subtitle ? 6 : 0}
+                        size={16}
+                        src={appIcon('qrcode')}
+                        verticalAlignment="center"
+                        visibility={hasCode && hasImage ? 'visible' : 'collapsed'}
+                    />
                 </stacklayout>
             </gridlayout>
-            <CardIcon col={3} color={colorPrimary} marginRight={8} size={16} src={appIcon('favorite_on')} verticalAlignment="center" visibility={item.doc.favorite === 1 ? 'visible' : 'collapsed'} />
+            <CardIcon col={2} color={colorPrimary} marginRight={8} size={16} src={appIcon('favorite_on')} verticalAlignment="center" visibility={item.doc.favorite === 1 ? 'visible' : 'collapsed'} />
             <CardIcon col={3} color={colorOnSurfaceVariant} size={16} src={appIcon('chevron')} verticalAlignment="center" visibility={$selectionMode || __ANDROID__ ? 'collapsed' : 'visible'} />
         </gridlayout>
         <RowSelectionMarker {selectionMode} selected={item.selected} />

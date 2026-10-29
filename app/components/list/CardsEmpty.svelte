@@ -18,5 +18,5 @@
         <span fontSize={20} fontWeight="bold" text={lc('no_card_yet_title')} />
         <span color={colorOnSurfaceVariant} fontSize={14} text={'\n' + lc('no_card_yet_help')} />
     </label>
-    <uibutton height={44} horizontalAlignment="center" marginTop={18} text={lc('scan_card')} variant="contained" on:tap={onScan} />
+    <uibutton android:paddingLeft={24} android:paddingRight={24} height={44} horizontalAlignment="center" marginTop={18} text={lc('scan_card')} variant="contained" on:tap={onScan} />
 </stacklayout>
