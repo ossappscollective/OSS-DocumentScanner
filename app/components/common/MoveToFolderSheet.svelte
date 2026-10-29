@@ -1,6 +1,5 @@
 <script context="module" lang="ts">
     import { Color } from '@nativescript/core';
-    import { prompt } from '@nativescript-community/ui-dialogs';
     import { showError } from '@shared/utils/showError';
     import CardIcon from '~/components/common/CardIcon.svelte';
     import SheetHeader from '~/components/common/SheetHeader.svelte';
@@ -8,6 +7,7 @@
     import { DocFolder } from '~/models/OCRDocument';
     import { appIcon } from '~/utils/appIcons';
     import { getRowCorners, getRowPosition } from '~/utils/groupedRows';
+    import { promptForText } from '~/utils/ui';
     import { colors, windowInset } from '~/variables';
 
     const SEARCH_MIN_FOLDERS = 8;
@@ -60,12 +60,10 @@
                 close(row.name);
                 return;
             }
-            const result = await prompt({
+            const result = await promptForText({
                 title: lc('new_folder'),
                 hintText: lc('name'),
-                okButtonText: lc('create'),
-                cancelButtonText: lc('cancel'),
-                autoFocus: true
+                okButtonText: lc('create')
             });
             const name = result?.text?.trim();
             if (result?.result && name?.length) {

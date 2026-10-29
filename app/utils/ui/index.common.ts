@@ -7,7 +7,7 @@ import { GestureRootView } from '@nativescript-community/gesturehandler';
 import { CheckBox } from '@nativescript-community/ui-checkbox';
 import { Label } from '@nativescript-community/ui-label';
 import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
-import { MDCAlertControlerOptions, alert, confirm, prompt } from '@nativescript-community/ui-dialogs';
+import { MDCAlertControlerOptions, PromptOptions, alert, confirm, prompt } from '@nativescript-community/ui-dialogs';
 import { HorizontalPosition, PopoverOptions, VerticalPosition } from '@nativescript-community/ui-popover';
 import { closePopover, showPopover } from '@nativescript-community/ui-popover/svelte';
 import {
@@ -2183,6 +2183,17 @@ export function getNameFormatHTMLArgs() {
         `<a href="https://day.js.org/docs/en/display/format">${l('here')}</a>`
     ];
 }
+/** asks a name: the system alert with a focused text field on iOS, a Material dialog with an outlined field on Android */
+export function promptForText(options: PromptOptions & MDCAlertControlerOptions) {
+    return prompt({
+        okButtonText: lc('ok'),
+        cancelButtonText: lc('cancel'),
+        autoFocus: true,
+        textFieldProperties: __ANDROID__ ? { variant: 'outline' } : undefined,
+        ...options
+    });
+}
+
 export async function showCustomAlert<T>(component, options, props = {}): Promise<any> {
     const componentInstanceInfo = resolveComponentElement(component, props);
     const modalView: View = componentInstanceInfo.element.nativeView;

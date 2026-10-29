@@ -6,7 +6,7 @@
     import { Img } from '@nativescript-community/ui-image';
     import { createNativeAttributedString } from '@nativescript-community/ui-label';
     import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
-    import { confirm, prompt } from '@nativescript-community/ui-dialogs';
+    import { confirm } from '@nativescript-community/ui-dialogs';
     import { VerticalPosition } from '@nativescript-community/ui-popover';
     import { isCatalyst, windowCommandEvent } from '@shared/utils/window';
     import { setContextMenu } from '@nativescript-community/ui-menu';
@@ -101,6 +101,7 @@
         onAndroidNewItent,
         onBackButton,
         pickFolderColor,
+        promptForText,
         showImagePopoverMenu,
         showPDFPopoverMenu,
         showPopoverMenu,
@@ -1268,9 +1269,10 @@
                     break;
                 case 'rename':
                     const item = getSelectedItems()[0];
-                    result = await prompt({
+                    result = await promptForText({
                         title: lc('rename'),
-                        defaultText: (item.doc || item.folder).name
+                        defaultText: (item.doc || item.folder).name,
+                        hintText: lc('name')
                     });
                     if (result.result && result.text?.length) {
                         await (item.doc || item.folder).save({
