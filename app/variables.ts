@@ -7,7 +7,8 @@ import { DEFAULT_DRAW_FOLDERS_BACKGROUND, SETTINGS_DRAW_FOLDERS_BACKGROUND, SETT
 export * from '@shared/variables';
 
 import { deviceHasCamera } from '@nativescript-community/ui-cameraview';
-import { initVariables } from '@shared/variables';
+import { setMenuColors } from '@nativescript-community/ui-menu';
+import { colors, initVariables } from '@shared/variables';
 import { withSystemColors } from '~/utils/iosSystemColors';
 
 initVariables({
@@ -21,6 +22,26 @@ initVariables({
         return __IOS__ ? withSystemColors(theme) : theme;
     }
 });
+
+if (__ANDROID__) {
+    // the menus are drawn by ui-menu with the colors of the app theme
+    colors.subscribe((current) => {
+        if (current.colorSurfaceContainer) {
+            setMenuColors({
+                surface: current.colorSurfaceContainer,
+                row: current.colorSurfaceContainerLow,
+                selected: current.colorPrimaryContainer,
+                onSelected: current.colorOnPrimaryContainer,
+                onSurface: current.colorOnSurface,
+                onSurfaceVariant: current.colorOnSurfaceVariant,
+                accent: current.colorPrimary,
+                onAccent: current.colorOnPrimary,
+                outline: current.colorOutline,
+                error: current.colorError
+            });
+        }
+    });
+}
 
 export const startOnCam = ApplicationSettings.getBoolean(SETTINGS_START_ON_CAM, START_ON_CAM);
 
