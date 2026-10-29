@@ -11,7 +11,13 @@
     import { showError } from '@shared/utils/showError';
     import { onMount } from 'svelte';
     import { Writable, writable } from 'svelte/store';
-    import CardListCell from '~/components/list/CardListCell.svelte';
+    import PKPassCardCell from '~/components/pkpass/PKPassCardCell.svelte';
+    import CardPhotoFace from '~/components/list/CardPhotoFace.svelte';
+    import CardRow from '~/components/list/CardRow.svelte';
+    import CardRowPhoto from '~/components/list/CardRowPhoto.svelte';
+    import CardRowTile from '~/components/list/CardRowTile.svelte';
+    import CardTile from '~/components/list/CardTile.svelte';
+    import CardTileFace from '~/components/list/CardTileFace.svelte';
     import { DocFolder, OCRDocument } from '~/models/OCRDocument';
     import {
         CARD_RATIO,
@@ -24,7 +30,7 @@
         SHEET_SOFT_INPUT_MODE
     } from '~/utils/constants';
     import { appIcon } from '~/utils/appIcons';
-    import { documentHasPKPassData } from '~/utils/pkpass';
+    import { getCardVariant } from '~/utils/cardCell';
     import { goToDocumentAfterScan, importImageFromCamera } from '~/utils/ui';
     import { colors, fontScale, hasCamera, isLandscape, screenHeightDips, screenWidthDips, windowInset } from '~/variables';
     import MainList, { Item } from './MainList.svelte';
@@ -209,7 +215,7 @@
         if (item?.type) {
             return item.type;
         }
-        const prefix = item?.doc && documentHasPKPassData(item.doc) ? 'pkpass_' : '';
+        const prefix = getCardVariant(item) ? getCardVariant(item) + '_' : '';
         switch (viewStyle) {
             case 'list':
             case 'columns':
@@ -220,10 +226,6 @@
             default:
                 return prefix + viewStyle;
         }
-    }
-    function onFullCardItemTouch(item: Item, event) {
-        const index = documents.findIndex((d) => d.doc && d.doc.id === item.doc.id);
-        handleTouchAction(index, event);
     }
     function handleTouchAction(index, event) {
         // console.info('handleTouchAction', index, event.action);
@@ -329,147 +331,121 @@
 >
     <Template key="cardholder" let:item>
         <absolutelayout height={itemRowHeight}>
-            <CardListCell
-                {alwaysShowNames}
-                {collectionView}
+            <CardTile
                 height={$itemHeight}
                 {item}
-                itemHeight={itemRowHeight}
-                {itemWidth}
                 layout="cardholder"
                 {nbColumns}
-                {onFullCardItemTouch}
                 syncColors={getSyncColors(item)}
                 {syncEnabled}
                 on:tap={() => onItemTap(item)}
                 on:longPress={(e) => onItemLongPress(item, e)}
-            />
+            >
+                <CardTileFace {item} layout="cardholder" />
+            </CardTile>
         </absolutelayout>
     </Template>
     <Template key="full" let:item>
-        <CardListCell
-            {alwaysShowNames}
-            {collectionView}
-            height={itemRowHeight}
-            {item}
-            itemHeight={itemRowHeight}
-            {itemWidth}
-            layout="full"
-            {nbColumns}
-            {onFullCardItemTouch}
-            syncColors={getSyncColors(item)}
-            {syncEnabled}
-            on:tap={() => onItemTap(item)}
-            on:longPress={(e) => onItemLongPress(item, e)}
-        />
-    </Template>
-    <Template key="list" let:item>
-        <CardListCell
-            {alwaysShowNames}
-            {collectionView}
-            height={itemRowHeight}
-            {item}
-            itemHeight={itemRowHeight}
-            {itemWidth}
-            layout="list"
-            {nbColumns}
-            {onFullCardItemTouch}
-            syncColors={getSyncColors(item)}
-            {syncEnabled}
-            on:tap={() => onItemTap(item)}
-            on:longPress={(e) => onItemLongPress(item, e)}
-        />
+        <CardTile height={itemRowHeight} {item} layout="full" {nbColumns} syncColors={getSyncColors(item)} {syncEnabled} on:tap={() => onItemTap(item)} on:longPress={(e) => onItemLongPress(item, e)}>
+            <CardTileFace {item} layout="full" />
+        </CardTile>
     </Template>
     <Template key="columns" let:item>
-        <CardListCell
-            {alwaysShowNames}
-            {collectionView}
+        <CardTile
             height={itemRowHeight}
             {item}
-            itemHeight={itemRowHeight}
-            {itemWidth}
             layout="columns"
             {nbColumns}
-            {onFullCardItemTouch}
             syncColors={getSyncColors(item)}
             {syncEnabled}
             on:tap={() => onItemTap(item)}
             on:longPress={(e) => onItemLongPress(item, e)}
-        />
+        >
+            <CardTileFace {item} layout="columns" />
+        </CardTile>
     </Template>
-    <Template key="pkpass_cardholder" let:item>
+    <Template key="list" let:item>
+        <CardRow height={itemRowHeight} {item} on:tap={() => onItemTap(item)} on:longPress={(e) => onItemLongPress(item, e)}>
+            <CardRowTile {item} />
+        </CardRow>
+    </Template>
+    <Template key="photo_cardholder" let:item>
         <absolutelayout height={itemRowHeight}>
-            <CardListCell
-                {alwaysShowNames}
-                {collectionView}
+            <CardTile
                 height={$itemHeight}
                 {item}
-                itemHeight={itemRowHeight}
-                {itemWidth}
                 layout="cardholder"
                 {nbColumns}
-                {onFullCardItemTouch}
-                pkPassCell={true}
                 syncColors={getSyncColors(item)}
                 {syncEnabled}
                 on:tap={() => onItemTap(item)}
                 on:longPress={(e) => onItemLongPress(item, e)}
-            />
+            >
+                <CardPhotoFace {alwaysShowNames} {item} {itemWidth} layout="cardholder" />
+            </CardTile>
+        </absolutelayout>
+    </Template>
+    <Template key="photo_full" let:item>
+        <CardTile height={itemRowHeight} {item} layout="full" {nbColumns} syncColors={getSyncColors(item)} {syncEnabled} on:tap={() => onItemTap(item)} on:longPress={(e) => onItemLongPress(item, e)}>
+            <CardPhotoFace {alwaysShowNames} {item} {itemWidth} layout="full" />
+        </CardTile>
+    </Template>
+    <Template key="photo_columns" let:item>
+        <CardTile
+            height={itemRowHeight}
+            {item}
+            layout="columns"
+            {nbColumns}
+            syncColors={getSyncColors(item)}
+            {syncEnabled}
+            on:tap={() => onItemTap(item)}
+            on:longPress={(e) => onItemLongPress(item, e)}
+        >
+            <CardPhotoFace {alwaysShowNames} {item} {itemWidth} layout="columns" />
+        </CardTile>
+    </Template>
+    <Template key="photo_list" let:item>
+        <CardRow height={itemRowHeight} {item} on:tap={() => onItemTap(item)} on:longPress={(e) => onItemLongPress(item, e)}>
+            <CardRowPhoto {item} />
+        </CardRow>
+    </Template>
+    <Template key="pkpass_cardholder" let:item>
+        <absolutelayout height={itemRowHeight}>
+            <CardTile
+                height={$itemHeight}
+                {item}
+                layout="cardholder"
+                {nbColumns}
+                syncColors={getSyncColors(item)}
+                {syncEnabled}
+                on:tap={() => onItemTap(item)}
+                on:longPress={(e) => onItemLongPress(item, e)}
+            >
+                <PKPassCardCell {item} {itemWidth} layout="cardholder" pkpass={item.doc.pages[0]?.pkpass} />
+            </CardTile>
         </absolutelayout>
     </Template>
     <Template key="pkpass_full" let:item>
-        <CardListCell
-            {alwaysShowNames}
-            {collectionView}
-            height={itemRowHeight}
-            {item}
-            itemHeight={itemRowHeight}
-            {itemWidth}
-            layout="full"
-            {nbColumns}
-            {onFullCardItemTouch}
-            pkPassCell={true}
-            syncColors={getSyncColors(item)}
-            {syncEnabled}
-            on:tap={() => onItemTap(item)}
-            on:longPress={(e) => onItemLongPress(item, e)}
-        />
-    </Template>
-    <Template key="pkpass_list" let:item>
-        <CardListCell
-            {alwaysShowNames}
-            {collectionView}
-            height={itemRowHeight}
-            {item}
-            itemHeight={itemRowHeight}
-            {itemWidth}
-            layout="list"
-            {nbColumns}
-            {onFullCardItemTouch}
-            pkPassCell={true}
-            syncColors={getSyncColors(item)}
-            {syncEnabled}
-            on:tap={() => onItemTap(item)}
-            on:longPress={(e) => onItemLongPress(item, e)}
-        />
+        <CardTile height={itemRowHeight} {item} layout="full" {nbColumns} syncColors={getSyncColors(item)} {syncEnabled} on:tap={() => onItemTap(item)} on:longPress={(e) => onItemLongPress(item, e)}>
+            <PKPassCardCell {item} {itemWidth} layout="full" pkpass={item.doc.pages[0]?.pkpass} />
+        </CardTile>
     </Template>
     <Template key="pkpass_columns" let:item>
-        <CardListCell
-            {alwaysShowNames}
-            {collectionView}
+        <CardTile
             height={itemRowHeight}
             {item}
-            itemHeight={itemRowHeight}
-            {itemWidth}
             layout="columns"
             {nbColumns}
-            {onFullCardItemTouch}
-            pkPassCell={true}
             syncColors={getSyncColors(item)}
             {syncEnabled}
             on:tap={() => onItemTap(item)}
             on:longPress={(e) => onItemLongPress(item, e)}
-        />
+        >
+            <PKPassCardCell {item} {itemWidth} layout="columns" pkpass={item.doc.pages[0]?.pkpass} />
+        </CardTile>
+    </Template>
+    <Template key="pkpass_list" let:item>
+        <CardRow height={itemRowHeight} {item} pkPassCell={true} on:tap={() => onItemTap(item)} on:longPress={(e) => onItemLongPress(item, e)}></CardRow>
     </Template>
 
     <stacklayout bind:this={fabHolder} slot="fab" class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)}>
