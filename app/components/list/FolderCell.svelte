@@ -37,10 +37,10 @@
     <gridlayout backgroundColor={iconBackground} borderRadius={iconSize / 2} height={iconSize} verticalAlignment="center" width={iconSize}>
         <CardIcon color={iconColor} horizontalAlignment="center" size={tile ? 18 : 17} src={appIcon('folder')} verticalAlignment="center" />
     </gridlayout>
-    <stacklayout col={1} marginLeft={tile ? 8 : 10} verticalAlignment="center">
-        <label color={colorOnSurface} fontSize={tile ? 13 : 14} fontWeight="600" lineBreak="end" maxLines={1} text={name} />
-        <label color={colorOnSurfaceVariant} fontSize={tile ? 11 : 12} text={lcp('documents_count', item.folder.count)} visibility={tile ? 'visible' : 'collapsed'} />
-    </stacklayout>
+    <label col={1} color={colorOnSurface} lineBreak="end" marginLeft={tile ? 8 : 10} maxLines={tile ? 2 : 1} verticalAlignment="center">
+        <span fontSize={tile ? 13 : 14} fontWeight="600" text={name} />
+        <span color={colorOnSurfaceVariant} fontSize={11} text={tile ? '\n' + lcp('documents_count', item.folder.count) : ''} />
+    </label>
     {#if !tile}
         <label col={2} color={colorOnSurfaceVariant} fontSize={12} text={item.folder.count + ''} verticalAlignment="center" />
         <CardIcon col={3} color={colorOnSurfaceVariant} marginLeft={6} size={16} src={appIcon('chevron')} verticalAlignment="center" />

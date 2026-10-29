@@ -477,7 +477,7 @@
                 backgroundColor={colorPrimaryContainer}
                 borderRadius={18}
                 color={colorOnPrimaryContainer}
-                elevation={3}
+                android:elevation={3}
                 fontSize={15}
                 fontWeight="600"
                 height={56}
