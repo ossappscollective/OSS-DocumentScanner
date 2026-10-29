@@ -144,7 +144,7 @@
                     icon: 'mdi-plus'
                 }
             ];
-            const height = Math.min(rowHeight * options.length, 400);
+            const height = Math.min(rowHeight * options.length, 400) + $windowInset.bottom;
             const option = await showBottomSheet({
                 parent: this,
                 view: OptionSelect,
@@ -200,7 +200,7 @@
             case 'cardholder':
                 return itemHeight * (isLandscape ? 0.6 : 0.4);
             case 'list':
-                return isLandscape ? itemHeight : 68;
+                return isLandscape ? itemHeight : 72;
             default:
                 return itemHeight;
         }

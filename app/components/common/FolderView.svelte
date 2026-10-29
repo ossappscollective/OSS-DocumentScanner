@@ -3,6 +3,8 @@
 <script lang="ts">
     import { createEventDispatcher } from '@shared/utils/svelte/ui';
     import { onMount } from 'svelte';
+    import type { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
+    import type { TextField } from '@nativescript-community/ui-textfield';
     import { lc } from '~/helpers/locale';
     import MiniSearch from '@shared/utils/minisearch';
     import SqlQuery from '@akylas/kiss-orm/dist/Queries/SqlQuery';
@@ -11,6 +13,7 @@
 
     const dispatch = createEventDispatcher();
     let closeCallback: Function;
+    let textfield: NativeViewElementNode<TextField>;
     let foundFolders: DocFolder[] = [];
     export let topFolder: string = null;
     export let defaultFolder: string = null;
@@ -25,6 +28,8 @@
     });
 
     onMount(async () => {
+        // the dialog is not shown yet
+        setTimeout(() => textfield?.nativeView?.requestFocus(), 400);
         if (!folders) {
             folders = await documentsService.folderRepository.search({ where: SqlQuery.createFromTemplateString`name <> 'none'` });
         }
@@ -63,6 +68,7 @@
 <gesturerootview {...$$restProps} {padding} rows="auto,auto,auto,auto" on:layoutChanged={(e) => (closeCallback = e.object['bindingContext']?.closeCallback)}>
     <uibutton height={30} horizontalAlignment="left" margin="2" text={topFolder} visibility={topFolder ? 'visible' : 'collapse'} />
     <textfield
+        bind:this={textfield}
         autocapitalizationType="none"
         autocorrect={false}
         hint={lc('folder')}
@@ -78,7 +84,7 @@
         <label marginTop={15} row={2} text={lc('existing_folders')} />
         <wraplayout margin={5} row={3}>
             {#each foundFolders as group (group.id)}
-                <uibutton height={30} margin="2" text={group.name} on:tap={() => onFolderTap(group)} />
+                <uibutton height={30} margin="2" text={group.name} variant="flat" on:tap={() => onFolderTap(group)} />
             {/each}
         </wraplayout>
     {/if}

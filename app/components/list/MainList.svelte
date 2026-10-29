@@ -9,7 +9,21 @@
     import { VerticalPosition } from '@nativescript-community/ui-popover';
     import { isCatalyst, windowCommandEvent } from '@shared/utils/window';
     import { setContextMenu } from '@nativescript-community/ui-menu';
-    import { AnimationDefinition, Application, ApplicationSettings, Color, EventData, Frame, NavigatedData, ObservableArray, Page, ProxyViewContainer, Screen, StackLayout, View } from '@nativescript/core';
+    import {
+        AnimationDefinition,
+        Application,
+        ApplicationSettings,
+        Color,
+        EventData,
+        Frame,
+        NavigatedData,
+        ObservableArray,
+        Page,
+        ProxyViewContainer,
+        Screen,
+        StackLayout,
+        View
+    } from '@nativescript/core';
     import { AndroidActivityBackPressedEventData } from '@nativescript/core/application/application-interfaces';
     import { debounce, throttle } from '@nativescript/core/utils';
     import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
@@ -22,6 +36,7 @@
     import type { AppBar } from '@nativescript-community/ui-appbar';
     import type { MenuItem } from '@nativescript-community/ui-menu';
     import { appIcon } from '~/utils/appIcons';
+    import { selectionMode } from '~/utils/svelte/store';
     import CardsEmpty from '~/components/list/CardsEmpty.svelte';
     import FolderCell from '~/components/list/FolderCell.svelte';
     import { optionsToMenuItems } from '~/utils/appMenu';
@@ -226,6 +241,7 @@
     let showSearch = false;
     let loading = false;
     export let nbSelected = 0;
+    $: selectionMode.set(nbSelected > 0);
     let editingTitle = false;
     export let nbColumns = writable(1);
     export let updateColumns = function (isLandscape, orientationChanged: boolean = false) {
@@ -384,6 +400,7 @@
             } as Item);
 
             if (event.shouldFocus) {
+                needsReloadOnBack = true;
                 collectionView?.nativeElement?.scrollToIndex(insertIndex, false);
             }
 
@@ -616,7 +633,8 @@
             showError(error);
         }
     }
-    // let needsRefreshOnBack = false;
+    // a card added then opened: iOS shows a recycled cell for it when coming back
+    let needsReloadOnBack = false;
     // let shown = false;
     async function onNavigatedTo(e: NavigatedData) {
         // shown = true;
@@ -629,6 +647,9 @@
             }
         } else if (sortOrder.startsWith('useCount')) {
             refresh();
+        } else if (needsReloadOnBack) {
+            needsReloadOnBack = false;
+            collectionView?.nativeElement?.refresh();
         }
     }
     function onNavigatingFrom() {
@@ -1314,7 +1335,7 @@
     }
     function itemTemplateSpanSize(item?: Item) {
         // the item can be gone already: a layout pass still asks for positions of the previous data
-        if (item?.type === 'folders') {
+        if (item?.type === 'folders' || item?.type === 'folder') {
             return $nbColumns;
         }
         return 1;
@@ -1368,7 +1389,10 @@
         ...(!isTrash && trashEnabled ? [{ title: lc('open_trash'), icon: appIcon('trash'), onSelect: openTrash }] : [])
     ];
     let optionsMenu: MenuItem[];
-    $: optionsMenu = [...(!isTrash && trashEnabled ? [{ title: lc('open_trash'), icon: appIcon('trash'), onSelect: openTrash }] : []), { title: lc('preferences'), icon: appIcon('settings'), onSelect: openPreferences }];
+    $: optionsMenu = [
+        ...(!isTrash && trashEnabled ? [{ title: lc('open_trash'), icon: appIcon('trash'), onSelect: openTrash }] : []),
+        { title: lc('preferences'), icon: appIcon('settings'), onSelect: openPreferences }
+    ];
 
     function onSearchChange(event: { text: string }) {
         const query = event.text?.toLowerCase();
