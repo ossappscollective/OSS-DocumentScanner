@@ -9,7 +9,7 @@
     import { getTileColors } from '~/utils/cardColors';
     import { getRowCorners } from '~/utils/groupedRows';
     import { selectionTransition } from '~/utils/svelte/actions';
-    import { rowMarkerWidth, selectionMode } from '~/utils/svelte/store';
+    import type { Readable } from 'svelte/store';
     import { colors } from '~/variables';
 
     // rows of a group touch on iOS, Android keeps 2 between them
@@ -18,10 +18,13 @@
     export let item: Item;
     export let height: number;
     export let pkPassCell: boolean = false;
+    export let selectionMode: Readable<boolean>;
 
     let { colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary, colorSecondaryContainer, colorSurfaceContainerLow } = $colors;
     $: ({ colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary, colorSecondaryContainer, colorSurfaceContainerLow } = $colors);
 
+    // the content is pushed right by the leading marker while selecting
+    $: markerWidth = $selectionMode ? 36 : 0;
     $: groupStart = item.position === 'first' || item.position === 'only';
     $: ({ page, hasImage, hasCode, label, cardColor } = getCardDisplay(item));
     $: tile = getTileColors(cardColor, colorPrimary);
@@ -41,7 +44,7 @@
         on:tap
         on:longPress
     >
-        <gridlayout columns="auto,*,auto,auto" paddingLeft={$rowMarkerWidth} use:selectionTransition>
+        <gridlayout columns="auto,*,auto,auto" paddingLeft={markerWidth} use:selectionTransition={{ selectionMode }}>
             <gridlayout
                 backgroundColor={pkPassCell ? (page?.pkpass?.passData?.backgroundColor ?? tile.fill) : hasImage ? null : tile.fill}
                 borderRadius={11}
@@ -61,11 +64,11 @@
             <CardIcon col={3} color={colorPrimary} marginRight={8} size={16} src={appIcon('favorite_on')} verticalAlignment="center" visibility={item.doc.favorite === 1 ? 'visible' : 'collapsed'} />
             <CardIcon col={3} color={colorOnSurfaceVariant} size={16} src={appIcon('chevron')} verticalAlignment="center" visibility={$selectionMode || __ANDROID__ ? 'collapsed' : 'visible'} />
         </gridlayout>
-        <RowSelectionMarker selected={item.selected} />
+        <RowSelectionMarker {selectionMode} selected={item.selected} />
         <gridlayout
             backgroundColor={colorOutlineVariant}
             height={0.5}
-            marginLeft={108 + $rowMarkerWidth}
+            marginLeft={108 + markerWidth}
             marginRight={-12}
             verticalAlignment="bottom"
             visibility={__IOS__ && (item.position === 'first' || item.position === 'middle') ? 'visible' : 'collapsed'}

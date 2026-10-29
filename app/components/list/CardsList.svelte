@@ -48,6 +48,7 @@
     let collectionView: NativeViewElementNode<CollectionViewWithSwipeMenu>;
     let viewStyle: string;
     let nbColumns: Writable<number>;
+    let selectionMode: Writable<boolean>;
     let syncEnabled: boolean;
 
     export let alwaysShowNames = ApplicationSettings.getBoolean(SETTINGS_CARD_ALWAYS_SHOW_NAME, DEFAULT_CARD_ALWAYS_SHOW_NAME);
@@ -316,6 +317,7 @@
     }}
     bind:fabHolder
     bind:nbColumns
+    bind:selectionMode
     bind:viewStyle
     bind:onItemTap
     bind:onItemLongPress
@@ -365,7 +367,7 @@
         </CardTile>
     </Template>
     <Template key="list" let:item>
-        <CardRow height={itemRowHeight} {item} on:tap={() => onItemTap(item)} on:longPress={(e) => onItemLongPress(item, e)}>
+        <CardRow height={itemRowHeight} {selectionMode} {item} on:tap={() => onItemTap(item)} on:longPress={(e) => onItemLongPress(item, e)}>
             <CardRowTile {item} />
         </CardRow>
     </Template>
@@ -405,7 +407,7 @@
         </CardTile>
     </Template>
     <Template key="photo_list" let:item>
-        <CardRow height={itemRowHeight} {item} on:tap={() => onItemTap(item)} on:longPress={(e) => onItemLongPress(item, e)}>
+        <CardRow height={itemRowHeight} {selectionMode} {item} on:tap={() => onItemTap(item)} on:longPress={(e) => onItemLongPress(item, e)}>
             <CardRowPhoto {item} />
         </CardRow>
     </Template>
@@ -445,7 +447,7 @@
         </CardTile>
     </Template>
     <Template key="pkpass_list" let:item>
-        <CardRow height={itemRowHeight} {item} pkPassCell={true} on:tap={() => onItemTap(item)} on:longPress={(e) => onItemLongPress(item, e)}></CardRow>
+        <CardRow height={itemRowHeight} {selectionMode} {item} pkPassCell={true} on:tap={() => onItemTap(item)} on:longPress={(e) => onItemLongPress(item, e)}></CardRow>
     </Template>
 
     <stacklayout bind:this={fabHolder} slot="fab" class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)}>

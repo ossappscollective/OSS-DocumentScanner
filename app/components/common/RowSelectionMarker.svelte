@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { selectionMode } from '~/utils/svelte/store';
+    import type { Readable } from 'svelte/store';
     import { colors, fonts } from '~/variables';
     export let selected: boolean = false;
+    export let selectionMode: Readable<boolean>;
     // technique for only specific properties to get updated on store change
     $: ({ colorBackground, colorOnPrimary, colorOutline, colorPrimary, colorSurfaceContainerLow } = $colors);
 </script>

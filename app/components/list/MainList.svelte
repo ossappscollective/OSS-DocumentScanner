@@ -33,12 +33,11 @@
     import { showError } from '@shared/utils/showError';
     import { closeModal, fade, goBack, navigate } from '@shared/utils/svelte/ui';
     import { onDestroy, onMount } from 'svelte';
-    import { writable } from 'svelte/store';
+    import { type Writable, writable } from 'svelte/store';
     import type { AppBar } from '@nativescript-community/ui-appbar';
     import type { MenuItem } from '@nativescript-community/ui-menu';
     import { appIcon } from '~/utils/appIcons';
     import { type RowPosition, updateRowPositions } from '~/utils/groupedRows';
-    import { selectionMode } from '~/utils/svelte/store';
     import CardsEmpty from '~/components/list/CardsEmpty.svelte';
     import FolderCell from '~/components/list/FolderCell.svelte';
     import { optionsToMenuItems } from '~/utils/appMenu';
@@ -244,6 +243,8 @@
     let showSearch = false;
     let loading = false;
     export let nbSelected = 0;
+    // read by the cells, which are not children of this component: the list of the current page, not a global
+    export let selectionMode: Writable<boolean> = writable(false);
     $: selectionMode.set(nbSelected > 0);
     // iOS cells do not lay out again when their content changes: the visible ones are bound again to leave or enter selection mode
     let wasSelecting = false;
@@ -1544,6 +1545,7 @@
             <Template key="folder" let:item>
                 {#if CARD_APP}
                     <FolderCell
+                        {selectionMode}
                         name={folder ? item.folder.name.replace(folder.name + '/', '') : item.folder.name}
                         {item}
                         marginLeft={folderMargin}
@@ -1595,6 +1597,7 @@
                     <Template let:item>
                         {#if CARD_APP}
                             <FolderCell
+                                {selectionMode}
                                 name={folder ? item.folder.name.replace(folder.name + '/', '') : item.folder.name}
                                 {item}
                                 margin={4}
