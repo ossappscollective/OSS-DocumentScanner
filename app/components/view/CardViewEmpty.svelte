@@ -22,7 +22,7 @@
         <span color={colorOnBackground} fontSize={20} fontWeight="bold" text={lc('card_empty_title')} />
         <span color={colorOnSurfaceVariant} fontSize={14} text={'\n' + lc('card_empty_help')} />
     </label>
-    <uibutton backgroundColor={accent.accent} color={accent.onAccent} horizontalAlignment="center" marginTop={20} text={lc('add_code')} variant="contained" on:tap={onAddCode} />
+    <uibutton height={44} backgroundColor={accent.accent} color={accent.onAccent} horizontalAlignment="center" marginTop={20} text={lc('add_code')} variant="contained" on:tap={onAddCode} />
     <uibutton
         backgroundColor={__IOS__ ? accent.accent + '33' : accent.container}
         color={accent.accent}
@@ -32,5 +32,5 @@
         variant="flat"
         on:tap={onAddPhoto}
     />
-    <uibutton color={accent.accent} horizontalAlignment="center" marginTop={4} text={lc('add_detail')} variant="text" on:tap={onAddDetail} />
+    <uibutton height={44} color={accent.accent} horizontalAlignment="center" marginTop={4} text={lc('add_detail')} variant="text" on:tap={onAddDetail} />
 </stacklayout>

@@ -1152,7 +1152,7 @@
 </script>
 
 <appPage bind:this={page} id="cardview" {...{ keepScreenAwake: hasQRCodes, screenBrightness: hasQRCodes ? 1 : -1 }}>
-    <appBar {bottomItems} {...(__ANDROID__ ? { backgroundColor: accent.container } : {})} color={colorOnBackground} iosIconRenderingMode="alwaysTemplate" scrollBehavior="lift" scrollTargetId="cardScroll" size="small" title={nbSelected > 0 ? lcp('selected', nbSelected) : inEditMode ? lc('reorder_pages') : hasCustomName || __ANDROID__ ? '' : document.name}>
+    <appBar {bottomItems} {...(__ANDROID__ ? { backgroundColor: accent.container } : {})} color={colorOnBackground} iosIconRenderingMode="alwaysTemplate" scrollBehavior="lift" scrollTargetId="cardScroll" size="small" translucent={__IOS__} title={nbSelected > 0 ? lcp('selected', nbSelected) : inEditMode ? lc('reorder_pages') : hasCustomName || __ANDROID__ ? '' : document.name}>
         {#if __ANDROID__}
             <navigationButton {...{ 'android.systemIcon': nbSelected > 0 || inEditMode ? 'ic_menu_close_clear_cancel' : 'ic_menu_back' }} on:tap={nbSelected > 0 ? unselectAll : inEditMode ? switchEditMode : onGoBack} />
         {/if}
@@ -1188,8 +1188,8 @@
             <scrollview id="cardScroll" on:layoutChanged={onScrollLayout}>
             {#key scrollHeight}
             {#if scrollHeight > 0}
-            <stacklayout>
-                <gridlayout height={hasHero || isEmptyCard ? heroHeight : undefined} rows="auto,auto,*,auto">
+            <stacklayout paddingBottom={32}>
+                <gridlayout height={hasImages || isEmptyCard ? heroHeight : undefined} rows="auto,auto,*,auto">
                 {#if __ANDROID__}
                     <gridlayout backgroundColor={accent.container} borderRadius="0 0 40 12" columns="*,auto" rows="auto" padding="0 20 {hasHero ? PLATE_OVERLAP + 20 : 24} 20">
                         <stacklayout margin="8 0 0 0">
@@ -1227,7 +1227,7 @@
                             <Template let:item>
                                 <gridlayout backgroundColor="white" borderRadius={28} elevation={isEInk || __ANDROID__ ? 0 : 6} margin={qrcodes?.length > 1 ? '4 4 8 4' : __ANDROID__ ? '4 0 8 0' : '4 16 8 16'} padding="20" rows="*,auto" on:tap={onQRCodeTap}>
                                     <svgview src={item.svg} stretch="aspectFit" />
-                                    <label color="black" fontSize={17} fontWeight="bold" marginTop={8} maxLines={1} row={1} selectable={true} text={item.text} textAlignment="center" />
+                                    <label color="black" fontSize={17} fontWeight="bold" linkColor="black" linkUnderline={false} marginTop={8} maxLines={1} row={1} selectable={true} text={item.text} textAlignment="center" />
                                 </gridlayout>
                             </Template>
                         </pager>
@@ -1354,7 +1354,7 @@
                                     marginTop={index > 0 ? 2 : 0}
                                     padding="12 20 12 20">
                                     <label color={colorOnSurfaceVariant} fontSize={13} text={detail.name} />
-                                    <label color={colorOnSurface} fontSize={17} selectable={true} text={formatItemValue(detail)} textWrap={true} />
+                                    <label color={colorOnSurface} fontSize={17} linkColor={colorOnSurface} linkUnderline={false} selectable={true} text={formatItemValue(detail)} textWrap={true} />
                                 </stacklayout>
                             {/each}
                         </stacklayout>
@@ -1363,7 +1363,7 @@
                             {#each details as detail, index (detail.name)}
                                 <stacklayout borderTopColor={colorOutlineVariant} borderTopWidth={index > 0 ? 0.5 : 0} padding="10 16 10 16">
                                     <label color={colorOnSurfaceVariant} fontSize={13} text={detail.name} />
-                                    <label color={colorOnSurface} fontSize={17} selectable={true} text={formatItemValue(detail)} textWrap={true} />
+                                    <label color={colorOnSurface} fontSize={17} linkColor={colorOnSurface} linkUnderline={false} selectable={true} text={formatItemValue(detail)} textWrap={true} />
                                 </stacklayout>
                             {/each}
                         </stacklayout>
