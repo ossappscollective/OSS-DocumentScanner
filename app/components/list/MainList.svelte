@@ -601,6 +601,10 @@
 
     onMount(() => {
         mounted = true;
+        // load while the page transition runs: the cards are there when it ends
+        if (documentsService.started) {
+            refresh(false);
+        }
         if (__IOS__) {
             Application.on(windowCommandEvent, onWindowCommand);
         }
@@ -686,7 +690,8 @@
         DEV_LOG && console.log('onNavigatedTo', e.isBackNavigation, sortOrder);
         if (!e.isBackNavigation) {
             if (documentsService.started) {
-                refresh();
+                // already loaded while the page was opening
+                refresh(false);
             } else {
                 documentsService.once('started', refreshSimple);
             }
