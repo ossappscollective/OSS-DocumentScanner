@@ -16,12 +16,14 @@
         ApplicationSettings,
         Color,
         EventData,
+        FormattedString,
         Frame,
         NavigatedData,
         ObservableArray,
         Page,
         ProxyViewContainer,
         Screen,
+        Span,
         StackLayout,
         View
     } from '@nativescript/core';
@@ -98,7 +100,7 @@
         importAndScanImage,
         onAndroidNewItent,
         onBackButton,
-        pickFolderColor,
+        pickColor,
         promptForText,
         showImagePopoverMenu,
         showPDFPopoverMenu,
@@ -205,6 +207,23 @@
         syncEnabled = syncService.enabled;
     }
     $: updateTitle(folder);
+
+    // iOS: the title of a folder starts with a folder glyph of its color, like on Android
+    function getFolderFormattedTitle(current: DocFolder, glyphColor: string) {
+        if (!__IOS__ || !current) {
+            return null;
+        }
+        const formatted = new FormattedString();
+        const glyph = new Span();
+        glyph.fontFamily = $fonts.mdi;
+        glyph.color = new Color(glyphColor);
+        glyph.text = 'mdi-folder';
+        const name = new Span();
+        name.text = '  ' + current.name;
+        formatted.spans.push(glyph, name);
+        return formatted;
+    }
+    $: folderTitle = getFolderFormattedTitle(folder, folder?.color || colorOutline);
 
     export let updateTitle = (folder) => {
         if (folder && __IOS__) {
@@ -1363,10 +1382,11 @@
         }
     }
 
-    async function setFolderColor(event) {
+    async function setFolderColor() {
         try {
-            const color: string = await pickFolderColor(folder, event);
+            const color = await pickColor(folder.color || colorPrimary, { anchor: page?.nativeView });
             if (color) {
+                await folder.save({ color: color.hex });
                 folder = folder; //for svelte to pick up change
             }
         } catch (error) {
@@ -1487,6 +1507,7 @@
         bind:this={appBar}
         android:backgroundColor={nbSelected > 0 ? colorPrimaryContainer : undefined}
         color={colorOnBackground}
+        iosIconRenderingMode="alwaysTemplate"
         scrollBehavior="lift"
         searchable={!isTrash && !onlyForImport && nbSelected === 0}
         scrollTargetId="documentsCollectionView"
@@ -1494,6 +1515,7 @@
         searchMode="inline"
         searchPlacement="integrated"
         {bottomItems}
+        formattedTitle={folderTitle}
         size="small"
         titleAlignment="leading"
         translucent={__IOS__}
