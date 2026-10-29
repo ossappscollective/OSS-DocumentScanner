@@ -1357,19 +1357,37 @@
     $: primaryAction = actions.find((action) => action.primary);
     $: secondaryActions = actions.filter((action) => !action.primary);
     $: plusMenu = secondaryActions.map((action) => ({ title: action.text, icon: appIcon(action.icon), onSelect: action.onTap }));
+    // the main actions of the selection, in order: the rest goes to the more menu
+    function getSelectionActionIds() {
+        if (isTrash) {
+            return ['select_all', 'restore', 'delete_permanently'];
+        }
+        return CARD_APP ? (__IOS__ ? ['share', 'favorite', 'move_folder', 'delete'] : ['favorite', 'move_folder', 'delete']) : ['pdf', 'share', 'delete'];
+    }
+    function splitSelectionOptions(options: OptionType[]) {
+        const toolbarIds = getSelectionActionIds();
+        return {
+            main: toolbarIds.map((id) => options.find((option) => option.id === id)).filter(Boolean),
+            more: options.filter((option) => !toolbarIds.includes(option.id))
+        };
+    }
+    const onSelectionAction = (option: OptionType) => handleSelectionAction({ object: collectionView?.nativeView }, option);
+    // Android: the actions are in the top bar while selecting, iOS: in the bottom toolbar
+    $: selectionOptions = nbSelected > 0 ? splitSelectionOptions(getSelectionToolbarOptions()) : { main: [], more: [] };
+    $: selectionMoreMenu = optionsToMenuItems(selectionOptions.more, onSelectionAction);
     function getSelectionBottomItems(options: OptionType[]) {
-        const toolbarIds = isTrash ? options.map((option) => option.id) : ['pdf', 'share', 'delete'];
-        const toolbarOptions = options.filter((option) => toolbarIds.includes(option.id));
-        const menuOptions = options.filter((option) => !toolbarIds.includes(option.id));
-        const onAction = (option: OptionType) => handleSelectionAction({ object: collectionView?.nativeView }, option);
-        const items: any[] = toolbarOptions.flatMap((option) => [{ spacer: true }, { text: option.name, icon: appIcon(option.id), onTap: () => onAction(option) }]);
-        if (menuOptions.length) {
+        if (__ANDROID__) {
+            return [];
+        }
+        const { main, more } = splitSelectionOptions(options);
+        const items: any[] = main.flatMap((option) => [{ spacer: true }, { text: option.name, icon: appIcon(option.id), onTap: () => onSelectionAction(option) }]);
+        if (more.length) {
             items.push(
                 { spacer: true },
                 {
                     text: lc('more_options'),
                     icon: appIcon('more'),
-                    menu: optionsToMenuItems(menuOptions, onAction)
+                    menu: optionsToMenuItems(more, onSelectionAction)
                 }
             );
         }
@@ -1427,6 +1445,7 @@
 <appPage bind:this={page} id="documentList" on:navigatedTo={onNavigatedTo} on:navigatingFrom={onNavigatingFrom}>
     <appBar
         bind:this={appBar}
+        android:backgroundColor={nbSelected > 0 ? colorPrimaryContainer : undefined}
         scrollBehavior="lift"
         searchable={!isTrash && !onlyForImport && nbSelected === 0}
         scrollTargetId="documentsCollectionView"
@@ -1476,6 +1495,13 @@
             {/if}
         {:else if __IOS__}
             <appBarItem ios.position="right" prominent={true} text={lc('cancel')} on:tap={unselectAll} />
+        {:else}
+            {#each selectionOptions.main as option (option.id)}
+                <appBarItem icon={appIcon(option.id)} text={option.name} on:tap={() => onSelectionAction(option)} />
+            {/each}
+            {#if selectionMoreMenu.length}
+                <appBarItem icon={appIcon('more')} menu={selectionMoreMenu} />
+            {/if}
         {/if}
     </appBar>
     <gridlayout class="pageContent" rows="auto,auto,*">
