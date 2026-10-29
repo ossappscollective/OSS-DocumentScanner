@@ -2,6 +2,7 @@
     import { lc } from '@nativescript-community/l';
     import { Template } from '@nativescript-community/svelte-native/components';
     import { TextField } from '@nativescript-community/ui-textfield';
+    import SheetHeader from '~/components/common/SheetHeader.svelte';
     import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { showError } from '@shared/utils/showError';
     import dayjs from 'dayjs';
@@ -9,6 +10,7 @@
     import { qrcodeService } from '~/services/qrcode';
     import { shortcutService } from '~/services/shortcuts';
     import { appIcon } from '~/utils/appIcons';
+    import { SHEET_SOFT_INPUT_MODE } from '~/utils/constants';
     import { pickColor } from '~/utils/ui';
     import { colors } from '~/variables';
     import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
@@ -108,6 +110,7 @@
                 parent: rootView,
                 skipCollapsedState: true,
                 view: ExtraFieldPicker,
+                windowSoftInputMode: SHEET_SOFT_INPUT_MODE,
                 props: { editing: !!field, ...(field?.extra || {}) }
             });
             if (!result) {
@@ -166,11 +169,7 @@
 </script>
 
 <gesturerootview bind:this={rootView} backgroundColor={__IOS__ ? colorBackground : colorSurface} rows="auto,*">
-    <gridlayout columns="auto,*,auto" padding="12 16 8 16">
-        <uibutton text={lc('cancel')} variant="text" on:tap={() => close(false)} />
-        <label col={1} color={colorOnSurface} fontSize={17} fontWeight="bold" text={lc('edit')} textAlignment="center" verticalAlignment="center" />
-        <uibutton col={2} text={lc('save')} variant="contained" on:tap={save} />
-    </gridlayout>
+    <SheetHeader doneText={lc('save')} onCancel={() => close(false)} onDone={save} title={lc('edit')} />
     <collectionview row={1} {itemTemplateSelector} items={listItems}>
         <Template key="name" let:item>
             <textfield hint={lc('name')} margin="4 16 4 16" text={name} variant={__IOS__ ? 'none' : 'filled'} on:textChange={(e) => (name = e.value)} />

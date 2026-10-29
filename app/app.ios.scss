@@ -81,6 +81,12 @@ button[variant='contained'] {
     height: 44;
 }
 
+.sheetHeaderTitle {
+    font-size: 17;
+    font-weight: bold;
+    text-align: center;
+}
+
 // capsule text fields: the system fill, 12% gray in light and 24% in dark
 textfield[variant='outline'],
 textview[variant='outline'] {
@@ -99,4 +105,15 @@ textfield[variant='outline'] {
 textview[variant='outline'] {
     min-height: 84;
     padding: 12 16;
+}
+
+// a field: 48 tall and 4 around
+.formRow {
+    height: 56;
+}
+
+textfield[variant='outline']:focused,
+textview[variant='outline']:focused {
+    border-color: var(--colorPrimary);
+    border-width: 1.5;
 }
