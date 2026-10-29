@@ -1057,22 +1057,42 @@
             refreshThrottle();
         }
     }
-    function getViewOptionsMenu(currentViewStyle: string, currentFolderViewStyle: string, currentSortOrder: string): MenuItem[] {
-        const folderViewStyleKeys = Object.keys(folderViewStyles);
+    function getViewStyleItems(currentViewStyle: string): MenuItem[] {
+        return Object.keys(viewStyles).map((key) => ({ title: viewStyles[key].name, checked: currentViewStyle === key, onSelect: () => selectViewStyle(key) }));
+    }
+    function getFolderStyleItems(currentFolderViewStyle: string): MenuItem[] {
+        return Object.keys(folderViewStyles).map((key) => ({ title: folderViewStyles[key].name, checked: currentFolderViewStyle === key, onSelect: () => selectFolderViewStyle(key) }));
+    }
+    function getSortItems(currentSortOrder: string): MenuItem[] {
         return [
-            { title: lc('view_style'), disabled: true },
-            ...Object.keys(viewStyles).map((key) => ({ title: viewStyles[key].name, checked: currentViewStyle === key, onSelect: () => selectViewStyle(key) })),
-            ...(folderViewStyleKeys.length > 1
-                ? [
-                      { separator: true },
-                      { title: lc('folder_view_style'), disabled: true },
-                      ...folderViewStyleKeys.map((key) => ({ title: folderViewStyles[key].name, checked: currentFolderViewStyle === key, onSelect: () => selectFolderViewStyle(key) }))
-                  ]
-                : []),
-            { separator: true },
-            { title: lc('sort'), disabled: true },
             ...Object.keys(sortKeys).map((key) => ({ title: sortKeys[key].name, checked: currentSortOrder.includes(key), onSelect: () => selectSortKey(key) })),
-            { title: lc('ascending'), checked: currentSortOrder.indexOf('ASC') !== -1, onSelect: toggleAscending }
+            { title: lc('ascending'), toggle: true, checked: currentSortOrder.indexOf('ASC') !== -1, onSelect: toggleAscending }
+        ];
+    }
+    // the current sort, e.g. "Date, ascending" (the most used is always descending)
+    function getSortSummary(currentSortOrder: string) {
+        const key = Object.keys(sortKeys).find((sortKey) => currentSortOrder.includes(sortKey));
+        const name = sortKeys[key]?.name;
+        return key === 'useCount' ? name : `${name}, ${lc(currentSortOrder.indexOf('ASC') !== -1 ? 'sort.ascending' : 'sort.descending')}`;
+    }
+    function getViewOptionsMenu(currentViewStyle: string, currentFolderViewStyle: string, currentSortOrder: string): MenuItem[] {
+        const folderItems = getFolderStyleItems(currentFolderViewStyle);
+        return [
+            { separator: true, title: lc('view_style') },
+            ...getViewStyleItems(currentViewStyle),
+            ...(folderItems.length > 1 ? [{ separator: true, title: lc('folder_view_style') }, ...folderItems] : []),
+            { separator: true, title: lc('sort') },
+            ...getSortItems(currentSortOrder)
+        ];
+    }
+    // iOS: a system menu is as high as 60% of the screen at most and scrolls beyond, the sort is a submenu of the view style one
+    function getIOSViewStyleItems(currentViewStyle: string, currentFolderViewStyle: string, currentSortOrder: string): MenuItem[] {
+        const folderItems = getFolderStyleItems(currentFolderViewStyle);
+        return [
+            ...getViewStyleItems(currentViewStyle),
+            ...(folderItems.length > 1 ? [{ separator: true, title: lc('folder_view_style') }, ...folderItems] : []),
+            { separator: true },
+            { title: lc('sort'), subtitle: getSortSummary(currentSortOrder), items: getSortItems(currentSortOrder) }
         ];
     }
     $: viewOptionsMenu = getViewOptionsMenu(viewStyle, folderViewStyle, sortOrder);
@@ -1423,7 +1443,7 @@
               : [];
     let iosMenu: MenuItem[];
     $: iosMenu = [
-        { title: lc('view_style'), icon: appIcon('view_style'), items: viewOptionsMenu },
+        { title: lc('view_style'), icon: appIcon('view_style'), items: getIOSViewStyleItems(viewStyle, folderViewStyle, sortOrder) },
         ...(!isTrash && trashEnabled ? [{ title: lc('open_trash'), icon: appIcon('trash'), onSelect: openTrash }] : [])
     ];
     let optionsMenu: MenuItem[];
