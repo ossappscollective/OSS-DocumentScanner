@@ -104,6 +104,7 @@
 
 <script lang="ts">
     import SliderPopover from '../common/SliderPopover.svelte';
+    import CardViewEmpty from '~/components/view/CardViewEmpty.svelte';
     import { TextField } from '@nativescript-community/ui-textfield';
     import { Label } from '@nativescript-community/ui-label';
     import { EXTRA_PAPERLESS_ID_KEY } from '~/services/sync/paperless/PaperlessNgxPDFSyncService';
@@ -164,6 +165,7 @@
     // the zones fill the screen, the details peek under them
     $: heroHeight = viewportHeight - (details.length ? 56 : 0);
     $: hasHero = hasQRCodes || hasImages;
+    $: isEmptyCard = !hasHero && !details.length && !isPKPassDocument;
     // no photo: the card color is the backdrop
     $: heroGradient = __IOS__ && !backdropImage && cardColor ? getBackdropGradient(accent.accent, isDarkTheme()) : null;
     function getBackdropGradient(color: string, dark: boolean) {
@@ -934,7 +936,10 @@
             ...(withImages && !pkpass ? [{ text: lc('adjust'), icon: appIcon('tune'), onTap: editCurrentPage }] : []),
             ...(pkpass ? [] : [{ text: lc('edit'), icon: appIcon('edit'), onTap: openEdit }]),
             { spacer: true },
-            { text: lc('more_options'), icon: appIcon('more'), menu: moreMenu },
+            // a menu with a single entry (delete) is the button of that entry
+            moreMenu.length > 1
+                ? { text: lc('more_options'), icon: appIcon('more'), menu: moreMenu }
+                : { text: moreMenu[0].title, icon: moreMenu[0].icon, color: colorError, onTap: () => moreMenu[0].onSelect(moreMenu[0]) },
             { spacer: true }
         ];
     }
@@ -958,7 +963,7 @@
     }
     $: documentMenu = getDocumentMenu(hasImages, isPKPassDocument, document.pages.length);
     $: bottomItems = getBottomItems(nbSelected, isPKPassDocument, document.favorite === 1, hasImages, canBeExportedToPDF, inEditMode);
-    async function onAddButton() {
+    async function onAddButton(kind?: 'code' | 'photo') {
         try {
             const OptionSelect = (await import('@shared/components/OptionSelect.svelte')).default;
             const rowHeight = 58;
@@ -1001,7 +1006,8 @@
                         name: lc('add_qrcode_manual'),
                         icon: 'mdi-qrcode-plus'
                     }
-                ]);
+                ])
+                .filter((option) => !kind || (kind === 'code') === option.id.startsWith('add_qrcode'));
             const height = Math.min(rowHeight * options.length, 400);
             const option = await showBottomSheet({
                 parent: this,
@@ -1146,7 +1152,7 @@
 </script>
 
 <appPage bind:this={page} id="cardview" {...{ keepScreenAwake: hasQRCodes, screenBrightness: hasQRCodes ? 1 : -1 }}>
-    <appBar {bottomItems} {...(__ANDROID__ ? { backgroundColor: accent.container } : {})} color={heroGradient ? accent.onBackdrop : colorOnBackground} scrollBehavior="lift" scrollTargetId="cardScroll" size="small" title={nbSelected > 0 ? lcp('selected', nbSelected) : inEditMode ? lc('reorder_pages') : hasCustomName || __ANDROID__ ? '' : document.name}>
+    <appBar {bottomItems} {...(__ANDROID__ ? { backgroundColor: accent.container } : {})} color={colorOnBackground} iosIconRenderingMode="alwaysTemplate" scrollBehavior="lift" scrollTargetId="cardScroll" size="small" title={nbSelected > 0 ? lcp('selected', nbSelected) : inEditMode ? lc('reorder_pages') : hasCustomName || __ANDROID__ ? '' : document.name}>
         {#if __ANDROID__}
             <navigationButton {...{ 'android.systemIcon': nbSelected > 0 || inEditMode ? 'ic_menu_close_clear_cancel' : 'ic_menu_back' }} on:tap={nbSelected > 0 ? unselectAll : inEditMode ? switchEditMode : onGoBack} />
         {/if}
@@ -1183,7 +1189,7 @@
             {#key scrollHeight}
             {#if scrollHeight > 0}
             <stacklayout>
-                <gridlayout height={hasHero ? heroHeight : undefined} rows="auto,auto,*,auto">
+                <gridlayout height={hasHero || isEmptyCard ? heroHeight : undefined} rows="auto,auto,*,auto">
                 {#if __ANDROID__}
                     <gridlayout backgroundColor={accent.container} borderRadius="0 0 40 12" columns="*,auto" rows="auto" padding="0 20 {hasHero ? PLATE_OVERLAP + 20 : 24} 20">
                         <stacklayout margin="8 0 0 0">
@@ -1211,6 +1217,9 @@
                         <label color={heroGradient ? accent.onBackdrop : colorOnBackground} fontSize={34} fontWeight="bold" maxLines={3} text={document.name} textWrap={true} />
                         <label color={heroGradient ? accent.onBackdrop : colorOnSurfaceVariant} fontSize={15} opacity={heroGradient ? 0.8 : 1} text={dayjs(document.createdDate).format('LL')} />
                     </stacklayout>
+                {/if}
+                {#if isEmptyCard}
+                    <CardViewEmpty onAddCode={() => onAddButton('code')} onAddDetail={openEdit} onAddPhoto={() => onAddButton('photo')} row={2} verticalAlignment="center" />
                 {/if}
                 {#if hasQRCodes}
                     <gridlayout height={CODE_ZONE_HEIGHT + (qrcodes?.length > 1 ? 28 : 0)} margin="{__ANDROID__ ? -PLATE_OVERLAP : 8} {__ANDROID__ && qrcodes?.length <= 1 ? 16 : 0} 8 {__ANDROID__ && qrcodes?.length <= 1 ? 16 : 0}" row={1} rows="*,auto">
