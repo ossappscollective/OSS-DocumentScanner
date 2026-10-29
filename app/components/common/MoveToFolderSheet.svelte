@@ -1,39 +1,15 @@
-<script context="module" lang="ts">
-    import { Template } from '@nativescript-community/svelte-native/components';
-    import { Color } from '@nativescript/core';
-    import { showError } from '@shared/utils/showError';
-    import CardIcon from '~/components/common/CardIcon.svelte';
+<script lang="ts">
+    import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
+    import type { TextField } from '@nativescript-community/ui-textfield';
     import SheetHeader from '~/components/common/SheetHeader.svelte';
     import { lc } from '~/helpers/locale';
     import { DocFolder } from '~/models/OCRDocument';
-    import { appIcon } from '~/utils/appIcons';
-    import { type RowPosition, getRowCorners, getRowPosition } from '~/utils/groupedRows';
-    import { promptForText } from '~/utils/ui';
     import { colors, windowInset } from '~/variables';
 
-    const SEARCH_MIN_FOLDERS = 8;
-    const ROW_HEIGHT = 52;
-    const ROW_GAP = __IOS__ ? 0 : 2;
-    const MAX_VISIBLE_ROWS = 8;
-    const ICON_SIZE = 32;
+    const MAX_CHIPS = 12;
 
-    interface Row {
-        id: string;
-        // the name given back when the row is tapped: '' removes the documents from their folder
-        name: string;
-        title: string;
-        icon: string;
-        color?: string;
-        checked?: boolean;
-        position?: RowPosition;
-        iconColor?: string;
-        iconBackground?: string;
-    }
-</script>
-
-<script lang="ts">
-    let { colorOnSurface, colorPrimary, colorOutlineVariant, colorSurfaceContainerHigh } = $colors;
-    $: ({ colorOnSurface, colorPrimary, colorOutlineVariant, colorSurfaceContainerHigh } = $colors);
+    let { colorOnSurfaceVariant } = $colors;
+    $: ({ colorOnSurfaceVariant } = $colors);
 
     /** every folder the documents can go to */
     export let folders: DocFolder[];
@@ -41,102 +17,41 @@
     export let currentFolder: DocFolder = undefined;
 
     let rootView;
-    let filter = '';
+    let textfield: NativeViewElementNode<TextField>;
+    let name = '';
 
-    $: showSearch = folders.length > SEARCH_MIN_FOLDERS;
-    $: lowerFilter = filter.trim().toLowerCase();
-    $: rows = (
-        [
-            ...(currentFolder ? [{ id: 'root', name: '', title: lc('remove_from_folder'), icon: appIcon('close') }] : []),
-            ...folders
-                .filter((folder) => !lowerFilter || folder.name.toLowerCase().includes(lowerFilter))
-                .map((folder) => ({
-                    id: 'folder_' + folder.id,
-                    name: folder.name,
-                    title: folder.name,
-                    icon: appIcon('folder_outline'),
-                    color: folder.color,
-                    checked: folder.id === currentFolder?.id
-                })),
-            { id: 'new', name: undefined, title: lc('new_folder'), icon: appIcon('new_folder') }
-        ] as Row[]
-    ).map((row, index, all) => {
-        const iconColor = row.color || colorPrimary;
-        return {
-            ...row,
-            position: getRowPosition(index === 0, index === all.length - 1),
-            iconColor,
-            iconBackground: Color.mix(new Color(colorSurfaceContainerHigh), new Color(iconColor), 16).hex
-        };
-    });
-    $: listHeight = Math.min(rows.length, MAX_VISIBLE_ROWS) * (ROW_HEIGHT + ROW_GAP);
+    $: lowerName = name.trim().toLowerCase();
+    $: suggestions = folders.filter((folder) => folder.id !== currentFolder?.id && (!lowerName || folder.name.toLowerCase().includes(lowerName))).slice(0, MAX_CHIPS);
 
-    function close(name?: string) {
-        rootView.nativeView.bindingContext.closeCallback(name);
+    function close(folderName?: string) {
+        rootView.nativeView.bindingContext.closeCallback(folderName);
     }
-
-    async function onRowTap(row: Row) {
-        try {
-            if (row.id !== 'new') {
-                close(row.name);
-                return;
-            }
-            const result = await promptForText({
-                title: lc('new_folder'),
-                hintText: lc('name'),
-                okButtonText: lc('create')
-            });
-            const name = result?.text?.trim();
-            if (result?.result && name?.length) {
-                close(name);
-            }
-        } catch (error) {
-            showError(error);
-        }
-    }
+    // an empty name removes the documents from their folder
+    const move = (folderName = name) => close(folderName.trim());
+    // the sheet is not shown yet
+    const focus = () => setTimeout(() => textfield?.nativeView?.requestFocus(), 400);
 </script>
 
-<gesturerootview bind:this={rootView} rows="auto,auto,auto">
-    <SheetHeader onCancel={() => close()} title={lc('move_folder')} />
+<gesturerootview bind:this={rootView} padding="0 0 {$windowInset.bottom + 16} 0" rows="auto,auto,auto,auto">
+    <SheetHeader doneText={lc('move')} onCancel={() => close()} onDone={() => move()} title={lc('move_folder')} />
     <textfield
+        bind:this={textfield}
         autocapitalizationType="none"
         autocorrect={false}
-        hint={lc('search')}
-        margin="0 16 8 16"
-        returnKeyType="search"
+        hint={lc('folder')}
+        margin="0 16"
+        returnKeyType="done"
         row={1}
-        text={filter}
+        text={name}
         variant="outline"
-        visibility={showSearch ? 'visible' : 'collapsed'}
-        on:textChange={(e) => (filter = e['value'])}
+        on:loaded={focus}
+        on:returnPress={() => move()}
+        on:textChange={(e) => (name = e['value'])}
     />
-    <collectionview height={listHeight} items={rows} marginBottom={$windowInset.bottom + 16} row={2}>
-        <Template let:item>
-            <gridlayout
-                backgroundColor={colorSurfaceContainerHigh}
-                {...getRowCorners(item.position, __IOS__)}
-                columns="auto,*,auto"
-                height={ROW_HEIGHT}
-                margin="{__IOS__ ? 0 : 1} 16"
-                padding="0 14"
-                rippleColor={colorOnSurface}
-                on:tap={() => onRowTap(item)}
-            >
-                <gridlayout backgroundColor={item.iconBackground} borderRadius={ICON_SIZE / 2} height={ICON_SIZE} verticalAlignment="center" width={ICON_SIZE}>
-                    <CardIcon color={item.iconColor} horizontalAlignment="center" size={20} src={item.icon} verticalAlignment="center" />
-                </gridlayout>
-                <label col={1} color={colorOnSurface} fontSize={16} fontWeight="500" lineBreak="end" marginLeft={10} maxLines={1} text={item.title} verticalAlignment="center" />
-                <CardIcon col={2} color={colorPrimary} size={16} src={appIcon('check')} verticalAlignment="center" visibility={item.checked ? 'visible' : 'collapsed'} />
-                <gridlayout
-                    backgroundColor={colorOutlineVariant}
-                    colSpan={3}
-                    height={0.5}
-                    marginLeft={46}
-                    marginRight={-14}
-                    verticalAlignment="bottom"
-                    visibility={__IOS__ && (item.position === 'first' || item.position === 'middle') ? 'visible' : 'collapsed'}
-                />
-            </gridlayout>
-        </Template>
-    </collectionview>
+    <label color={colorOnSurfaceVariant} fontSize={13} margin="4 20 0 20" row={2} text={lc('move_folder_desc')} textWrap={true} />
+    <wraplayout margin="8 16 0 16" row={3} visibility={suggestions.length ? 'visible' : 'collapsed'}>
+        {#each suggestions as folder (folder.id)}
+            <uibutton height={36} margin="0 8 8 0" text={folder.name} variant="outline" on:tap={() => move(folder.name)} />
+        {/each}
+    </wraplayout>
 </gesturerootview>
