@@ -186,7 +186,8 @@
         switch (viewStyle) {
             case 'full':
                 return (item, position) => {
-                    if (position < $nbColumns + (folderItems.length ? 1 : 0)) {
+                    // the folders (a row or one item each) come before the cards: only the cards overlap, but not the first row of them
+                    if (!item?.doc || position < (documents?.findIndex((current) => !!current.doc) ?? 0) + $nbColumns) {
                         return [0, 0, 0, 0];
                     }
                     return [-0.71 * itemHeight, 0, 0, 0];

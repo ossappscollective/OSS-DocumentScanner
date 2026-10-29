@@ -304,7 +304,7 @@
                 r = await documentsService.documentRepository.findTrashedDocuments();
             } else {
                 r = await documentsService.documentRepository.findDocuments({ filter, folder, omitThoseWithFolders: true, order: sortOrder });
-                await refreshFolders(filter);
+                await refreshFolders(filter, false);
             }
             const items: Item[] = (!isTrash && folderItems.length ? (folderViewStyle === 'vertical' ? [...folderItems] : [{ type: 'folders', selected: false }]) : []).concat(
                 r.map((doc) => ({ doc, selected: false }) as Item)
@@ -324,7 +324,8 @@
         }
     }
 
-    const refreshFolders = tryCatchFunction(async (filter: string = lastRefreshFilter) => {
+    // `updateList` false: the caller builds the whole list itself, the current one must not be changed
+    const refreshFolders = tryCatchFunction(async (filter: string = lastRefreshFilter, updateList = true) => {
         try {
             folders = filter?.length ? [] : await documentsService.folderRepository.findFolders(folder);
             // DEV_LOG && console.log('folders', JSON.stringify(folders));
@@ -340,7 +341,7 @@
                             }) as any
                     )
             );
-            if (documents) {
+            if (documents && updateList) {
                 if (folderViewStyle === 'horizontal') {
                     if (folderItems.length) {
                         if (documents.getItem(0)?.type !== 'folders') {
@@ -1465,6 +1466,7 @@
     <appBar
         bind:this={appBar}
         android:backgroundColor={nbSelected > 0 ? colorPrimaryContainer : undefined}
+        color={colorOnBackground}
         scrollBehavior="lift"
         searchable={!isTrash && !onlyForImport && nbSelected === 0}
         scrollTargetId="documentsCollectionView"
@@ -1474,6 +1476,7 @@
         {bottomItems}
         size="small"
         titleAlignment="leading"
+        translucent={__IOS__}
         class="listAppBar"
         title={nbSelected > 0 ? lp('selected', nbSelected) : __IOS__ || isTrash ? title : folder?.name}
         on:searchChange={onSearchChange}
