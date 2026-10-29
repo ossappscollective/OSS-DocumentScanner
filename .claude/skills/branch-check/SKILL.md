@@ -1,7 +1,6 @@
 ---
 name: branch-check
 description: Ensure you're on a correct working branch off up-to-date main before planning or editing — starting from a GitHub issue when one is in play.
-disable-model-invocation: true
 ---
 
 Run before anything else, before planning or editing.
