@@ -33,12 +33,12 @@ checkbox {
 }
 
 .scanFab {
-    background-color: var(--colorPrimaryContainer);
-    border-radius: 28;
     elevation: 3;
+    font-size: 16;
+    font-weight: 600;
     height: 56;
     margin: 16;
     padding: 0 20;
-    ripple-color: var(--colorOnPrimaryContainer);
+    shape: round;
     vertical-align: center;
 }

@@ -35,8 +35,8 @@
 </script>
 
 <script lang="ts">
-    let { colorOnBackground, colorOnPrimary, colorOnPrimaryContainer, colorOnSurfaceVariant, colorSurface } = $colors;
-    $: ({ colorOnBackground, colorOnPrimary, colorOnPrimaryContainer, colorOnSurfaceVariant, colorSurface } = $colors);
+    let { colorOnBackground, colorOnPrimary, colorOnPrimaryContainer, colorOnSurfaceVariant, colorPrimaryContainer, colorSurface } = $colors;
+    $: ({ colorOnBackground, colorOnPrimary, colorOnPrimaryContainer, colorOnSurfaceVariant, colorPrimaryContainer, colorSurface } = $colors);
     let fabHolder: NativeViewElementNode<StackLayout>;
     let collectionView: NativeViewElementNode<CollectionViewWithSwipeMenu>;
     let viewStyle: string;
@@ -473,10 +473,17 @@
     <stacklayout bind:this={fabHolder} slot="fab" class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal">
         <uibutton class="addFab" {...{ src: appIcon('add') }} variant="contained" verticalAlignment="center" on:tap={throttle(() => onAddButton(), 500)} />
         {#if $hasCamera}
-            <stacklayout class="scanFab" orientation="horizontal" on:tap={throttle(() => onStartCam(), 500)} on:longPress={() => onStartCam(true)}>
-                <nsimage height={24} src={appIcon('camera')} tintColor={colorOnPrimaryContainer} verticalAlignment="center" width={24} />
-                <label color={colorOnPrimaryContainer} fontSize={16} fontWeight="600" marginLeft={8} text={lc('scan')} verticalAlignment="center" />
-            </stacklayout>
+            <!-- the button puts no space between its icon and its text -->
+            <uibutton
+                class="scanFab"
+                backgroundColor={colorPrimaryContainer}
+                color={colorOnPrimaryContainer}
+                {...{ src: appIcon('camera') }}
+                text={'\u2002' + lc('scan')}
+                variant="contained"
+                on:tap={throttle(() => onStartCam(), 500)}
+                on:longPress={() => onStartCam(true)}
+            />
         {/if}
     </stacklayout>
 
