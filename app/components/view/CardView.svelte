@@ -7,7 +7,7 @@
     import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { confirm } from '@nativescript-community/ui-dialogs';
     import { Pager } from '@nativescript-community/ui-pager';
-    import { MenuItem, setContextMenu } from '@nativescript-community/ui-menu';
+    import { MenuItem, setContextMenu, showMenu } from '@nativescript-community/ui-menu';
     import {
         AnimationDefinition,
         Application,
@@ -963,67 +963,30 @@
     }
     $: documentMenu = getDocumentMenu(hasImages, isPKPassDocument, document.pages.length);
     $: bottomItems = getBottomItems(nbSelected, isPKPassDocument, document.favorite === 1, hasImages, canBeExportedToPDF, inEditMode);
-    async function onAddButton(kind?: 'code' | 'photo') {
+    // the options of the add button: photos and codes in their own section, a menu (system menu on iOS)
+    function getAddMenu(kind?: 'code' | 'photo'): MenuItem[] {
+        const photos: MenuItem[] = [
+            ...($hasCamera ? [{ id: 'camera', title: lc('add_from_camera'), icon: appIcon('camera') }] : []),
+            { id: 'import', title: lc('import_from_file'), icon: appIcon('import_file') },
+            { id: 'import_image', title: lc('import_from_image'), icon: appIcon('import_image') }
+        ];
+        const codes: MenuItem[] = [
+            { id: 'add_qrcode_camera', title: lc('add_qrcode_camera'), icon: appIcon('camera') },
+            { id: 'add_qrcode_file', title: lc('add_qrcode_file'), icon: appIcon('import_image') },
+            { id: 'add_qrcode_manual', title: lc('add_qrcode_manual'), icon: appIcon('edit') }
+        ];
+        const items = kind === 'photo' ? photos : kind === 'code' ? codes : [{ separator: true, title: lc('add_photo') }, ...photos, { separator: true, title: lc('add_code') }, ...codes];
+        return items.map((item) => (item.separator ? item : { ...item, onSelect: () => runAddOption(item.id as string) }));
+    }
+    $: addMenu = getAddMenu();
+    function showAddMenu(kind: 'code' | 'photo', anchor: View) {
+        return showMenu({ anchor, items: getAddMenu(kind) });
+    }
+    async function runAddOption(id: string) {
         try {
-            const OptionSelect = (await import('@shared/components/OptionSelect.svelte')).default;
-            const rowHeight = 58;
-            const options = (
-                $hasCamera
-                    ? [
-                          {
-                              id: 'camera',
-                              name: lc('add_from_camera'),
-                              icon: 'mdi-camera'
-                          }
-                      ]
-                    : []
-            )
-                .concat([
-                    {
-                        id: 'import',
-                        name: lc('import_from_file'),
-                        icon: 'mdi-file-document-plus-outline'
-                    },
-                    {
-                        id: 'import_image',
-                        name: lc('import_from_image'),
-                        icon: 'mdi-image-plus-outline'
-                    }
-                ])
-                .concat([
-                    {
-                        id: 'add_qrcode_camera',
-                        name: lc('add_qrcode_camera'),
-                        icon: 'mdi-qrcode-scan'
-                    },
-                    {
-                        id: 'add_qrcode_file',
-                        name: lc('add_qrcode_file'),
-                        icon: 'mdi-qrcode-plus'
-                    },
-                    {
-                        id: 'add_qrcode_manual',
-                        name: lc('add_qrcode_manual'),
-                        icon: 'mdi-qrcode-plus'
-                    }
-                ])
-                .filter((option) => !kind || (kind === 'code') === option.id.startsWith('add_qrcode'));
-            const height = Math.min(rowHeight * options.length, 400);
-            const option = await showBottomSheet({
-                parent: this,
-                view: OptionSelect,
-                peekHeight: height,
-                ignoreTopSafeArea: true,
-                props: {
-                    rowHeight,
-                    height,
-                    options
-                }
-            });
-            DEV_LOG && console.log('on add option', option);
             let found = false;
-            if (option) {
-                switch (option.id) {
+            if (id) {
+                switch (id) {
                     case 'camera':
                         await importImageFromCamera({ document, inverseUseSystemCamera: false });
                         break;
@@ -1152,7 +1115,7 @@
 </script>
 
 <appPage bind:this={page} id="cardview" {...{ keepScreenAwake: hasQRCodes, screenBrightness: hasQRCodes ? 1 : -1 }}>
-    <appBar {bottomItems} {...(__ANDROID__ ? { backgroundColor: accent.container } : {})} color={colorOnBackground} iosIconRenderingMode="alwaysTemplate" scrollBehavior="lift" scrollTargetId="cardScroll" size="small" translucent={__IOS__} title={nbSelected > 0 ? lcp('selected', nbSelected) : inEditMode ? lc('reorder_pages') : hasCustomName || __ANDROID__ ? '' : document.name}>
+    <appBar {bottomItems} {...(__ANDROID__ ? { backgroundColor: accent.container } : {})} color={colorOnBackground} iosIconRenderingMode="alwaysTemplate" scrollBehavior={__ANDROID__ ? 'hide' : 'lift'} scrollTargetId="cardScroll" size="small" translucent={__IOS__} title={nbSelected > 0 ? lcp('selected', nbSelected) : inEditMode ? lc('reorder_pages') : hasCustomName || __ANDROID__ ? '' : document.name}>
         {#if __ANDROID__}
             <navigationButton {...{ 'android.systemIcon': nbSelected > 0 || inEditMode ? 'ic_menu_close_clear_cancel' : 'ic_menu_back' }} on:tap={nbSelected > 0 ? unselectAll : inEditMode ? switchEditMode : onGoBack} />
         {/if}
@@ -1164,7 +1127,7 @@
             <appBarItem icon={appIcon('check')} ios.position="right" text={lc('ok')} on:tap={switchEditMode} />
         {:else}
             {#if !isPKPassDocument}
-                <appBarItem icon={appIcon('add')} ios.position="right" text={lc('add')} on:tap={() => onAddButton()} />
+                <appBarItem icon={appIcon('add')} ios.position="right" menu={addMenu} text={lc('add')} />
             {/if}
             <appBarItem icon={appIcon('more')} ios.position="right" menu={documentMenu} />
         {/if}
@@ -1219,7 +1182,7 @@
                     </stacklayout>
                 {/if}
                 {#if isEmptyCard}
-                    <CardViewEmpty {accent} onAddCode={() => onAddButton('code')} onAddDetail={openEdit} onAddPhoto={() => onAddButton('photo')} row={2} verticalAlignment="center" />
+                    <CardViewEmpty {accent} onAddCode={(anchor) => showAddMenu('code', anchor)} onAddDetail={openEdit} onAddPhoto={(anchor) => showAddMenu('photo', anchor)} row={2} verticalAlignment="center" />
                 {/if}
                 {#if hasQRCodes}
                     <gridlayout height={CODE_ZONE_HEIGHT + (qrcodes?.length > 1 ? 28 : 0)} margin="{__ANDROID__ ? -PLATE_OVERLAP : 8} {__ANDROID__ && qrcodes?.length <= 1 ? 16 : 0} 8 {__ANDROID__ && qrcodes?.length <= 1 ? 16 : 0}" row={1} rows="*,auto">
@@ -1241,7 +1204,7 @@
                                 row={1}
                                 selectedColor={colorOnSurface}
                                 type="worm"
-                                width={qrcodes.length * 16} />
+                                width={qrcodes.length * 24 + 16} />
                         {/if}
                     </gridlayout>
                 {/if}
