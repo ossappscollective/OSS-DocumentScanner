@@ -39,7 +39,6 @@
     let { colorOnBackground, colorOnPrimary, colorOnPrimaryContainer, colorOnSurfaceVariant, colorPrimaryContainer, colorSurface } = $colors;
     $: ({ colorOnBackground, colorOnPrimary, colorOnPrimaryContainer, colorOnSurfaceVariant, colorPrimaryContainer, colorSurface } = $colors);
     let fabHolder: NativeViewElementNode<StackLayout>;
-    let fabExtended = true;
     let collectionView: NativeViewElementNode<CollectionViewWithSwipeMenu>;
     let viewStyle: string;
     let nbColumns: Writable<number>;
@@ -313,7 +312,6 @@
         columns: { name: lc('columns'), icon: 'mdi-view-grid' },
         list: { name: lc('list'), icon: 'mdi-view-day' }
     }}
-    bind:fabExtended
     bind:fabHolder
     bind:nbColumns
     bind:viewStyle
@@ -481,7 +479,7 @@
                 class="scanFab"
                 backgroundColor={colorPrimaryContainer}
                 color={colorOnPrimaryContainer}
-                expanded={fabExtended}
+                shrinkOnScroll={collectionView?.nativeView}
                 src={appIcon('camera')}
                 text={lc('scan')}
                 on:tap={throttle(() => onStartCam(), 500)}
