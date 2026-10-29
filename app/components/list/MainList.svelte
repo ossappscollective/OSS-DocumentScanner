@@ -9,6 +9,7 @@
     import { VerticalPosition } from '@nativescript-community/ui-popover';
     import { isCatalyst, windowCommandEvent } from '@shared/utils/window';
     import { setContextMenu } from '@nativescript-community/ui-menu';
+    import { observeScrollDirection } from '@nativescript-community/ui-core/scroll-hide';
     import {
         AnimationDefinition,
         Application,
@@ -160,6 +161,13 @@
     let foldersCollectionView: NativeViewElementNode<CollectionView>;
     // let lottieView: NativeViewElementNode<LottieView>;
     export let fabHolder: NativeViewElementNode<StackLayout> = null;
+    // the extended fab collapses to its icon while the list scrolls down
+    export let fabExtended = true;
+    let stopObservingScroll: () => void;
+    $: if (__ANDROID__ && collectionView?.nativeView) {
+        stopObservingScroll?.();
+        stopObservingScroll = observeScrollDirection(collectionView.nativeView, (direction) => (fabExtended = direction === 'up'));
+    }
     let searchTimer: ReturnType<typeof setTimeout>;
     let appBar: NativeViewElementNode<AppBar>;
 
@@ -588,6 +596,7 @@
     });
     onDestroy(() => {
         DEV_LOG && console.log('MainList', 'onDestroy');
+        stopObservingScroll?.();
         if (__IOS__) {
             Application.off(windowCommandEvent, onWindowCommand);
         }

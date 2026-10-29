@@ -55,12 +55,8 @@ textfield[variant='outline'] {
 }
 
 .scanFab {
-    border-radius: 18;
     elevation: 6;
-    font-size: 14;
-    font-weight: 500;
-    height: 56;
     horizontal-align: right;
     margin: 0 16 16 16;
-    padding: 0 20;
+    shape: fab;
 }

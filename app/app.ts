@@ -235,6 +235,10 @@ try {
         cornerSize: 12
     });
 
+    themer.createShape('fab', {
+        cornerFamily: 'rounded' as any,
+        cornerSize: 18
+    });
     themer.createShape('none', {
         cornerFamily: 'rounded' as any,
         cornerSize: 0

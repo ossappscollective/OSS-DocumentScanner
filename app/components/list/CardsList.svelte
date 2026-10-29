@@ -39,6 +39,7 @@
     let { colorOnBackground, colorOnPrimary, colorOnPrimaryContainer, colorOnSurfaceVariant, colorPrimaryContainer, colorSurface } = $colors;
     $: ({ colorOnBackground, colorOnPrimary, colorOnPrimaryContainer, colorOnSurfaceVariant, colorPrimaryContainer, colorSurface } = $colors);
     let fabHolder: NativeViewElementNode<StackLayout>;
+    let fabExtended = true;
     let collectionView: NativeViewElementNode<CollectionViewWithSwipeMenu>;
     let viewStyle: string;
     let nbColumns: Writable<number>;
@@ -312,6 +313,7 @@
         columns: { name: lc('columns'), icon: 'mdi-view-grid' },
         list: { name: lc('list'), icon: 'mdi-view-day' }
     }}
+    bind:fabExtended
     bind:fabHolder
     bind:nbColumns
     bind:viewStyle
@@ -475,14 +477,13 @@
     <stacklayout bind:this={fabHolder} slot="fab" class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)}>
         <uibutton class="addFab" {...{ src: appIcon('add') }} variant="contained" verticalAlignment="center" on:tap={throttle(() => onAddButton(), 500)} />
         {#if $hasCamera}
-            <!-- the button puts no space between its icon and its text -->
-            <uibutton
+            <uifloatingactionbutton
                 class="scanFab"
                 backgroundColor={colorPrimaryContainer}
                 color={colorOnPrimaryContainer}
-                {...{ src: appIcon('camera') }}
-                text={'\u2002' + lc('scan')}
-                variant="contained"
+                expanded={fabExtended}
+                src={appIcon('camera')}
+                text={lc('scan')}
                 on:tap={throttle(() => onStartCam(), 500)}
                 on:longPress={() => onStartCam(true)}
             />
