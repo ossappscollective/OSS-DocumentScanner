@@ -1,22 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
-  <defs>
-    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#2e8555;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#25c2a0;stop-opacity:1" />
-    </linearGradient>
-  </defs>
-  <!-- Background circle -->
-  <circle cx="50" cy="50" r="45" fill="url(#logoGrad)"/>
-  <!-- Document icon -->
-  <rect x="30" y="20" width="40" height="55" rx="3" fill="#fff"/>
-  <!-- Folded corner -->
-  <polygon points="55,20 70,20 70,35 55,35" fill="#e0e0e0"/>
-  <polygon points="55,20 55,35 70,35" fill="#c0c0c0"/>
-  <!-- Document lines -->
-  <line x1="35" y1="45" x2="65" y2="45" stroke="#ddd" stroke-width="2"/>
-  <line x1="35" y1="52" x2="60" y2="52" stroke="#ddd" stroke-width="2"/>
-  <line x1="35" y1="59" x2="65" y2="59" stroke="#ddd" stroke-width="2"/>
-  <line x1="35" y1="66" x2="55" y2="66" stroke="#ddd" stroke-width="2"/>
-  <!-- Scanner beam -->
-  <rect x="25" y="75" width="50" height="3" fill="#25c2a0" opacity="0.8"/>
+  <rect width="100" height="100" rx="22.37" fill="#2FBF71"/>
+  <path d="M22 36V30Q22 22 30 22H36" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
+  <path d="M64 22H70Q78 22 78 30V36" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
+  <path d="M22 64V70Q22 78 30 78H36" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
+  <path d="M64 78H70Q78 78 78 70V64" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
+  <rect x="34" y="30" width="32" height="40" rx="5" fill="#FFFFFF"/>
+  <rect x="40" y="37" width="20" height="3.5" rx="1.75" fill="#BFE8D1"/>
+  <rect x="40" y="44" width="20" height="3.5" rx="1.75" fill="#BFE8D1"/>
+  <rect x="40" y="62" width="12" height="3.5" rx="1.75" fill="#BFE8D1"/>
+  <rect x="27" y="52" width="46" height="4" rx="2" fill="#0E6B3D"/>
 </svg>
