@@ -1227,7 +1227,7 @@
                             <Template let:item>
                                 <gridlayout backgroundColor="white" borderRadius={28} elevation={isEInk || __ANDROID__ ? 0 : 6} margin={qrcodes?.length > 1 ? '4 4 8 4' : __ANDROID__ ? '4 0 8 0' : '4 16 8 16'} padding="20" rows="*,auto" on:tap={onQRCodeTap}>
                                     <svgview src={item.svg} stretch="aspectFit" />
-                                    <label color="black" fontSize={17} fontWeight="bold" linkColor="black" linkUnderline={false} marginTop={8} maxLines={1} row={1} selectable={true} text={item.text} textAlignment="center" />
+                                    <label color="black" fontSize={17} fontWeight="bold" linkColor="black" {...{ linkUnderline: false }} marginTop={8} maxLines={1} row={1} selectable={true} text={item.text} textAlignment="center" />
                                 </gridlayout>
                             </Template>
                         </pager>
@@ -1354,7 +1354,7 @@
                                     marginTop={index > 0 ? 2 : 0}
                                     padding="12 20 12 20">
                                     <label color={colorOnSurfaceVariant} fontSize={13} text={detail.name} />
-                                    <label color={colorOnSurface} fontSize={17} linkColor={colorOnSurface} linkUnderline={false} selectable={true} text={formatItemValue(detail)} textWrap={true} />
+                                    <label color={colorOnSurface} fontSize={17} linkColor={colorOnSurface} {...{ linkUnderline: false }} selectable={true} text={formatItemValue(detail)} textWrap={true} />
                                 </stacklayout>
                             {/each}
                         </stacklayout>
@@ -1363,7 +1363,7 @@
                             {#each details as detail, index (detail.name)}
                                 <stacklayout borderTopColor={colorOutlineVariant} borderTopWidth={index > 0 ? 0.5 : 0} padding="10 16 10 16">
                                     <label color={colorOnSurfaceVariant} fontSize={13} text={detail.name} />
-                                    <label color={colorOnSurface} fontSize={17} linkColor={colorOnSurface} linkUnderline={false} selectable={true} text={formatItemValue(detail)} textWrap={true} />
+                                    <label color={colorOnSurface} fontSize={17} linkColor={colorOnSurface} {...{ linkUnderline: false }} selectable={true} text={formatItemValue(detail)} textWrap={true} />
                                 </stacklayout>
                             {/each}
                         </stacklayout>
