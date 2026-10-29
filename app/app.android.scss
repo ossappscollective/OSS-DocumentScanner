@@ -7,3 +7,18 @@ checkbox {
 button[variant='contained'] {
     height: 40;
 }
+
+// a tonal chip: the surface has no glass here
+.cardChip {
+    background-color: var(--colorPrimaryContainer);
+    border-color: transparent;
+    border-radius: 10;
+    border-width: 1;
+}
+
+.cardsEmptyIcon {
+    background-color: var(--colorPrimaryContainer);
+    border-color: transparent;
+    border-radius: 30;
+    border-width: 1;
+}

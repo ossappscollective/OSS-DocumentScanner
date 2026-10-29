@@ -169,7 +169,7 @@
     <gridlayout columns="auto,*,auto" padding="12 16 8 16">
         <uibutton text={lc('cancel')} variant="text" on:tap={() => close(false)} />
         <label col={1} color={colorOnSurface} fontSize={17} fontWeight="bold" text={lc('edit')} textAlignment="center" verticalAlignment="center" />
-        <uibutton col={2} text={lc('save')} variant={__IOS__ ? 'prominentGlass' : 'contained'} on:tap={save} />
+        <uibutton col={2} text={lc('save')} variant="contained" on:tap={save} />
     </gridlayout>
     <collectionview row={1} {itemTemplateSelector} items={listItems}>
         <Template key="name" let:item>

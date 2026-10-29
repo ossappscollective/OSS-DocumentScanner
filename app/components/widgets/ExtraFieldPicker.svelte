@@ -143,5 +143,5 @@
         on:tap={(e) => selectDate(e)}
     />
 
-    <uibutton horizontalAlignment="right" row={4} text={editing ? lc('edit') : lc('add')} variant={__IOS__ ? 'prominentGlass' : 'contained'} on:tap={add} />
+    <uibutton horizontalAlignment="right" row={4} text={editing ? lc('edit') : lc('add')} variant="contained" on:tap={add} />
 </gesturerootview>
