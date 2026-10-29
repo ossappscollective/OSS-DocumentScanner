@@ -1219,7 +1219,7 @@
                     </stacklayout>
                 {/if}
                 {#if isEmptyCard}
-                    <CardViewEmpty onAddCode={() => onAddButton('code')} onAddDetail={openEdit} onAddPhoto={() => onAddButton('photo')} row={2} verticalAlignment="center" />
+                    <CardViewEmpty {accent} onAddCode={() => onAddButton('code')} onAddDetail={openEdit} onAddPhoto={() => onAddButton('photo')} row={2} verticalAlignment="center" />
                 {/if}
                 {#if hasQRCodes}
                     <gridlayout height={CODE_ZONE_HEIGHT + (qrcodes?.length > 1 ? 28 : 0)} margin="{__ANDROID__ ? -PLATE_OVERLAP : 8} {__ANDROID__ && qrcodes?.length <= 1 ? 16 : 0} 8 {__ANDROID__ && qrcodes?.length <= 1 ? 16 : 0}" row={1} rows="*,auto">
