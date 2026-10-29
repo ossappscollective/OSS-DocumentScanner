@@ -1,5 +1,1 @@
-L'application <i>OSS Docs Scanneur</i> est une application Open Source pour scanner tous vos documents. Soit vous scannez à l'aide de votre appareil photo, soit vous importez une image. L'application détecte automatiquement dans la photo et recadre l'image.
-
-Une fois le document créé, vous pouvez détecter du texte dans le document en utilisant l'OCR.
-
-Vous pouvez également partager votre document en format PDF. Si vous voulez, vous pouvez synchroniser les données de l'application avec un serveur WebDAV (comme Nextcloud) pour ne jamais rien perdre !
+L'application <i>OSS Docs Scanneur</i> est une application Open Source pour scanner tous vos documents. Soit vous scannez à l'aide de votre appareil photo, soit vous importez une image. L'application détecte automatiquement dans la photo et recadre l'image.<br><br>Une fois le document créé, vous pouvez détecter du texte dans le document en utilisant l'OCR.<br><br>Vous pouvez également partager votre document en format PDF. Si vous voulez, vous pouvez synchroniser les données de l'application avec un serveur WebDAV (comme Nextcloud) pour ne jamais rien perdre !
