@@ -57,7 +57,8 @@
         EVENT_DOCUMENT_UPDATED,
         QRCODE_RESIZE_THRESHOLD,
         SETTINGS_DOCUMENT_NAME_FORMAT,
-        SETTINGS_FORCE_WHITE_BACKGROUND_QRCODE
+        SETTINGS_FORCE_WHITE_BACKGROUND_QRCODE,
+        SHEET_SOFT_INPUT_MODE
     } from '~/utils/constants';
     import { appIcon } from '~/utils/appIcons';
     import { optionsToMenuItems } from '~/utils/appMenu';
@@ -943,6 +944,7 @@
             const saved = await showBottomSheet({
                 parent: page,
                 view: CardEditSheet,
+                windowSoftInputMode: SHEET_SOFT_INPUT_MODE,
                 detents: [{ fraction: 0.65 }, 'large'],
                 grabber: true,
                 props: { document }

@@ -174,3 +174,6 @@ export const DOCUMENT_DATA_FILENAME = 'data.json';
 export const DELETED_DOCUMENTS_DATA_FILENAME = 'deleted_documents.json';
 export const DELETED_FOLDERS_DATA_FILENAME = 'deleted_folders.json';
 export const VALID_MARKER_FILENAME = '.valid';
+
+// SOFT_INPUT_ADJUST_RESIZE: a sheet with fields moves up with the keyboard
+export const SHEET_SOFT_INPUT_MODE = __ANDROID__ ? 16 : undefined;

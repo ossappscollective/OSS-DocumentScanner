@@ -20,7 +20,8 @@
         DEFAULT_NB_COLUMNS_LANDSCAPE,
         SETTINGS_CARD_ALWAYS_SHOW_NAME,
         SETTINGS_NB_COLUMNS,
-        SETTINGS_NB_COLUMNS_LANDSCAPE
+        SETTINGS_NB_COLUMNS_LANDSCAPE,
+        SHEET_SOFT_INPUT_MODE
     } from '~/utils/constants';
     import { appIcon } from '~/utils/appIcons';
     import { documentHasPKPassData } from '~/utils/pkpass';
@@ -82,6 +83,7 @@
             const result = await showBottomSheet({
                 parent: this,
                 view: CreateCard,
+                windowSoftInputMode: SHEET_SOFT_INPUT_MODE,
                 ignoreTopSafeArea: true
             });
             DEV_LOG && console.log('CreateCard', result);

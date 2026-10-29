@@ -3,6 +3,16 @@ checkbox {
     margin-right: 0;
 }
 
+// the primary button is a 40 tall pill
+button[variant='contained'] {
+    height: 40;
+}
+
+.sheetHeaderTitle {
+    font-size: 22;
+    margin-left: 8;
+}
+
 // a tonal chip: the surface has no glass here
 .cardChip {
     background-color: var(--colorPrimaryContainer);
@@ -16,6 +26,18 @@ checkbox {
     border-color: transparent;
     border-radius: 30;
     border-width: 1;
+}
+
+// a field: 56 tall and 4 around
+.formRow {
+    height: 64;
+}
+
+// the outline takes the accent while the field has the focus
+textfield[variant='outline'] {
+    floating-color: var(--colorPrimary);
+    stroke-color: var(--colorPrimary);
+    stroke-inactive-color: var(--colorOutline);
 }
 
 // the floating buttons are fully round
