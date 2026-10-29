@@ -1,0 +1,2 @@
+// Overrides App_Resources/documentscanner/iOS/build.xcconfig for Mac Catalyst builds
+IPHONEOS_DEPLOYMENT_TARGET = 16.0

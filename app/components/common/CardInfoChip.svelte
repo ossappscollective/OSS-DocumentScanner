@@ -21,11 +21,11 @@
             <label {color} fontSize={11} fontWeight="600" lineBreak="end" maxLines={1} text={pages + ''} verticalAlignment="center" />
         </stacklayout>
         <absolutelayout backgroundColor={color} height={12} opacity={0.25} verticalAlignment="center" visibility={hasPages && (hasCode || favorite) ? 'visible' : 'collapsed'} width={1} />
-        <stacklayout minWidth={22} orientation="horizontal" visibility={hasCode ? 'visible' : 'collapsed'}>
+        <stacklayout minWidth={22} orientation="horizontal" padding="0 5" visibility={hasCode ? 'visible' : 'collapsed'}>
             <CardIcon {color} horizontalAlignment="center" size={12} src={appIcon('qrcode')} verticalAlignment="center" />
         </stacklayout>
         <absolutelayout backgroundColor={color} height={12} opacity={0.25} verticalAlignment="center" visibility={hasCode && favorite ? 'visible' : 'collapsed'} width={1} />
-        <stacklayout minWidth={22} orientation="horizontal" visibility={favorite ? 'visible' : 'collapsed'}>
+        <stacklayout minWidth={22} orientation="horizontal" padding="0 5" visibility={favorite ? 'visible' : 'collapsed'}>
             <CardIcon {color} horizontalAlignment="center" size={12} src={appIcon('favorite_on')} verticalAlignment="center" />
         </stacklayout>
     </stacklayout>
