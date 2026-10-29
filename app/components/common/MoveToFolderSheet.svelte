@@ -51,7 +51,7 @@
     <label color={colorOnSurfaceVariant} fontSize={13} margin="4 20 0 20" row={2} text={lc('move_folder_desc')} textWrap={true} />
     <wraplayout margin="8 16 0 16" row={3} visibility={suggestions.length ? 'visible' : 'collapsed'}>
         {#each suggestions as folder (folder.id)}
-            <uibutton height={36} margin="0 8 8 0" text={folder.name} variant="outline" on:tap={() => move(folder.name)} />
+            <uibutton height={32} margin="0 8 8 0" text={folder.name} variant="outline" on:tap={() => move(folder.name)} />
         {/each}
     </wraplayout>
 </gesturerootview>
