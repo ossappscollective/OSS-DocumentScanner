@@ -29,7 +29,7 @@ Exact values for every component and state, so implementers do not need to ask. 
 - **Android scan FAB:** extended, 56 tall, radius 18 (squircle), horizontal padding 20, icon 24, gap 10, label Label Large (14 sp, medium). Tonal: accentContainer fill, onContainer content. It is the only extended FAB on the screen.
 - **Android add FAB:** small, 40 x 40, radius 12, tonal, placed 12 above the scan FAB, right edges aligned.
 - **Position:** 16 from the right edge and 16 above the navigation or gesture inset. Content bottom padding is inset + 88.
-- **Collapse:** the extended FAB collapses to a 56 icon-only FAB (same radius) when the list scrolls down and extends when it scrolls up or reaches the top; spring, 300 ms. It hides in selection mode.
+- **Collapse:** the extended FAB collapses to a 56 icon-only FAB (same radius) when the list scrolls down and extends when it scrolls up or reaches the top, with the Material ExtendedFloatingActionButton animation. It hides in selection mode.
 - **iOS:** no FAB. The camera is a 48 circle of system glass to the right of the search capsule.
 - **Elevation rule:** controls that float over scrolling content use level 3 elevation (soft shadow, 0 4 12, 20% black): FAB, floating toolbar, menus, snackbars, and the top edge of stacked tiles. In-flow surfaces (plate, tiles, list groups, sheets' content) have no shadow. On iOS, glass carries its own depth; no extra shadow except menus and stacked tiles.
 
@@ -64,9 +64,9 @@ Exact values for every component and state, so implementers do not need to ask. 
 
 ## 5. Selection
 
-- **Marker:** circle, 22 on tiles (top-left), 24 as a leading mark on rows. Selected: accent fill, check icon 14, 2 ring in the surface color (white on iOS photo tiles, page color elsewhere). Unselected in selection mode: empty circle with a 1.5 outline in secondary color (rows only; tiles show nothing until selected).
-- **Selected tile scales to 95%** in the grid (columns) only, spring 150 ms. Stacked tiles do not scale (they overlap); list rows show a tonal row highlight instead. With Reduce Motion or e-ink there is no scale.
-- **Chevron:** hidden in selection mode on card rows and folder rows; the leading marker appears and the thumbnail moves right by 36 (spring).
+- **Marker:** circle, 22 on tiles (top-left), 24 as a leading mark on rows. Selected: accent fill, check icon 14, 2 ring in the surface color (white on iOS photo tiles, page color elsewhere). Unselected in selection mode: empty circle with a 2 outline in secondary color (rows only; tiles show nothing until selected).
+- **Selected tile scales to 95%** in the grid (columns) only, 150 ms. Stacked tiles do not scale (they overlap); list rows show a tonal row highlight instead. With Reduce Motion or e-ink there is no scale.
+- **Chevron:** hidden in selection mode on card rows and folder rows; the leading marker appears and the thumbnail moves right by 36 over 150 ms (cubic-bezier 0.2, 0.9, 0.3, 1.15).
 - **Folders can be selected** like cards, with the same markers.
 - **iOS selection mode:** the title becomes "3 selected" with a Done pill (glass) top-right; Select all is in the more menu. The search capsule and camera button are replaced by the system toolbar (glass): Share, Favorite, Move to folder, Delete. Delete uses the system red tint. Use the system toolbar (ui-appbar bottom items), not a custom view.
 - **Android selection mode:** a contextual top app bar replaces the search bar (M3 contextual action bar): accentContainer fill (the status bar matches), close icon on the left, the count as title (22 sp), actions on the right: Favorite, Move to folder, Delete, then an overflow with Select all and Share. No bottom toolbar, and the FAB is hidden. Back exits selection. Delete asks for confirmation with a red text action.
@@ -75,7 +75,7 @@ Exact values for every component and state, so implementers do not need to ask. 
 
 - **Icon:** outline folder glyph, 20, inside a 32 circle. Circle fill: accent at 16% (light) or 22% (dark) on iOS; accentContainer on Android. Glyph color: accent on iOS; onContainer on Android.
 - **Horizontal style:** a scrolling row above the cards, tiles 132 x 54, radius 16, 8 between tiles, 16 side margin. Surface: row color on iOS, surfaceContainerLow on Android. Content: icon circle, name 13 semibold, count 11 secondary.
-- **Vertical style:** grouped rows, 52 tall, side margin 16 (same as the card list). iOS: one inset grouped container, radius 18, hairlines inset 60 from the left. Android: segmented group, 20 outer corners on the first and last row only, 6 between, 2 gap. Content: icon circle, name 16 medium, count secondary, chevron (iOS only, hidden in selection).
+- **Vertical style:** grouped rows, 52 tall, side margin 16 (same as the card list). iOS: one inset grouped container, radius 18, hairlines inset 60 from the left. Android: segmented group, 20 outer corners on the first and last row only, 6 between, 2 gap. Content: icon circle, name 16 medium, count secondary, chevron (iOS only, hidden in selection). iOS hairlines run from the start of the text to the trailing edge. The folders group and the cards group are 8 apart.
 - **In the columns style,** vertical folders span the full width (both columns) above the grid.
 - **Card rows in the list style** follow the same grouping: first and last corners only. A row knows its position through its index; if the list cannot supply it, wrap the rows in one rounded container (iOS) or compute the corners from the index (Android).
 
@@ -85,9 +85,9 @@ The darker band at the bottom of some photo tiles in the mockups is a drawn hori
 
 ## 8. List rows (card list, list style)
 
-- **Row:** 72 tall, 12 horizontal padding. Thumbnail 96 x 60 (ratio 1.6), radius 11. Title, subtitle, then trailing items.
+- **Row:** 72 tall on both platforms (Android adds the 2 gap around it), 12 horizontal padding. Thumbnail 96 x 60 (ratio 1.6), radius 11. Title, subtitle, then trailing items.
 - **Title:** iOS 17 semibold (Headline); Android 16 sp medium (Title Medium); one line, ellipsis. An auto-named card uses the full localized date and time.
-- **Subtitle:** 14 secondary. Photo count when there are photos ("2 photos"), followed by a 16 code icon when the card has a code (qr or barcode glyph). **Never the word "code".** Name-only cards have no subtitle and the title centers vertically.
+- **Subtitle:** 14 secondary. Photo count when there are photos ("2 photos"), followed by a 16 code icon when the card has a code (qr or barcode glyph). **Never the word "code".** Name and code cards without photos show the code glyph alone as the subtitle; name-only cards have no subtitle and the title centers vertically.
 - **No-photo thumbnail:** the color tile with the title inside (section 4), not a bare color.
 - **Trailing:** favorite star (16, accent) when favorite. Chevron on iOS only, hidden in selection. Android rows have no chevron.
 - This is bigger than the mockup looks on a device: the earlier mockup values (66 row, 88 x 56 thumbnail, 15 title) were mockup pixels, not device values.
@@ -124,11 +124,11 @@ iOS uses Dynamic Type; Android scales with font scale. Layouts must survive 200%
 | Motion | Value |
 | --- | --- |
 | Press feedback | 100 ms |
-| Selection scale, chip merge, row marker slide | Spring, 150 ms |
+| Selection scale, chip merge, row marker slide | 150 ms, cubic-bezier(0.2, 0.9, 0.3, 1.15), not a spring (see differences below) |
 | Menu open | 150 ms, scale from the anchor (section 14) |
 | Sheet present and detent change | System spring (iOS); M3 Expressive spatial spring, about 350 ms (Android) |
 | Ambient backdrop and page color crossfade | 250 ms |
-| FAB collapse and extend | Spring, 300 ms |
+| FAB collapse and extend | The Material ExtendedFloatingActionButton shrink and extend animation |
 | Reduce Motion, remove animations, e-ink | 150 ms fade, or none on e-ink |
 
 ## 12. Snackbars, toasts and progress
@@ -216,7 +216,7 @@ iOS uses Dynamic Type; Android scales with font scale. Layouts must survive 200%
 
 ## 14. Menus
 
-- **Android animation origin:** the popup scales from the anchor, not from the top-left: pivot at the anchor's nearest corner (top-right for the overflow button), 0.8 to 1 plus fade, 150 ms. If the menu plugin cannot set the origin, that is a plugin bug to fix there.
+- **Android animation origin:** the popup scales from the anchor, not from the top-left: pivot at the anchor's nearest corner (top-right for the overflow button), 0.8 to 1 plus fade, 150 ms. If the menu plugin cannot set the origin, that is a plugin bug to fix there (done in ui-menu with a style per corner; not published yet).
 - **iOS:** the system menu already animates from the button.
 - Everything else about menus is in `cardwallet-card-view.md` (Menus).
 
@@ -226,7 +226,7 @@ iOS uses Dynamic Type; Android scales with font scale. Layouts must survive 200%
 - **Keyboard:** a focused field stays at least 16 above the keyboard. iOS sheets expand to the large detent when the keyboard opens; Android sheets use adjustResize and scroll.
 - **iOS alert (UIAlertController):** the system alert, which is glass on iOS 26. Title, optional message, optional native text field. Cancel on the left, regular weight; the default action on the right, bold; a destructive action in the system red. For a text prompt the field is focused when the alert appears and the keyboard opens; Return runs the default action. Do not build a custom alert.
 - **Android dialog (M3):** width min(312, screen - 48), radius 28, container surfaceContainerHigh, 24 padding. Title 24 sp, message 14 sp secondary, notched outlined field full width and focused on open (the dialog moves above the keyboard), actions right-aligned text buttons: Cancel, then the primary action; a destructive action uses the error color.
-- **Which to use:** short confirmation or one name prompt (Rename, New folder) is an alert or dialog. **Move to folder** is a sheet with a list of folders (grouped rows, current folder checked, a search field when there are more than 8 folders) and a New folder row at the end; it is not an alert.
+- **Which to use:** short confirmation or one name prompt (Rename, New folder) is an alert or dialog. **Move to folder** is a sheet with a list of folders (grouped rows, current folder checked, a search field when there are more than 8 folders) and a New folder row at the end; it is not an alert. When browsing inside a folder the first row is Remove from folder, otherwise there is no way back to the root.
 
 ## 16. Remaining components
 
@@ -270,3 +270,11 @@ Most rules are shared. The scanner feels more like a document app:
 | 15 Safe areas and dialogs | Specified |
 | 16 Remaining components | Specified |
 | 17 Document Scanner | Proposal |
+
+## 19. Differences on purpose (code against this document, PRs 777 to 783)
+
+- **Row marker slide:** 150 ms cubic-bezier(0.2, 0.9, 0.3, 1.15), not a spring, because the NativeScript spring curve crashes iOS with translate. Marker border is 2, not 1.5, because a fractional border is not drawn reliably on Android.
+- **Scan FAB:** an ExtendedFloatingActionButton using the Material collapse and extend animation; this needs an unpublished ui-floatingactionbutton fix.
+- **Move to folder:** new strings `new_folder` and `remove_from_folder`.
+- **Android menu origin:** fixed in ui-menu with a style per corner; the plugin change is not published.
+- **Open:** the Document Scanner list is still its own canvas list (section 17 is a proposal). The delete confirmation dialog (destructive text action in the error color, section 15) is not built yet.
