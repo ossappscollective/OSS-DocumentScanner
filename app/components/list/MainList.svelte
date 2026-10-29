@@ -272,12 +272,13 @@
         });
     }
 
-    const getItems = (list: ObservableArray<Item>) => Array.from({ length: list.length }, (_, index) => list.getItem(index));
-    // rows are grouped: the first and last of a run have the outer corners. Called where items are inserted or removed in place,
-    // the rows whose place changed are bound again
-    function updatePositions() {
+    // rows are grouped: the first and last of a run have the outer corners. After an item is inserted or removed in place at `index`,
+    // only the rows next to it can change place: those are bound again, the others are left alone
+    function updatePositions(index?: number) {
         if (documents) {
-            updateRowPositions(getItems(documents)).forEach((index) => documents.setItem(index, documents.getItem(index)));
+            const getItem = (position: number) => documents.getItem(position);
+            const changed = index === undefined ? updateRowPositions(getItem, documents.length) : updateRowPositions(getItem, documents.length, index - 1, index + 1);
+            changed.forEach((position) => documents.setItem(position, documents.getItem(position)));
         }
     }
 
@@ -306,7 +307,7 @@
             const items: Item[] = (!isTrash && folderItems.length ? (folderViewStyle === 'vertical' ? [...folderItems] : [{ type: 'folders', selected: false }]) : []).concat(
                 r.map((doc) => ({ doc, selected: false }) as Item)
             );
-            updateRowPositions(items);
+            updateRowPositions((index) => items[index], items.length);
             documents = new ObservableArray(items);
             // DEV_LOG &&
             //     console.log(
@@ -400,6 +401,7 @@
             const existingIndex = documents.findIndex((d) => d.doc?.id === event.doc.id);
             if (existingIndex !== -1) {
                 documents.splice(existingIndex, 1);
+                updatePositions(existingIndex);
             }
 
             // Find where documents start (works for both vertical/horizontal folder styles)
@@ -411,7 +413,7 @@
                 doc: event.doc,
                 selected: false
             } as Item);
-            updatePositions();
+            updatePositions(insertIndex);
 
             if (event.shouldFocus) {
                 collectionView?.nativeElement?.scrollToIndex(insertIndex, false);
@@ -457,7 +459,7 @@
         if (index >= 0) {
             if (folder && doc.folders && doc.folders.indexOf(folder.id) === -1) {
                 documents.splice(index, 1);
-                updatePositions();
+                updatePositions(index);
             } else {
                 const item = documents?.getItem(index);
                 if (item) {
@@ -501,12 +503,12 @@
             const index = documents.findIndex((item) => item.doc && item.doc.id === id);
             if (index !== -1) {
                 documents.splice(index, 1);
+                updatePositions(index);
                 if (nbSelected > 0) {
                     nbSelected = Math.max(nbSelected - 1, 0);
                 }
             }
         }
-        updatePositions();
         if (!isTrash) {
             refreshFolders();
         }

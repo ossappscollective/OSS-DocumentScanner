@@ -1,5 +1,7 @@
 import { expect, test } from 'vitest';
-import { getRowCorners, updateRowPositions } from './groupedRows';
+import { getRowCorners, updateRowPositions as updatePositions } from './groupedRows';
+
+const updateRowPositions = (items: any[], from?: number, to?: number) => updatePositions((index) => items[index], items.length, from, to);
 
 const folder = () => ({ folder: {} }) as any;
 const doc = () => ({ doc: {} }) as any;
@@ -32,4 +34,13 @@ test('getRowCorners on iOS rounds only the outer corners', () => {
 test('getRowCorners on Android uses 20 outside and 6 between rows', () => {
     expect(getRowCorners('last', false)).toEqual({ borderTopLeftRadius: 6, borderTopRightRadius: 6, borderBottomLeftRadius: 20, borderBottomRightRadius: 20 });
     expect(getRowCorners('only', false).borderTopLeftRadius).toBe(20);
+});
+
+test('updateRowPositions only touches the rows between from and to', () => {
+    const items = [doc(), doc(), doc(), doc()];
+    updateRowPositions(items);
+    items.splice(0, 1);
+    // the removed first row: only the new first row changes
+    expect(updateRowPositions(items, 0, 1)).toEqual([0]);
+    expect(items.map((item) => item.position)).toEqual(['first', 'middle', 'last']);
 });

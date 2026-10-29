@@ -18,17 +18,20 @@ function getGroup(item?: GroupableItem) {
     return item?.folder ? 'folder' : item?.doc ? 'doc' : undefined;
 }
 
-/** gives each folder / document item its place in its run of same kind rows, returns the indexes that changed */
-export function updateRowPositions(items: ArrayLike<GroupableItem>) {
+/**
+ * gives each folder / document item its place in its run of same kind rows, returns the indexes that changed.
+ * `from` and `to` limit the check to the rows around an insertion or a removal.
+ */
+export function updateRowPositions(getItem: (index: number) => GroupableItem | undefined, length: number, from = 0, to = length - 1) {
     const changed: number[] = [];
-    for (let index = 0; index < items.length; index++) {
-        const item = items[index];
+    for (let index = Math.max(0, from); index <= Math.min(length - 1, to); index++) {
+        const item = getItem(index);
         const group = getGroup(item);
         if (!group) {
             continue;
         }
-        const first = getGroup(items[index - 1]) !== group;
-        const last = getGroup(items[index + 1]) !== group;
+        const first = getGroup(getItem(index - 1)) !== group;
+        const last = getGroup(getItem(index + 1)) !== group;
         const position = getRowPosition(first, last);
         if (item.position !== position) {
             item.position = position;
