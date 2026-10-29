@@ -4,14 +4,16 @@
     import { showError } from '@shared/utils/showError';
     import dayjs from 'dayjs';
     import { formatDate } from '~/helpers/locale';
+    import SheetHeader from '~/components/common/SheetHeader.svelte';
+    import { focusState } from '~/utils/svelte/actions';
     import { ExtraFieldType } from '~/models/OCRDocument';
     import { pickDate, showPopoverMenu } from '~/utils/ui';
     import { colors } from '~/variables';
 </script>
 
 <script lang="ts">
-    let { colorOnBackground, colorOnSurfaceVariant, colorOutlineVariant } = $colors;
-    $: ({ colorOnBackground, colorOnSurfaceVariant, colorOutlineVariant } = $colors);
+    let { colorOnSurfaceVariant, colorOutlineVariant } = $colors;
+    $: ({ colorOnSurfaceVariant, colorOutlineVariant } = $colors);
 
     export let editing = false;
     export let name = null;
@@ -91,6 +93,10 @@
         }
     }
 
+    function close() {
+        rootView.nativeView.bindingContext.closeCallback();
+    }
+
     async function add() {
         try {
             if (!currentName || (!currentValue && currentType !== ExtraFieldType.Date)) {
@@ -123,25 +129,24 @@
     }
 </script>
 
-<gesturerootview bind:this={rootView} padding={16} rows="auto,auto,auto,auto,auto">
-    <label color={colorOnBackground} fontSize={20} fontWeight="bold" marginBottom={16} text={editing ? lc('edit_extra_field') : lc('add_extra_field')} />
-    <gridlayout row={1}>
-        <textfield hint={lc('name')} margin={tMargin} paddingLeft={60} row={2} text={currentName} variant="outline" on:textChange={(e) => (currentName = e.value)} />
-        <uibutton class="icon-btn" color={colorOnSurfaceVariant} horizontalAlignment="left" text="mdi-menu-down" variant="text" verticalAlignment="middle" on:tap={selecteTemplateName} />
-    </gridlayout>
-    <textfield editable={false} hint={lc('type')} margin={tMargin} row={2} text={lc(currentType)} textTransform="uppercase" variant="outline" on:tap={(e) => selectType(e)} />
-
-    <textview
-        editable={currentType !== ExtraFieldType.Date}
-        hint={lc('value')}
-        keyboardType={getKeyboardType(currentType)}
-        margin={tMargin}
-        row={3}
-        text={currentType === ExtraFieldType.Date ? formatDate(currentTime, 'LL') : currentValue}
-        variant="outline"
-        on:textChange={(e) => (currentValue = e.value)}
-        on:tap={(e) => selectDate(e)}
-    />
-
-    <uibutton horizontalAlignment="right" row={4} text={editing ? lc('edit') : lc('add')} variant="text" on:tap={add} />
+<gesturerootview bind:this={rootView} rows="auto,auto">
+    <SheetHeader doneText={editing ? lc('edit') : lc('add')} onCancel={close} onDone={add} title={editing ? lc('edit_extra_field') : lc('add_extra_field')} />
+    <stacklayout padding="0 16 16 16" row={1}>
+        <gridlayout>
+            <textfield hint={lc('name')} margin={tMargin} paddingLeft={60} text={currentName} use:focusState variant="outline" on:textChange={(e) => (currentName = e.value)} />
+            <uibutton class="icon-btn" color={colorOnSurfaceVariant} horizontalAlignment="left" text="mdi-menu-down" variant="text" verticalAlignment="middle" on:tap={selecteTemplateName} />
+        </gridlayout>
+        <textfield editable={false} hint={lc('type')} margin={tMargin} text={lc(currentType)} textTransform="uppercase" variant="outline" on:tap={(e) => selectType(e)} />
+        <textview
+            editable={currentType !== ExtraFieldType.Date}
+            hint={lc('value')}
+            keyboardType={getKeyboardType(currentType)}
+            margin={tMargin}
+            text={currentType === ExtraFieldType.Date ? formatDate(currentTime, 'LL') : currentValue}
+            use:focusState
+            variant="outline"
+            on:textChange={(e) => (currentValue = e.value)}
+            on:tap={(e) => selectDate(e)}
+        />
+    </stacklayout>
 </gesturerootview>
