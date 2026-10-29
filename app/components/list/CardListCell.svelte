@@ -271,17 +271,14 @@
             {:else}
                 <label
                     color={tile.text}
-                    fontSize={stacked ? 20 : 15}
+                    fontSize={stacked ? 28 : 22}
                     fontWeight="bold"
-                    horizontalAlignment="left"
                     lineBreak="end"
-                    margin="10 12"
-                    marginLeft={item.selected ? 40 : 12}
-                    marginRight={stacked && hasCode ? 44 : 12}
+                    margin="10 16"
                     maxLines={stacked ? 2 : 3}
                     text={label}
-                    textAlignment="left"
-                    verticalAlignment="top"
+                    textAlignment="center"
+                    verticalAlignment="center"
                 />
                 <CardIcon
                     color={tile.text}
