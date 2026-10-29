@@ -13,7 +13,6 @@
         AnimationDefinition,
         Application,
         ApplicationSettings,
-        ChangedData,
         Color,
         EventData,
         Frame,
@@ -273,20 +272,12 @@
         });
     }
 
-    // rows are grouped: the first and last of a run have the outer corners, so a change of the list updates its neighbors
-    let positionedItems: ObservableArray<Item>;
     const getItems = (list: ObservableArray<Item>) => Array.from({ length: list.length }, (_, index) => list.getItem(index));
-    function onItemsChange(event: ChangedData<Item>) {
-        if (event.action !== 'update') {
-            updateRowPositions(getItems(positionedItems)).forEach((index) => positionedItems.setItem(index, positionedItems.getItem(index)));
-        }
-    }
-    $: if (documents !== positionedItems) {
-        positionedItems?.off('change', onItemsChange);
-        positionedItems = documents;
+    // rows are grouped: the first and last of a run have the outer corners. Called where items are inserted or removed in place,
+    // the rows whose place changed are bound again
+    function updatePositions() {
         if (documents) {
-            updateRowPositions(getItems(documents));
-            documents.on('change', onItemsChange);
+            updateRowPositions(getItems(documents)).forEach((index) => documents.setItem(index, documents.getItem(index)));
         }
     }
 
@@ -312,17 +303,11 @@
                 r = await documentsService.documentRepository.findDocuments({ filter, folder, omitThoseWithFolders: true, order: sortOrder });
                 await refreshFolders(filter);
             }
-            documents = new ObservableArray(
-                (!isTrash && folderItems.length ? (folderViewStyle === 'vertical' ? [...folderItems] : [{ type: 'folders', selected: false }]) : []).concat(
-                    r.map(
-                        (doc) =>
-                            ({
-                                doc,
-                                selected: false
-                            }) as any
-                    )
-                )
+            const items: Item[] = (!isTrash && folderItems.length ? (folderViewStyle === 'vertical' ? [...folderItems] : [{ type: 'folders', selected: false }]) : []).concat(
+                r.map((doc) => ({ doc, selected: false }) as Item)
             );
+            updateRowPositions(items);
+            documents = new ObservableArray(items);
             // DEV_LOG &&
             //     console.log(
             //         'documents',
@@ -373,6 +358,7 @@
                         documents.splice(0, documents.length, ...folderItems);
                     }
                 }
+                updatePositions();
             }
         } catch (error) {
             showError(error);
@@ -425,6 +411,7 @@
                 doc: event.doc,
                 selected: false
             } as Item);
+            updatePositions();
 
             if (event.shouldFocus) {
                 collectionView?.nativeElement?.scrollToIndex(insertIndex, false);
@@ -470,6 +457,7 @@
         if (index >= 0) {
             if (folder && doc.folders && doc.folders.indexOf(folder.id) === -1) {
                 documents.splice(index, 1);
+                updatePositions();
             } else {
                 const item = documents?.getItem(index);
                 if (item) {
@@ -518,6 +506,7 @@
                 }
             }
         }
+        updatePositions();
         if (!isTrash) {
             refreshFolders();
         }
