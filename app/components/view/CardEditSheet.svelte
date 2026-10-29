@@ -190,13 +190,13 @@
         <Template key="code" let:item>
             <gridlayout columns="*,auto" margin="2 16 2 16">
                 <textfield error={item.code.error} hint={lc('barcode')} text={item.code.text} variant={__IOS__ ? 'none' : 'filled'} on:textChange={(e) => onCodeText(item.code, e.value, e.object)} />
-                <uibutton col={1} variant="text" {...{ src: appIcon('delete') }} on:tap={() => removeCode(item.code)} />
+                <uibutton col={1} color={colorError} variant="text" {...{ src: appIcon('delete') }} on:tap={() => removeCode(item.code)} />
             </gridlayout>
         </Template>
 
         <Template key="field" let:item>
             <ListItemAutoSize fontSize={17} item={{ title: item.field.name, subtitle: formatValue(item.field.extra) }} on:tap={() => editField(item.field)}>
-                <uibutton col={1} variant="text" {...{ src: appIcon('delete') }} on:tap={() => removeField(item.field)} />
+                <uibutton col={1} color={colorError} variant="text" {...{ src: appIcon('delete') }} on:tap={() => removeField(item.field)} />
             </ListItemAutoSize>
         </Template>
 

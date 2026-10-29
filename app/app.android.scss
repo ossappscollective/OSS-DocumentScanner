@@ -2,3 +2,8 @@
 checkbox {
     margin-right: 0;
 }
+
+// the primary button is a 40 tall pill
+button[variant='contained'] {
+    height: 40;
+}

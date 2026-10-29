@@ -74,3 +74,8 @@ textfield[variant='none'] {
     font-size: 30;
     font-weight: 700;
 }
+
+// the primary button is a 44 tall capsule
+button[variant='prominentGlass'] {
+    height: 44;
+}
