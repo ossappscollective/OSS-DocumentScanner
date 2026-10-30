@@ -1700,35 +1700,6 @@ export async function goToFolderView(folder: DocFolder, useTransition = true) {
     }
 }
 
-export async function pickFolderColor(folder, event) {
-    try {
-        const ColorPickerView = (await import('~/components/common/ColorPickerView.svelte')).default;
-        // const result: any = await showModal({ page: Settings, fullscreen: true, props: { position } });
-        const anchorView = event.object as View;
-        const color: string = await showPopover({
-            backgroundColor: get(colors).colorSurfaceContainer,
-            vertPos: VerticalPosition.BELOW,
-            horizPos: HorizontalPosition.RIGHT,
-            view: ColorPickerView,
-            anchor: anchorView,
-            props: {
-                borderRadius: 10,
-                elevation: __ANDROID__ ? 3 : 0,
-                margin: 4,
-                width: screenWidthDips * 0.7,
-                backgroundColor: get(colors).colorSurfaceContainer,
-                defaultColor: folder.color
-            }
-        });
-        if (color) {
-            await folder.save({ color });
-        }
-        return color;
-    } catch (error) {
-        showError(error);
-    }
-}
-
 export async function addCurrentImageToDocument({
     autoRotate,
     fileName,

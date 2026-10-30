@@ -3,70 +3,51 @@ import { navigate, showModal } from '@shared/utils/svelte/ui';
 import { QRCodeSingleData, detectQRCodeFromFile, generateQRCodeImage, getSVGFromQRCode } from 'plugin-nativeprocessor';
 import { OCRDocument, OCRPage } from '~/models/OCRDocument';
 import { QRCODE_RESIZE_THRESHOLD } from '~/utils/constants';
+import { BARCODE_FORMATS } from '~/utils/barcodeFormats';
 import { getBarcodeFormat } from '~/utils/pkpass';
 import { screenWidthDips } from '~/variables';
+
+export { BARCODE_FORMATS };
 
 const TAG = 'QRCodeService';
 
 export function getBarcodeFallbackString(format) {
     switch (format) {
-        case FORMATS.AZTEC:
+        case BARCODE_FORMATS.AZTEC:
             return 'AZTEC';
-        case FORMATS.DATA_MATRIX:
+        case BARCODE_FORMATS.DATA_MATRIX:
             return 'DATA_MATRIX';
-        case FORMATS.PDF_417:
+        case BARCODE_FORMATS.PDF_417:
             return 'PDF_417';
-        case FORMATS.QR_CODE:
+        case BARCODE_FORMATS.QR_CODE:
             return 'QR_CODE';
-        case FORMATS.CODABAR:
+        case BARCODE_FORMATS.CODABAR:
             return 'C0C';
-        case FORMATS.CODE_39:
+        case BARCODE_FORMATS.CODE_39:
             return 'CODE-39';
-        case FORMATS.CODE_93:
+        case BARCODE_FORMATS.CODE_93:
             return 'CODE-93';
-        case FORMATS.CODE_128:
+        case BARCODE_FORMATS.CODE_128:
             return 'CODE-128';
-        case FORMATS.EAN_8:
+        case BARCODE_FORMATS.EAN_8:
             return '32123456';
-        case FORMATS.EAN_13:
+        case BARCODE_FORMATS.EAN_13:
             return '5901234123457';
-        case FORMATS.ITF:
+        case BARCODE_FORMATS.ITF:
             return '1003';
-        case FORMATS.UPC_A:
+        case BARCODE_FORMATS.UPC_A:
             return '123456789012';
-        case FORMATS.UPC_E:
+        case BARCODE_FORMATS.UPC_E:
             return '0123456';
-        // case FORMATS.DXFILMEDGE:
+        // case BARCODE_FORMATS.DXFILMEDGE:
         //     return '0123456';
-        case FORMATS.DATABAR:
+        case BARCODE_FORMATS.DATABAR:
             return '12345678901231';
-        case FORMATS.DATABAREXPANDED:
+        case BARCODE_FORMATS.DATABAREXPANDED:
             return '[01]98898765432106[3202]012345[15]991231';
         default:
             return format;
     }
-}
-
-export enum FORMATS {
-    QR_CODE = 'QRCode',
-    EAN_8 = 'EAN-8',
-    EAN_13 = 'EAN-13',
-    UPC_A = 'UPC-A',
-    UPC_E = 'UPC-E',
-    AZTEC = 'Aztec',
-    CODABAR = 'Codabar',
-    CODE_39 = 'Code39',
-    CODE_93 = 'Code93',
-    CODE_128 = 'Code128',
-    DATABAR = 'DataBar',
-    DATABAREXPANDED = 'DataBarExpanded',
-    DATA_MATRIX = 'DataMatrix',
-    // DXFILMEDGE = 'DXFilmEdge',
-    ITF = 'ITF',
-    MAXICODE = 'MaxiCode',
-    MICROQRCODE = 'MicroQRCode',
-    PDF_417 = 'PDF417',
-    RMQRCODE = 'rMQRCode'
 }
 
 export class QRCodeService extends Observable {

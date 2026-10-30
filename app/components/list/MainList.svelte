@@ -44,7 +44,8 @@
     import EditNameActionBar from '~/components/common/EditNameActionBar.svelte';
     import SelectedIndicator from '~/components/common/SelectedIndicator.svelte';
     import { l, lc, lcp, lp } from '~/helpers/locale';
-    import { getRealTheme, isEInk, onThemeChanged } from '~/helpers/theme';
+    import { getRealTheme, isDarkTheme, isEInk, onThemeChanged } from '~/helpers/theme';
+    import { getCardAccent } from '~/utils/cardColors';
     import { DocFolder, OCRDocument, OCRPage } from '~/models/OCRDocument';
     import {
         DocumentAddedEventData,
@@ -98,7 +99,7 @@
         importAndScanImage,
         onAndroidNewItent,
         onBackButton,
-        pickFolderColor,
+        pickColor,
         promptForText,
         showImagePopoverMenu,
         showPDFPopoverMenu,
@@ -206,6 +207,31 @@
     }
     $: updateTitle(folder);
 
+    // the title of a folder starts with the folder icon of its rows, so the page reads as a folder.
+    // iOS: the count is the small line next to the icon, the name is the subtitle of the bar (the big line under it)
+    function getFolderFormattedTitle(current: DocFolder, glyphColor: string) {
+        if (!current) {
+            return null;
+        }
+        return createNativeAttributedString(
+            {
+                spans: [
+                    { fontFamily: $fonts.mdi, fontSize: (__IOS__ ? 20 : 24) * $fontScale, color: glyphColor, text: 'mdi-folder-outline' },
+                    { text: '  ' + (__IOS__ ? lcp('documents_count', current.count) : current.name), ...(__IOS__ ? { fontSize: 15 * $fontScale } : {}) }
+                ]
+            },
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            1,
+            true
+        );
+    }
+    // the bar takes the tonal color of the folder, like the plate of a card
+    $: folderAccent = folder?.color && !isEInk ? getCardAccent(folder.color, isDarkTheme(), colorPrimary) : null;
+    $: folderTitle = getFolderFormattedTitle(folder, colorOnSurfaceVariant);
+
     export let updateTitle = (folder) => {
         if (folder && __IOS__) {
             title = folder.name;
@@ -216,9 +242,9 @@
                     spans: [
                         {
                             fontFamily: $fonts.mdi,
-                            color: folder.color || colorOutline,
+                            color: colorOnSurfaceVariant,
                             fontSize: 24 * $fontScale,
-                            text: 'mdi-folder'
+                            text: 'mdi-folder-outline'
                         },
                         {
                             text: '  ' + folder.name
@@ -1363,10 +1389,11 @@
         }
     }
 
-    async function setFolderColor(event) {
+    async function setFolderColor() {
         try {
-            const color: string = await pickFolderColor(folder, event);
+            const color = await pickColor(folder.color || colorPrimary, { anchor: page?.nativeView });
             if (color) {
+                await folder.save({ color: color.hex });
                 folder = folder; //for svelte to pick up change
             }
         } catch (error) {
@@ -1485,16 +1512,20 @@
 <appPage bind:this={page} id="documentList" on:navigatedTo={onNavigatedTo} on:navigatingFrom={onNavigatingFrom}>
     <appBar
         bind:this={appBar}
-        android:backgroundColor={nbSelected > 0 ? colorPrimaryContainer : undefined}
+        android:backgroundColor={nbSelected > 0 ? colorPrimaryContainer : folderAccent?.container}
+        ios:backgroundColor={nbSelected > 0 ? undefined : folderAccent?.accent}
         color={colorOnBackground}
+        iosIconRenderingMode="alwaysTemplate"
         scrollBehavior="lift"
         searchable={!isTrash && !onlyForImport && nbSelected === 0}
         scrollTargetId="documentsCollectionView"
         searchHint={lc('search')}
-        searchMode="inline"
+        searchMode={folder && __ANDROID__ ? 'collapsible' : 'inline'}
         searchPlacement="integrated"
         {bottomItems}
-        size="small"
+        formattedTitle={nbSelected > 0 ? null : folderTitle}
+        size={folder && __IOS__ ? 'large' : 'small'}
+        subtitle={folder && nbSelected === 0 ? (__IOS__ ? folder.name : lcp('documents_count', folder.count)) : null}
         titleAlignment="leading"
         translucent={__IOS__}
         class="listAppBar"

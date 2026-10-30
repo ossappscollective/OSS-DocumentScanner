@@ -2,10 +2,10 @@
     import { lc } from '@nativescript-community/l';
     import { SilentError } from '@akylas/nativescript-app-utils/error';
     import { showError } from '@shared/utils/showError';
-    import { FORMATS, getBarcodeFallbackString, qrcodeService } from '~/services/qrcode';
+    import { BARCODE_FORMATS, getBarcodeFallbackString, qrcodeService } from '~/services/qrcode';
+    import { getBarcodeInputRule, sanitizeBarcodeInput } from '~/utils/barcodeInput';
     import { pickColor, showPopoverMenu } from '~/utils/ui';
     import { colors } from '~/variables';
-    import { focusState } from '~/utils/svelte/actions';
     import SheetHeader from '../common/SheetHeader.svelte';
     import SvgView from '../common/SVGView.svelte';
 </script>
@@ -17,7 +17,7 @@
     export let name = null;
     export let color = colorPrimary;
     let code;
-    let codeFormat = FORMATS.QR_CODE;
+    let codeFormat = BARCODE_FORMATS.QR_CODE;
     let rootView;
     let svg: string;
     let validCode = true;
@@ -47,12 +47,13 @@
         try {
             DEV_LOG && console.log('selectBarcodeFormat');
             // const OptionSelect = (await import('~/components/OptionSelect.svelte')).default;
-            const options = Object.keys(FORMATS).map((k) => ({ name: lc(FORMATS[k]), id: k }));
+            const options = Object.keys(BARCODE_FORMATS).map((k) => ({ name: lc(BARCODE_FORMATS[k]), id: k }));
             await showPopoverMenu({
                 options,
                 anchor: event.object,
                 onClose: (item) => {
-                    codeFormat = FORMATS[item.id];
+                    codeFormat = BARCODE_FORMATS[item.id];
+                    code = sanitizeBarcodeInput(codeFormat, code);
                     updateSvg();
                 }
             });
@@ -74,7 +75,10 @@
         }
     }
     function onCodeTextChange(e) {
-        code = e.value;
+        code = sanitizeBarcodeInput(codeFormat, e.value);
+        if (code !== e.value) {
+            e.object.text = code;
+        }
         updateSvg();
     }
     async function changeColor(event) {
@@ -89,8 +93,17 @@
 <gesturerootview bind:this={rootView} rows="auto,auto">
     <SheetHeader doneEnabled={name?.length > 0} doneText={lc('add')} onCancel={close} onDone={add} title={lc('create')} />
     <gridlayout columns="*,auto" padding="0 16 16 16" row={1} rows="auto,auto,auto,auto,auto,auto">
-        <textfield colSpan={2} hint={lc('name')} margin={tMargin} text={name} use:focusState variant="outline" on:textChange={(e) => (name = e.value)} />
-        <textfield colSpan={2} hint={lc('barcode')} margin={tMargin} row={1} text={code} use:focusState variant="outline" on:textChange={onCodeTextChange} />
+        <textfield colSpan={2} hint={lc('name')} margin={tMargin} text={name} variant="outline" on:textChange={(e) => (name = e.value)} />
+        <textfield
+            colSpan={2}
+            hint={lc('barcode')}
+            keyboardType={getBarcodeInputRule(codeFormat).numeric ? 'number' : undefined}
+            margin={tMargin}
+            row={1}
+            text={code}
+            variant="outline"
+            on:textChange={onCodeTextChange}
+        />
         <textfield
             colSpan={2}
             editable={false}

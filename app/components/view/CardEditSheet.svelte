@@ -1,19 +1,17 @@
 <script context="module" lang="ts">
     import { lc } from '@nativescript-community/l';
     import { Template } from '@nativescript-community/svelte-native/components';
-    import { TextField } from '@nativescript-community/ui-textfield';
     import SheetHeader from '~/components/common/SheetHeader.svelte';
     import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { showError } from '@shared/utils/showError';
     import dayjs from 'dayjs';
     import { ExtraFieldType, OCRDocument } from '~/models/OCRDocument';
-    import { qrcodeService } from '~/services/qrcode';
     import { shortcutService } from '~/services/shortcuts';
     import { appIcon } from '~/utils/appIcons';
     import { SHEET_SOFT_INPUT_MODE } from '~/utils/constants';
     import { pickColor } from '~/utils/ui';
     import { colors } from '~/variables';
-    import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
+    import CardEditCodeRow from '~/components/view/CardEditCodeRow.svelte';
 
     interface CodeRow {
         id: number;
@@ -62,7 +60,7 @@
             ...(visibleCodes.length ? [{ type: 'sectionheader', title: lc('barcode').toUpperCase() }, ...visibleCodes.map((code) => ({ type: 'code', code }))] : []),
             { type: 'sectionheader', title: lc('extra_fields').toUpperCase() },
             ...visibleFields.map((field) => ({ type: 'field', field })),
-            { type: 'add' }
+            { type: 'spacer' }
         ];
     }
     rebuild();
@@ -72,19 +70,6 @@
         rootView.nativeView.bindingContext.closeCallback(result);
     }
 
-    async function onCodeText(code: CodeRow, text: string, field: unknown) {
-        code.text = text;
-        try {
-            const svg = await qrcodeService.getQRCodeSVG({ ...code.original, text }, 100, 'black');
-            code.error = svg?.length ? undefined : lc('unsupported_barcode_value');
-        } catch (error) {
-            code.error = lc('unsupported_barcode_value');
-        }
-        // the error is set on the field itself: the rows are not built again while typing
-        if (field instanceof TextField) {
-            field.error = code.error;
-        }
-    }
     function removeCode(code: CodeRow) {
         code.removed = true;
         rebuild();
@@ -111,7 +96,7 @@
                 skipCollapsedState: true,
                 view: ExtraFieldPicker,
                 windowSoftInputMode: SHEET_SOFT_INPUT_MODE,
-                props: { editing: !!field, ...(field?.extra || {}) }
+                props: { editing: !!field, name: field?.name, ...(field?.extra || {}) }
             });
             if (!result) {
                 return;
@@ -168,11 +153,11 @@
     }
 </script>
 
-<gesturerootview bind:this={rootView} backgroundColor={__IOS__ ? colorBackground : colorSurface} rows="auto,*">
-    <SheetHeader doneText={lc('save')} onCancel={() => close(false)} onDone={save} title={lc('edit')} />
+<gesturerootview bind:this={rootView} rows="auto,*">
+    <SheetHeader actionIcon={appIcon('add')} actionLabel={lc('add_extra_field')} doneText={lc('save')} onAction={() => editField()} onCancel={() => close(false)} onDone={save} title={lc('edit')} />
     <collectionview row={1} {itemTemplateSelector} items={listItems}>
         <Template key="name" let:item>
-            <textfield hint={lc('name')} margin="4 16 4 16" text={name} variant={__IOS__ ? 'none' : 'filled'} on:textChange={(e) => (name = e.value)} />
+            <textfield hint={lc('name')} margin="6 16" text={name} variant="outline" on:textChange={(e) => (name = e.value)} />
         </Template>
 
         <Template key="color" let:item>
@@ -187,20 +172,33 @@
         </Template>
 
         <Template key="code" let:item>
-            <gridlayout columns="*,auto" margin="2 16 2 16">
-                <textfield error={item.code.error} hint={lc('barcode')} text={item.code.text} variant={__IOS__ ? 'none' : 'filled'} on:textChange={(e) => onCodeText(item.code, e.value, e.object)} />
-                <uibutton col={1} color={colorError} variant="text" {...{ src: appIcon('delete') }} on:tap={() => removeCode(item.code)} />
-            </gridlayout>
+            <CardEditCodeRow code={item.code} onRemove={() => removeCode(item.code)} />
         </Template>
 
         <Template key="field" let:item>
-            <ListItemAutoSize fontSize={17} item={{ title: item.field.name, subtitle: formatValue(item.field.extra) }} on:tap={() => editField(item.field)}>
-                <uibutton col={1} color={colorError} variant="text" {...{ src: appIcon('delete') }} on:tap={() => removeField(item.field)} />
-            </ListItemAutoSize>
+            <gridlayout columns="*,auto" margin="6 16">
+                <gridlayout class="extraFieldRow" on:tap={() => editField(item.field)}>
+                    <stacklayout verticalAlignment="center">
+                        <label color={colorOnSurfaceVariant} fontSize={12} text={item.field.name} />
+                        <label color={colorOnSurface} fontSize={17} text={formatValue(item.field.extra) + ''} textWrap={true} />
+                    </stacklayout>
+                </gridlayout>
+                <uibutton
+                    accessibilityLabel={lc('delete')}
+                    col={1}
+                    color={colorError}
+                    height={44}
+                    padding="0"
+                    variant="text"
+                    width={44}
+                    {...{ src: appIcon('delete') }}
+                    on:tap={() => removeField(item.field)}
+                />
+            </gridlayout>
         </Template>
 
-        <Template key="add" let:item>
-            <uibutton margin="8 16 24 16" text={lc('add_extra_field')} variant={__IOS__ ? 'tinted' : 'text'} on:tap={() => editField()} />
+        <Template key="spacer" let:item>
+            <gridlayout height={24} />
         </Template>
     </collectionview>
 </gesturerootview>
