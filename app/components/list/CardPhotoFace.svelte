@@ -51,7 +51,7 @@
         visibility={showLabel ? 'visible' : 'collapsed'}
     />
     <CardStatusChips col={1} extra={item.doc.extra} margin={8} row={stacked ? 1 : 0} verticalAlignment={stacked ? 'bottom' : 'top'} />
-    <stacklayout col={2} margin="8 12 8 0" orientation="horizontal" row={stacked ? 1 : 0} verticalAlignment={stacked ? 'bottom' : 'top'}>
+    <stacklayout col={2} margin="8 12 6 0" orientation="horizontal" row={stacked ? 1 : 0} verticalAlignment={stacked ? 'bottom' : 'top'}>
         <CardIcon color={iconColor} marginRight={hasCode ? 6 : 0} size={18} src={appIcon('favorite_on')} visibility={item.doc.favorite === 1 ? 'visible' : 'collapsed'} />
         <CardIcon color={iconColor} size={18} src={appIcon('qrcode')} visibility={hasCode ? 'visible' : 'collapsed'} />
     </stacklayout>

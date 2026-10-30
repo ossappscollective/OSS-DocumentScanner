@@ -21,7 +21,7 @@
 </script>
 
 {#if stacked}
-    <!-- only the strip above the next card is seen: the title (it shrinks to fit) with the chips at its right -->
+    <!-- only the strip above the next card is seen: the title (it shrinks to fit) with the chips at its right, the icons always on the line below -->
     <gridlayout height={stripHeight} columns="*,auto" verticalAlignment="top">
         <label
             autoFontSize={true}
@@ -41,7 +41,7 @@
         />
         <stacklayout col={1} margin="14 10 0 0" verticalAlignment="top">
             <CardStatusChips extra={item.doc.extra} horizontalAlignment="right" tint={tile.text} />
-            <stacklayout horizontalAlignment="right" marginTop={hasStatus ? 6 : 0} orientation="horizontal">
+            <stacklayout horizontalAlignment="right" marginTop={hasStatus ? 6 : 30} orientation="horizontal">
                 <CardIcon
                     color={tile.text}
                     marginRight={hasCode ? 6 : 0}
