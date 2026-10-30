@@ -22,6 +22,7 @@
     import { DocFolder, OCRDocument } from '~/models/OCRDocument';
     import {
         CARD_RATIO,
+        CARDHOLDER_GAP,
         DEFAULT_CARD_ALWAYS_SHOW_NAME,
         DEFAULT_NB_COLUMNS,
         DEFAULT_NB_COLUMNS_LANDSCAPE,
@@ -177,13 +178,13 @@
                 return itemHeight * FULL_VISIBLE_RATIO;
             case 'cardholder':
                 // the card starts after its margin
-                return rowHeight - 16 / nbColumns;
+                return rowHeight - CARDHOLDER_GAP;
         }
     }
     function getItemRowHeight(viewStyle, itemHeight, nbColumns, isLandscape) {
         switch (viewStyle) {
             case 'cardholder':
-                return itemHeight * (isLandscape ? 0.6 : 0.4);
+                return itemHeight * (isLandscape ? 0.6 : 0.3);
             case 'list':
                 return isLandscape ? itemHeight : 72;
             default:
@@ -316,6 +317,7 @@
                 {item}
                 layout="cardholder"
                 {nbColumns}
+                {stripHeight}
                 syncColors={getSyncColors(item)}
                 {syncEnabled}
                 on:tap={() => onItemTap(item)}
@@ -356,6 +358,7 @@
                 {item}
                 layout="cardholder"
                 {nbColumns}
+                {stripHeight}
                 syncColors={getSyncColors(item)}
                 {syncEnabled}
                 on:tap={() => onItemTap(item)}
@@ -396,6 +399,7 @@
                 {item}
                 layout="cardholder"
                 {nbColumns}
+                {stripHeight}
                 syncColors={getSyncColors(item)}
                 {syncEnabled}
                 on:tap={() => onItemTap(item)}

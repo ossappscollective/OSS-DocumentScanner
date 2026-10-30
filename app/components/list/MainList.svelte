@@ -1593,7 +1593,7 @@
             ios:autoReloadItemOnLayout={true}
             itemTemplateSelector={(item) => itemTemplateSelector(viewStyle, item)}
             items={documents}
-            paddingBottom={Math.max($windowInset.bottom, BOTTOM_BUTTON_OFFSET)}
+            paddingBottom={__IOS__ ? 16 : Math.max($windowInset.bottom, BOTTOM_BUTTON_OFFSET)}
             paddingLeft={contentPadding}
             paddingRight={contentPadding}
             row={2}
