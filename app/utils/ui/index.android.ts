@@ -1,8 +1,7 @@
 import { lc } from '@nativescript-community/l';
-import { AndroidActivityNewIntentEventData, Application, Color, Frame, Utils, View } from '@nativescript/core';
+import { AndroidActivityNewIntentEventData, Application, Color, Utils, View } from '@nativescript/core';
 import { throttle } from '@nativescript/core/utils';
 import { showError } from '@shared/utils/showError';
-import { Dayjs } from 'dayjs';
 import { documentsService } from '~/services/documents';
 import { ocrService } from '~/services/ocr';
 import { securityService } from '~/services/security';
@@ -172,20 +171,5 @@ export async function pickColor(color: Color | string, options: { alpha?: boolea
             height: screenHeightDips * 0.8,
             alphaSupport: false
         }
-    });
-}
-
-export async function pickDate(currentDate: Dayjs) {
-    return new Promise<number>((resolve, reject) => {
-        const datePicker = com.google.android.material.datepicker.MaterialDatePicker.Builder.datePicker().setTitleText(lc('pick_date')).setSelection(new java.lang.Long(currentDate.valueOf())).build();
-        datePicker.addOnDismissListener(
-            new android.content.DialogInterface.OnDismissListener({
-                onDismiss: () => {
-                    resolve(datePicker.getSelection().longValue());
-                }
-            })
-        );
-        const parentView = Frame.topmost() || Application.getRootView();
-        datePicker.show(parentView._getRootFragmentManager(), 'datepicker');
     });
 }
