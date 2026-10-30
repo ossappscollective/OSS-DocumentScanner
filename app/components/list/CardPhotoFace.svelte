@@ -29,28 +29,19 @@
     sharedTransitionTag="document_{item.doc.id}_{item.doc.pages[0].id}"
     stretch="aspectFill"
 />
-{#if stacked}
-    <!-- only the strip above the next card is seen: the title chip on top, the chips at the bottom -->
-    <gridlayout columns="*,auto" height={stripHeight} rows="auto,*" verticalAlignment="top">
-        <CardChip
-            colSpan={2}
-            fontWeight={autoName ? '500' : '600'}
-            horizontalAlignment="left"
-            margin={8}
-            marginLeft={item.selected ? 40 : 8}
-            text={label}
-            verticalAlignment="top"
-            visibility={showLabel ? 'visible' : 'collapsed'}
-        />
-        <stacklayout col={1} horizontalAlignment="right" margin="8 8 8 0" orientation="horizontal" row={1} verticalAlignment="bottom">
-            <CardStatusChips extra={item.doc.extra} />
-            <CardInfoChip {hasCode} favorite={item.doc.favorite === 1} />
-        </stacklayout>
-    </gridlayout>
-{:else}
-    <CardChip fontWeight={autoName ? '500' : '600'} horizontalAlignment="left" margin={8} text={label} verticalAlignment="bottom" visibility={showLabel ? 'visible' : 'collapsed'} />
-    <stacklayout horizontalAlignment="right" margin={8} orientation="horizontal" verticalAlignment="top">
-        <CardStatusChips extra={item.doc.extra} />
-        <CardInfoChip {hasCode} favorite={item.doc.favorite === 1} />
-    </stacklayout>
-{/if}
+<!-- the title chip and the chips never share a row: the title is on top and the chips at the bottom of the strip seen above the next card (stacked), the other way around otherwise -->
+<gridlayout columns="*,auto,auto" height={stripHeight} rows="auto,*" verticalAlignment="top">
+    <CardChip
+        colSpan={3}
+        fontWeight={autoName ? '500' : '600'}
+        horizontalAlignment="left"
+        margin={8}
+        marginLeft={stacked && item.selected ? 40 : 8}
+        row={stacked ? 0 : 1}
+        text={label}
+        verticalAlignment={stacked ? 'top' : 'bottom'}
+        visibility={showLabel ? 'visible' : 'collapsed'}
+    />
+    <CardStatusChips col={1} extra={item.doc.extra} margin={8} row={stacked ? 1 : 0} verticalAlignment={stacked ? 'bottom' : 'top'} />
+    <CardInfoChip col={2} {hasCode} favorite={item.doc.favorite === 1} margin="8 8 8 0" row={stacked ? 1 : 0} verticalAlignment={stacked ? 'bottom' : 'top'} />
+</gridlayout>
