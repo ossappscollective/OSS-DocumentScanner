@@ -1589,6 +1589,7 @@
             bind:this={collectionView}
             {colWidth}
             on:itemLoading={onCollectionViewItemLoading}
+            ios:animateItemUpdate={false}
             ios:autoReloadItemOnLayout={true}
             itemTemplateSelector={(item) => itemTemplateSelector(viewStyle, item)}
             items={documents}
