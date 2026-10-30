@@ -1,8 +1,4 @@
-import { lc } from '@nativescript-community/l';
 import { Color, IOSHelper, View } from '@nativescript/core';
-import { DateTimePicker } from '@nativescript/datetimepicker';
-import { Dayjs } from 'dayjs';
-import { lang } from '~/helpers/locale';
 import { showSnack } from './index.common';
 export * from './index.common';
 
@@ -148,19 +144,4 @@ export async function pickColor(color: Color | string, { alpha, anchor }: { alph
             reject(err);
         }
     });
-}
-
-export async function pickDate(currentDate: Dayjs, context?) {
-    const result = await DateTimePicker.pickDate({
-        context,
-        date: currentDate.toDate(),
-        // minDate: currentDate.subtract(100, 'y').toDate(),
-        // maxDate: currentTime.add(100, 'y').toDate(),
-        locale: lang,
-        okButtonText: lc('ok'),
-        cancelButtonText: lc('cancel')
-    });
-    if (result) {
-        return result.valueOf();
-    }
 }

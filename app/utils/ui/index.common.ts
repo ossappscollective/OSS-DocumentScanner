@@ -2,6 +2,7 @@ import { IgnoreError, PermissionError, SilentError } from '@akylas/nativescript-
 import { share } from '@akylas/nativescript-app-utils/share';
 import { MultiResult, Permissions, Status, isPermResultAuthorized, openSettings, request } from '@nativescript-community/perms';
 import { ComponentInstanceInfo, resolveComponentElement } from '@nativescript-community/svelte-native/dom';
+import { pickDate as pickNativeDate } from '@nativescript-community/ui-datetimepicker';
 import { openFilePicker, pickFolder } from '@nativescript-community/ui-document-picker';
 import { GestureRootView } from '@nativescript-community/gesturehandler';
 import { CheckBox } from '@nativescript-community/ui-checkbox';
@@ -35,7 +36,7 @@ import { doInBatch } from '@shared/utils/batch';
 import { showError } from '@shared/utils/showError';
 import { goBack, navigate, showModal } from '@shared/utils/svelte/ui';
 import { hideLoading, showLoading, showSliderPopover, showSnack, updateLoadingProgress } from '@shared/utils/ui';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import { filesize } from 'filesize';
 import {
     CropResult,
@@ -2249,4 +2250,16 @@ export async function requestGalleryPermission() {
 }
 export async function requestNotificationPermission() {
     return requestPermission('notification', lc('notification_permission_needed'));
+}
+
+export async function pickDate(currentDate: Dayjs) {
+    const result = await pickNativeDate({
+        date: currentDate.toDate(),
+        title: lc('pick_date'),
+        positiveButtonText: lc('ok'),
+        negativeButtonText: lc('cancel'),
+        locale: lang,
+        tintColor: get(colors).colorPrimary
+    });
+    return result?.valueOf();
 }
