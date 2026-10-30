@@ -2,7 +2,9 @@ import dayjs from 'dayjs';
 import type { Item } from '~/components/list/MainList.svelte';
 import { documentHasPKPassData } from '~/utils/pkpass';
 import { pickCardColor } from '~/utils/cardColors';
+import { lc } from '~/helpers/locale';
 import { isEInk } from '~/helpers/theme';
+import { getCardStatus } from '~/utils/cardStatus';
 
 export type CardVariant = '' | 'photo' | 'pkpass';
 
@@ -26,6 +28,7 @@ export function getCardDisplay(item: Item) {
         page,
         hasImage: !!page?.imagePath,
         hasCode: !!page?.qrcode?.length,
+        hasStatus: getCardStatus(doc.extra, { expiration: lc('expire_on'), balance: lc('balance') }).length > 0,
         autoName,
         label: autoName ? dayjs(doc.createdDate).format('ll') : doc.name,
         cardColor: isEInk ? null : pickCardColor(doc.extra?.color, [page?.extra?.color, ...(page?.colors ?? [])])

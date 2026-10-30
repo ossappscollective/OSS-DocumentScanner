@@ -68,6 +68,7 @@
 
     $: condensed = viewStyle === 'condensed';
 
+    const FULL_VISIBLE_RATIO = 0.29;
     const title = lc('cards');
     let itemWidth = (($isLandscape ? screenHeightDips : screenWidthDips) - $windowInset.left - $windowInset.right - 2 * columnsPadding) / $nbColumns - 2 * rowMargin;
     const itemHeight = writable(itemWidth * CARD_RATIO + 2 * rowMargin);
@@ -84,6 +85,7 @@
     $: textPaint.color = colorOnBackground || 'black';
     $: textPaint.textSize = (condensed ? 11 : 14) * $fontScale;
     $: itemRowHeight = getItemRowHeight(viewStyle, $itemHeight, $nbColumns, $isLandscape);
+    $: stripHeight = getStripHeight(viewStyle, $itemHeight, itemRowHeight, $nbColumns);
 
     async function createCard() {
         try {
@@ -155,7 +157,7 @@
                     if (!item?.doc || position < (documents?.findIndex((current) => !!current.doc) ?? 0) + $nbColumns) {
                         return [0, 0, 0, 0];
                     }
-                    return [-0.71 * itemHeight, 0, 0, 0];
+                    return [-(1 - FULL_VISIBLE_RATIO) * itemHeight, 0, 0, 0];
                 };
             // case 'cardholder':
             //     return (item, position) => {
@@ -166,6 +168,16 @@
             //     };
             default:
                 return null;
+        }
+    }
+    // the part of a card which is seen above the next one: the title on top, the chips at the bottom
+    function getStripHeight(viewStyle, itemHeight, rowHeight, nbColumns) {
+        switch (viewStyle) {
+            case 'full':
+                return itemHeight * FULL_VISIBLE_RATIO;
+            case 'cardholder':
+                // the card starts after its margin
+                return rowHeight - 16 / nbColumns;
         }
     }
     function getItemRowHeight(viewStyle, itemHeight, nbColumns, isLandscape) {
@@ -309,13 +321,13 @@
                 on:tap={() => onItemTap(item)}
                 on:longPress={(e) => onItemLongPress(item, e)}
             >
-                <CardTileFace {item} layout="cardholder" />
+                <CardTileFace {item} layout="cardholder" {stripHeight} />
             </CardTile>
         </absolutelayout>
     </Template>
     <Template key="full" let:item>
         <CardTile height={itemRowHeight} {item} layout="full" {nbColumns} syncColors={getSyncColors(item)} {syncEnabled} on:tap={() => onItemTap(item)} on:longPress={(e) => onItemLongPress(item, e)}>
-            <CardTileFace {item} layout="full" />
+            <CardTileFace {item} layout="full" {stripHeight} />
         </CardTile>
     </Template>
     <Template key="columns" let:item>
@@ -349,13 +361,13 @@
                 on:tap={() => onItemTap(item)}
                 on:longPress={(e) => onItemLongPress(item, e)}
             >
-                <CardPhotoFace {alwaysShowNames} {item} {itemWidth} layout="cardholder" />
+                <CardPhotoFace {alwaysShowNames} {item} {itemWidth} layout="cardholder" {stripHeight} />
             </CardTile>
         </absolutelayout>
     </Template>
     <Template key="photo_full" let:item>
         <CardTile height={itemRowHeight} {item} layout="full" {nbColumns} syncColors={getSyncColors(item)} {syncEnabled} on:tap={() => onItemTap(item)} on:longPress={(e) => onItemLongPress(item, e)}>
-            <CardPhotoFace {alwaysShowNames} {item} {itemWidth} layout="full" />
+            <CardPhotoFace {alwaysShowNames} {item} {itemWidth} layout="full" {stripHeight} />
         </CardTile>
     </Template>
     <Template key="photo_columns" let:item>

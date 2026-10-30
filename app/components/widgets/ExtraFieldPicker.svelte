@@ -22,6 +22,7 @@
     export let name = null;
     export let value = null;
     export let type: ExtraFieldType = ExtraFieldType.Date;
+    export let kind: string = undefined;
     let currentTime = value ? dayjs(value) : dayjs();
     let currentValue = value;
     let currentName = name;
@@ -105,9 +106,11 @@
             if (!currentName || (!currentValue && currentType !== ExtraFieldType.Date)) {
                 throw new SilentError(lc('need_fill_fields'));
             }
+            const currentKind = nameTemplates.find((template) => template.name === currentName)?.id ?? (currentName === name ? kind : undefined);
             const result = {
                 type: currentType,
                 name: currentName,
+                ...(currentKind ? { kind: currentKind } : {}),
                 value: currentType === ExtraFieldType.Date ? currentTime.valueOf() : currentType === ExtraFieldType.Number ? parseFloat(currentValue) : currentValue
             };
             if (onClose) {

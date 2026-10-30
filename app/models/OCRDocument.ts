@@ -151,6 +151,8 @@ export interface DocumentExtra {
         | {
               type: string;
               value: any;
+              /** the name template the field comes from (expire_on, balance): its name is localized */
+              kind?: string;
           };
 }
 
