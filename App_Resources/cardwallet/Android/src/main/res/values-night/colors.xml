@@ -4,7 +4,8 @@
     <color name="shortcut_background">#1E1B16</color>
     <color name="ic_launcher_background">#000000</color>
 
-    <color name="seed">#DC3D5D</color>
+    <color name="icon_background">#1E1014</color>
+    <color name="seed">#DA3D5C</color>
     <color name="md_theme_primary">#FFB2B9</color>
     <color name="md_theme_onPrimary">#67001F</color>
     <color name="md_theme_primaryContainer">#91002F</color>

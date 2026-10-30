@@ -281,3 +281,13 @@ Most rules are shared. The scanner feels more like a document app:
 - **Android menu origin:** fixed in ui-menu with a style per corner; the plugin change is not published.
 - **Sizes x 1.31 (decided, to apply in code):** list rows 88 with a 116 x 72 thumbnail and 20 titles, tile chips 28 tall with 14 text, folder tiles 173 x 71 and vertical folder rows 68, tile titles 18 to 28 (grid) and 26 (stacked).
 - **Open:** the Document Scanner list is still its own canvas list (section 17 is a proposal). The delete confirmation dialog (destructive text action in the error color, section 15) is not built yet.
+
+## 20. App icons and splash
+
+- **Shape rule applies:** the glyphs use only rounded rectangles, circles and round-capped strokes. Masters are full-bleed 100 x 100 squares in `graphics/icon_<app>.svg` (the platforms apply their own mask); `_dark`, `_monochrome` and `_transparent` (glyph only) sit beside them.
+- **Cardwallet:** accent `#DA3D5C`, two stacked cards (the back one tilted 14 degrees), a chip circle and a stripe pill on the front card.
+- **Document Scanner:** accent `#2FBF71`, a document with text pills inside four scan brackets, crossed by a scan bar (dropped in the monochrome variant).
+- **Android:** adaptive icon with the `icon_background` color and the glyph at 78% inside the safe zone; the themed (monochrome) layer is `icon_monochrome`, with the details cut out.
+- **Dark icon:** iOS 18+ uses the `1024-dark.png` entry of a single-size `AppIcon` set. Android has no dark adaptive icon, so `drawable-night/ic_launcher_foreground.xml` and a night `icon_background` are provided; only launchers that resolve the icon with the night configuration use them.
+- **Splash:** the system background (white, dark in dark mode) and the icon centered. Android 12+ shows the glyph on an `icon_background` disc; older versions and iOS show the rounded icon (`splash_icon`, `logo.png`) at 144 / 120.
+- Export the PNGs from the masters; do not edit them by hand.
