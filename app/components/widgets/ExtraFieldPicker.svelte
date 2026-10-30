@@ -39,8 +39,18 @@
     }
 
     const types = Object.values(ExtraFieldType);
+    // a date and a typed value do not share their text: the field starts empty when it changes from one to the other
+    function setType(newType: ExtraFieldType) {
+        if (newType === currentType) {
+            return;
+        }
+        if (newType === ExtraFieldType.Date || currentType === ExtraFieldType.Date) {
+            currentValue = '';
+        }
+        currentType = newType;
+    }
     function onTypeChanged(event: SelectedIndexChangedEventData) {
-        currentType = types[event.newIndex];
+        setType(types[event.newIndex]);
     }
     const nameTemplates = [
         { id: 'valid_from', name: lc('valid_from'), type: ExtraFieldType.Date },
@@ -50,7 +60,7 @@
     ];
     function selectTemplate(template: (typeof nameTemplates)[number]) {
         currentName = template.name;
-        currentType = template.type;
+        setType(template.type);
     }
 
     function close() {
@@ -125,7 +135,7 @@
             minHeight={currentType === ExtraFieldType.Date ? 48 : 84}
             text={currentType === ExtraFieldType.Date ? formatDate(currentTime, 'LL') : currentValue}
             variant="outline"
-            on:textChange={(e) => (currentValue = e.value)}
+            on:textChange={(e) => currentType !== ExtraFieldType.Date && (currentValue = e.value)}
             on:tap={(e) => selectDate(e)}
         />
     </stacklayout>
