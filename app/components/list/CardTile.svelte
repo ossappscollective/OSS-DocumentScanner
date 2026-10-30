@@ -36,7 +36,9 @@
             case 'cardholder':
             case 'full':
                 Object.assign(result, {
-                    boxShadow: isEInk ? 0 : `0 -3 10 #00000033`,
+                    // @akylas/nativescript (background.ios) applies the alpha of the color twice on iOS (shadowOpacity and shadowColor):
+                    // 0x72 renders the 20% of the design. Use 0x33 again once it is fixed there
+                    boxShadow: isEInk ? 0 : `0 -3 10 ${__IOS__ ? '#00000072' : '#00000033'}`,
                     margin: 16 / nbColumns
                 });
                 break;
