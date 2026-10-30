@@ -5,7 +5,6 @@
     import dayjs from 'dayjs';
     import { formatDate } from '~/helpers/locale';
     import SheetHeader from '~/components/common/SheetHeader.svelte';
-    import { focusState } from '~/utils/svelte/actions';
     import { ExtraFieldType } from '~/models/OCRDocument';
     import { pickDate, showPopoverMenu } from '~/utils/ui';
     import { colors } from '~/variables';
@@ -133,7 +132,7 @@
     <SheetHeader doneText={editing ? lc('edit') : lc('add')} onCancel={close} onDone={add} title={editing ? lc('edit_extra_field') : lc('add_extra_field')} />
     <stacklayout padding="0 16 16 16" row={1}>
         <gridlayout columns="*,auto">
-            <textfield hint={lc('name')} margin={tMargin} text={currentName} use:focusState variant="outline" on:textChange={(e) => (currentName = e.value)} />
+            <textfield hint={lc('name')} margin={tMargin} text={currentName} variant="outline" on:textChange={(e) => (currentName = e.value)} />
             <uibutton
                 accessibilityLabel={lc('name')}
                 class="icon-btn"
@@ -154,7 +153,6 @@
             keyboardType={getKeyboardType(currentType)}
             margin={tMargin}
             text={currentType === ExtraFieldType.Date ? formatDate(currentTime, 'LL') : currentValue}
-            use:focusState
             variant="outline"
             on:textChange={(e) => (currentValue = e.value)}
             on:tap={(e) => selectDate(e)}

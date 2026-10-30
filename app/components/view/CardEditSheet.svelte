@@ -12,7 +12,6 @@
     import { pickColor } from '~/utils/ui';
     import { colors } from '~/variables';
     import CardEditCodeRow from '~/components/view/CardEditCodeRow.svelte';
-    import { focusState } from '~/utils/svelte/actions';
 
     interface CodeRow {
         id: number;
@@ -158,7 +157,7 @@
     <SheetHeader actionIcon={appIcon('add')} actionLabel={lc('add_extra_field')} doneText={lc('save')} onAction={() => editField()} onCancel={() => close(false)} onDone={save} title={lc('edit')} />
     <collectionview row={1} {itemTemplateSelector} items={listItems}>
         <Template key="name" let:item>
-            <textfield hint={lc('name')} margin="6 16" text={name} use:focusState variant="outline" on:textChange={(e) => (name = e.value)} />
+            <textfield hint={lc('name')} margin="6 16" text={name} variant="outline" on:textChange={(e) => (name = e.value)} />
         </Template>
 
         <Template key="color" let:item>

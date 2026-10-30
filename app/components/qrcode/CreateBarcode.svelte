@@ -7,7 +7,7 @@
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import CActionBar from '~/components/common/CActionBar.svelte';
     import { lc } from '~/helpers/locale';
-    import { FORMATS, getBarcodeFallbackString, qrcodeService } from '~/services/qrcode';
+    import { BARCODE_FORMATS, getBarcodeFallbackString, qrcodeService } from '~/services/qrcode';
     import { colors, windowInset } from '~/variables';
     import SvgView from '../common/SVGView.svelte';
 
@@ -22,7 +22,7 @@
 
     function updateItems() {
         items = new ObservableArray(
-            Object.values(FORMATS).map((format) => ({
+            Object.values(BARCODE_FORMATS).map((format) => ({
                 format,
                 text,
                 async getSVG(item) {

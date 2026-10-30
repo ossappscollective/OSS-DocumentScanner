@@ -7,7 +7,6 @@
     import { qrcodeService } from '~/services/qrcode';
     import { appIcon } from '~/utils/appIcons';
     import { getBarcodeInputRule, sanitizeBarcodeInput } from '~/utils/barcodeInput';
-    import { focusState } from '~/utils/svelte/actions';
     import { colors } from '~/variables';
 
     export let code: { original: any; text: string; error?: string };
@@ -45,6 +44,6 @@
 <!-- the barcode is drawn on the left while it is edited: what is changed or removed is visible -->
 <gridlayout columns="auto,*,auto" margin="6 16" {...$$restProps}>
     <SvgView backgroundColor="white" borderRadius={11} height={56} item={{ svg }} margin="0 12 0 0" padding="4" stretch="aspectFit" verticalAlignment="center" width={88} />
-    <textfield col={1} {error} hint={format} keyboardType={rule.numeric ? 'number' : undefined} text={code.text} use:focusState variant="outline" on:textChange={onTextChange} />
+    <textfield col={1} {error} hint={format} keyboardType={rule.numeric ? 'number' : undefined} text={code.text} variant="outline" on:textChange={onTextChange} />
     <uibutton accessibilityLabel={lc('delete')} col={2} color={colorError} height={44} padding="0" variant="text" width={44} {...{ src: appIcon('delete') }} on:tap={onRemove} />
 </gridlayout>
