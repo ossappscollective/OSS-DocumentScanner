@@ -211,6 +211,8 @@
     "existing_folders": "istniejące foldery",
     "expanded": "rozszerzony",
     "expire_on": "wygasa",
+    "expired": "Wygasły",
+    "expires_on_date": "Wygasa %1$s",
     "export": "eksportuj",
     "export_as_espass": "Eksportuj jako ESpass",
     "export_as_pkpass": "Eksportuj jako PKPass",
