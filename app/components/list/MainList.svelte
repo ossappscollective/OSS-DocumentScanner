@@ -16,14 +16,12 @@
         ApplicationSettings,
         Color,
         EventData,
-        FormattedString,
         Frame,
         NavigatedData,
         ObservableArray,
         Page,
         ProxyViewContainer,
         Screen,
-        Span,
         StackLayout,
         View
     } from '@nativescript/core';
@@ -209,25 +207,26 @@
     }
     $: updateTitle(folder);
 
-    // the title of a folder starts with the folder icon of its rows, so the page reads as a folder
+    // the title of a folder starts with the folder icon of its rows, so the page reads as a folder.
+    // iOS: the count is the small line next to the icon, the name is the subtitle of the bar (the big line under it)
     function getFolderFormattedTitle(current: DocFolder, glyphColor: string) {
         if (!current) {
             return null;
         }
-        const formatted = new FormattedString();
-        const glyph = new Span();
-        glyph.fontFamily = $fonts.mdi;
-        glyph.fontSize = (__IOS__ ? 20 : 24) * $fontScale;
-        glyph.color = new Color(glyphColor);
-        glyph.text = 'mdi-folder-outline';
-        // iOS: the count is the small line next to the icon, the name is the subtitle of the bar (the big line under it)
-        const name = new Span();
-        name.text = '  ' + (__IOS__ ? lcp('documents_count', current.count) : current.name);
-        if (__IOS__) {
-            name.fontSize = 15 * $fontScale;
-        }
-        formatted.spans.push(glyph, name);
-        return formatted;
+        return createNativeAttributedString(
+            {
+                spans: [
+                    { fontFamily: $fonts.mdi, fontSize: (__IOS__ ? 20 : 24) * $fontScale, color: glyphColor, text: 'mdi-folder-outline' },
+                    { text: '  ' + (__IOS__ ? lcp('documents_count', current.count) : current.name), ...(__IOS__ ? { fontSize: 15 * $fontScale } : {}) }
+                ]
+            },
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            1,
+            true
+        );
     }
     // the bar takes the tonal color of the folder, like the plate of a card
     $: folderAccent = folder?.color && !isEInk ? getCardAccent(folder.color, isDarkTheme(), colorPrimary) : null;
@@ -1533,7 +1532,7 @@
         size={folder && __IOS__ ? 'large' : 'small'}
         subtitle={folder && nbSelected === 0 ? (__IOS__ ? folder.name : lcp('documents_count', folder.count)) : null}
         titleAlignment="leading"
-        translucent={__IOS__}
+        ios:translucent={true}
         class="listAppBar"
         title={nbSelected > 0 ? lp('selected', nbSelected) : __IOS__ || isTrash ? title : folder?.name}
         on:searchChange={onSearchChange}

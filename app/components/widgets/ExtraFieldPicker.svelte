@@ -5,16 +5,12 @@
     import dayjs from 'dayjs';
     import { formatDate } from '~/helpers/locale';
     import SheetHeader from '~/components/common/SheetHeader.svelte';
-    import { focusState } from '~/utils/svelte/actions';
+    import type { SelectedIndexChangedEventData } from '@nativescript/core';
     import { ExtraFieldType } from '~/models/OCRDocument';
-    import { pickDate, showPopoverMenu } from '~/utils/ui';
-    import { colors } from '~/variables';
+    import { pickDate } from '~/utils/ui';
 </script>
 
 <script lang="ts">
-    let { colorOnSurfaceVariant, colorOutlineVariant } = $colors;
-    $: ({ colorOnSurfaceVariant, colorOutlineVariant } = $colors);
-
     export let editing = false;
     /** the form is shown inside another sheet instead of its own: called with the result (undefined when cancelled) */
     export let onClose: (result?: any) => void = undefined;
@@ -42,57 +38,19 @@
         }
     }
 
-    async function selectType(event) {
-        try {
-            // const OptionSelect = (await import('~/components/OptionSelect.svelte')).default;
-            const options = Object.keys(ExtraFieldType).map((k) => ({ name: lc(ExtraFieldType[k]), id: k }));
-            await showPopoverMenu({
-                options,
-                anchor: event.object,
-                onClose: (item) => {
-                    currentType = ExtraFieldType[item.id];
-                }
-            });
-        } catch (error) {
-            showError(error);
-        }
+    const types = Object.values(ExtraFieldType);
+    function onTypeChanged(event: SelectedIndexChangedEventData) {
+        currentType = types[event.newIndex];
     }
-    async function selecteTemplateName(event) {
-        try {
-            // const OptionSelect = (await import('~/components/OptionSelect.svelte')).default;
-            const options = [
-                {
-                    id: 'valid_from',
-                    name: lc('valid_from'),
-                    type: ExtraFieldType.Date
-                },
-                {
-                    id: 'expire_on',
-                    name: lc('expire_on'),
-                    type: ExtraFieldType.Date
-                },
-                {
-                    id: 'balance',
-                    name: lc('balance'),
-                    type: ExtraFieldType.Number
-                },
-                {
-                    id: 'notes',
-                    name: lc('notes'),
-                    type: ExtraFieldType.String
-                }
-            ];
-            await showPopoverMenu({
-                options,
-                anchor: event.object,
-                onClose: (item) => {
-                    currentName = item.name;
-                    currentType = item.type;
-                }
-            });
-        } catch (error) {
-            showError(error);
-        }
+    const nameTemplates = [
+        { id: 'valid_from', name: lc('valid_from'), type: ExtraFieldType.Date },
+        { id: 'expire_on', name: lc('expire_on'), type: ExtraFieldType.Date },
+        { id: 'balance', name: lc('balance'), type: ExtraFieldType.Number },
+        { id: 'notes', name: lc('notes'), type: ExtraFieldType.String }
+    ];
+    function selectTemplate(template: (typeof nameTemplates)[number]) {
+        currentName = template.name;
+        currentType = template.type;
     }
 
     function close() {
@@ -143,35 +101,32 @@
 <gesturerootview bind:this={rootView} rows="auto,auto" {...$$restProps}>
     <SheetHeader doneText={editing ? lc('edit') : lc('add')} onCancel={close} onDone={add} title={editing ? lc('edit_extra_field') : lc('add_extra_field')} />
     <stacklayout padding="0 16 16 16" row={1}>
-        <gridlayout columns="*,auto">
-            <textfield hint={lc('name')} margin={tMargin} text={currentName} use:focusState variant="outline" on:textChange={(e) => (currentName = e.value)} />
-            <uibutton
-                accessibilityLabel={lc('name')}
-                class="icon-btn"
-                col={1}
-                color={colorOnSurfaceVariant}
-                height={48}
-                text="mdi-menu-down"
-                variant="text"
-                verticalAlignment="center"
-                width={48}
-                on:tap={selecteTemplateName}
-            />
-        </gridlayout>
-        <textfield editable={false} hint={lc('type')} margin={tMargin} text={lc(currentType)} textTransform="uppercase" variant="outline" on:tap={(e) => selectType(e)} />
-        {#if currentType === ExtraFieldType.Date}
-            <!-- a date is picked, not typed: a tap field -->
-            <textfield editable={false} hint={lc('value')} margin={tMargin} text={formatDate(currentTime, 'LL')} variant="outline" on:tap={(e) => selectDate(e)} />
-        {:else}
-            <textview
-                hint={lc('value')}
-                keyboardType={getKeyboardType(currentType)}
-                margin={tMargin}
-                text={currentValue}
-                use:focusState
-                variant="outline"
-                on:textChange={(e) => (currentValue = e.value)}
-            />
-        {/if}
+        <textfield hint={lc('name')} margin={tMargin} text={currentName} variant="outline" on:textChange={(e) => (currentName = e.value)} />
+        <!-- usual names: a tap fills the name and the type -->
+        <scrollview marginBottom={8} orientation="horizontal">
+            <stacklayout orientation="horizontal">
+                {#each nameTemplates as template (template.id)}
+                    <uibutton height={32} marginRight={8} text={template.name} variant="flat" on:tap={() => selectTemplate(template)} />
+                {/each}
+            </stacklayout>
+        </scrollview>
+        <!-- the type is one of 3 values: a segmented control, not a drop down -->
+        <segmentedbar margin={tMargin} selectedIndex={types.indexOf(currentType)} on:selectedIndexChanged={onTypeChanged}>
+            {#each types as type (type)}
+                <segmentedbaritem title={lc(type)} />
+            {/each}
+        </segmentedbar>
+        <textview
+            editable={currentType !== ExtraFieldType.Date}
+            fontSize={17}
+            hint={lc('value')}
+            keyboardType={getKeyboardType(currentType)}
+            margin={tMargin}
+            minHeight={currentType === ExtraFieldType.Date ? 48 : 84}
+            text={currentType === ExtraFieldType.Date ? formatDate(currentTime, 'LL') : currentValue}
+            variant="outline"
+            on:textChange={(e) => (currentValue = e.value)}
+            on:tap={(e) => selectDate(e)}
+        />
     </stacklayout>
 </gesturerootview>

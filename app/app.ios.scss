@@ -112,8 +112,8 @@ textview[variant='outline'] {
     height: 56;
 }
 
-textfield[variant='outline']:focused,
-textview[variant='outline']:focused {
+textfield[variant='outline']:focus,
+textview[variant='outline']:focus {
     border-color: var(--colorPrimary);
     border-width: 1.5;
 }

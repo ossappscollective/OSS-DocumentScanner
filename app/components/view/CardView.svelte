@@ -1115,7 +1115,7 @@
 </script>
 
 <appPage bind:this={page} id="cardview" {...{ keepScreenAwake: hasQRCodes, screenBrightness: hasQRCodes ? 1 : -1 }}>
-    <appBar {bottomItems} {...(__ANDROID__ ? { backgroundColor: accent.container } : {})} color={colorOnBackground} iosIconRenderingMode="alwaysTemplate" scrollBehavior={__ANDROID__ ? 'hide' : 'lift'} scrollTargetId="cardScroll" size="small" translucent={__IOS__} title={nbSelected > 0 ? lcp('selected', nbSelected) : inEditMode ? lc('reorder_pages') : hasCustomName || __ANDROID__ ? '' : document.name}>
+    <appBar {bottomItems} android:backgroundColor={accent.container} android:scrollBehavior="hide" color={colorOnBackground} iosIconRenderingMode="alwaysTemplate" ios:translucent={true} scrollBehavior="lift" scrollTargetId="cardScroll" size="small" title={nbSelected > 0 ? lcp('selected', nbSelected) : inEditMode ? lc('reorder_pages') : hasCustomName || __ANDROID__ ? '' : document.name}>
         {#if __ANDROID__}
             <navigationButton {...{ 'android.systemIcon': nbSelected > 0 || inEditMode ? 'ic_menu_close_clear_cancel' : 'ic_menu_back' }} on:tap={nbSelected > 0 ? unselectAll : inEditMode ? switchEditMode : onGoBack} />
         {/if}

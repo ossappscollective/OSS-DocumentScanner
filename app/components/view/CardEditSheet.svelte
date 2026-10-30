@@ -10,7 +10,6 @@
     import { pickColor } from '~/utils/ui';
     import { colors } from '~/variables';
     import CardEditCodeRow from '~/components/view/CardEditCodeRow.svelte';
-    import { focusState } from '~/utils/svelte/actions';
 
     interface CodeRow {
         id: number;
@@ -168,7 +167,7 @@
     />
     <collectionview row={1} {itemTemplateSelector} items={listItems} visibility={fieldForm ? 'collapse' : 'visible'}>
         <Template key="name" let:item>
-            <textfield hint={lc('name')} margin="6 16" text={name} use:focusState variant="outline" on:textChange={(e) => (name = e.value)} />
+            <textfield hint={lc('name')} margin="6 16" text={name} variant="outline" on:textChange={(e) => (name = e.value)} />
         </Template>
 
         <Template key="color" let:item>
@@ -189,10 +188,10 @@
         <Template key="field" let:item>
             <gridlayout columns="*,auto" margin="6 16">
                 <gridlayout class="extraFieldRow" on:tap={() => editField(item.field)}>
-                    <stacklayout verticalAlignment="center">
-                        <label color={colorOnSurfaceVariant} fontSize={12} text={item.field.name} />
-                        <label color={colorOnSurface} fontSize={17} text={formatValue(item.field.extra) + ''} textWrap={true} />
-                    </stacklayout>
+                    <label textWrap={true} verticalAlignment="center">
+                        <span color={colorOnSurfaceVariant} fontSize={12} text={item.field.name} />
+                        <span color={colorOnSurface} fontSize={17} text={'\n' + formatValue(item.field.extra)} />
+                    </label>
                 </gridlayout>
                 <uibutton
                     accessibilityLabel={lc('delete')}
