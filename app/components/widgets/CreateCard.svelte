@@ -6,6 +6,7 @@
     import { getBarcodeInputRule, sanitizeBarcodeInput } from '~/utils/barcodeInput';
     import { pickColor, showPopoverMenu } from '~/utils/ui';
     import { colors } from '~/variables';
+    import FormTextField from '~/components/common/FormTextField.svelte';
     import SheetHeader from '../common/SheetHeader.svelte';
     import SvgView from '../common/SVGView.svelte';
 </script>
@@ -21,7 +22,6 @@
     let rootView;
     let svg: string;
     let validCode = true;
-    const tMargin = '4 0 4 0';
 
     function close() {
         rootView.nativeView.bindingContext.closeCallback();
@@ -93,28 +93,9 @@
 <gesturerootview bind:this={rootView} rows="auto,auto">
     <SheetHeader doneEnabled={name?.length > 0} doneText={lc('add')} onCancel={close} onDone={add} title={lc('create')} />
     <gridlayout columns="*,auto" padding="0 16 16 16" row={1} rows="auto,auto,auto,auto,auto,auto">
-        <textfield colSpan={2} hint={lc('name')} margin={tMargin} text={name} variant="outline" on:textChange={(e) => (name = e.value)} />
-        <textfield
-            colSpan={2}
-            hint={lc('barcode')}
-            keyboardType={getBarcodeInputRule(codeFormat).numeric ? 'number' : undefined}
-            margin={tMargin}
-            row={1}
-            text={code}
-            variant="outline"
-            on:textChange={onCodeTextChange}
-        />
-        <textfield
-            colSpan={2}
-            editable={false}
-            hint={lc('barcode_type')}
-            margin={tMargin}
-            row={2}
-            text={codeFormat}
-            textTransform="uppercase"
-            variant="outline"
-            on:tap={(e) => selectBarcodeFormat(e)}
-        />
+        <FormTextField colSpan={2} label={lc('name')} bind:text={name} />
+        <FormTextField colSpan={2} keyboardType={getBarcodeInputRule(codeFormat).numeric ? 'number' : undefined} label={lc('barcode')} row={1} text={code} onChange={onCodeTextChange} />
+        <FormTextField colSpan={2} editable={false} label={lc('barcode_type')} row={2} text={codeFormat} textTransform="uppercase" onTap={(e) => selectBarcodeFormat(e)} />
         <gridlayout class="formRow" colSpan={2} columns="*,auto" row={3} on:tap={changeColor}>
             <label color={colorOnBackground} fontSize={17} margin="0 4" text={lc('color')} verticalAlignment="center" />
             <absolutelayout backgroundColor={color} borderColor={colorOutline} borderRadius="50%" borderWidth={2} col={1} height={40} verticalAlignment="center" width={40} />

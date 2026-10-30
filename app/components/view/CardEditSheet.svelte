@@ -9,6 +9,7 @@
     import { appIcon } from '~/utils/appIcons';
     import { pickColor } from '~/utils/ui';
     import { colors } from '~/variables';
+    import FormTextField from '~/components/common/FormTextField.svelte';
     import CardEditCodeRow from '~/components/view/CardEditCodeRow.svelte';
 
     interface CodeRow {
@@ -167,7 +168,7 @@
     />
     <collectionview row={1} {itemTemplateSelector} items={listItems} visibility={fieldForm ? 'collapse' : 'visible'}>
         <Template key="name" let:item>
-            <textfield hint={lc('name')} margin="6 16" text={name} variant="outline" on:textChange={(e) => (name = e.value)} />
+            <FormTextField label={lc('name')} margin="0 16 8 16" bind:text={name} />
         </Template>
 
         <Template key="color" let:item>
@@ -186,20 +187,25 @@
         </Template>
 
         <Template key="field" let:item>
-            <gridlayout columns="*,auto" margin="6 16">
-                <gridlayout class="extraFieldRow" on:tap={() => editField(item.field)}>
-                    <label textWrap={true} verticalAlignment="center">
-                        <span color={colorOnSurfaceVariant} fontSize={12} text={item.field.name} />
-                        <span color={colorOnSurface} fontSize={17} text={'\n' + formatValue(item.field.extra)} />
-                    </label>
-                </gridlayout>
+            <gridlayout columns="*,auto" margin="0 16">
+                <FormTextField
+                    editable={false}
+                    label={item.field.name}
+                    minHeight={48}
+                    multiline={true}
+                    margin="0 0 8 0"
+                    text={formatValue(item.field.extra) + ''}
+                    onTap={() => editField(item.field)}
+                />
                 <uibutton
                     accessibilityLabel={lc('delete')}
                     col={1}
                     color={colorError}
                     height={44}
+                    marginTop={__IOS__ ? 18 : 6}
                     padding="0"
                     variant="text"
+                    verticalAlignment="top"
                     width={44}
                     {...{ src: appIcon('delete') }}
                     on:tap={() => removeField(item.field)}

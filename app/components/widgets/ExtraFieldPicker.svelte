@@ -4,8 +4,11 @@
     import { showError } from '@shared/utils/showError';
     import dayjs from 'dayjs';
     import { formatDate } from '~/helpers/locale';
+    import FormTextField from '~/components/common/FormTextField.svelte';
     import SheetHeader from '~/components/common/SheetHeader.svelte';
-    import type { SelectedIndexChangedEventData } from '@nativescript/core';
+    import type { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
+    import type { SegmentedBar, SelectedIndexChangedEventData } from '@nativescript/core';
+    import { onMount } from 'svelte';
     import { ExtraFieldType } from '~/models/OCRDocument';
     import { pickDate } from '~/utils/ui';
 </script>
@@ -49,6 +52,13 @@
         }
         currentType = newType;
     }
+    // iOS: the first selection is not drawn when it is set before the items exist (the property already has its value, the native control is not updated)
+    let typesBar: NativeViewElementNode<SegmentedBar>;
+    onMount(() => {
+        if (__IOS__) {
+            setTimeout(() => (typesBar.nativeView.ios.selectedSegmentIndex = types.indexOf(currentType)), 50);
+        }
+    });
     function onTypeChanged(event: SelectedIndexChangedEventData) {
         setType(types[event.newIndex]);
     }
@@ -111,7 +121,7 @@
 <gesturerootview bind:this={rootView} rows="auto,auto" {...$$restProps}>
     <SheetHeader doneText={editing ? lc('edit') : lc('add')} onCancel={close} onDone={add} title={editing ? lc('edit_extra_field') : lc('add_extra_field')} />
     <stacklayout padding="0 16 16 16" row={1}>
-        <textfield hint={lc('name')} margin={tMargin} text={currentName} variant="outline" on:textChange={(e) => (currentName = e.value)} />
+        <FormTextField label={lc('name')} bind:text={currentName} />
         <!-- usual names: a tap fills the name and the type -->
         <scrollview marginBottom={8} orientation="horizontal">
             <stacklayout orientation="horizontal">
@@ -121,22 +131,21 @@
             </stacklayout>
         </scrollview>
         <!-- the type is one of 3 values: a segmented control, not a drop down -->
-        <segmentedbar margin={tMargin} selectedIndex={types.indexOf(currentType)} on:selectedIndexChanged={onTypeChanged}>
+        <segmentedbar margin={tMargin} selectedIndex={types.indexOf(currentType)} bind:this={typesBar} on:selectedIndexChanged={onTypeChanged}>
             {#each types as type (type)}
                 <segmentedbaritem title={lc(type)} />
             {/each}
         </segmentedbar>
-        <textview
+        <FormTextField
             editable={currentType !== ExtraFieldType.Date}
             fontSize={17}
-            hint={lc('value')}
             keyboardType={getKeyboardType(currentType)}
-            margin={tMargin}
+            label={lc('value')}
             minHeight={currentType === ExtraFieldType.Date ? 48 : 84}
+            multiline={true}
             text={currentType === ExtraFieldType.Date ? formatDate(currentTime, 'LL') : currentValue}
-            variant="outline"
-            on:textChange={(e) => currentType !== ExtraFieldType.Date && (currentValue = e.value)}
-            on:tap={(e) => selectDate(e)}
+            onChange={(e) => currentType !== ExtraFieldType.Date && (currentValue = e.value)}
+            onTap={(e) => selectDate(e)}
         />
     </stacklayout>
 </gesturerootview>
