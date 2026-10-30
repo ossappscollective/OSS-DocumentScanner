@@ -77,7 +77,7 @@
                 accessibilityLabel={label}
                 android:height={56}
                 hint={label}
-                {...trailingIcon ? { paddingRight: 48 } : {}}
+                {...__IOS__ && trailingIcon ? { paddingRight: 48 } : {}}
                 {text}
                 variant="outline"
                 {...$$restProps}
