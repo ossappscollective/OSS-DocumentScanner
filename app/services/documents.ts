@@ -501,6 +501,10 @@ export class PageRepository extends BaseRepository<OCRPage, Page> {
         );`
             ])
         );
+    }
+
+    // after the migrations: an existing table may still miss the indexed columns before them
+    async createIndexes() {
         await this.database.query(sql`CREATE INDEX IF NOT EXISTS idx_page_nameSearch ON Page(nameSearch)`);
         await this.database.query(sql`CREATE INDEX IF NOT EXISTS idx_page_ocrDataSearch ON Page(ocrDataSearch)`);
     }
@@ -629,7 +633,6 @@ export class DocumentRepository extends BaseRepository<OCRDocument, Document> {
                 nameSearch TEXT
                 );
         `),
-            this.database.query(sql`CREATE INDEX IF NOT EXISTS idx_doc_nameSearch ON Document(nameSearch);`),
             this.database.query(sql`
         CREATE TABLE IF NOT EXISTS "DocumentsTags" (
             document_id TEXT,
@@ -649,6 +652,10 @@ export class DocumentRepository extends BaseRepository<OCRDocument, Document> {
         );
     `)
         ]);
+    }
+
+    async createIndexes() {
+        await this.database.query(sql`CREATE INDEX IF NOT EXISTS idx_doc_nameSearch ON Document(nameSearch)`);
     }
 
     migrations = {
@@ -1044,6 +1051,8 @@ export class DocumentsService extends Observable {
                 } else {
                     await markMigrationsApplied(this.db, migrations);
                 }
+                await this.documentRepository.createIndexes();
+                await this.pageRepository.createIndexes();
             } catch (error) {
                 console.error('error applying migrations', error, error.stack);
             }
