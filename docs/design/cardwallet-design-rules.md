@@ -211,7 +211,6 @@ iOS uses Dynamic Type; Android scales with font scale. Layouts must survive 200%
 | `clear` | `xmark.circle.fill` | `close-circle` | Clear button in fields |
 | `chevron_down` | `chevron.down` | `chevron-down` | Select fields |
 | `error` | `exclamationmark.circle` | `alert-circle-outline` | Field and form errors |
-| `new_folder` | `folder.badge.plus` | `folder-plus-outline` | New folder row |
 
 
 ## 14. Menus
@@ -226,13 +225,14 @@ iOS uses Dynamic Type; Android scales with font scale. Layouts must survive 200%
 - **Keyboard:** a focused field stays at least 16 above the keyboard. iOS sheets expand to the large detent when the keyboard opens; Android sheets use adjustResize and scroll.
 - **iOS alert (UIAlertController):** the system alert, which is glass on iOS 26. Title, optional message, optional native text field. Cancel on the left, regular weight; the default action on the right, bold; a destructive action in the system red. For a text prompt the field is focused when the alert appears and the keyboard opens; Return runs the default action. Do not build a custom alert.
 - **Android dialog (M3):** width min(312, screen - 48), radius 28, container surfaceContainerHigh, 24 padding. Title 24 sp, message 14 sp secondary, notched outlined field full width and focused on open (the dialog moves above the keyboard), actions right-aligned text buttons: Cancel, then the primary action; a destructive action uses the error color.
-- **Which to use:** short confirmation or one name prompt (Rename, New folder) is an alert or dialog. **Move to folder** is a sheet with a list of folders (grouped rows, current folder checked, a search field when there are more than 8 folders) and a New folder row at the end; it is not an alert. When browsing inside a folder the first row is Remove from folder, otherwise there is no way back to the root.
+- **Which to use:** short confirmation or one name prompt (Rename, New folder) is an alert or dialog. **Move to folder** is a bottom sheet: header (Cancel, title, Move), a focused text field for the folder name (iOS capsule, Android notched outlined), and the existing folders as wrapped outline chips under it (32 tall, the outline button variant with its default outline, no fill, 8 gap, pill), filtered while the user types; tapping a chip moves the card there. An empty name removes the card from its folder. No search field and no remove-from-folder row. It is not an alert. (Owner decision from the PR 781 review.)
 
 ## 16. Remaining components
 
+- **iOS text field rhythm (decided):** caption row 14 + 2, capsule 48, 8 between fields, so the pitch is 72. The caption shows the label only when the field has a value; the hint inside the empty capsule is the label text. The caption row is always reserved, so heights never change on focus or typing. Helper and error text go in an optional 16 row below; reserve it only in forms that validate. The gap between fields must stay larger than the 2 between a caption and its capsule, so a caption never reads as belonging to the field above.
 - **Settings rows:** iOS inset grouped, row 52 tall (min 44), leading icon in a 30 circle (accent 16% fill, icon 17 in accent) when the row has an icon, title 17, trailing value in secondary, switch or chevron; section header Footnote uppercase secondary, footer Footnote. Android: segmented groups (28 outer, 6 inner, 2 gap), row 64 tall (72 with supporting text), leading icon 24 in a 40 circle (accentContainer), title Body Large, supporting text Body Medium secondary, trailing switch or value; section header Label Large in the accent.
 - **Switch, checkbox, radio in lists:** the switch is trailing; a checkbox is a leading 24 circle (both platforms); a radio is trailing on iOS rows with a check instead (single choice uses a trailing check on iOS, a leading radio on Android settings rows).
-- **Pickers:** color picker is a grid of 40 round swatches, 6 per row, selected has a 2 ring and a check, a custom color at the end. Date and time use the system pickers (iOS compact or graphical in a sheet; Android M3 modal pickers). Folder picker is the sheet in section 15.
+- **Pickers:** color picker is a grid of 40 round swatches, 6 per row, selected has a 2 ring and a check, a custom color at the end. Date and time use the system pickers (iOS compact or graphical in a sheet; Android M3 modal pickers). Move to folder is the sheet in section 15.
 - **Empty states, loading, errors:** an icon in a glass circle (iOS) or a shape (Android), a title (Title 2 / Title Large), one line of help, one prominent action. Errors use the Error state in section 10 plus a Retry action.
 - **Toolbars:** iOS system toolbar (glass), Android floating toolbar with the edit FAB (card view) or the contextual bar (selection).
 - **Haptics (iOS):** selection on page and picker changes, light success on copy, warning on destructive confirmation. Android uses the system haptic feedback on long press and selection.
@@ -267,7 +267,7 @@ Most rules are shared. The scanner feels more like a document app:
 | 12 Snackbars and progress | Specified, not implemented |
 | 13 Icons | Specified; folder and new ids to add |
 | 14 Menu origin | Specified; may need a plugin fix |
-| 15 Safe areas and dialogs | Specified |
+| 15 Safe areas and dialogs | Specified; Move to folder changed to name field plus folder chips (PR 781 review) |
 | 16 Remaining components | Specified |
 | 17 Document Scanner | Proposal |
 
@@ -275,6 +275,6 @@ Most rules are shared. The scanner feels more like a document app:
 
 - **Row marker slide:** 150 ms cubic-bezier(0.2, 0.9, 0.3, 1.15), not a spring, because the NativeScript spring curve crashes iOS with translate. Marker border is 2, not 1.5, because a fractional border is not drawn reliably on Android.
 - **Scan FAB:** an ExtendedFloatingActionButton using the Material collapse and extend animation; this needs an unpublished ui-floatingactionbutton fix.
-- **Move to folder:** new strings `new_folder` and `remove_from_folder`.
+- **Move to folder:** replaced by the sheet in section 15 (name field plus folder chips), decided in the PR 781 review; the earlier remove_from_folder row and its string are gone.
 - **Android menu origin:** fixed in ui-menu with a style per corner; the plugin change is not published.
 - **Open:** the Document Scanner list is still its own canvas list (section 17 is a proposal). The delete confirmation dialog (destructive text action in the error color, section 15) is not built yet.
