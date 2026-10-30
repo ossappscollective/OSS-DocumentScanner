@@ -106,7 +106,7 @@
         <scrollview marginBottom={8} orientation="horizontal">
             <stacklayout orientation="horizontal">
                 {#each nameTemplates as template (template.id)}
-                    <uibutton height={32} marginRight={8} text={template.name} variant="flat" on:tap={() => selectTemplate(template)} />
+                    <uibutton height={32} marginRight={8} text={template.name} variant="outline" on:tap={() => selectTemplate(template)} />
                 {/each}
             </stacklayout>
         </scrollview>
