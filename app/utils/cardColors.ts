@@ -98,6 +98,11 @@ function getReadableText(background: Color) {
 /**
  * The look of a tile with no photo: the card color itself with the text color of best contrast
  */
+/** a quiet wash of the tile text color: a chip which fades into its card */
+export function getChipWash(textColor: string, alpha = 56) {
+    return new Color(textColor).setAlpha(alpha).hex;
+}
+
 export function getTileColors(color: string | null | undefined, fallback: string): TileColors {
     const base = toColor(color) ?? toColor(fallback) ?? new Color('#006a65');
     return { fill: toHex(base), text: getReadableText(base) };

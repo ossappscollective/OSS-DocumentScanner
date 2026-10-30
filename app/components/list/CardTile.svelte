@@ -7,6 +7,7 @@
     import { isEInk } from '~/helpers/theme';
     import { getCardDisplay } from '~/utils/cardCell';
     import { getTileColors } from '~/utils/cardColors';
+    import { CARDHOLDER_GAP } from '~/utils/constants';
     import { colors } from '~/variables';
     const tileRadius = __IOS__ ? 18 : 20;
 </script>
@@ -18,6 +19,7 @@
     export let syncEnabled: boolean;
     export let layout: string;
     export let syncColors: string[];
+    export let stripHeight: number = undefined;
 
     let { colorBackground, colorPrimary } = $colors;
     $: ({ colorBackground, colorPrimary } = $colors);
@@ -38,8 +40,9 @@
                 Object.assign(result, {
                     // @akylas/nativescript (background.ios) applies the alpha of the color twice on iOS (shadowOpacity and shadowColor):
                     // 0x72 renders the 20% of the design. Use 0x33 again once it is fixed there
-                    boxShadow: isEInk ? 0 : `0 -3 10 ${__IOS__ ? '#00000072' : '#00000033'}`,
-                    margin: 16 / nbColumns
+                    boxShadow: isEInk ? 0 : layout === 'cardholder' ? `0 -2 5 ${__IOS__ ? '#0000008C' : '#0000004D'}` : `0 -3 10 ${__IOS__ ? '#00000072' : '#00000033'}`,
+                    ...(layout === 'cardholder' ? { marginTop: CARDHOLDER_GAP, marginLeft: 16 / nbColumns, marginRight: 16 / nbColumns } : { margin: 16 / nbColumns }),
+                    ...(isEInk ? {} : { borderWidth: 1, borderColor: '#FFFFFF47' })
                 });
                 break;
             case 'columns':
@@ -57,6 +60,10 @@
 <gridlayout {height} width="100%" {...$$restProps}>
     <gridlayout id="cardItemTemplate" class="cardItemTemplate" prop:mainContent {...getItemHolderParams(layout, $nbColumns, tile.fill, item.selected)} on:tap on:longPress>
         <slot />
+        {#if layout === 'cardholder' && !isEInk}
+            <!-- the card goes into its slot: the bottom of the strip gets darker -->
+            <stacklayout backgroundImage="linear-gradient(to bottom, #00000000, #00000033)" height={12} isUserInteractionEnabled={false} marginTop={stripHeight - 12} verticalAlignment="top" />
+        {/if}
         <SelectedIndicator selected={item.selected} />
         <SyncIndicator {syncColors} verticalAlignment="top" visible={syncEnabled} />
     </gridlayout>

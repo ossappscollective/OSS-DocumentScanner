@@ -21,8 +21,8 @@
 </script>
 
 {#if stacked}
-    <!-- only the strip above the next card is seen: the title on top (it shrinks to fit), the chips at the bottom -->
-    <gridlayout height={stripHeight} rows="*,auto" verticalAlignment="top">
+    <!-- only the strip above the next card is seen: the title (it shrinks to fit) with the chips at its right -->
+    <gridlayout height={stripHeight} columns="*,auto" verticalAlignment="top">
         <label
             autoFontSize={true}
             color={tile.text}
@@ -30,7 +30,7 @@
             fontWeight="bold"
             horizontalAlignment="left"
             lineBreak="end"
-            margin="10 16 4 16"
+            margin="8 8 0 16"
             marginLeft={item.selected ? 44 : 16}
             maxFontSize={28}
             maxLines={2}
@@ -39,20 +39,27 @@
             textAlignment="left"
             verticalAlignment="top"
         />
-        <gridlayout columns="auto,*,auto" margin="0 8 8 8" row={1}>
-            <CardStatusChips extra={item.doc.extra} />
-            <stacklayout col={2} orientation="horizontal">
-                <CardIcon color={tile.text} marginRight={6} opacity={0.75} size={18} src={appIcon('qrcode')} verticalAlignment="middle" visibility={hasCode ? 'visible' : 'collapsed'} />
-                <CardChip icon={appIcon('favorite_on')} verticalAlignment="middle" visibility={item.doc.favorite === 1 ? 'visible' : 'collapsed'} />
+        <stacklayout col={1} margin="14 10 0 0" verticalAlignment="top">
+            <CardStatusChips extra={item.doc.extra} horizontalAlignment="right" tint={tile.text} />
+            <stacklayout horizontalAlignment="right" marginTop={hasStatus ? 6 : 0} orientation="horizontal">
+                <CardIcon
+                    color={tile.text}
+                    marginRight={hasCode ? 6 : 0}
+                    opacity={0.75}
+                    size={18}
+                    src={appIcon('favorite_on')}
+                    visibility={item.doc.favorite === 1 ? 'visible' : 'collapsed'}
+                />
+                <CardIcon color={tile.text} opacity={0.75} size={18} src={appIcon('qrcode')} visibility={hasCode ? 'visible' : 'collapsed'} />
             </stacklayout>
-        </gridlayout>
+        </stacklayout>
     </gridlayout>
 {:else}
     <!-- the chips have their own row above the title: they never cover it -->
     <gridlayout rows="auto,*">
         <stacklayout horizontalAlignment="right" margin="8 8 0 8" orientation="horizontal" verticalAlignment="top" visibility={hasTopChips ? 'visible' : 'collapsed'}>
             <CardStatusChips extra={item.doc.extra} />
-            <CardChip icon={appIcon('favorite_on')} verticalAlignment="middle" visibility={item.doc.favorite === 1 ? 'visible' : 'collapsed'} />
+            <CardChip icon={appIcon('favorite_on')} marginLeft={hasStatus ? 6 : 0} verticalAlignment="middle" visibility={item.doc.favorite === 1 ? 'visible' : 'collapsed'} />
         </stacklayout>
         <label
             autoFontSize={true}

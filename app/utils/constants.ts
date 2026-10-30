@@ -59,6 +59,7 @@ export const PDF_EXT = '.pdf';
 export const PKPASS_EXT = '.pkpass';
 export const ESPASS_EXT = '.espass';
 export const CARD_RATIO = 0.629;
+export const CARDHOLDER_GAP = 8;
 export const IMAGE_DECODE_HEIGHT = Math.max(Screen.mainScreen.widthPixels, Screen.mainScreen.heightPixels);
 
 export const BOTTOM_BUTTON_OFFSET = __ANDROID__ && SDK_VERSION < 30 ? 130 : 120;
