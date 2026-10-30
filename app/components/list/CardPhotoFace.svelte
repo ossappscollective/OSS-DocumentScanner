@@ -24,6 +24,8 @@
     $: ({ hasCode, autoName, label, page } = getCardDisplay(item));
     // the color of the image, as on the tile behind it: the icons take the readable color over it
     $: iconColor = getTileColors(page.extra?.color ?? page.colors?.[1], colorBackground).text;
+    // the icons share the bottom row of a columns tile with the title chip
+    $: iconsWidth = (hasCode ? 18 : 0) + (item.doc.favorite === 1 ? 18 : 0) + (hasCode && item.doc.favorite === 1 ? 6 : 0) + (hasCode || item.doc.favorite === 1 ? 12 : 0);
     $: showLabel = !autoName || alwaysShowNames;
 </script>
 
@@ -45,13 +47,14 @@
         horizontalAlignment="left"
         margin={8}
         marginLeft={stacked && item.selected ? 40 : 8}
+        marginRight={stacked ? 8 : iconsWidth + 8}
         row={stacked ? 0 : 1}
         text={label}
         verticalAlignment={stacked ? 'top' : 'bottom'}
         visibility={showLabel ? 'visible' : 'collapsed'}
     />
     <CardStatusChips col={1} extra={item.doc.extra} margin={8} row={stacked ? 1 : 0} verticalAlignment={stacked ? 'bottom' : 'top'} />
-    <stacklayout col={2} margin="8 12 6 0" orientation="horizontal" row={stacked ? 1 : 0} verticalAlignment={stacked ? 'bottom' : 'top'}>
+    <stacklayout col={2} margin="8 12 6 0" orientation="horizontal" row={1} verticalAlignment="bottom">
         <CardIcon color={iconColor} marginRight={hasCode ? 6 : 0} size={18} src={appIcon('favorite_on')} visibility={item.doc.favorite === 1 ? 'visible' : 'collapsed'} />
         <CardIcon color={iconColor} size={18} src={appIcon('qrcode')} visibility={hasCode ? 'visible' : 'collapsed'} />
     </stacklayout>
