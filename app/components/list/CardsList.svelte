@@ -5,8 +5,9 @@
     import { Paint } from '@nativescript-community/ui-canvas';
     import { CollectionViewWithSwipeMenu } from '@nativescript-community/ui-collectionview-swipemenu';
     import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
-    import { ApplicationSettings, ObservableArray, StackLayout } from '@nativescript/core';
+    import { ApplicationSettings, ObservableArray, StackLayout, View } from '@nativescript/core';
     import { throttle } from '@nativescript/core/utils';
+    import { showMenu } from '@nativescript-community/ui-menu';
     import { prefs } from '@shared/services/preferences';
     import { showError } from '@shared/utils/showError';
     import { onMount } from 'svelte';
@@ -129,54 +130,18 @@
         }
     }
 
-    async function onAddButton() {
-        DEV_LOG && console.log('onAddButton');
+    // Android: the small add button opens a menu next to it
+    async function onAddButton(event: { object: View }) {
         try {
-            const OptionSelect = (await import('@shared/components/OptionSelect.svelte')).default;
-            const rowHeight = 58;
-            const options = [
-                {
-                    id: 'import',
-                    name: lc('import_from_file'),
-                    icon: 'mdi-file-document-plus-outline'
-                },
-                {
-                    id: 'import_image',
-                    name: lc('import_from_image'),
-                    icon: 'mdi-image-plus-outline'
-                },
-                {
-                    id: 'create',
-                    name: lc('create'),
-                    icon: 'mdi-plus'
-                }
-            ];
-            const height = Math.min(rowHeight * options.length, 400) + $windowInset.bottom;
-            const option = await showBottomSheet({
-                parent: this,
-                view: OptionSelect,
-                ignoreTopSafeArea: true,
-                peekHeight: height,
-                props: {
-                    rowHeight,
-                    height,
-                    options
-                }
+            await showMenu({
+                anchor: event.object,
+                placement: { horizontal: 'end', vertical: 'above' },
+                items: [
+                    { title: lc('import_from_file'), icon: appIcon('import_file'), onSelect: () => importDocument() },
+                    { title: lc('import_from_image'), icon: appIcon('import_image'), onSelect: () => importImages() },
+                    { title: lc('create'), icon: appIcon('add'), onSelect: () => createCard() }
+                ]
             });
-            DEV_LOG && console.log('on add option', option);
-            if (option) {
-                switch (option.id) {
-                    case 'import':
-                        await importDocument();
-                        break;
-                    case 'import_image':
-                        await importImages();
-                        break;
-                    case 'create':
-                        await createCard();
-                        break;
-                }
-            }
         } catch (error) {
             showError(error);
         }
@@ -452,7 +417,7 @@
     </Template>
 
     <stacklayout bind:this={fabHolder} slot="fab" class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)}>
-        <uibutton class="addFab" {...{ src: appIcon('add') }} variant="contained" verticalAlignment="center" on:tap={throttle(() => onAddButton(), 500)} />
+        <uibutton class="addFab" {...{ src: appIcon('add') }} variant="contained" verticalAlignment="center" on:tap={throttle((event) => onAddButton(event), 500)} />
         {#if $hasCamera}
             <uifloatingactionbutton
                 class="scanFab"

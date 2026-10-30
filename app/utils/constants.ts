@@ -177,3 +177,5 @@ export const VALID_MARKER_FILENAME = '.valid';
 
 // SOFT_INPUT_ADJUST_RESIZE: a sheet with fields moves up with the keyboard
 export const SHEET_SOFT_INPUT_MODE = __ANDROID__ ? 16 : undefined;
+// adjustPan: the sheet moves up only when the keyboard covers the focused field, it is not resized
+export const SHEET_PAN_SOFT_INPUT_MODE = __ANDROID__ ? 32 : undefined;

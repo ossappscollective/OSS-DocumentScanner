@@ -92,6 +92,7 @@ textfield[variant='outline'],
 textview[variant='outline'] {
     background-color: #7878801f;
     border-radius: 24;
+    font-size: 17;
     padding: 0 16;
 
     .ns-dark &,
@@ -116,17 +117,4 @@ textfield[variant='outline']:focus,
 textview[variant='outline']:focus {
     border-color: var(--colorPrimary);
     border-width: 1.5;
-}
-
-// a field with a caption (the name) which is edited in its own sheet: the look of the capsule text fields
-.extraFieldRow {
-    background-color: #7878801f;
-    border-radius: 24;
-    min-height: 56;
-    padding: 6 16;
-
-    .ns-dark &,
-    .ns-black & {
-        background-color: #7878803d;
-    }
 }

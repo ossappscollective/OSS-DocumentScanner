@@ -12,7 +12,7 @@ if (!svgFolder || !existsSync(svgFolder)) {
 }
 
 const source = readFileSync(join(root, 'app/utils/appIcons.ts'), 'utf8');
-const androidIcons = source.slice(source.indexOf('    : {'));
+const androidIcons = source.slice(source.indexOf('const ANDROID_ICONS'), source.indexOf('} satisfies'));
 const names = [...new Set([...androidIcons.matchAll(/: '([a-z0-9-]+)'/g)].map((match) => match[1]))];
 const folders = ['documentscanner', 'cardwallet'].map((flavor) => join(root, 'App_Resources', flavor, 'Android/src/main/res/drawable'));
 

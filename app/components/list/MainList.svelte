@@ -600,6 +600,10 @@
 
     onMount(() => {
         mounted = true;
+        // load while the page transition runs: the cards are there when it ends
+        if (documentsService.started) {
+            refresh(false);
+        }
         if (__IOS__) {
             Application.on(windowCommandEvent, onWindowCommand);
         }
@@ -685,7 +689,8 @@
         DEV_LOG && console.log('onNavigatedTo', e.isBackNavigation, sortOrder);
         if (!e.isBackNavigation) {
             if (documentsService.started) {
-                refresh();
+                // already loaded while the page was opening
+                refresh(false);
             } else {
                 documentsService.once('started', refreshSimple);
             }
@@ -1527,7 +1532,7 @@
         size={folder && __IOS__ ? 'large' : 'small'}
         subtitle={folder && nbSelected === 0 ? (__IOS__ ? folder.name : lcp('documents_count', folder.count)) : null}
         titleAlignment="leading"
-        translucent={__IOS__}
+        ios:translucent={true}
         class="listAppBar"
         title={nbSelected > 0 ? lp('selected', nbSelected) : __IOS__ || isTrash ? title : folder?.name}
         on:searchChange={onSearchChange}

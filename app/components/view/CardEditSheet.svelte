@@ -2,15 +2,14 @@
     import { lc } from '@nativescript-community/l';
     import { Template } from '@nativescript-community/svelte-native/components';
     import SheetHeader from '~/components/common/SheetHeader.svelte';
-    import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { showError } from '@shared/utils/showError';
     import dayjs from 'dayjs';
     import { ExtraFieldType, OCRDocument } from '~/models/OCRDocument';
     import { shortcutService } from '~/services/shortcuts';
     import { appIcon } from '~/utils/appIcons';
-    import { SHEET_SOFT_INPUT_MODE } from '~/utils/constants';
     import { pickColor } from '~/utils/ui';
     import { colors } from '~/variables';
+    import FormTextField from '~/components/common/FormTextField.svelte';
     import CardEditCodeRow from '~/components/view/CardEditCodeRow.svelte';
 
     interface CodeRow {
@@ -60,6 +59,8 @@
             ...(visibleCodes.length ? [{ type: 'sectionheader', title: lc('barcode').toUpperCase() }, ...visibleCodes.map((code) => ({ type: 'code', code }))] : []),
             { type: 'sectionheader', title: lc('extra_fields').toUpperCase() },
             ...visibleFields.map((field) => ({ type: 'field', field })),
+            // without any field the button of the header is far from the title of this section
+            ...(visibleFields.length ? [] : [{ type: 'addfield' }]),
             { type: 'spacer' }
         ];
     }
@@ -88,30 +89,30 @@
     function formatValue(extra) {
         return extra?.type === ExtraFieldType.Date ? dayjs(extra.value).format(extra.format || 'LL') : (extra?.value ?? '');
     }
+    // the form of a field replaces the content of this sheet: no second sheet over it
+    let fieldForm: { field?: FieldRow; ExtraFieldPicker: any } = null;
     async function editField(field?: FieldRow) {
         try {
             const ExtraFieldPicker = (await import('~/components/widgets/ExtraFieldPicker.svelte')).default;
-            const result = await showBottomSheet({
-                parent: rootView,
-                skipCollapsedState: true,
-                view: ExtraFieldPicker,
-                windowSoftInputMode: SHEET_SOFT_INPUT_MODE,
-                props: { editing: !!field, name: field?.name, ...(field?.extra || {}) }
-            });
-            if (!result) {
-                return;
-            }
-            const { name: fieldName, ...others } = result;
-            if (field) {
-                field.name = fieldName;
-                field.extra = others;
-            } else {
-                fields.push({ key: null, name: fieldName, extra: others, removed: false });
-            }
-            rebuild();
+            fieldForm = { field, ExtraFieldPicker };
         } catch (error) {
             showError(error);
         }
+    }
+    function onFieldFormClose(result?: any) {
+        const field = fieldForm?.field;
+        fieldForm = null;
+        if (!result) {
+            return;
+        }
+        const { name: fieldName, ...others } = result;
+        if (field) {
+            field.name = fieldName;
+            field.extra = others;
+        } else {
+            fields.push({ key: null, name: fieldName, extra: others, removed: false });
+        }
+        rebuild();
     }
     function removeField(field: FieldRow) {
         field.removed = true;
@@ -154,10 +155,22 @@
 </script>
 
 <gesturerootview bind:this={rootView} rows="auto,*">
-    <SheetHeader actionIcon={appIcon('add')} actionLabel={lc('add_extra_field')} doneText={lc('save')} onAction={() => editField()} onCancel={() => close(false)} onDone={save} title={lc('edit')} />
-    <collectionview row={1} {itemTemplateSelector} items={listItems}>
+    {#if fieldForm}
+        <svelte:component this={fieldForm.ExtraFieldPicker} editing={!!fieldForm.field} name={fieldForm.field?.name} onClose={onFieldFormClose} rowSpan={2} {...fieldForm.field?.extra || {}} />
+    {/if}
+    <SheetHeader
+        visibility={fieldForm ? 'collapse' : 'visible'}
+        actionIcon={appIcon('add')}
+        actionLabel={lc('add_extra_field')}
+        doneText={lc('save')}
+        onAction={() => editField()}
+        onCancel={() => close(false)}
+        onDone={save}
+        title={lc('edit')}
+    />
+    <collectionview row={1} {itemTemplateSelector} items={listItems} visibility={fieldForm ? 'collapse' : 'visible'}>
         <Template key="name" let:item>
-            <textfield hint={lc('name')} margin="6 16" text={name} variant="outline" on:textChange={(e) => (name = e.value)} />
+            <FormTextField label={lc('name')} margin="0 16 8 16" bind:text={name} />
         </Template>
 
         <Template key="color" let:item>
@@ -176,25 +189,34 @@
         </Template>
 
         <Template key="field" let:item>
-            <gridlayout columns="*,auto" margin="6 16">
-                <gridlayout class="extraFieldRow" on:tap={() => editField(item.field)}>
-                    <stacklayout verticalAlignment="center">
-                        <label color={colorOnSurfaceVariant} fontSize={12} text={item.field.name} />
-                        <label color={colorOnSurface} fontSize={17} text={formatValue(item.field.extra) + ''} textWrap={true} />
-                    </stacklayout>
-                </gridlayout>
+            <gridlayout columns="*,auto" margin="0 16">
+                <FormTextField
+                    editable={false}
+                    label={item.field.name}
+                    minHeight={48}
+                    multiline={true}
+                    margin="0 0 8 0"
+                    text={formatValue(item.field.extra) + ''}
+                    onTap={() => editField(item.field)}
+                />
                 <uibutton
                     accessibilityLabel={lc('delete')}
                     col={1}
                     color={colorError}
                     height={44}
+                    marginTop={__IOS__ ? 18 : 6}
                     padding="0"
                     variant="text"
+                    verticalAlignment="top"
                     width={44}
                     {...{ src: appIcon('delete') }}
                     on:tap={() => removeField(item.field)}
                 />
             </gridlayout>
+        </Template>
+
+        <Template key="addfield" let:item>
+            <uibutton height={44} margin="4 16 8 16" text={lc('add_extra_field')} variant="outline" on:tap={() => editField()} />
         </Template>
 
         <Template key="spacer" let:item>
