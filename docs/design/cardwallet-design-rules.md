@@ -5,7 +5,8 @@ Exact values for every component and state, so implementers do not need to ask. 
 ## 0. Units and how to read the mockups
 
 - Sizes are device points (iOS) and dp (Android), for a 393 pt (iOS) or 412 dp (Android) wide screen, unless a number is marked "mockup".
-- The HTML mockups draw a 300 wide frame and show it scaled down, so their text, rows and chips look larger relative to the frame than they are on a device. Never copy mockup pixels for text, icons, chips, buttons, rows or fields: use the device values in this file.
+- The HTML mockups draw a 300 wide frame, about 24% narrower than a 393 pt phone, so anything drawn at a standard size (text, rows, chips, buttons) looks about 30% larger relative to the screen than the same number does on a device. That is why the first implementation looked smaller than the mockup. Use the values in this file.
+- **Open question:** scale the mockup-derived sizes (list rows, thumbnails, tile chips, folder tiles, tile titles) by 1.31 to match the mockup's proportions, or keep the platform-standard values below. Until decided, the values below stand.
 - Proportional sizes derive from the screen: a pager page is the screen width minus 48 (16 margin, 8 gap, 24 peek); a grid tile is (screen width minus 32 minus 12) divided by 2, at ratio 1.58.
 - The mockups use Tabler icons as stand-ins. The real icons are in section 13.
 
@@ -58,7 +59,7 @@ Exact values for every component and state, so implementers do not need to ask. 
 - **No photo (name only, name and code):** the title is inside the tile on the card color fill, in the contrast color (white on dark colors, black on light ones).
   - Grid and columns: centered, bold, up to 2 lines, auto-fit between 14 and 22.
   - Stacked styles (cardholder, full): top-left, 20 bold, one line.
-  - A code glyph (qr or barcode, 18, 75% opacity) sits bottom-right inside the tile.
+  - A code glyph (qr or barcode, 18, 75% opacity) sits bottom-right inside the tile; in the stacked styles, where the bottom is covered, it is a segment of the info pill instead.
   - List thumbnail: the title centered, 11 bold, up to 2 lines.
 - The title is never drawn as bare text over a photo.
 
@@ -90,7 +91,7 @@ The darker band at the bottom of some photo tiles in the mockups is a drawn hori
 - **Subtitle:** 14 secondary. Photo count when there are photos ("2 photos"), followed by a 16 code icon when the card has a code (qr or barcode glyph). **Never the word "code".** Name and code cards without photos show the code glyph alone as the subtitle; name-only cards have no subtitle and the title centers vertically.
 - **No-photo thumbnail:** the color tile with the title inside (section 4), not a bare color.
 - **Trailing:** favorite star (16, accent) when favorite. Chevron on iOS only, hidden in selection. Android rows have no chevron.
-- This is bigger than the mockup looks on a device: the earlier mockup values (66 row, 88 x 56 thumbnail, 15 title) were mockup pixels, not device values.
+- Relative to the screen these are smaller than the mockup (66 row, 88 x 56 thumbnail, 15 title in a 300 wide frame); see the open question in section 0.
 
 ## 9. Typography scale
 
