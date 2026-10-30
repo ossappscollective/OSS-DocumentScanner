@@ -19,11 +19,12 @@
 
 <gridlayout columns="auto,*,auto,auto" padding="12 16 8 16" {...$$restProps}>
     <!-- iOS: a glass Cancel pill and a prominent action. Android: a close icon and a text action -->
-    <uibutton accessibilityLabel={lc('cancel')} {...{ 'android:src': appIcon('close') }} android:variant="text" ios:text={lc('cancel')} ios:variant="glass" on:tap={onCancel} />
+    <uibutton accessibilityLabel={lc('cancel')} {...{ 'android:src': appIcon('close') }} android:fontSize={28} android:variant="text" ios:text={lc('cancel')} ios:variant="glass" on:tap={onCancel} />
     <label class="sheetHeaderTitle" col={1} color={colorOnSurface} text={title} verticalAlignment="center" />
     <uibutton
         accessibilityLabel={actionLabel}
         col={2}
+        android:fontSize={28}
         marginRight={4}
         android:variant="text"
         ios:variant="glass"

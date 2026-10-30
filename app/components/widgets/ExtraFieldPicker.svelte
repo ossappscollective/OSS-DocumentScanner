@@ -7,7 +7,9 @@
     import FormTextField from '~/components/common/FormTextField.svelte';
     import SheetHeader from '~/components/common/SheetHeader.svelte';
     import type { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-    import type { SegmentedBar, SelectedIndexChangedEventData } from '@nativescript/core';
+    import { showMenu } from '@nativescript-community/ui-menu';
+    import type { SegmentedBar, SelectedIndexChangedEventData, View } from '@nativescript/core';
+    import { appIcon } from '~/utils/appIcons';
     import { onMount } from 'svelte';
     import { ExtraFieldType } from '~/models/OCRDocument';
     import { pickDate } from '~/utils/ui';
@@ -52,13 +54,20 @@
         }
         currentType = newType;
     }
-    // iOS: the first selection is not drawn when it is set before the items exist (the property already has its value, the native control is not updated)
+    // the first selection is not drawn when it is set before the items exist (the property already has its value, the native control is not updated)
     let typesBar: NativeViewElementNode<SegmentedBar>;
-    onMount(() => {
-        if (__IOS__) {
-            setTimeout(() => (typesBar.nativeView.ios.selectedSegmentIndex = types.indexOf(currentType)), 50);
-        }
-    });
+    onMount(() =>
+        setTimeout(() => {
+            const index = types.indexOf(currentType);
+            if (__IOS__) {
+                typesBar.nativeView.ios.selectedSegmentIndex = index;
+            } else {
+                // MaterialButtonToggleGroup: the button of the first selection
+                const group = typesBar.nativeView.android as com.google.android.material.button.MaterialButtonToggleGroup;
+                group.check(group.getChildAt(index).getId());
+            }
+        }, 50)
+    );
     function onTypeChanged(event: SelectedIndexChangedEventData) {
         setType(types[event.newIndex]);
     }
@@ -68,6 +77,16 @@
         { id: 'balance', name: lc('balance'), type: ExtraFieldType.Number },
         { id: 'notes', name: lc('notes'), type: ExtraFieldType.String }
     ];
+    async function showNames(anchor: View) {
+        try {
+            await showMenu({
+                anchor,
+                items: nameTemplates.map((template) => ({ title: template.name, subtitle: lc(template.type), onSelect: () => selectTemplate(template) }))
+            });
+        } catch (error) {
+            showError(error);
+        }
+    }
     function selectTemplate(template: (typeof nameTemplates)[number]) {
         currentName = template.name;
         setType(template.type);
@@ -121,15 +140,8 @@
 <gesturerootview bind:this={rootView} rows="auto,auto" {...$$restProps}>
     <SheetHeader doneText={editing ? lc('edit') : lc('add')} onCancel={close} onDone={add} title={editing ? lc('edit_extra_field') : lc('add_extra_field')} />
     <stacklayout padding="0 16 16 16" row={1}>
-        <FormTextField label={lc('name')} bind:text={currentName} />
-        <!-- usual names: a tap fills the name and the type -->
-        <scrollview marginBottom={8} orientation="horizontal">
-            <stacklayout orientation="horizontal">
-                {#each nameTemplates as template (template.id)}
-                    <uibutton height={32} marginRight={8} text={template.name} variant="outline" on:tap={() => selectTemplate(template)} />
-                {/each}
-            </stacklayout>
-        </scrollview>
+        <!-- the usual names are in a menu: each shows its type -->
+        <FormTextField label={lc('name')} onTrailingTap={showNames} trailingIcon={appIcon('chevron_down')} bind:text={currentName} />
         <!-- the type is one of 3 values: a segmented control, not a drop down -->
         <segmentedbar margin={tMargin} selectedIndex={types.indexOf(currentType)} bind:this={typesBar} on:selectedIndexChanged={onTypeChanged}>
             {#each types as type (type)}
@@ -145,7 +157,7 @@
             multiline={true}
             text={currentType === ExtraFieldType.Date ? formatDate(currentTime, 'LL') : currentValue}
             onChange={(e) => currentType !== ExtraFieldType.Date && (currentValue = e.value)}
-            onTap={(e) => selectDate(e)}
+            onTap={currentType === ExtraFieldType.Date ? selectDate : undefined}
         />
     </stacklayout>
 </gesturerootview>

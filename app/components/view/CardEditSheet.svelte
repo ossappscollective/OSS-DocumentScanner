@@ -59,6 +59,8 @@
             ...(visibleCodes.length ? [{ type: 'sectionheader', title: lc('barcode').toUpperCase() }, ...visibleCodes.map((code) => ({ type: 'code', code }))] : []),
             { type: 'sectionheader', title: lc('extra_fields').toUpperCase() },
             ...visibleFields.map((field) => ({ type: 'field', field })),
+            // without any field the button of the header is far from the title of this section
+            ...(visibleFields.length ? [] : [{ type: 'addfield' }]),
             { type: 'spacer' }
         ];
     }
@@ -211,6 +213,10 @@
                     on:tap={() => removeField(item.field)}
                 />
             </gridlayout>
+        </Template>
+
+        <Template key="addfield" let:item>
+            <uibutton height={44} margin="4 16 8 16" text={lc('add_extra_field')} variant="outline" on:tap={() => editField()} />
         </Template>
 
         <Template key="spacer" let:item>
