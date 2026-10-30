@@ -162,7 +162,7 @@ The list uses the same tile language as the card view. Its main problem today is
 | Style | Layout | Label | Notes |
 | --- | --- | --- | --- |
 | Columns | 2 columns in portrait, 3 to 4 in landscape; 16 margin, 12 gap; tile ratio 1.58 | Chip, bottom-left | Default |
-| List | Rows 72 tall: 96 by 60 thumbnail, title, subtitle, star, chevron (iOS only) | None on the thumbnail; text beside it | iOS inset grouped rows; Android one rounded row per card for now (a row does not know its position yet), segmented rows later |
+| List | Rows 88 tall: 116 by 72 thumbnail, title, subtitle, star, chevron (iOS only) | None on the thumbnail; text beside it | iOS inset grouped rows; Android one rounded row per card for now (a row does not know its position yet), segmented rows later |
 | Cardholder | Full-width tiles stacked, about 40% of each visible | Chip, top-left | Soft shadow on each tile's top edge |
 | Full | Full-width tiles stacked, about 29% visible, last tile whole | Chip, top-left | Same as cardholder with deeper overlap |
 
@@ -184,7 +184,7 @@ The list uses the same tile language as the card view. Its main problem today is
 - **Auto names.** The default timestamp name is never shown in full on a tile: the chip shows the localized short date only. List rows show the full timestamp as the title, since there is room. A name the user set always shows. The existing `alwaysShowNames` setting then only decides whether auto-named cards get the date chip.
 - **Card color.** It fills name tiles. Image tiles get no ring and no border; the color appears in the card view and in edit.
 - **Selection.** A check badge top-left and the tile scales to 95%. iOS: the title becomes "3 selected" with a Done pill, and a glass toolbar (share, favorite, folder, delete) replaces the search capsule. Android: a contextual app bar with the same actions.
-- **Folders.** Always above the cards, in every style. Horizontal: a scrolling row of 132 by 54 tiles. Vertical: grouped rows 52 tall with count and chevron (iOS only). The folder icon sits in a tinted circle.
+- **Folders.** Always above the cards, in every style. Horizontal: a scrolling row of 173 by 71 tiles. Vertical: grouped rows 68 tall with count and chevron (iOS only). The folder icon sits in a tinted circle.
 - **Chrome.** iOS: Large Title "Cards", a glass pill with add, settings and more, and a glass search capsule beside a glass camera button; the list scrolls under both with the system scroll edge effect. Android: search bar on top, an extended Scan FAB at the bottom right, the contextual bar for selection.
 - **Stacking.** Bars and the search row are always above the tiles. In the stacked styles tiles overlap each other, so their order must never rise above the chrome.
 - **Empty state.** An icon in a glass circle (iOS) or a shape (Android), the title "Add your first card", one line of help and a prominent "Scan a card" button.
@@ -284,7 +284,7 @@ The card list and the components are on draft pull requests 765 to 768 in ossapp
 
 | Area | PR | Implemented | Gap against this spec |
 | --- | --- | --- | --- |
-| Card list | 765 | Four view styles, chips, tiles, folder tiles (horizontal 132 by 54, vertical 46 row with chevron) | Android list is one rounded row per card, not segmented, because a row does not know its position |
+| Card list | 765 | Four view styles, chips, tiles, folder tiles (horizontal 173 by 71, vertical 68 row with chevron) | Android list is one rounded row per card, not segmented, because a row does not know its position |
 | Text fields | 766 | Android outlined with 20/20/20/6 corners through a ui-textfield style override; iOS capsule in CSS | Android label still floats on the border (a label inside the field needs a ui-textfield change). iOS has no caption above and no focus or error ring: NativeScript CSS has no :focus, though focus and blur events could toggle a class |
 | Buttons | 767 | Primary is prominentGlass on iOS (44) and contained on Android (40) | No round-to-squircle shape morph on press (needs ui-button) |
 | Sheets | 768 | Shared SheetHeader: iOS glass Cancel pill, centered title, prominent action; Android close icon, title, text action | Transparent appearance, hairline on scroll and the 32% dim (need ui-bottomsheet) |

@@ -6,7 +6,7 @@ Exact values for every component and state, so implementers do not need to ask. 
 
 - Sizes are device points (iOS) and dp (Android), for a 393 pt (iOS) or 412 dp (Android) wide screen, unless a number is marked "mockup".
 - The HTML mockups draw a 300 wide frame, about 24% narrower than a 393 pt phone, so anything drawn at a standard size (text, rows, chips, buttons) looks about 30% larger relative to the screen than the same number does on a device. That is why the first implementation looked smaller than the mockup. Use the values in this file.
-- **Open question:** scale the mockup-derived sizes (list rows, thumbnails, tile chips, folder tiles, tile titles) by 1.31 to match the mockup's proportions, or keep the platform-standard values below. Until decided, the values below stand.
+- **Decided:** the sizes that came from the mockup (list rows, thumbnails, tile chips, folder tiles, tile titles) are scaled by 1.31 (393 / 300) so a device looks like the mockup. Standard controls keep their platform sizes: buttons 44 and 40, fields 48 and 56, toolbars, switches, the 22 and 24 selection markers.
 - Proportional sizes derive from the screen: a pager page is the screen width minus 48 (16 margin, 8 gap, 24 peek); a grid tile is (screen width minus 32 minus 12) divided by 2, at ratio 1.58.
 - The mockups use Tabler icons as stand-ins. The real icons are in section 13.
 
@@ -23,7 +23,7 @@ Exact values for every component and state, so implementers do not need to ask. 
 
 - **One exception: the Android FAB** keeps the M3 Expressive squircle, corner radius = height / 3.
 - Consequences: the Android checkbox is a circle with a check (not a rounded square); Android chips are pills (not 8 radius); a selection marker is a circle everywhere.
-- **Container radius from size:** radius = clamp(8, 0.18 x shorter side, 28). Grid tile 174 x 110 gives 20; stacked tile 361 x 228 gives 28; pager page and code tile give 28; list thumbnail 96 x 60 gives 11. Pills are height / 2.
+- **Container radius from size:** radius = clamp(8, 0.18 x shorter side, 28). Grid tile 174 x 110 gives 20; stacked tile 361 x 228 gives 28; pager page and code tile give 28; list thumbnail 116 x 72 gives 13. Pills are height / 2.
 
 ## 2. FAB and floating controls
 
@@ -38,18 +38,18 @@ Exact values for every component and state, so implementers do not need to ask. 
 
 | Property | iOS | Android |
 | --- | --- | --- |
-| Height | 22 | 22 |
-| Padding | 8 horizontal; icon-only 22 x 22 | 8 horizontal; icon-only 22 x 22 |
-| Text | 11, semibold | Label Small, 11 sp, medium |
-| Icon | 12 | 12 |
-| Gap icon to text | 4 | 4 |
-| Radius | 11 (pill) | 11 (pill) |
+| Height | 28 | 28 |
+| Padding | 10 horizontal; icon-only 28 x 28 | 10 horizontal; icon-only 28 x 28 |
+| Text | 14, semibold | 14 sp, medium |
+| Icon | 16 | 16 |
+| Gap icon to text | 5 | 5 |
+| Radius | 14 (pill) | 14 (pill) |
 | Fill | Regular glass: white 70% (light) or dark gray 66% (dark), 1 border of white 85% or 20%, system blur | accentContainer at 94% |
 | Content | label color | onContainer |
-| Margin to tile edge | 8 | 8 |
+| Margin to tile edge | 10 | 10 |
 
-- **Title chip:** one line, ellipsis, max width tile width - 16 - info pill width. It is alone in its corner and never merges.
-- **Info pill (merge rule):** page count, code glyph and favorite merge into ONE pill, 22 tall, whenever two or more are present. Segments in this order: page count (stack icon + number), code (qr or barcode icon), favorite (star). Segments are separated by a 1 hairline (white 35% on glass, onContainer 20% on tonal); each text segment has 8 padding, each icon segment is 22 wide. A single item is shown as a normal chip. Maximum 3 segments, same on iOS and Android.
+- **Title chip:** one line, ellipsis, max width tile width - 20 - info pill width. It is alone in its corner and never merges.
+- **Info pill (merge rule):** page count, code glyph and favorite merge into ONE pill, 28 tall, whenever two or more are present. Segments in this order: page count (stack icon + number), code (qr or barcode icon), favorite (star). Segments are separated by a 1 hairline (white 35% on glass, onContainer 20% on tonal); each text segment has 10 padding, each icon segment is 28 wide. A single item is shown as a normal chip. Maximum 3 segments, same on iOS and Android.
 - **Placement:** title chip bottom-left in the grid and top-left in the stacked styles. Info pill top-right in every style.
 - **Tight space:** the info pill keeps its width; the title chip shrinks to a minimum of 3 characters, then hides.
 
@@ -57,10 +57,10 @@ Exact values for every component and state, so implementers do not need to ask. 
 
 - **Photo (or code on a photo):** the title is a chip (section 3). An auto-named card shows a chip with the localized short date.
 - **No photo (name only, name and code):** the title is inside the tile on the card color fill, in the contrast color (white on dark colors, black on light ones).
-  - Grid and columns: centered, bold, up to 2 lines, auto-fit between 14 and 22.
-  - Stacked styles (cardholder, full): top-left, 20 bold, one line.
+  - Grid and columns: centered, bold, up to 2 lines, auto-fit between 18 and 28.
+  - Stacked styles (cardholder, full): top-left, 26 bold, one line.
   - A code glyph (qr or barcode, 18, 75% opacity) sits bottom-right inside the tile; in the stacked styles, where the bottom is covered, it is a segment of the info pill instead.
-  - List thumbnail: the title centered, 11 bold, up to 2 lines.
+  - List thumbnail: the title centered, 14 bold, up to 2 lines.
 - The title is never drawn as bare text over a photo.
 
 ## 5. Selection
@@ -74,9 +74,9 @@ Exact values for every component and state, so implementers do not need to ask. 
 
 ## 6. Folders
 
-- **Icon:** outline folder glyph, 20, inside a 32 circle. Circle fill: accent at 16% (light) or 22% (dark) on iOS; accentContainer on Android. Glyph color: accent on iOS; onContainer on Android.
-- **Horizontal style:** a scrolling row above the cards, tiles 132 x 54, radius 16, 8 between tiles, 16 side margin. Surface: row color on iOS, surfaceContainerLow on Android. Content: icon circle, name 13 semibold, count 11 secondary.
-- **Vertical style:** grouped rows, 52 tall, side margin 16 (same as the card list). iOS: one inset grouped container, radius 18, hairlines inset 60 from the left. Android: segmented group, 20 outer corners on the first and last row only, 6 between, 2 gap. Content: icon circle, name 16 medium, count secondary, chevron (iOS only, hidden in selection). iOS hairlines run from the start of the text to the trailing edge. The folders group and the cards group are 8 apart.
+- **Icon:** outline folder glyph, 26, inside a 42 circle. Circle fill: accent at 16% (light) or 22% (dark) on iOS; accentContainer on Android. Glyph color: accent on iOS; onContainer on Android.
+- **Horizontal style:** a scrolling row above the cards, tiles 173 x 71, radius 21, 10 between tiles, 16 side margin. Surface: row color on iOS, surfaceContainerLow on Android. Content: icon circle, name 17 semibold, count 14 secondary.
+- **Vertical style:** grouped rows, 68 tall, side margin 16 (same as the card list). iOS: one inset grouped container, radius 18, hairlines inset 72 from the left. Android: segmented group, 20 outer corners on the first and last row only, 6 between, 2 gap. Content: icon circle, name 18 medium, count secondary (14), chevron (iOS only, hidden in selection). iOS hairlines run from the start of the text to the trailing edge. The folders group and the cards group are 8 apart.
 - **In the columns style,** vertical folders span the full width (both columns) above the grid.
 - **Card rows in the list style** follow the same grouping: first and last corners only. A row knows its position through its index; if the list cannot supply it, wrap the rows in one rounded container (iOS) or compute the corners from the index (Android).
 
@@ -86,12 +86,12 @@ The darker band at the bottom of some photo tiles in the mockups is a drawn hori
 
 ## 8. List rows (card list, list style)
 
-- **Row:** 72 tall on both platforms (Android adds the 2 gap around it), 12 horizontal padding. Thumbnail 96 x 60 (ratio 1.6), radius 11. Title, subtitle, then trailing items.
-- **Title:** iOS 17 semibold (Headline); Android 16 sp medium (Title Medium); one line, ellipsis. An auto-named card uses the full localized date and time.
-- **Subtitle:** 14 secondary. Photo count when there are photos ("2 photos"), followed by a 16 code icon when the card has a code (qr or barcode glyph). **Never the word "code".** Name and code cards without photos show the code glyph alone as the subtitle; name-only cards have no subtitle and the title centers vertically.
+- **Row:** 88 tall on both platforms (Android adds the 2 gap around it), 16 horizontal padding. Thumbnail 116 x 72 (ratio 1.6), radius 13. Title, subtitle, then trailing items.
+- **Title:** iOS 20 semibold (Title 3); Android 20 sp medium; one line, ellipsis. An auto-named card uses the full localized date and time.
+- **Subtitle:** 16 secondary. Photo count when there are photos ("2 photos"), followed by a 20 code icon when the card has a code (qr or barcode glyph). **Never the word "code".** Name and code cards without photos show the code glyph alone as the subtitle; name-only cards have no subtitle and the title centers vertically.
 - **No-photo thumbnail:** the color tile with the title inside (section 4), not a bare color.
-- **Trailing:** favorite star (16, accent) when favorite. Chevron on iOS only, hidden in selection. Android rows have no chevron.
-- Relative to the screen these are smaller than the mockup (66 row, 88 x 56 thumbnail, 15 title in a 300 wide frame); see the open question in section 0.
+- **Trailing:** favorite star (20, accent) when favorite. Chevron on iOS only, hidden in selection. Android rows have no chevron.
+- These are the mockup values (66 row, 88 x 56 thumbnail, 15 title in a 300 wide frame) times 1.31.
 
 ## 9. Typography scale
 
@@ -99,12 +99,12 @@ The darker band at the bottom of some photo tiles in the mockups is a drawn hori
 | --- | --- | --- |
 | Card name, large | Large Title 34 bold | Display Medium Emphasized |
 | Screen title | Large Title 34 bold | Title Large 22 |
-| Row and folder title | Headline 17 semibold | Title Medium 16 medium |
+| Row and folder title | Title 3 20 semibold | 20 sp medium |
 | Body, field value | Body 17 | Body Large 16 |
 | Secondary, subtitle | Subheadline 15 | Body Medium 14 |
 | Footnote, helper, caption | Footnote 13 and Caption 12 | Label Medium 12 |
 | Button, menu item | Body 17 semibold / Body 17 | Label Large 14 medium / Body Large 16 |
-| Chip text on tiles | Caption 2, 11 semibold | Label Small 11 medium |
+| Chip text on tiles | 14 semibold | 14 sp medium |
 
 iOS uses Dynamic Type; Android scales with font scale. Layouts must survive 200%.
 
@@ -143,7 +143,7 @@ iOS uses Dynamic Type; Android scales with font scale. Layouts must survive 200%
 ## 13. Icons
 
 - **One set per platform, one id table:** `app/utils/appIcons.ts` maps an app icon id to an SF Symbol (iOS) and an MDI name (Android, loaded as `res://ic_mdi_*` vector drawables; iOS `sys://`). Tabler in the mockups is a stand-in only.
-- **Style:** outline by default; filled only for an "on" state (favorite_on). Sizes: 24 in bars and buttons (22 on iOS bars), 20 in menus and rows, 18 in fields, 12 on tile chips.
+- **Style:** outline by default; filled only for an "on" state (favorite_on). Sizes: 24 in bars and buttons (22 on iOS bars), 20 in menus and rows, 18 in fields, 16 on tile chips.
 - **Naming:** `snake_case`, semantic (what it does, not what it looks like).
 - **Changes needed:** `folder` on Android must be `folder-outline`; add the ids in the second table.
 
@@ -278,4 +278,5 @@ Most rules are shared. The scanner feels more like a document app:
 - **Scan FAB:** an ExtendedFloatingActionButton using the Material collapse and extend animation; this needs an unpublished ui-floatingactionbutton fix.
 - **Move to folder:** replaced by the sheet in section 15 (name field plus folder chips), decided in the PR 781 review; the earlier remove_from_folder row and its string are gone.
 - **Android menu origin:** fixed in ui-menu with a style per corner; the plugin change is not published.
+- **Sizes x 1.31 (decided, to apply in code):** list rows 88 with a 116 x 72 thumbnail and 20 titles, tile chips 28 tall with 14 text, folder tiles 173 x 71 and vertical folder rows 68, tile titles 18 to 28 (grid) and 26 (stacked).
 - **Open:** the Document Scanner list is still its own canvas list (section 17 is a proposal). The delete confirmation dialog (destructive text action in the error color, section 15) is not built yet.
