@@ -40,23 +40,37 @@ textfield[variant='outline'] {
     stroke-inactive-color: var(--colorOutline);
 }
 
-// the floating buttons: a small tonal add button above the extended Scan button, both with the elevation of floating controls
+// the floating buttons: a small tonal button at the left of the extended one, both round, with the elevation of floating controls
 .addFab {
     background-color: var(--colorSecondaryContainer);
-    border-radius: 12;
     color: var(--colorOnSecondaryContainer);
     elevation: 6;
-    font-size: 24;
+    font-size: 20;
     height: 40;
-    horizontal-align: right;
-    margin: 0 16 12 16;
+    margin: 0 0 24 16;
     padding: 0;
+    shape: round;
+    vertical-align: bottom;
     width: 40;
 }
 
+.editFab,
 .scanFab {
     elevation: 6;
-    horizontal-align: right;
-    margin: 0 16 16 16;
-    shape: fab;
+    margin: 0 16 16 12;
+    shape: round;
+}
+
+// the icon of a button takes the font size
+.overlayIconButton {
+    font-size: 24;
+}
+
+// edits the photo it sits on
+.photoEditButton {
+    background-color: var(--colorSecondaryContainer);
+    color: var(--colorOnSecondaryContainer);
+    elevation: 0;
+    font-size: 20;
+    padding: 0;
 }

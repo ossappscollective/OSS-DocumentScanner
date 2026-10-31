@@ -120,6 +120,8 @@ export const DEFAULT_PDF_OPTIONS = {
     imageLoadScale: 2,
     draw_ocr_text: true
 };
+/** the keys of the PDF options which are layout: the preview puts them back with Reset, not the quality, the password or the folder */
+export const PDF_LAYOUT_KEYS = ['paper_size', 'orientation', 'items_per_page', 'page_padding', 'color', 'draw_ocr_text'];
 export const DEFAULT_CARD_ALWAYS_SHOW_NAME = true;
 export const IMAGE_CONTEXT_OPTIONS = {
     originalQueryCacheType: 0,
