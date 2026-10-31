@@ -3,18 +3,21 @@
     import { closeBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { HorizontalPosition, VerticalPosition } from '@nativescript-community/ui-popover';
     import { showPopover } from '@nativescript-community/ui-popover/svelte';
-    import { View, verticalAlignmentProperty } from '@nativescript/core';
+    import { SegmentedBar } from '@nativescript-community/ui-segmentedbar';
+    import { EventData, View, verticalAlignmentProperty } from '@nativescript/core';
     import { showError } from '@shared/utils/showError';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import { lc } from '~/helpers/locale';
     import { OCRLanguages, ocrService } from '~/services/ocr';
     import { colors, fonts } from '~/variables';
     import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
+    import SheetHeader from '../common/SheetHeader.svelte';
     import Chip from '../widgets/Chip.svelte';
     import { checkOrDownloadOCRLanguages, localizedLanguage } from '~/utils/ui';
 
     // technique for only specific properties to get updated on store change
-    $: ({ colorOnPrimary, colorOnSurface, colorOutline, colorPrimary, colorSurfaceContainer } = $colors);
+    $: ({ colorOnPrimary, colorOnSurface, colorOnSurfaceVariant, colorOutline, colorPrimary, colorSurfaceContainer } = $colors);
+    $: secondaryColor = colorOnSurfaceVariant;
 
     let collectionView: NativeViewElementNode<CollectionView>;
     let downloaded = ocrService.downloadedLanguages;
@@ -65,6 +68,12 @@
         languages = languages;
     }
 
+    function onQualityChanged(event: EventData) {
+        if (event.object instanceof SegmentedBar) {
+            setDataType(qualities[event.object.selectedIndex]);
+        }
+    }
+
     function startOrCloseOCR() {
         closeBottomSheet(onlySettings ? { languages, dataType } : true);
     }
@@ -84,8 +93,8 @@
 </script>
 
 <gesturerootview id="ocrSettingsBottomSheet" rows="auto">
-    <stacklayout padding={onlySettings ? 0 : 16}>
-        {#if onlySettings}
+    {#if onlySettings}
+        <stacklayout>
             <ListItemAutoSize item={{ title: lc('quality'), titleProps: { verticalAlignment: 'top' } }}>
                 <stacklayout marginTop={50} orientation="horizontal" verticalAlignment="bottom">
                     {#each qualities as quality (quality)}
@@ -123,45 +132,6 @@
                     {/each}
                 </stacklayout>
             </ListItemAutoSize>
-        {:else}
-            <label class="sectionBigHeader" marginBottom={onlySettings ? 0 : 16} text={lc('quality')} />
-            <stacklayout orientation="horizontal">
-                {#each qualities as quality (quality)}
-                    <gridlayout
-                        backgroundColor={dataType === quality ? colorPrimary : undefined}
-                        borderColor={colorOutline}
-                        borderRadius={8}
-                        borderWidth={dataType === quality ? 0 : 1}
-                        columns="auto,auto"
-                        height={32}
-                        margin={4}
-                        paddingLeft={dataType === quality ? 8 : 12}
-                        paddingRight={12}
-                        rippleColor={colorPrimary}
-                        on:tap={() => setDataType(quality)}
-                    >
-                        <label
-                            color={dataType === quality ? colorOnPrimary : colorOnSurface}
-                            fontFamily={$fonts.mdi}
-                            fontSize={16}
-                            marginRight={4}
-                            text="mdi-check"
-                            verticalAlignment="middle"
-                            visibility={dataType === quality ? 'visible' : 'collapse'}
-                        />
-                        <label
-                            col={1}
-                            color={dataType === quality ? colorOnPrimary : colorOnSurface}
-                            fontSize={14}
-                            fontWeight={dataType === quality ? 'bold' : 'normal'}
-                            text={lc(quality)}
-                            verticalAlignment="middle"
-                        />
-                    </gridlayout>
-                {/each}
-            </stacklayout>
-        {/if}
-        {#if onlySettings}
             <ListItemAutoSize item={{ title: lc('languages'), titleProps: { verticalAlignment: 'top' } }} paddingRight={0}>
                 <uibutton class="icon-btn" col={1} marginTop={6} text="mdi-plus" variant="text" verticalAlignment="top" on:tap={addLanguages} />
                 <wraplayout marginTop={50} verticalAlignment="bottom">
@@ -170,27 +140,30 @@
                     {/each}
                 </wraplayout>
             </ListItemAutoSize>
-        {:else}
-            <gridlayout columns="*,auto" marginBottom={16} marginTop={15} rows="auto">
-                <label class="sectionBigHeader" text={lc('languages')} verticalAlignment="middle" />
-                <uibutton class="icon-btn" col={1} padding={0} text="mdi-plus" variant="text" on:tap={addLanguages} />
-            </gridlayout>
-
-            <wraplayout row={1}>
-                {#each languages as language (language)}
-                    <Chip rightIcon={downloaded.indexOf(language) !== -1 ? 'mdi-download' : null} text={localizedLanguage(language, OCRLanguages)} on:tap={() => removeLanguage(language)} />
-                {/each}
-            </wraplayout>
-        {/if}
-        <!-- <gridlayout , backgroundColor="" borderRadius="50%" columns="*,auto">
-            <textfield hint={lc('languages')} placeholder={lc('languages')} returnKeyType="search" variant="none" verticalTextAlignment="center" />
-        </gridlayout> -->
-        {#if !onlySettings}
-            <uibutton horizontalAlignment="right" padding="10 16 10 16" row={1} text={lc('start')} on:tap={startOrCloseOCR} />
-        {/if}
-
-        {#if showDownloadButton}
-            <uibutton horizontalAlignment="right" padding="10 16 10 16" row={1} text={lc('download')} on:tap={downloadLanguages} />
-        {/if}
-    </stacklayout>
+            {#if showDownloadButton}
+                <uibutton horizontalAlignment="right" padding="10 16 10 16" text={lc('download')} on:tap={downloadLanguages} />
+            {/if}
+        </stacklayout>
+    {:else}
+        <stacklayout>
+            <SheetHeader doneText={lc('start')} onCancel={() => closeBottomSheet(false)} onDone={startOrCloseOCR} title={lc('ocr')} />
+            <stacklayout padding="0 16 24 16">
+                <label color={secondaryColor} fontSize={__IOS__ ? 13 : 14} margin="8 16 8 16" text={__IOS__ ? lc('quality').toUpperCase() : lc('quality')} />
+                <segmentedbar marginBottom={8} selectedIndex={qualities.indexOf(dataType)} on:selectedIndexChanged={onQualityChanged}>
+                    {#each qualities as quality (quality)}
+                        <segmentedbaritem title={lc(quality)} variant="outline" />
+                    {/each}
+                </segmentedbar>
+                <gridlayout columns="*,auto" margin="16 0 0 0">
+                    <label color={secondaryColor} fontSize={__IOS__ ? 13 : 14} margin="0 16 0 16" text={__IOS__ ? lc('languages').toUpperCase() : lc('languages')} verticalAlignment="middle" />
+                    <uibutton col={1} height={32} padding="0 12" text={`+ ${lc('add')}`} variant="outline" on:tap={addLanguages} />
+                </gridlayout>
+                <wraplayout marginTop={8}>
+                    {#each languages as language (language)}
+                        <Chip rightIcon={downloaded.indexOf(language) !== -1 ? 'mdi-download' : null} text={localizedLanguage(language, OCRLanguages)} on:tap={() => removeLanguage(language)} />
+                    {/each}
+                </wraplayout>
+            </stacklayout>
+        </stacklayout>
+    {/if}
 </gesturerootview>

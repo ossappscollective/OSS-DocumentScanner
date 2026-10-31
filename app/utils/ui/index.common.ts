@@ -33,7 +33,9 @@ import { ConfirmOptions } from '@nativescript/core/ui/dialogs/dialogs-common';
 import { SDK_VERSION, copyToClipboard, debounce, openFile } from '@nativescript/core/utils';
 import { create as createImagePicker } from '@nativescript/imagepicker';
 import { doInBatch } from '@shared/utils/batch';
+import type { MenuItem } from '@nativescript-community/ui-menu';
 import { showError } from '@shared/utils/showError';
+import { appIcon } from '~/utils/appIcons';
 import { goBack, navigate, showModal } from '@shared/utils/svelte/ui';
 import { hideLoading, showLoading, showSliderPopover, showSnack, updateLoadingProgress } from '@shared/utils/ui';
 import dayjs, { Dayjs } from 'dayjs';
@@ -53,7 +55,6 @@ import {
 import { zip } from 'plugin-zip';
 import type { ComponentProps } from 'svelte';
 import { get } from 'svelte/store';
-import type ExportPDFAlertOptions__SvelteComponent_ from '~/components/common/ExportPDFAlertOptions.svelte';
 import type OptionSelect__SvelteComponent_ from '@shared/components/OptionSelect.svelte';
 import type BottomSnack__SvelteComponent_ from '~/components/widgets/BottomSnack.svelte';
 import BottomSnack from '~/components/widgets/BottomSnack.svelte';
@@ -92,6 +93,7 @@ import {
     SETTINGS_ALWAYS_PROMPT_CROP_EDIT,
     SETTINGS_CROP_ENABLED,
     SETTINGS_DEFAULT_BRIGHTNESS,
+    SHEET_PAN_SOFT_INPUT_MODE,
     SETTINGS_DEFAULT_COLORMATRIX,
     SETTINGS_DEFAULT_COLORTYPE,
     SETTINGS_DEFAULT_CONTRAST,
@@ -111,7 +113,7 @@ import { StorageSizes, filterPagesWithOriginal } from '~/utils/originals';
 import { buildPassArchive, getStoredPassFormat } from '~/utils/pkpass';
 import { importPKPassFiles } from '~/utils/pkpass-import';
 import { showToast } from '~/utils/ui';
-import { colors, fontScale, screenWidthDips } from '~/variables';
+import { colors, fontScale, screenHeightDips, screenWidthDips } from '~/variables';
 import { MatricesTypes, Matrix } from '../color_matrix';
 import { cleanFilename, saveImage } from '../utils';
 import { buildExportImageNames } from '../exportUtils';
@@ -577,18 +579,33 @@ export async function showSettings(props?) {
     }
 }
 
+/** the options of an export to PDF, asked in a sheet: the folder, the file name (a single document), the quality of the images and an optional password */
+export async function askPDFExportOptions({ filename, folder, showFilename }: { filename?: string; folder: string; showFilename: boolean }) {
+    const view = (await import('~/components/common/ExportPDFOptionsSheet.svelte')).default;
+    const defaultOptions = getPDFDefaultExportOptions();
+    return (await showBottomSheet({
+        view,
+        skipCollapsedState: true,
+        windowSoftInputMode: SHEET_PAN_SOFT_INPUT_MODE,
+        props: { filename, folder, jpegQuality: defaultOptions.jpegQuality, password: defaultOptions.password, showFilename }
+    })) as { filename?: string; folder: string; jpegQuality: number; password: string } | undefined;
+}
+
 export async function showPDFPopoverMenu({
     anchor,
     document,
     documents,
     pages,
-    popoverOptions
+    popoverOptions,
+    action
 }: {
     pages: { page: OCRPage; document: OCRDocument }[];
     document?: OCRDocument;
     documents: OCRDocument[];
     anchor?;
     popoverOptions?: Partial<PopoverOptions>;
+    /** runs this action of the popover (an id of its options) without showing it: the actions of the export menu */
+    action?: string;
 }) {
     let exportDirectory: string;
 
@@ -642,10 +659,10 @@ export async function showPDFPopoverMenu({
                 { id: 'export', name: lc('export'), icon: 'mdi-export' },
                 ...(documents.length > 1 ? [{ id: 'bulk_export', name: lc('bulk_export'), icon: 'mdi-file-document-multiple-outline' }] : [])
             ] as any)
-            .concat(__ANDROID__ ? ([{ id: 'print', name: lc('print'), icon: 'mdi-printer' }] as any) : [])
+            .concat([{ id: 'print', name: lc('print'), icon: 'mdi-printer' }] as any)
             .concat([{ id: 'preview', name: lc('preview'), icon: 'mdi-printer-eye' }] as any)
     );
-    return showPopoverMenu({
+    const popover = {
         title: lc('pdf_export'),
         options,
         anchor,
@@ -740,28 +757,12 @@ export async function showPDFPopoverMenu({
                             }
                         }
                         await closePopover();
-                        const component = (await import('~/components/common/ExportPDFAlertOptions.svelte')).default;
-                        let componentInstanceInfo: ComponentInstanceInfo<GridLayout, ExportPDFAlertOptions__SvelteComponent_>;
                         try {
-                            const defaultOptions = getPDFDefaultExportOptions();
-                            DEV_LOG && console.log('defaultOptions', JSON.stringify(defaultOptions));
-                            componentInstanceInfo = resolveComponentElement(component, {
-                                filename: getFileNameForDocument(document) + PDF_EXT,
-                                jpegQuality: defaultOptions.jpegQuality,
-                                password: defaultOptions.password,
-                                folder: exportDirectory
-                            }) as ComponentInstanceInfo<GridLayout, ExportPDFAlertOptions__SvelteComponent_>;
-                            const result = await confirm({
-                                okButtonText: lc('ok'),
-                                cancelButtonText: lc('cancel'),
-                                view: componentInstanceInfo.element.nativeView
-                            });
-                            if (result) {
-                                let filename = componentInstanceInfo.viewInstance.filename;
+                            const exportOptions = await askPDFExportOptions({ filename: getFileNameForDocument(document) + PDF_EXT, folder: exportDirectory, showFilename: true });
+                            if (exportOptions) {
+                                let { filename } = exportOptions;
                                 if (filename.length) {
-                                    const password = componentInstanceInfo.viewInstance.password;
-                                    const jpegQuality = componentInstanceInfo.viewInstance.jpegQuality;
-                                    const folder = componentInstanceInfo.viewInstance.folder;
+                                    const { folder, jpegQuality, password } = exportOptions;
                                     showLoading(lc('exporting'));
                                     DEV_LOG && console.log('exportPDF', folder, filename, jpegQuality, !!password);
                                     if (__ANDROID__) {
@@ -796,10 +797,6 @@ export async function showPDFPopoverMenu({
                             }
                         } catch (err) {
                             throw err;
-                        } finally {
-                            componentInstanceInfo.element.nativeElement._tearDownUI();
-                            componentInstanceInfo.viewInstance.$destroy();
-                            componentInstanceInfo = null;
                         }
                         break;
                     }
@@ -815,26 +812,11 @@ export async function showPDFPopoverMenu({
                             }
                         }
                         await closePopover();
-                        const component = (await import('~/components/common/ExportPDFAlertOptions.svelte')).default;
-                        let componentInstanceInfo: ComponentInstanceInfo<GridLayout, ExportPDFAlertOptions__SvelteComponent_>;
                         try {
-                            const defaultOptions = getPDFDefaultExportOptions();
-                            componentInstanceInfo = resolveComponentElement(component, {
-                                jpegQuality: defaultOptions.jpegQuality,
-                                password: defaultOptions.password,
-                                folder: exportDirectory,
-                                showFilename: false
-                            }) as ComponentInstanceInfo<GridLayout, ExportPDFAlertOptions__SvelteComponent_>;
-                            const result = await confirm({
-                                okButtonText: lc('ok'),
-                                cancelButtonText: lc('cancel'),
-                                view: componentInstanceInfo.element.nativeView
-                            });
-                            if (result) {
+                            const exportOptions = await askPDFExportOptions({ folder: exportDirectory, showFilename: false });
+                            if (exportOptions) {
                                 showLoading(lc('exporting'));
-                                const password = componentInstanceInfo.viewInstance.password;
-                                const jpegQuality = componentInstanceInfo.viewInstance.jpegQuality;
-                                const folder = componentInstanceInfo.viewInstance.folder;
+                                const { folder, jpegQuality, password } = exportOptions;
                                 DEV_LOG &&
                                     console.log(
                                         'bulk export',
@@ -866,10 +848,6 @@ export async function showPDFPopoverMenu({
                             }
                         } catch (err) {
                             throw err;
-                        } finally {
-                            componentInstanceInfo.element.nativeElement._tearDownUI();
-                            componentInstanceInfo.viewInstance.$destroy();
-                            componentInstanceInfo = null;
                         }
                         break;
                     }
@@ -894,7 +872,11 @@ export async function showPDFPopoverMenu({
             }
         },
         ...(popoverOptions ?? {})
-    });
+    };
+    if (action) {
+        return popover.onClose({ id: action });
+    }
+    return showPopoverMenu(popover);
 }
 
 async function exportImages(pages: { page: OCRPage; document: OCRDocument }[], exportDirectory: string, toGallery = false) {
@@ -1029,7 +1011,7 @@ function getTargetFormatFromActionId(id: string): PKPassType | null {
     return null; // legacy / native-format action
 }
 
-export async function showImagePopoverMenu(pages: { page: OCRPage; document: OCRDocument }[], anchor, popoverOptions?: Partial<PopoverOptions>) {
+export async function showImagePopoverMenu(pages: { page: OCRPage; document: OCRDocument }[], anchor, popoverOptions?: Partial<PopoverOptions> & { action?: string }) {
     let exportDirectory = ApplicationSettings.getString('image_export_directory', DEFAULT_EXPORT_DIRECTORY);
     let exportDirectoryName = exportDirectory;
     DEV_LOG && console.log('showImagePopoverMenu', exportDirectoryName, pages.length);
@@ -1091,8 +1073,9 @@ export async function showImagePopoverMenu(pages: { page: OCRPage; document: OCR
             icon: 'mdi-share-variant'
         } as any);
     }
+    const { action, ...otherPopoverOptions } = popoverOptions ?? {};
     return new Promise<boolean>((resolve, reject) => {
-        showPopoverMenu({
+        const popover = {
             title: lc('image_export'),
             options,
             anchor,
@@ -1268,9 +1251,72 @@ export async function showImagePopoverMenu(pages: { page: OCRPage; document: OCR
                     hideLoading();
                 }
             },
-            ...(popoverOptions ?? {})
-        });
+            ...otherPopoverOptions
+        };
+        if (action) {
+            popover.onClose({ id: action });
+        } else {
+            showPopoverMenu(popover);
+        }
     });
+}
+
+/**
+ * The export menu (PDF, images, passes, share) of the pages shown: native menu items, opened from the export button of a bar.
+ * The sections: PDF, then the passes and the images, then the settings. An item which does not apply is not there.
+ * `pdf: false` is for the page edit (the menu is about the current page).
+ */
+export function getExportMenu({ document, documents, pages, pdf = true }: { pages: { page: OCRPage; document: OCRDocument }[]; document?: OCRDocument; documents?: OCRDocument[]; pdf?: boolean }): MenuItem[] {
+    const allDocuments = documents ?? (document ? [document] : []);
+    const hasImages = pages.some((p) => p.page?.imagePath);
+    const hasPass = CARD_APP && pages.some((p) => p.page?.pkpass);
+    const single = pages.length === 1;
+    const runPDF = (action: string) => showPDFPopoverMenu({ pages, document, documents: allDocuments, action }).catch(showError);
+    const runImages = (action: string) => showImagePopoverMenu(pages, null, { action }).catch(showError);
+    const sections: MenuItem[][] = [];
+    if (pdf && hasImages && !hasPass) {
+        sections.push([
+            { id: 'preview_pdf', title: lc('preview_pdf'), icon: appIcon('preview'), onSelect: () => runPDF('preview') },
+            { id: 'export_pdf', title: lc('export_pdf'), icon: appIcon('save_to_folder'), onSelect: () => runPDF('export') },
+            ...(allDocuments.length > 1 ? [{ id: 'export_pdf_each', title: lc('bulk_export'), icon: appIcon('save_to_folder'), onSelect: () => runPDF('bulk_export') }] : []),
+            { id: 'share_pdf', title: lc('share_pdf'), icon: appIcon('export'), onSelect: () => runPDF('share') },
+            { id: 'print_pdf', title: lc('print_pdf'), icon: appIcon('print'), onSelect: () => runPDF('print') }
+        ]);
+    }
+    if (hasPass) {
+        sections.push([
+            { id: 'export_as_pkpass', title: lc('export_as_pkpass'), icon: appIcon('save_to_folder'), onSelect: () => runImages('export_as_pkpass') },
+            { id: 'export_as_espass', title: lc('export_as_espass'), icon: appIcon('save_to_folder'), onSelect: () => runImages('export_as_espass') },
+            { id: 'share_as_pkpass', title: lc('share_as_pkpass'), icon: appIcon('export'), onSelect: () => runImages('share_as_pkpass') },
+            { id: 'share_as_espass', title: lc('share_as_espass'), icon: appIcon('export'), onSelect: () => runImages('share_as_espass') }
+        ]);
+    }
+    if (hasImages) {
+        sections.push([
+            { id: 'export_images', title: lc(single ? 'export_image' : 'export_images'), icon: appIcon('save_to_folder'), onSelect: () => runImages('export') },
+            { id: 'save_gallery', title: lc('save_gallery'), icon: appIcon('save_gallery'), onSelect: () => runImages('save_gallery') },
+            { id: 'share_images', title: lc(single ? 'share_image' : 'share_images'), icon: appIcon('export'), onSelect: () => runImages('share') }
+        ]);
+    }
+    const settings: MenuItem[] = [];
+    if (pdf && hasImages && !hasPass) {
+        settings.push({ id: 'pdf_settings', title: lc('pdf_export_settings'), icon: appIcon('settings'), onSelect: () => showSettings({ subSettingsOptions: 'pdf_export' }) });
+    }
+    if (__ANDROID__ && (hasImages || hasPass)) {
+        const folder = ApplicationSettings.getString('image_export_directory', DEFAULT_EXPORT_DIRECTORY);
+        settings.push({
+            id: 'set_export_directory',
+            title: lc('export_folder'),
+            subtitle: folder ? getDirectoryName(folder) : lc('please_choose_export_folder'),
+            icon: appIcon('folder'),
+            onSelect: () => runImages('set_export_directory'),
+            trailingAction: { icon: appIcon('restore'), title: lc('reset'), onSelect: () => ApplicationSettings.remove('image_export_directory') }
+        });
+    }
+    if (settings.length) {
+        sections.push(settings);
+    }
+    return sections.flatMap((section, index) => (index === 0 ? section : [{ separator: true }, ...section]));
 }
 
 export interface ShowSnackMessageOptions {
@@ -1528,10 +1574,13 @@ export async function deleteOriginalImages({ documents, pages }: { documents?: O
 }
 export async function transformPages({ documents, pages }: { documents?: OCRDocument[]; pages?: PageTransformData[] }) {
     try {
-        const view = (await import('~/components/common/TransformPagesBottomSheet.svelte')).default;
+        const view = (await import('~/components/widgets/ImageProcessingSettingsBottomSheet.svelte')).default;
+        // a fixed height: its list scrolls inside, the sheet does not take the whole screen
+        const sheetHeight = Math.round(screenHeightDips * 0.7);
         const updateOptions = await showBottomSheet({
             view,
-            skipCollapsedState: true
+            detents: [sheetHeight],
+            props: { sheetHeight, applyMode: true, transforms: [], colorType: DEFAULT_COLORTYPE, colorMatrix: null, brightness: DEFAULT_BRIGHTNESS, contrast: DEFAULT_CONTRAST, cameraOptionsStore: null }
         });
         if (updateOptions) {
             // await showLoading(lc('computing'));

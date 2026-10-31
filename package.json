@@ -85,6 +85,7 @@
         "@nativescript-community/ui-menu": "1.4.2",
         "@nativescript-community/ui-pager": "14.1.42",
         "@nativescript-community/ui-pager-indicator": "14.1.42",
+        "@nativescript-community/ui-persistent-bottomsheet": "0.1.14",
         "@nativescript-community/ui-popover": "0.1.22",
         "@nativescript-community/ui-progress": "1.4.2",
         "@nativescript-community/ui-segmentedbar": "1.4.2",
@@ -145,6 +146,7 @@
         "@nativescript-community/ui-datetimepicker": "portal:../ui-native-components/packages/ui-datetimepicker",
         "@nativescript-community/ui-menu": "portal:../ui-native-components/packages/ui-menu",
         "@nativescript-community/ui-button": "portal:../ui-native-components/packages/ui-button",
-        "@nativescript-community/ui-segmentedbar": "portal:../ui-native-components/packages/ui-segmentedbar"
+        "@nativescript-community/ui-segmentedbar": "portal:../ui-native-components/packages/ui-segmentedbar",
+        "@nativescript-community/ui-persistent-bottomsheet": "portal:../ui-persistent-bottomsheet/packages/ui-persistent-bottomsheet"
     }
 }
