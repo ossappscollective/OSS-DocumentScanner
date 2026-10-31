@@ -209,6 +209,8 @@
     "existing_folders": "기존 폴더",
     "expanded": "널널하게",
     "expire_on": "만료 시점",
+    "expired": "만료됨",
+    "expires_on_date": "%1$s 만료",
     "export": "내보내기",
     "export_as_espass": "ESpass로 내보내기",
     "export_as_pkpass": "PKPass로 내보내기",
