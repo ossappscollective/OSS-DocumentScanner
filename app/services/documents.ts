@@ -538,6 +538,25 @@ export class PageRepository extends BaseRepository<OCRPage, Page> {
         );
     }
 
+    // gives an image to a page created without one; its code stays as is
+    async fillPage(page: OCRPage, attributes: OCRPage, dataFolder: string) {
+        const { document_id, id, imagePath, qrcode, sourceImagePath, ...others } = attributes;
+        await this.update(
+            page,
+            cleanUndefined({
+                ...others,
+                imagePath: imagePath?.replace(dataFolder, ''),
+                sourceImagePath: sourceImagePath?.replace(dataFolder, ''),
+                rotation: others.rotation && !isNaN(others.rotation) ? others.rotation : 0,
+                scale: others.scale ?? 1
+            })
+        );
+        // update stores the relative paths, the model holds the absolute ones
+        page.imagePath = imagePath;
+        page.sourceImagePath = sourceImagePath;
+        return page;
+    }
+
     async update(page: OCRPage, data?: Partial<OCRPage>, updateModifiedDate = true) {
         if (!data) {
             const toUpdate: Partial<OCRPage> = {};
