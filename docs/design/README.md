@@ -6,6 +6,11 @@ Read these in order. Everything here is the target design; the implementation st
 | --- | --- |
 | `cardwallet-design-rules.md` | Exact values for every component and state: shape rule, FAB, chips, titles, selection, folders, list rows, typography, states, motion, snackbars, icons, safe areas, dialogs, settings rows, Document Scanner differences. **Wins on conflicts.** |
 | `cardwallet-card-view.md` | Principles, tokens, hero zones, the iOS (Liquid Glass) and Android (Material 3 Expressive) card view, variants and edge cases, card list, components (buttons, text fields, chips, selection, sheets, menus), implementation status of PRs 765 to 768 |
+| `cardwallet-fullscreen.html` | Mockup: fullscreen viewer, code (QR, wide barcode) and photo (single, several, zoomed) |
+| `cardwallet-page-edit.html` | Mockup: page edit, default, adjust sheet, adjust sheet without original, more menu |
+| `cardwallet-pdf-preview.html` / `.md` | Mockup and spec: PDF preview (sheets pager, transparent layout sheet, more menu, loading, exporting, empty and error states) |
+| `cardwallet-crop-export.html` / `.md` | Mockup and spec: crop view (dark editor, four states) and the export menu (PDF, images, share) in five contexts, mapping to the code |
+| `cardwallet-photo-edit-button.html` | Mockup: five placements of the photo edit button (open decision) |
 | `cardwallet-card-view-variants.html` | Mockup: card view variants on iOS and Android |
 | `cardwallet-card-view-ios-states.html` | Mockup: eight iOS card view states |
 | `cardwallet-card-list.html` | Mockup: card list styles, folders, selection, tile anatomy |

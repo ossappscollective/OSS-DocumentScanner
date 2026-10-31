@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Card view: where does the photo edit button go?</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
+<style>
+:root{--text-primary:#1f1f1e;--text-secondary:#5f5e5a;--border-strong:#c8c6bd;--surface-1:#e9e8e1;--page:#fafaf7}
+@media(prefers-color-scheme:dark){:root{--text-primary:#f1f0ea;--text-secondary:#b0aea5;--border-strong:#4a4944;--surface-1:#34332f;--page:#1c1c1a}}
+body{font-family:system-ui,sans-serif;margin:24px;background:var(--page);color:var(--text-primary);max-width:1200px}
+button{font:inherit;font-size:13px;color:var(--text-primary);background:transparent;border:0.5px solid var(--border-strong);border-radius:8px;padding:5px 12px;cursor:pointer}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+ul{font-size:13px;color:var(--text-secondary);line-height:1.5;max-width:860px}
+</style>
+</head>
+<body>
+<h2 class="sr-only">Five placements of the photo edit button on the card view, on iOS and Android: overlay in the corner of the cell, labeled button under the photo, button on the thumbnail row, overlay inside the photo bounds, and no button (menu and fullscreen only).</h2>
+<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 14px">
+<button id="bl">Light</button><button id="bd">Dark</button>
+<span style="width:1px;height:20px;background:var(--border-strong)"></span>
+<button id="mi">iOS</button><button id="ma">Android</button><button id="mb">Both</button>
+</div>
+<div id="out"></div>
+<ul>
+<li><b>Decided: D</b>, with the photo tile at a constant card ratio so the button has stable bounds (rules, section 23). The notes below keep the other options.</li>
+<li><b>A. Corner of the cell (built):</b> the photo is aspect fit and narrower than its cell when it is not 1.58, so the button floats off the image on iOS and hangs over its edge on Android. Not recommended.</li>
+<li><b>B. Labeled button under the photo:</b> tonal pill, 36 tall, icon 18 and the label "adjust" (iOS: tinted capsule, Android: tonal). It never covers the image, says what it edits, and is the only photo action next to the photo. Costs 36 + 8 of height (the toolbar area is reused, no scrolling needed).</li>
+<li><b>C. On the thumbnail row:</b> a 36 round icon button at the right end of the strip. No extra height, no label, and it collides with the thumbnails beyond 5 photos.</li>
+<li><b>D. Inside the image, sized to it:</b> the same round button at 12 from the photo's own bottom-right corner (iOS clear glass, Android tonal). Best look, but the pager must expose the image bounds (the image size is derived from its aspect ratio), which is fragile on both platforms.</li>
+<li><b>E. No button:</b> photo edit stays in the long-press menu of a photo ("Edit photo") and in the pencil of the fullscreen viewer; tap a photo opens fullscreen. The toolbar is share and edit (card). Cleanest screen; photo edit is two taps away and less discoverable.</li>
+<li><b>System design fit:</b> iOS prefers a visible text control for a distinct mode ("Edit" in Photos) or a context menu (E); an unlabeled glass icon over content is for media controls only. Material 3 puts actions about a media item in the item's own row or below it (B, C) and uses an icon over the image only for media controls such as fullscreen. So B or E follow the platform conventions best; D is acceptable if the bounds can be read reliably.</li>
+</ul>
+<script>
+const state={dark:false,mode:'both'};
+const BF='backdrop-filter:blur(18px) saturate(1.7);-webkit-backdrop-filter:blur(18px) saturate(1.7);';
+const ic=(n,sz,c)=>`<i class="ti ti-${n}" style="font-size:${sz||20}px;${c?'color:'+c:''}"></i>`;
+function roles(p){const d=state.dark;
+if(p==='a')return d?{page:'#111318',bar:'#272a31',cont:'#00458f',onCont:'#d8e2ff',acc:'#adc6ff',txt:'#e2e2e9',sub:'#c4c6d0',sec:'#3f4759',onSec:'#dbe2f9'}:{page:'#f9f9ff',bar:'#e6e9f2',cont:'#d8e2ff',onCont:'#001a41',acc:'#005ac1',txt:'#1a1b20',sub:'#44474f',sec:'#dbe2f9',onSec:'#141b2c'};
+return d?{page:'#000',acc:'#4d8dff',txt:'#fff',sub:'rgba(235,235,245,.65)',glass:'rgba(70,70,76,.42)',gb:'rgba(255,255,255,.22)',tint:'rgba(77,141,255,.22)'}:{page:'#f2f2f7',acc:'#0a6cff',txt:'#000',sub:'rgba(60,60,67,.65)',glass:'rgba(255,255,255,.42)',gb:'rgba(255,255,255,.8)',tint:'rgba(10,108,255,.12)'}}
+const frame=(inner,r,p)=>`<div style="width:300px;height:650px;border-radius:${p==='i'?46:36}px;background:${r.page};border:6px solid #17171a;box-sizing:border-box;position:relative;overflow:hidden;font-family:${p==='i'?'-apple-system,system-ui,sans-serif':'Roboto,system-ui,sans-serif'};color:${r.txt}"><div style="position:absolute;top:8px;${p==='i'?'left:50%;margin-left:-42px;width:84px;height:24px':'left:50%;margin-left:-7px;width:14px;height:14px'};border-radius:12px;background:#000;z-index:30"></div>${inner}</div>`;
+function qr(sz){const n=21,c=sz/n;let v=7,s='';const rnd=()=>{v=(v*1103515245+12345)%2147483648;return v/2147483648};for(let y=0;y<n;y++)for(let x=0;x<n;x++){const f=(x<8&&y<8)||(x>12&&y<8)||(x<8&&y>12);if(!f&&rnd()>.52)s+=`<rect x="${x*c}" y="${y*c}" width="${c}" height="${c}" fill="#000"/>`}
+const fin=(x,y)=>`<rect x="${x*c}" y="${y*c}" width="${7*c}" height="${7*c}" fill="#000"/><rect x="${(x+1)*c}" y="${(y+1)*c}" width="${5*c}" height="${5*c}" fill="#fff"/><rect x="${(x+2)*c}" y="${(y+2)*c}" width="${3*c}" height="${3*c}" fill="#000"/>`;return`<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}">${s}${fin(0,0)}${fin(14,0)}${fin(0,14)}</svg>`}
+const photoCol=['#7b8f86','#8d7b91'];
+// geometry of the photo zone
+const PX=16,PW=252,PH=170,PTOP=262;
+function round(p,r,size,over){const st=p==='i'?`background:${over?'rgba(255,255,255,.35)':r.glass};border:1px solid ${over?'rgba(255,255,255,.6)':r.gb};${BF}color:${over?'#fff':r.txt}`:`background:${r.sec};color:${r.onSec}`;return`<div style="width:${size}px;height:${size}px;border-radius:50%;${st};display:flex;align-items:center;justify-content:center">${ic('adjustments-horizontal',size>=36?18:16)}</div>`}
+function labeled(p,r){const st=p==='i'?`background:${r.tint};color:${r.acc}`:`background:${r.sec};color:${r.onSec}`;return`<div style="height:36px;padding:0 16px;border-radius:18px;${st};display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:${p==='i'?600:500}">${ic('adjustments-horizontal',18)}adjust</div>`}
+function screen(v,p,r){
+const topbar=p==='i'?`<div style="position:absolute;left:14px;top:44px;width:40px;height:40px;border-radius:50%;background:${r.glass};border:1px solid ${r.gb};${BF}display:flex;align-items:center;justify-content:center">${ic('chevron-left',20)}</div><div style="position:absolute;right:14px;top:44px;height:40px;padding:0 14px;border-radius:20px;background:${r.glass};border:1px solid ${r.gb};${BF}display:flex;align-items:center;gap:14px">${ic('star',20)}${ic('plus',20)}${ic('dots',20)}</div>`:`<div style="position:absolute;left:0;right:0;top:0;height:160px;background:${r.cont};border-radius:0 0 40px 12px"></div><div style="position:absolute;left:16px;right:16px;top:36px;display:flex;justify-content:space-between;color:${r.onCont}">${ic('arrow-left',24)}<span style="display:flex;gap:18px">${ic('star',24)}${ic('plus',24)}${ic('dots-vertical',24)}</span></div>`;
+const name=`<div style="position:absolute;left:${p==='i'?20:22}px;top:${p==='i'?96:84}px;font-size:${p==='i'?32:30}px;font-weight:${p==='i'?700:600};color:${p==='i'?r.txt:r.onCont}">Pharmacie</div>`;
+const code=`<div style="position:absolute;left:${PX}px;top:${p==='i'?150:142}px;width:${PW+PX*0}px;height:96px;border-radius:28px;background:#fff;display:flex;align-items:center;justify-content:center;gap:12px;${p==='i'?'box-shadow:0 6px 22px rgba(0,0,0,.14);':''}color:#000">${qr(64)}<div style="font-size:15px;font-weight:600;letter-spacing:.5px">5550<br>1234</div></div>`;
+const photoStyle=(i)=>`position:absolute;top:${PTOP}px;height:${PH}px;border-radius:28px;background:${photoCol[i]}`;
+// photo (aspect fit, 1.5 ratio: narrower than the cell: 170*1.5=255 > 252 ok but a 4:3 photo is 227)
+const iw=v==='A'||v==='D'?226:252,ih=v==='A'||v==='D'?170:PH;
+const photo=`<div style="position:absolute;left:${PX}px;top:${PTOP}px;width:${PW}px;height:${PH}px"><div style="position:absolute;left:${(PW-iw)/2}px;top:0;width:${iw}px;height:${ih}px;border-radius:24px;background:${photoCol[0]};display:flex;align-items:center;justify-content:center;color:#ffffff88">${ic('photo',22)}${v==='D'?`<div style="position:absolute;right:12px;bottom:12px">${round(p,r,36,true)}</div>`:''}</div>${v==='A'?`<div style="position:absolute;right:12px;bottom:12px">${round(p,r,36,true)}</div>`:''}</div><div style="position:absolute;left:${PX+PW+8}px;top:${PTOP}px;width:60px;height:${PH}px;border-radius:24px;background:${photoCol[1]}"></div>`;
+const thumbsTop=PTOP+PH+14;
+const thumbs=`<div style="position:absolute;left:0;right:0;top:${thumbsTop}px;display:flex;justify-content:center;gap:8px"><div style="width:44px;height:30px;border-radius:8px;background:${photoCol[0]};outline:2px solid ${r.acc};outline-offset:1px"></div><div style="width:44px;height:30px;border-radius:8px;background:${photoCol[1]}"></div></div>`;
+let extra='';
+if(v==='B')extra=`<div style="position:absolute;left:0;right:0;top:${thumbsTop+44}px;display:flex;justify-content:center">${labeled(p,r)}</div>`;
+if(v==='C')extra=`<div style="position:absolute;right:18px;top:${thumbsTop-3}px">${round(p,r,36,false)}</div>`;
+const tool=p==='i'?`<div style="position:absolute;left:14px;right:14px;bottom:16px;height:52px;border-radius:26px;background:${r.glass};border:1px solid ${r.gb};${BF}display:flex;align-items:center;justify-content:space-between;padding:0 6px 0 18px">${ic('share',21)}<div style="width:76px;height:40px;border-radius:20px;background:${r.acc};color:#fff;display:flex;align-items:center;justify-content:center">${ic('pencil',20)}</div></div>`:`<div style="position:absolute;left:0;right:0;bottom:16px;display:flex;justify-content:center"><div style="height:56px;padding:0 28px;border-radius:28px;background:${r.bar};display:flex;align-items:center;gap:32px">${ic('share',22)}${ic('pencil',22)}</div></div>`;
+const menu=v==='E'?`<div style="position:absolute;left:30px;top:${PTOP+40}px;width:180px;border-radius:${p==='i'?16:20}px;background:${p==='i'?(state.dark?'rgba(44,44,46,.9)':'rgba(255,255,255,.9)'):(state.dark?'#1d2024':'#f1f3fa')};${p==='i'?BF:''}box-shadow:0 8px 28px rgba(0,0,0,.28);padding:${p==='i'?0:6}px;z-index:10">${['maximize|Fullscreen','adjustments-horizontal|Edit photo','share|Share photo'].map((t,i)=>{const[a,b]=t.split('|');return`<div style="height:${p==='i'?42:48}px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;font-size:15px;${p==='i'&&i?`border-top:0.5px solid ${r.sub}33`:''}${p==='a'?`border-radius:${i?'6px':'20px 20px 6px 6px'};background:${state.dark?'#2b2d33':'#e8ebf4'};margin-bottom:2px;gap:12px;justify-content:flex-start`:''}">${p==='a'?ic(a,20)+b:b+ic(a,18)}</div>`}).join('')}</div>`:'';
+return frame(topbar+name+code+photo+thumbs+extra+tool+menu,r,p)}
+const FR=[['A. Corner of the cell (built)','A'],['B. Labeled, under the photo','B'],['C. On the thumbnail row','C'],['D. Inside the image','D'],['E. No button (menu)','E']];
+function scaled(html,label,sc){return`<div style="width:${300*sc}px"><div style="width:${300*sc}px;height:${650*sc}px"><div style="width:300px;height:650px;transform:scale(${sc});transform-origin:0 0">${html}</div></div><div style="font-size:12px;color:var(--text-secondary);text-align:center;margin-top:6px">${label}</div></div>`}
+function render(){const both=state.mode==='both',sc=both?.55:.78;
+const row=(title,p)=>{const r=roles(p);return`<div style="font-size:14px;font-weight:500;margin:6px 0 8px">${title}</div><div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;margin-bottom:18px">${FR.map(f=>scaled(screen(f[1],p,r),f[0],sc)).join('')}</div>`};
+document.getElementById('out').innerHTML=(state.mode!=='android'?row('iOS 26','i'):'')+(state.mode!=='ios'?row('Android M3 Expressive','a'):'');
+document.getElementById('bl').style.background=state.dark?'transparent':'var(--surface-1)';
+document.getElementById('bd').style.background=state.dark?'var(--surface-1)':'transparent';
+[['mi','ios'],['ma','android'],['mb','both']].forEach(x=>document.getElementById(x[0]).style.background=state.mode===x[1]?'var(--surface-1)':'transparent')}
+document.getElementById('bl').onclick=()=>{state.dark=false;render()};
+document.getElementById('bd').onclick=()=>{state.dark=true;render()};
+[['mi','ios'],['ma','android'],['mb','both']].forEach(x=>document.getElementById(x[0]).onclick=()=>{state.mode=x[1];render()});
+render();
+</script>
+</body>
+</html>

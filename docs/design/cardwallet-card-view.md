@@ -60,12 +60,12 @@ Three layers: an **ambient backdrop** that gives glass something to refract, a c
 
 **Layout, top to bottom (same order as Android)**
 
-1. Navigation bar: back and more, system glass buttons.
+1. Navigation bar: back on the left; favorite and more on the right, system glass buttons (see Bars in the design rules).
 2. Name in the primary label color (Large Title, 34 pt bold) with the card type as a small accent-tinted glass capsule under it. With a photo, the accent is not used for the name text. With no photo the card color is the backdrop, so the name takes the contrast color against it (white or black) and the capsule is solid card color with onAccent text.
 3. Code zone: white tiles, **no border and no ring**. A soft shadow (0 6 22, 14% black) separates the tile from the backdrop. Dots in a small glass capsule when there are several codes.
 4. Photo zone: pager with 28 pt concentric corners; thumbnail strip in a glass capsule when there are several photos.
 5. Details sheet, non-modal, three detents.
-6. Bottom toolbar: share, favorite, edit (prominent, card-tinted), more.
+6. Bottom toolbar: share on the left, edit the card at the right (prominent, with a text label). A round photo edit button sits inside each photo tile.
 
 **Layer 1: ambient backdrop**
 
@@ -84,7 +84,7 @@ Three layers: an **ambient backdrop** that gives glass something to refract, a c
 | Photo thumbnails | Regular glass, interactive | UIGlassEffect (isInteractive) in a UIGlassContainerEffect | Selected thumbnail outlined in the accent; over bright photos use the clear style plus a 20% dim |
 | Details sheet, peek and medium | System sheet glass | UISheetPresentationController, custom detents, largestUndimmedDetentIdentifier | Turns opaque at large |
 | Toolbar | System glass | UIToolbar; edit item with the prominent style, tinted | One tinted item only |
-| More menu | System menu, morphs from its button | UIMenu on the toolbar item | Fullscreen and delete live here |
+| More menu | System menu, morphs from its button | UIMenu on the navigation bar item | Fullscreen and delete live here, with the other card actions |
 
 API names are from memory of iOS 26; each needs a check on device. Reachable from NativeScript through the iOS runtime.
 
@@ -115,11 +115,11 @@ Standard M3 Expressive components do the work (small top app bar, carousel, floa
 
 **Anatomy**
 
-- **Top app bar.** Small, transparent over the plate: back and more. On scroll it becomes a tonal bar with the name in Title Large.
+- **Top app bar.** Small, transparent over the plate: back on the left; favorite and more on the right. On scroll it becomes a tonal bar with the name in Title Large.
 - **Code zone.** White tiles, 28 dp corners, no shadow, overlapping the plate's bottom edge. Several codes: pager (24 dp peek) with dots, no names. Tap opens fullscreen; long press opens the item menu.
 - **Photo zone.** M3 carousel of photo cards, same width, peek and corners as code tiles, thumbnail row under it when there are several photos; selected thumbnail has a 2.5 dp accent outline.
 - **Details.** Inline segmented list: outer corners 28 dp, inner 6 dp, 2 dp between rows, on surfaceContainerLow, below the zones (often below the fold). Pressing a row morphs its corners to 20 dp and copies the value; masked fields (PIN) reveal on tap.
-- **Actions.** M3 floating toolbar: share, favorite, more. Edit is the FAB at its end, filled with the accent role. Fullscreen sits in the overflow menu. The toolbar floats 16 dp above the navigation or gesture bar inset, not above the screen edge. Content bottom padding = navigation inset + 88 dp (64 toolbar, 16 margin, 8 gap), so the thumbnail strip and the last details never sit under the toolbar.
+- **Actions.** M3 floating toolbar: share. Edit (the card) is an extended FAB with its label at the bottom right, filled with the accent role. Favorite is in the top app bar next to more; fullscreen sits in the overflow menu. The toolbar floats 16 dp above the navigation or gesture bar inset, not above the screen edge. Content bottom padding = navigation inset + 88 dp (64 toolbar, 16 margin, 8 gap), so the thumbnail strip and the last details never sit under the toolbar.
 - **Edit.** Modal bottom sheet, drag handle, notched outlined text fields stacked in the order Name, type fields, extra fields, then a Color row, a Pages list to reorder and add codes and photos, Save as a filled button.
 
 **Color and motion.** The card view alone seeds its palette from the card color; the rest of the app keeps the system or app seed. Spatial springs drive the plate collapse and the carousel; effects springs drive color changes when the user changes the card color in edit (the plate recolors live behind the sheet).

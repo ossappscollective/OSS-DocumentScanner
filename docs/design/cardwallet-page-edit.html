@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page edit (iOS and Android)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
+<style>
+:root{--text-primary:#1f1f1e;--text-secondary:#5f5e5a;--border-strong:#c8c6bd;--surface-1:#e9e8e1;--page:#fafaf7}
+@media(prefers-color-scheme:dark){:root{--text-primary:#f1f0ea;--text-secondary:#b0aea5;--border-strong:#4a4944;--surface-1:#34332f;--page:#1c1c1a}}
+body{font-family:system-ui,sans-serif;margin:24px;background:var(--page);color:var(--text-primary);max-width:1100px}
+button{font:inherit;font-size:13px;color:var(--text-primary);background:transparent;border:0.5px solid var(--border-strong);border-radius:8px;padding:5px 12px;cursor:pointer}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+ul{font-size:13px;color:var(--text-secondary);line-height:1.5;max-width:760px}
+</style>
+</head>
+<body>
+<h2 class="sr-only">Page edit screen on iOS and Android: default, adjust sheet (transparent glass over the page), adjust sheet when the original image is gone, and the more menu.</h2>
+<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 14px">
+<button id="bl">Light</button><button id="bd">Dark</button>
+<span style="width:1px;height:20px;background:var(--border-strong)"></span>
+<button id="mi">iOS</button><button id="ma">Android</button><button id="mb">Both</button>
+</div>
+<div id="out"></div>
+<ul>
+<li><b>Bars:</b> native top bar and bottom toolbar, like the card view. Top bar: back, the document name with "Page 2 of 5" as subtitle, share, more. Bottom toolbar: the tools that change the page (crop, rotate left, rotate right, adjust, detect text, detect barcode). Everything else (PDF export, card color, detected text, barcodes, rename, delete page) is in the more menu, delete last in red.</li>
+<li><b>Page:</b> the page image on the neutral page color (the scanner has no card color), aspect fit, 16 margin, 6 radius, level 1 shadow on iOS and none on Android. Pinch zoom and swipe between pages. The counter pill "2 / 5" floats 12 above the toolbar: glass on iOS, tonal on Android; hidden for one page.</li>
+<li><b>No original:</b> crop is hidden (it needs the original image) and the Transformations group is not in the adjust sheet; only adjustments and filters remain.</li>
+<li><b>Adjust sheet:</b> the transparent sheet of the camera: no dim behind, forced dark, grabber, detents half and large, content on the on-glass roles. At the half detent the page scales to stay fully visible above the sheet. Sections: Transformations (switches, trailing, on both platforms), Adjustments (brightness and contrast sliders, the value on the right, tap the value to reset), Filters (a row of 56 tiles, the selected one has a 2 accent ring). Every change applies live; there is no Save. Closing the sheet keeps the changes.</li>
+<li><b>More menu:</b> iOS system menu from the more button; Android M3 Expressive menu, 28 radius, rows 48, delete in its own segment.</li>
+<li><b>Controls over the page</b> follow the Document Scanner rule: glass on iOS, tonal on Android, never over the document itself (the counter sits below the page area, not on it).</li>
+</ul>
+<script>
+const state={dark:false,mode:'both'};
+const BF='backdrop-filter:blur(18px) saturate(1.7);-webkit-backdrop-filter:blur(18px) saturate(1.7);';
+const ic=(n,sz,c)=>`<i class="ti ti-${n}" style="font-size:${sz||20}px;${c?'color:'+c:''}"></i>`;
+function roles(p){const d=state.dark;
+if(p==='a')return d?{page:'#111318',bar:'#272a31',cont:'#00458f',acc:'#adc6ff',onAcc:'#002e69',txt:'#e2e2e9',sub:'#c4c6d0',menu:'#2b2d33',sep:'#43474e',paper:'#e8e8ea'}:{page:'#f9f9ff',bar:'#e6e9f2',cont:'#d8e2ff',acc:'#005ac1',onAcc:'#fff',txt:'#1a1b20',sub:'#44474f',menu:'#eceef6',sep:'#c4c6d0',paper:'#fff'};
+return d?{page:'#000',acc:'#4d8dff',txt:'#fff',sub:'rgba(235,235,245,.65)',glass:'rgba(70,70,76,.42)',gb:'rgba(255,255,255,.22)',sep:'rgba(84,84,88,.6)',menu:'rgba(44,44,46,.82)',paper:'#e8e8ea'}:{page:'#f2f2f7',acc:'#0a6cff',txt:'#000',sub:'rgba(60,60,67,.65)',glass:'rgba(255,255,255,.42)',gb:'rgba(255,255,255,.8)',sep:'rgba(60,60,67,.18)',menu:'rgba(255,255,255,.82)',paper:'#fff'}}
+const frame=(inner,r,p)=>`<div style="width:300px;height:650px;border-radius:${p==='i'?46:36}px;background:${r.page};border:6px solid #17171a;box-sizing:border-box;position:relative;overflow:hidden;font-family:${p==='i'?'-apple-system,system-ui,sans-serif':'Roboto,system-ui,sans-serif'};color:${r.txt}"><div style="position:absolute;top:8px;${p==='i'?'left:50%;margin-left:-42px;width:84px;height:24px':'left:50%;margin-left:-7px;width:14px;height:14px'};border-radius:12px;background:#000;z-index:30"></div>${inner}</div>`;
+const glassBtn=(r,n,x)=>`<div style="position:absolute;${x<0?`right:${-x}px`:`left:${x}px`};top:44px;width:40px;height:40px;border-radius:50%;background:${r.glass};border:1px solid ${r.gb};${BF}display:flex;align-items:center;justify-content:center;color:${r.txt};z-index:6">${ic(n,20)}</div>`;
+// top bars
+function topBar(p,r){if(p==='i')return`${glassBtn(r,'chevron-left',14)}<div style="position:absolute;left:70px;right:104px;top:44px;height:40px;text-align:center;display:flex;flex-direction:column;justify-content:center"><div style="font-size:15px;font-weight:600;white-space:nowrap">Passport scan</div><div style="font-size:11px;color:${r.sub}">Page 2 of 5</div></div><div style="position:absolute;right:14px;top:44px;height:40px;padding:0 14px;border-radius:20px;background:${r.glass};border:1px solid ${r.gb};${BF}display:flex;align-items:center;gap:16px;color:${r.txt};z-index:6">${ic('share',20)}${ic('dots',20)}</div>`;
+return`<div style="position:absolute;left:0;right:0;top:0;height:96px;background:${r.page}"></div><div style="position:absolute;left:12px;right:12px;top:36px;height:56px;display:flex;align-items:center;gap:14px;color:${r.txt}">${ic('arrow-left',24)}<div style="flex:1;display:flex;flex-direction:column"><div style="font-size:20px;line-height:1.1">Passport scan</div><div style="font-size:12px;color:${r.sub}">Page 2 of 5</div></div>${ic('share-3',24)}${ic('dots-vertical',24)}</div>`}
+const paperPage=(r,p,w,h)=>{const lines=Array.from({length:13},(_,i)=>`<div style="height:4px;border-radius:2px;background:#0000001f;width:${i%5===4?'55%':'100%'};margin-top:${i===0?0:8}px"></div>`).join('');return`<div style="width:${w}px;height:${h}px;border-radius:6px;background:${r.paper};${p==='i'?'box-shadow:0 2px 10px rgba(0,0,0,.18);':'border:1px solid '+r.sep+';'}box-sizing:border-box;padding:${Math.round(w/12)}px"><div style="height:14px;width:45%;border-radius:3px;background:#0000003d;margin-bottom:14px"></div>${lines}</div>`};
+function pageArea(r,p,top,bottom,sc){const avail=bottom-top-32,h=Math.min(avail,360)*(sc||1),w=Math.round(h/1.41);return`<div style="position:absolute;left:0;right:0;top:${top}px;height:${bottom-top}px;display:flex;align-items:center;justify-content:center">${paperPage(r,p,w,Math.round(h))}</div>`}
+const counter=(r,p,bottom)=>`<div style="position:absolute;left:0;right:0;bottom:${bottom}px;display:flex;justify-content:center;z-index:4"><div style="height:28px;padding:0 12px;border-radius:14px;${p==='i'?`background:${r.glass};border:1px solid ${r.gb};${BF}`:`background:${r.cont}`};color:${p==='i'?r.txt:r.txt};font-size:13px;display:flex;align-items:center">2 / 5</div></div>`;
+function toolbar(p,r,crop,mark){const tools=[crop?'crop':null,'rotate-2','rotate-clockwise-2','|','adjustments-horizontal','text-scan-2','qrcode'].filter(Boolean);
+const items=tools.map(t=>t==='|'?`<span style="width:1px;height:22px;background:${r.sep}"></span>`:`<div style="width:36px;height:36px;border-radius:${p==='i'?'50%':'12px'};display:flex;align-items:center;justify-content:center;color:${t===mark?(p==='i'?r.acc:r.txt):r.txt};${t===mark?(p==='i'?`background:${r.acc}26`:`background:${r.cont}`):''}">${ic(t,p==='i'?22:24)}</div>`).join('');
+return p==='i'?`<div style="position:absolute;left:14px;right:14px;bottom:16px;height:52px;border-radius:26px;background:${r.glass};border:1px solid ${r.gb};${BF}display:flex;align-items:center;justify-content:space-around;padding:0 8px;z-index:5">${items}</div>`
+:`<div style="position:absolute;left:14px;right:14px;bottom:16px;height:56px;border-radius:28px;background:${r.bar};display:flex;align-items:center;justify-content:space-around;padding:0 8px;z-index:5">${items}</div>`}
+// frames
+function fDefault(p,r){return frame(topBar(p,r)+pageArea(r,p,p==='i'?96:96,560)+counter(r,p,p==='i'?84:88)+toolbar(p,r,true),r,p)}
+// transparent sheet: on-glass roles
+const G={txt:'#fff',sub:'rgba(255,255,255,.68)',fill:'rgba(255,255,255,.14)',sep:'rgba(255,255,255,.22)'};
+function sw(on,acc){return`<div style="width:40px;height:24px;border-radius:12px;background:${on?acc:'rgba(255,255,255,.28)'};position:relative;flex:none"><div style="position:absolute;top:2px;${on?'right:2px':'left:2px'};width:20px;height:20px;border-radius:50%;background:#fff"></div></div>`}
+function sheetContent(p,r,withTransforms){const acc=p==='i'?'#4d8dff':'#adc6ff';
+const group=(rows)=>`<div style="margin:0 16px;border-radius:${p==='i'?12:20}px;background:${G.fill};overflow:hidden">${rows}</div>`;
+const head=t=>`<div style="margin:14px 32px 6px;font-size:${p==='i'?11:12}px;letter-spacing:${p==='i'?'.4px':'0'};${p==='i'?'text-transform:uppercase;':'font-weight:500;'}color:${p==='a'?acc:G.sub}">${t}</div>`;
+const row=(t,s,on,i)=>`<div style="height:44px;padding:0 14px;display:flex;align-items:center;gap:10px;${i?`border-top:0.5px solid ${G.sep}`:''}"><div style="flex:1"><div style="font-size:14px;color:${G.txt}">${t}</div><div style="font-size:10px;color:${G.sub}">${s}</div></div>${sw(on,acc)}</div>`;
+const slider=(t,v,pos,i)=>`<div style="padding:8px 14px 10px;${i?`border-top:0.5px solid ${G.sep}`:''}"><div style="display:flex;justify-content:space-between;font-size:14px;color:${G.txt}"><span>${t}</span><span style="color:${pos===.5?G.sub:acc}">${v}</span></div><div style="position:relative;height:20px;margin-top:4px"><div style="position:absolute;left:0;right:0;top:9px;height:3px;border-radius:2px;background:rgba(255,255,255,.28)"></div><div style="position:absolute;left:0;width:${pos*100}%;top:9px;height:3px;border-radius:2px;background:${acc}"></div><div style="position:absolute;left:calc(${pos*100}% - 9px);top:1px;width:18px;height:18px;border-radius:50%;background:#fff"></div></div></div>`;
+const names=['Normal','Gray','B&W','Sepia','Polaroid','Invert'],cols=['#c9c2b5','#9a9a9a','#e6e6e6','#b99a76','#c8b9a2','#34495a'];
+const filt=`<div style="display:flex;gap:8px;padding:0 16px;overflow:hidden">${names.map((n,i)=>`<div style="flex:none;width:56px"><div style="width:56px;height:56px;border-radius:10px;background:${cols[i]};${i===0?`outline:2px solid ${acc};outline-offset:1px`:''}"></div><div style="font-size:10px;text-align:center;margin-top:4px;color:${i===0?acc:G.sub}">${n}</div></div>`).join('')}</div>`;
+return`${withTransforms?head('Transformations')+group(row('Enhance','improve contrast and sharpness',true,0)+row('Whitepaper','make the background white',false,1)+row('Color','improve colors',false,2)):''}${head('Adjustments')}${group(slider('Brightness','0.00',.5,0)+slider('Contrast','1.20',.58,1))}${head('Filters')}${filt}`}
+function fSheet(p,r,withTransforms){const top=300;
+const sheet=`<div style="position:absolute;left:${p==='i'?6:0}px;right:${p==='i'?6:0}px;top:${top}px;bottom:${p==='i'?6:0}px;border-radius:${p==='i'?'26px':'28px 28px 0 0'};background:rgba(28,28,32,${p==='i'?.55:.9});border:${p==='i'?'1px solid rgba(255,255,255,.22)':'none'};${BF}z-index:8;overflow:hidden"><div style="width:36px;height:5px;border-radius:3px;background:rgba(255,255,255,.4);margin:8px auto 2px"></div>${sheetContent(p,r,withTransforms)}</div>`;
+return frame(topBar(p,r)+pageArea(r,p,96,top,1)+toolbar(p,r,withTransforms,'adjustments-horizontal')+sheet,r,p)}
+function fMenu(p,r){const items=[['file-type-pdf','PDF export'],['palette','Color'],['text-scan-2','Detected text'],['qrcode','Barcodes'],['pencil','Rename'],['-'],['trash','Delete page',1]];
+if(p==='i'){const rows=items.map((it,i)=>it[0]==='-'?`<div style="height:6px;background:${r.sep}"></div>`:`<div style="height:42px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;${i&&items[i-1][0]!=='-'?`border-top:0.5px solid ${r.sep};`:''}color:${it[2]?'#ff453a':r.txt};font-size:15px"><span>${it[1]}</span>${ic(it[0],18)}</div>`).join('');
+return frame(topBar(p,r)+pageArea(r,p,96,560)+toolbar(p,r,true)+`<div style="position:absolute;inset:0;background:rgba(0,0,0,${state.dark?.35:.12});z-index:9"></div><div style="position:absolute;right:14px;top:92px;width:206px;border-radius:16px;background:${r.menu};${BF}box-shadow:0 8px 28px rgba(0,0,0,.25);overflow:hidden;z-index:10">${rows}</div>`,r,p)}
+const rows=items.map(it=>it[0]==='-'?`<div style="height:6px"></div>`:`<div style="height:48px;padding:0 16px;display:flex;align-items:center;gap:12px;color:${it[2]?'#ba1a1a':r.txt};font-size:15px;border-radius:${it[1]==='PDF export'?'20px 20px 6px 6px':it[2]?'20px':'6px'};background:${r.menu};margin-bottom:2px">${ic(it[0],20)}<span>${it[1]}</span></div>`).join('');
+return frame(topBar(p,r)+pageArea(r,p,96,560)+toolbar(p,r,true)+`<div style="position:absolute;right:12px;top:84px;width:200px;border-radius:28px;background:${state.dark?'#1d2024':'#f1f3fa'};padding:6px;box-shadow:0 4px 12px rgba(0,0,0,.25);z-index:10">${rows}</div>`,r,p)}
+const FR=[['Page 2 of 5',fDefault],['Adjust sheet (half detent)',(p,r)=>fSheet(p,r,true)],['Adjust sheet, no original',(p,r)=>fSheet(p,r,false)],['More menu',fMenu]];
+function scaled(html,label,sc){return`<div style="width:${300*sc}px"><div style="width:${300*sc}px;height:${650*sc}px"><div style="width:300px;height:650px;transform:scale(${sc});transform-origin:0 0">${html}</div></div><div style="font-size:12px;color:var(--text-secondary);text-align:center;margin-top:6px">${label}</div></div>`}
+function render(){const both=state.mode==='both',sc=both?.5:.8;
+const row=(title,p)=>{const r=roles(p);return`<div style="font-size:14px;font-weight:500;margin:6px 0 8px">${title}</div><div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;margin-bottom:18px">${FR.map(f=>scaled(f[1](p,r),f[0],sc)).join('')}</div>`};
+document.getElementById('out').innerHTML=(state.mode!=='android'?row('iOS 26','i'):'')+(state.mode!=='ios'?row('Android M3 Expressive','a'):'');
+document.getElementById('bl').style.background=state.dark?'transparent':'var(--surface-1)';
+document.getElementById('bd').style.background=state.dark?'var(--surface-1)':'transparent';
+[['mi','ios'],['ma','android'],['mb','both']].forEach(x=>document.getElementById(x[0]).style.background=state.mode===x[1]?'var(--surface-1)':'transparent')}
+document.getElementById('bl').onclick=()=>{state.dark=false;render()};
+document.getElementById('bd').onclick=()=>{state.dark=true;render()};
+[['mi','ios'],['ma','android'],['mb','both']].forEach(x=>document.getElementById(x[0]).onclick=()=>{state.mode=x[1];render()});
+render();
+</script>
+</body>
+</html>

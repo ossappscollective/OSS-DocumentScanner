@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDF preview (iOS and Android)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
+<style>
+:root{--text-primary:#1f1f1e;--text-secondary:#5f5e5a;--border-strong:#c8c6bd;--surface-1:#e9e8e1;--page:#fafaf7}
+@media(prefers-color-scheme:dark){:root{--text-primary:#f1f0ea;--text-secondary:#b0aea5;--border-strong:#4a4944;--surface-1:#34332f;--page:#1c1c1a}}
+body{font-family:system-ui,sans-serif;margin:24px;background:var(--page);color:var(--text-primary);max-width:1100px}
+button{font:inherit;font-size:13px;color:var(--text-primary);background:transparent;border:0.5px solid var(--border-strong);border-radius:8px;padding:5px 12px;cursor:pointer}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+ul{font-size:13px;color:var(--text-secondary);line-height:1.5;max-width:760px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{display:inline-block;animation:spin 1s linear infinite}
+</style>
+</head>
+<body>
+<h2 class="sr-only">PDF preview screen on iOS and Android: sheets of the exported PDF in a pager, the layout options sheet (transparent glass), the more menu, loading, exporting, exported and the empty and error states.</h2>
+<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 14px">
+<button id="bl">Light</button><button id="bd">Dark</button>
+<span style="width:1px;height:20px;background:var(--border-strong)"></span>
+<button id="mi">iOS</button><button id="ma">Android</button><button id="mb">Both</button>
+</div>
+<div id="out"></div>
+<ul>
+<li><b>What it is:</b> a live preview of the sheets of the PDF (not the rendered file): one pager page per sheet, drawn with the current layout options. Opened from the PDF export menu (preview) and from the scanner activity (there the main action is Save).</li>
+<li><b>Bars:</b> native top bar and bottom toolbar. Top bar: close, "PDF preview" with the layout summary as subtitle, the black and white toggle (a state, so it is always visible), one more menu (share, open in another app, print on Android). Bottom: the layout button (opens the options sheet), and the main action Export at the trailing end: a prominent button on iOS, an extended FAB on Android with the layout button as the small tonal FAB 12 to its left. This is not an edit mode, so Android keeps its FAB.</li>
+<li><b>Sheet:</b> white paper in both themes, 6 radius like the page edit screen, level 1 shadow on iOS and a 1 outline on Android, neighbors peek 16 with an 8 gap. Paper size, orientation, pages per sheet and margins are drawn to scale (margin in points, scaled with the sheet width), so what is seen is what is exported. Full paper = the page itself, no margin.</li>
+<li><b>Options sheet:</b> the transparent glass sheet of the page edit screen (no dim, forced dark, grabber, half and large detents, on-glass roles). Changes apply live, nothing to confirm, Reset puts the defaults back. With the Full paper size, orientation, pages per sheet and margins are disabled with a helper line. The OCR switch only exists when a page has detected text. Image quality, password and folder are not here: the last row opens the export settings.</li>
+<li><b>Loading:</b> rendering sheets is non-blocking: a linear progress under the top bar, skeleton sheets, Export disabled. Exporting, opening, sharing and printing are blocking: the centered card with a 32% dim. Done: a snackbar (Android) or toast (iOS) with Open; the counter hides while it shows.</li>
+<li><b>Empty and error:</b> icon, title, one line, one prominent action. Empty has Close; error has Retry and a text Close. The toolbar is hidden in both.</li>
+</ul>
+<script>
+const state={dark:false,mode:'both'};
+const BF='backdrop-filter:blur(18px) saturate(1.7);-webkit-backdrop-filter:blur(18px) saturate(1.7);';
+const ic=(n,sz,c)=>`<i class="ti ti-${n}" style="font-size:${sz||20}px;${c?'color:'+c:''}"></i>`;
+const CW=288,CH=638; // inside of the 300 x 650 frame (6 border)
+function roles(p){const d=state.dark;
+if(p==='a')return d?{page:'#111318',bar:'#272a31',cont:'#00458f',onCont:'#d8e2ff',acc:'#adc6ff',onAcc:'#002e69',txt:'#e2e2e9',sub:'#c4c6d0',menu:'#2b2d33',sep:'#43474e',paper:'#e8e8ea',err:'#ffb4ab',snack:'#e2e2e9',onSnack:'#2f3036',snackAct:'#005ac1',surf:'#1d2024'}:{page:'#f9f9ff',bar:'#e6e9f2',cont:'#d8e2ff',onCont:'#001b3f',acc:'#005ac1',onAcc:'#fff',txt:'#1a1b20',sub:'#44474f',menu:'#eceef6',sep:'#c4c6d0',paper:'#fff',err:'#ba1a1a',snack:'#2f3036',onSnack:'#f1f0f7',snackAct:'#adc6ff',surf:'#f1f3fa'};
+return d?{page:'#000',acc:'#4d8dff',onAcc:'#fff',txt:'#fff',sub:'rgba(235,235,245,.65)',glass:'rgba(70,70,76,.42)',gb:'rgba(255,255,255,.22)',sep:'rgba(84,84,88,.6)',menu:'rgba(44,44,46,.82)',paper:'#e8e8ea',flat:'rgba(118,118,128,.24)',err:'#ff453a'}:{page:'#f2f2f7',acc:'#0a6cff',onAcc:'#fff',txt:'#000',sub:'rgba(60,60,67,.65)',glass:'rgba(255,255,255,.42)',gb:'rgba(255,255,255,.8)',sep:'rgba(60,60,67,.18)',menu:'rgba(255,255,255,.82)',paper:'#fff',flat:'rgba(118,118,128,.12)',err:'#d70015'}}
+const frame=(inner,r,p)=>`<div style="width:300px;height:650px;border-radius:${p==='i'?46:36}px;background:${r.page};border:6px solid #17171a;box-sizing:border-box;position:relative;overflow:hidden;font-family:${p==='i'?'-apple-system,system-ui,sans-serif':'Roboto,system-ui,sans-serif'};color:${r.txt}"><div style="position:absolute;top:8px;${p==='i'?'left:50%;margin-left:-42px;width:84px;height:24px':'left:50%;margin-left:-7px;width:14px;height:14px'};border-radius:12px;background:#000;z-index:30"></div>${inner}</div>`;
+
+/* ---------- document images and sheets ---------- */
+const IMGR=1/1.41, PAPER={a4:[595,842],a3:[842,1191],letter:[612,792]};
+const HUES=['#2f6fdb','#d9534f','#2e9e6b','#e0a030','#7b5cd6'];
+function docImg(w,h,bw,seed,skel){w=Math.round(w);h=Math.round(h);
+if(skel)return`<div style="width:${w}px;height:${h}px;border-radius:2px;background:rgba(120,120,128,.14)"></div>`;
+const hue=bw?'#8e8e93':HUES[seed%5],pad=Math.max(3,Math.round(w*.08)),lh=Math.max(2,Math.round(h*.014)),gap=Math.max(3,Math.round(h*.02));
+const n=Math.max(0,Math.floor((h-pad*2-h*.22)/(lh+gap)));
+const lines=Array.from({length:n},(_,i)=>`<div style="height:${lh}px;border-radius:1px;background:#00000024;width:${i%5===4?'55%':'100%'}"></div>`).join('');
+return`<div style="width:${w}px;height:${h}px;background:#fffefa;box-shadow:0 0 0 .5px rgba(0,0,0,.16);box-sizing:border-box;padding:${pad}px;overflow:hidden;position:relative;border-radius:1px"><div style="height:${Math.max(3,Math.round(h*.045))}px;width:42%;background:${hue};border-radius:1px"></div><div style="position:absolute;right:${pad}px;top:${pad}px;width:${Math.round(w*.2)}px;height:${Math.round(w*.26)}px;background:${bw?'#b4b4b8':HUES[(seed+2)%5]};opacity:.85;border-radius:1px"></div><div style="display:flex;flex-direction:column;gap:${gap}px;margin-top:${Math.round(h*.2)}px">${lines}</div></div>`}
+function layout(cfg,aw,ah){const ratio=cfg.paper==='full'?IMGR:(cfg.land?PAPER[cfg.paper][1]/PAPER[cfg.paper][0]:PAPER[cfg.paper][0]/PAPER[cfg.paper][1]);const sw=Math.min(aw,ah*ratio);return{sw,sh:sw/ratio}}
+function sheetInner(sw,sh,cfg,seed,skel){if(cfg.paper==='full')return docImg(sw,sh,cfg.bw,seed,skel);
+const n=cfg.n,land=cfg.land;let cols=n>2?2:1,rows=n>2?Math.ceil(n/2):n;if(land){const t=cols;cols=rows;rows=t}
+const wPt=land?PAPER[cfg.paper][1]:PAPER[cfg.paper][0],m=cfg.margin*sw/wPt;let out='';
+for(let i=0;i<n;i++){let r0=land?(n>2?i%2:0):(n>2?Math.floor(i/2):i),c0=land?(n>2?Math.floor(i/2):i):(n>2?i%2:0),rs=1,cs=1;
+if(n>2&&n%2===1&&i===n-1){if(land)rs=2;else cs=2}
+const cw=sw/cols,ch=sh/rows,x=c0*cw+m,y=r0*ch+m,iw=cw*cs-2*m,ih=ch*rs-2*m;let w=iw,h=iw/IMGR;if(h>ih){h=ih;w=ih*IMGR}
+out+=`<div style="position:absolute;left:${x+(iw-w)/2}px;top:${y+(ih-h)/2}px">${docImg(w,h,cfg.bw,seed+i,skel)}</div>`}
+return out}
+function sheetEl(p,r,sw,sh,cfg,seed,left,top,skel){return`<div style="position:absolute;left:${left}px;top:${top}px;width:${sw}px;height:${sh}px;border-radius:6px;overflow:hidden;background:${r.paper};${p==='i'?'box-shadow:0 2px 10px rgba(0,0,0,.18)':`box-shadow:0 0 0 1px ${state.dark?'#43474e':'#c4c6d0'}`}">${sheetInner(sw,sh,cfg,seed,skel)}</div>`}
+function pager(p,r,cfg,top,bottom,o){o=o||{};const aw=CW-48,ah=bottom-top-(o.pad||16),L=layout(cfg,aw,ah),t=top+(bottom-top-L.sh)/2;let h='';
+for(let k=-1;k<=1;k++){const slot=24+k*(aw+8);h+=sheetEl(p,r,L.sw,L.sh,cfg,k+3+(o.seed||0),slot+(aw-L.sw)/2,t,o.skel)}
+return`<div style="position:absolute;left:0;right:0;top:0;bottom:0;overflow:hidden">${h}</div>`}
+
+/* ---------- bars ---------- */
+const glassBtn=(r,n,x)=>`<div style="position:absolute;${x<0?`right:${-x}px`:`left:${x}px`};top:44px;width:40px;height:40px;border-radius:50%;background:${r.glass};border:1px solid ${r.gb};${BF}display:flex;align-items:center;justify-content:center;color:${r.txt};z-index:6">${ic(n,20)}</div>`;
+function topBar(p,r,o){o=o||{};const title='PDF preview',sub=o.sub===undefined?'Full size':o.sub,more=o.more!==false,tog=o.toggle!==false;
+if(p==='i'){const tgl=`<div style="width:32px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center;${o.bw?`background:${r.acc}26;color:${r.acc}`:''}">${ic('circle-half-2',20)}</div>`;
+const pill=tog||more?`<div style="position:absolute;right:14px;top:44px;height:40px;padding:0 4px;border-radius:20px;background:${r.glass};border:1px solid ${r.gb};${BF}display:flex;align-items:center;gap:2px;color:${r.txt};z-index:6">${tog?tgl:''}${more?`<div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center">${ic('dots',20)}</div>`:''}</div>`:'';
+return`${glassBtn(r,'x',14)}<div style="position:absolute;left:64px;right:${tog||more?100:64}px;top:44px;height:40px;text-align:center;display:flex;flex-direction:column;justify-content:center"><div style="font-size:15px;font-weight:600;white-space:nowrap">${title}</div>${sub?`<div style="font-size:11px;color:${r.sub};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${sub}</div>`:''}</div>${pill}`}
+const tgl=`<div style="width:40px;height:40px;border-radius:20px;display:flex;align-items:center;justify-content:center;${o.bw?`background:${r.cont};color:${r.onCont}`:''}">${ic('circle-half-2',24)}</div>`;
+return`<div style="position:absolute;left:0;right:0;top:0;height:96px;background:${r.page}"></div><div style="position:absolute;left:8px;right:8px;top:36px;height:56px;display:flex;align-items:center;gap:6px;color:${r.txt}"><div style="width:40px;height:40px;display:flex;align-items:center;justify-content:center">${ic('x',24)}</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;padding-left:2px"><div style="font-size:20px;line-height:1.1;white-space:nowrap">${title}</div>${sub?`<div style="font-size:12px;color:${r.sub};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${sub}</div>`:''}</div>${tog?tgl:''}${more?`<div style="width:40px;height:40px;display:flex;align-items:center;justify-content:center">${ic('dots-vertical',24)}</div>`:''}</div>`}
+const counter=(r,p,txt)=>`<div style="position:absolute;left:0;right:0;bottom:${p==='i'?72:84}px;display:flex;justify-content:center;z-index:4"><div style="height:28px;padding:0 12px;border-radius:14px;background:${p==='i'?r.flat:r.cont};color:${p==='i'?r.txt:r.onCont};font-size:13px;display:flex;align-items:center">${txt||'2 / 5'}</div></div>`;
+function bottom(p,r,o){o=o||{};const label=o.save?'Save':'Export',icon=o.save?'check':'upload',dis=o.disabled?(p==='i'?'opacity:.45;':'opacity:.38;'):'';
+if(p==='i')return`<div style="position:absolute;left:14px;right:14px;bottom:16px;height:44px;display:flex;align-items:center;justify-content:space-between;z-index:5;${dis}"><div style="width:44px;height:44px;border-radius:22px;background:${r.glass};border:1px solid ${r.gb};${BF}display:flex;align-items:center;justify-content:center;color:${r.txt}">${ic('adjustments-horizontal',22)}</div><div style="height:44px;padding:0 18px;border-radius:22px;background:${r.acc};border:1px solid rgba(255,255,255,.35);color:${r.onAcc};display:flex;align-items:center;gap:6px;font-size:15px;font-weight:600">${ic(icon,18)}${label}</div></div>`;
+return`<div style="position:absolute;right:16px;bottom:16px;display:flex;align-items:center;gap:12px;z-index:5;${dis}"><div style="width:40px;height:40px;border-radius:20px;background:${r.cont};color:${r.onCont};display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.2)">${ic('adjustments-horizontal',22)}</div><div style="height:56px;padding:0 20px;border-radius:28px;background:${r.acc};color:${r.onAcc};display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,.2)">${ic(icon,24)}${label}</div></div>`}
+function progress(p,r){if(p==='i')return`<div style="position:absolute;left:16px;right:16px;top:92px;height:4px;border-radius:2px;background:${r.sep};z-index:6"><div style="width:42%;height:4px;border-radius:2px;background:${r.acc}"></div></div>`;
+let d='M0 5';for(let x=0;x<=100;x+=2)d+=` L${x} ${5+3*Math.sin(x/40*2*Math.PI)}`;
+return`<div style="position:absolute;left:16px;right:16px;top:90px;height:10px;z-index:6"><div style="position:absolute;left:0;right:0;top:3px;height:4px;border-radius:2px;background:${r.cont}"></div><svg width="110" height="10" viewBox="0 0 110 10" style="position:absolute;left:0;top:0"><path d="${d}" fill="none" stroke="${r.acc}" stroke-width="4" stroke-linecap="round"/></svg></div>`}
+
+/* ---------- frames ---------- */
+const AREA=[96,520];
+function preview(p,r,cfg,o){o=o||{};return frame(pager(p,r,cfg,AREA[0],AREA[1],o)+topBar(p,r,{sub:o.sub,bw:cfg.bw,more:o.more,toggle:o.toggle})+(o.nocounter?'':counter(r,p,o.count))+(o.nobottom?'':bottom(p,r,o))+(o.extra||''),r,p)}
+const SUBS={full:'Full size'};
+const sub=cfg=>cfg.paper==='full'?'Full size':`${cfg.paper==='letter'?'Letter':cfg.paper.toUpperCase()} · ${cfg.land?'landscape':'portrait'} · ${cfg.n} per sheet`;
+const C_FULL={paper:'full',n:1,margin:10,land:false,bw:false},C_A4={paper:'a4',n:2,margin:10,land:false,bw:false},C_LET={paper:'letter',n:4,margin:20,land:true,bw:true};
+const fFull=(p,r)=>preview(p,r,C_FULL,{sub:sub(C_FULL)}),fA4=(p,r)=>preview(p,r,C_A4,{sub:sub(C_A4)}),fLet=(p,r)=>preview(p,r,C_LET,{sub:sub(C_LET)});
+
+// options sheet, on-glass roles
+const G={txt:'#fff',sub:'rgba(255,255,255,.68)',fill:'rgba(255,255,255,.14)',sep:'rgba(255,255,255,.22)',sel:'rgba(255,255,255,.28)'};
+function optSheet(p,r,cfg,top){const acc=p==='i'?'#4d8dff':'#adc6ff',full=cfg.paper==='full',dis=full?(p==='i'?'opacity:.45;':'opacity:.38;'):'';
+const swt=(on)=>`<div style="width:40px;height:24px;border-radius:12px;background:${on?acc:'rgba(255,255,255,.28)'};position:relative;flex:none"><div style="position:absolute;top:2px;${on?'right:2px':'left:2px'};width:20px;height:20px;border-radius:50%;background:#fff"></div></div>`;
+const seg=(items,sel,w)=>p==='i'?`<div style="display:flex;padding:2px;border-radius:16px;background:${G.fill};height:32px;box-sizing:border-box;${w?`width:${w}px;`:''}">${items.map((t,i)=>`<div style="flex:1;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:${i===sel?600:400};color:${G.txt};${i===sel?`background:${G.sel}`:''}">${t}</div>`).join('')}</div>`
+:`<div style="display:flex;gap:2px;${w?`width:${w}px;`:''}">${items.map((t,i)=>{const e=items.length-1,rad=i===0?'18px 6px 6px 18px':i===e?'6px 18px 18px 6px':'6px';return`<div style="flex:1;height:36px;border-radius:${rad};box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:3px;font-size:12px;color:${G.txt};${i===sel?`background:${G.sel}`:`border:1px solid ${G.sep}`}">${i===sel?ic('check',13):''}${t}</div>`}).join('')}</div>`;
+const step=(v)=>p==='i'?`<div style="display:flex;align-items:center;gap:6px"><span style="font-size:14px;color:${G.sub}">${v}</span><div style="display:flex;align-items:center;height:32px;width:78px;border-radius:16px;background:${G.fill};color:${G.txt}"><div style="flex:1;text-align:center">${ic('minus',16)}</div><span style="width:1px;height:16px;background:${G.sep}"></span><div style="flex:1;text-align:center">${ic('plus',16)}</div></div></div>`
+:`<div style="display:flex;align-items:center;gap:8px"><div style="width:36px;height:36px;border-radius:18px;background:${G.fill};display:flex;align-items:center;justify-content:center;color:${G.txt}">${ic('minus',16)}</div><span style="font-size:14px;color:${G.txt};min-width:12px;text-align:center">${v}</span><div style="width:36px;height:36px;border-radius:18px;background:${G.fill};display:flex;align-items:center;justify-content:center;color:${G.txt}">${ic('plus',16)}</div></div>`;
+const grp=(rows)=>`<div style="margin:0 16px 8px;border-radius:${p==='i'?12:20}px;background:${G.fill};overflow:hidden">${rows}</div>`;
+const line=(i)=>i?`border-top:0.5px solid ${G.sep};`:'';
+const lbl=(t,s)=>`<div style="flex:1;white-space:nowrap"><div style="font-size:14px;color:${G.txt}">${t}</div>${s?`<div style="font-size:10px;color:${G.sub}">${s}</div>`:''}</div>`;
+const mpos=cfg.margin/50;
+const rows=`<div style="padding:8px 14px 10px">${`<div style="font-size:14px;color:${G.txt};margin-bottom:6px">Paper size</div>`}${seg(['Full','A4','A3','Letter'],{full:0,a4:1,a3:2,letter:3}[cfg.paper])}</div>`
++`<div style="${dis}${line(1)}height:42px;padding:0 14px;display:flex;align-items:center">${lbl('Orientation')}${seg(['Portrait','Landscape'],cfg.land?1:0,124)}</div>`
++`<div style="${dis}${line(1)}height:42px;padding:0 14px;display:flex;align-items:center">${lbl('Pages per sheet')}${step(cfg.n)}</div>`
++`<div style="${dis}${line(1)}padding:8px 14px 10px"><div style="display:flex;justify-content:space-between;font-size:14px;color:${G.txt}"><span>Margins</span><span style="color:${cfg.margin===10?G.sub:acc}">${cfg.margin} pt</span></div><div style="position:relative;height:20px;margin-top:4px"><div style="position:absolute;left:0;right:0;top:9px;height:3px;border-radius:2px;background:rgba(255,255,255,.28)"></div><div style="position:absolute;left:0;width:${mpos*100}%;top:9px;height:3px;border-radius:2px;background:${acc}"></div><div style="position:absolute;left:calc(${mpos*100}% - 9px);top:1px;width:18px;height:18px;border-radius:50%;background:#fff"></div></div></div>`;
+const hdr=p==='i'?`<div style="display:flex;align-items:center;justify-content:space-between;padding:2px 16px 8px"><span style="width:60px"></span><span style="font-size:15px;font-weight:600;color:${G.txt}">Page layout</span><span style="width:60px;display:flex;justify-content:flex-end"><span style="height:28px;padding:0 12px;border-radius:14px;background:rgba(255,255,255,.18);color:${G.txt};font-size:13px;display:flex;align-items:center;${cfg.paper==='full'?'opacity:.45':''}">Reset</span></span></div>`
+:`<div style="display:flex;align-items:center;justify-content:space-between;padding:2px 20px 6px 20px"><span style="font-size:18px;color:${G.txt}">Page layout</span><span style="font-size:13px;font-weight:500;color:${acc};${cfg.paper==='full'?'opacity:.38':''}">Reset</span></div>`;
+const help=full?`<div style="margin:-2px 30px 8px;font-size:10px;color:${G.sub}">Each sheet has the size of its page. Orientation, pages per sheet and margins do not apply.</div>`:'';
+const ocr=grp(`<div style="height:46px;padding:0 14px;display:flex;align-items:center">${lbl('Transparent OCR text','searchable text layer in the PDF')}${swt(true)}</div>`);
+const more=grp(`<div style="height:44px;padding:0 14px;display:flex;align-items:center;gap:10px;color:${G.txt}">${ic('settings',18)}${lbl('Image quality, password, folder')}${p==='i'?ic('chevron-right',16,G.sub):''}</div>`);
+return`<div style="position:absolute;left:${p==='i'?6:0}px;right:${p==='i'?6:0}px;top:${top}px;bottom:${p==='i'?6:0}px;border-radius:${p==='i'?'26px':'28px 28px 0 0'};background:rgba(28,28,32,${p==='i'?.72:.9});border:${p==='i'?'1px solid rgba(255,255,255,.22)':'none'};${BF}z-index:8;overflow:hidden"><div style="width:36px;height:5px;border-radius:3px;background:rgba(255,255,255,.4);margin:8px auto 2px"></div>${hdr}${grp(rows)}${help}${ocr}${more}</div>`}
+const fSheet=(cfg)=>(p,r)=>{const top=p==='i'?236:230;return frame(pager(p,r,cfg,AREA[0],top-2,{pad:10})+topBar(p,r,{sub:sub(cfg),bw:cfg.bw})+optSheet(p,r,cfg,top),r,p)};
+
+function fMenu(p,r){const items=[['upload','share-3','Share'],['external-link','external-link','Open in another app']].concat(p==='a'?[['printer','printer','Print']]:[]);
+const bg=C_A4;let menu;
+if(p==='i'){const rows=items.map((it,i)=>`<div style="height:42px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;${i?`border-top:0.5px solid ${r.sep};`:''}color:${r.txt};font-size:15px"><span>${it[2]}</span>${ic(it[0],18)}</div>`).join('');
+menu=`<div style="position:absolute;right:14px;top:92px;width:214px;border-radius:16px;background:${r.menu};${BF}box-shadow:0 8px 28px rgba(0,0,0,.25);overflow:hidden;z-index:10">${rows}</div>`}
+else{const rows=items.map((it,i)=>`<div style="height:48px;padding:0 16px;display:flex;align-items:center;gap:12px;color:${r.txt};font-size:15px;border-radius:${i===0?'20px 20px 6px 6px':i===items.length-1?'6px 6px 20px 20px':'6px'};background:${r.menu};margin-bottom:2px">${ic(it[1],20)}<span>${it[2]}</span></div>`).join('');
+menu=`<div style="position:absolute;right:12px;top:84px;width:216px;border-radius:28px;background:${r.surf};padding:6px;box-shadow:0 4px 12px rgba(0,0,0,.25);z-index:10">${rows}</div>`}
+return preview(p,r,bg,{sub:sub(bg),extra:`<div style="position:absolute;inset:0;background:rgba(0,0,0,${p==='i'?(state.dark?.35:.12):0});z-index:9"></div>${menu}`})}
+
+function fLoading(p,r){const cfg=C_A4;return frame(pager(p,r,cfg,AREA[0],AREA[1],{skel:true})+topBar(p,r,{sub:sub(cfg)})+progress(p,r)+bottom(p,r,{disabled:true}),r,p)}
+function fExporting(p,r){const cfg=C_A4;const card=`<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:150px;border-radius:24px;padding:24px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:14px;font-size:15px;color:${r.txt};z-index:21;${p==='i'?`background:${r.menu};border:1px solid ${r.gb};${BF}`:`background:${r.surf};box-shadow:0 4px 12px rgba(0,0,0,.25)`}"><span class="spin" style="color:${r.acc}">${ic('loader-2',32)}</span>Exporting</div>`;
+return preview(p,r,cfg,{sub:sub(cfg),extra:`<div style="position:absolute;inset:0;background:rgba(0,0,0,.32);z-index:20"></div>${card}`})}
+function fDone(p,r){const cfg=C_A4;const t=p==='i'?`<div style="position:absolute;left:16px;right:16px;bottom:72px;height:44px;border-radius:22px;background:${r.glass};border:1px solid ${r.gb};${BF}display:flex;align-items:center;justify-content:space-between;padding:0 18px;font-size:13px;color:${r.txt};z-index:12"><span style="white-space:nowrap">Saved: Passport scan.pdf</span><b style="color:${r.acc}">Open</b></div>`
+:`<div style="position:absolute;left:16px;right:16px;bottom:84px;height:48px;border-radius:16px;background:${r.snack};display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:12.5px;color:${r.onSnack};z-index:12"><span style="white-space:nowrap">Saved: Passport scan.pdf</span><b style="color:${r.snackAct};font-weight:500">Open</b></div>`;
+return preview(p,r,cfg,{sub:sub(cfg),nocounter:true,extra:t})}
+function state2(p,r,o){const circle=p==='i'?`background:${r.glass};border:1px solid ${r.gb};${BF}border-radius:50%`:`background:${o.err?r.cont:r.cont};border-radius:32px 32px 32px 10px`;
+const btn=(t,k)=>k==='text'?`<div style="height:${p==='i'?44:40}px;padding:0 18px;display:flex;align-items:center;font-size:${p==='i'?15:14}px;color:${r.acc};font-weight:${p==='i'?400:500}">${t}</div>`:`<div style="height:${p==='i'?44:40}px;padding:0 24px;border-radius:${p==='i'?22:20}px;background:${r.acc};color:${r.onAcc};display:flex;align-items:center;font-size:${p==='i'?15:14}px;font-weight:${p==='i'?600:500}">${t}</div>`;
+const iconCol=o.err?r.err:(p==='i'?r.acc:r.onCont);
+return frame(topBar(p,r,{sub:o.err?null:null,more:false,toggle:false})+`<div style="position:absolute;left:32px;right:32px;top:210px;display:flex;flex-direction:column;align-items:center;text-align:center"><div style="width:${p==='i'?88:96}px;height:${p==='i'?88:96}px;${circle};display:flex;align-items:center;justify-content:center;color:${iconCol}">${ic(o.icon,40)}</div><div style="font-size:${p==='i'?20:22}px;font-weight:${p==='i'?700:400};margin-top:22px">${o.title}</div><div style="font-size:${p==='i'?14:13}px;color:${r.sub};margin-top:8px;line-height:1.4">${o.text}</div><div style="margin-top:22px;display:flex;flex-direction:column;align-items:center;gap:4px">${btn(o.action)}${o.second?btn(o.second,'text'):''}</div></div>`,r,p)}
+const fEmpty=(p,r)=>state2(p,r,{icon:'file-type-pdf',title:'Nothing to preview',text:'This document has no pages yet. Add pages, then come back to the preview.',action:'Close'});
+const fError=(p,r)=>state2(p,r,{icon:'alert-circle',err:true,title:'Preview failed',text:'The image of page 3 could not be loaded.',action:'Retry',second:'Close'});
+
+const FR=[['Preview, full size (default)',fFull],['A4, 2 per sheet',fA4],['Letter landscape, 4 per sheet, B&W',fLet],['Options sheet, A4 (half detent)',fSheet(C_A4)],['Options sheet, full size',fSheet(C_FULL)],['More menu',fMenu],['Loading sheets (non blocking)',fLoading],['Exporting (blocking)',fExporting],['Exported',fDone],['Empty',fEmpty],['Error',fError]];
+function scaled(html,label,sc){return`<div style="width:${300*sc}px"><div style="width:${300*sc}px;height:${650*sc}px"><div style="width:300px;height:650px;transform:scale(${sc});transform-origin:0 0">${html}</div></div><div style="font-size:12px;color:var(--text-secondary);text-align:center;margin-top:6px">${label}</div></div>`}
+function render(){const both=state.mode==='both',sc=both?.5:.8;
+const row=(title,p)=>{const r=roles(p);return`<div style="font-size:14px;font-weight:500;margin:6px 0 8px">${title}</div><div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;margin-bottom:18px">${FR.map(f=>scaled(f[1](p,r),f[0],sc)).join('')}</div>`};
+document.getElementById('out').innerHTML=(state.mode!=='android'?row('iOS 26','i'):'')+(state.mode!=='ios'?row('Android M3 Expressive','a'):'');
+document.getElementById('bl').style.background=state.dark?'transparent':'var(--surface-1)';
+document.getElementById('bd').style.background=state.dark?'var(--surface-1)':'transparent';
+[['mi','ios'],['ma','android'],['mb','both']].forEach(x=>document.getElementById(x[0]).style.background=state.mode===x[1]?'var(--surface-1)':'transparent')}
+document.getElementById('bl').onclick=()=>{state.dark=false;render()};
+document.getElementById('bd').onclick=()=>{state.dark=true;render()};
+[['mi','ios'],['ma','android'],['mb','both']].forEach(x=>document.getElementById(x[0]).onclick=()=>{state.mode=x[1];render()});
+render();
+</script>
+</body>
+</html>
