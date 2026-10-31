@@ -8,7 +8,7 @@
     export let rightIcon: string = null;
 </script>
 
-<gridlayout borderColor={colorOutline} borderRadius={8} borderWidth={1} columns="auto,auto,auto" height={32} margin={4} paddingLeft={rightIcon ? 8 : 12} paddingRight={8} {...$$restProps}>
+<gridlayout borderColor={colorOutline} borderRadius={16} borderWidth={1} columns="auto,auto,auto" height={32} margin={4} paddingLeft={rightIcon ? 8 : 12} paddingRight={8} {...$$restProps}>
     <label color={colorOnSurface} fontFamily={$fonts.mdi} fontSize={16} marginRight={4} text={rightIcon} verticalAlignment="middle" visibility={rightIcon ? 'visible' : 'collapse'} />
 
     <label col={1} fontSize={14} paddingBottom={2} {text} verticalAlignment="middle" />

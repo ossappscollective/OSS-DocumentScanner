@@ -211,7 +211,7 @@ textfield,
     background-color: var(--colorPrimaryContainer);
     ripple-color: var(--colorPrimaryContainer);
     color: var(--colorOnPrimaryContainer);
-    shape: medium;
+    shape: round;
     elevation: 2;
     font-size: 24;
     padding: 0;
@@ -231,7 +231,7 @@ textfield,
 
 .small-fab {
     @extend .mdi;
-    shape: small;
+    shape: round;
     background-color: var(--colorSecondaryContainer);
     ripple-color: var(--colorSecondaryContainer);
     color: var(--colorOnSecondaryContainer);

@@ -26,6 +26,9 @@
     $: iconColor = getTileColors(page.extra?.color ?? page.colors?.[1], colorBackground).text;
     // the icons share the bottom row of a columns tile with the title chip
     $: iconsWidth = (hasCode ? 18 : 0) + (item.doc.favorite === 1 ? 18 : 0) + (hasCode && item.doc.favorite === 1 ? 6 : 0) + (hasCode || item.doc.favorite === 1 ? 12 : 0);
+    // the title chip: the contrast color of the photo, semi-transparent, with the inverse color for the text
+    $: chipBackground = `${iconColor}99`;
+    $: chipTextColor = iconColor === '#ffffff' ? '#000000' : '#ffffff';
     $: showLabel = !autoName || alwaysShowNames;
 </script>
 
@@ -40,9 +43,10 @@
     stretch="aspectFill"
 />
 <!-- the title chip and the chips never share a row: the title is on top and the chips at the bottom of the strip seen above the next card (stacked), the other way around otherwise -->
-<gridlayout columns="*,auto,auto" height={stripHeight} rows="auto,*" verticalAlignment="top">
+<gridlayout columns="*,auto,auto" height={stripHeight} rows="auto,*" verticalAlignment={stripHeight ? 'top' : 'stretch'}>
     <CardChip
         colSpan={3}
+        fill={chipBackground}
         fontWeight={autoName ? '500' : '600'}
         horizontalAlignment="left"
         margin={8}
@@ -50,6 +54,7 @@
         marginRight={stacked ? 8 : iconsWidth + 8}
         row={stacked ? 0 : 1}
         text={label}
+        tint={chipTextColor}
         verticalAlignment={stacked ? 'top' : 'bottom'}
         visibility={showLabel ? 'visible' : 'collapsed'}
     />

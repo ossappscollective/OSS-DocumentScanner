@@ -1,7 +1,7 @@
 <script context="module" lang="ts">
     import { Template } from '@nativescript-community/svelte-native/components';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-    import { CollectionView } from '@nativescript-community/ui-collectionview';
+    import { CollectionView, CollectionViewItemEventData } from '@nativescript-community/ui-collectionview';
     import { Img } from '@nativescript-community/ui-image';
     import { SVGView } from '@nativescript-community/ui-svg';
     import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
@@ -18,8 +18,6 @@
         ImageSource,
         ObservableArray,
         Page,
-        PageTransition,
-        SharedTransition,
         Utils,
         View
     } from '@nativescript/core';
@@ -27,7 +25,7 @@
     import { debounce, throttle } from '@nativescript/core/utils';
     import { create as createImagePicker } from '@nativescript/imagepicker';
     import { showError } from '@shared/utils/showError';
-    import { goBack, navigate, showModal } from '@shared/utils/svelte/ui';
+    import { fade, goBack, navigate, showModal } from '@shared/utils/svelte/ui';
     import dayjs from 'dayjs';
     import { QRCodeData, QRCodeSingleData, detectQRCodeFromFile } from 'plugin-nativeprocessor';
     import { onDestroy, onMount } from 'svelte';
@@ -48,6 +46,7 @@
     import { getBarcodeFallbackString, qrcodeService } from '~/services/qrcode';
     import { shortcutService } from '~/services/shortcuts';
     import {
+        CARD_RATIO,
         DEFAULT_FORCE_WHITE_BACKGROUND_QRCODE,
         DOCUMENT_NAME_FORMAT,
         EVENT_DOCUMENT_DELETED,
@@ -62,7 +61,7 @@
     } from '~/utils/constants';
     import { appIcon } from '~/utils/appIcons';
     import { optionsToMenuItems } from '~/utils/appMenu';
-    import { getCardAccent, pickCardColor } from '~/utils/cardColors';
+    import { getCardAccent, getTileColors, pickCardColor } from '~/utils/cardColors';
     import { recycleImages } from '~/utils/images';
     import { documentHasPKPassData, getPKPassColors } from '~/utils/pkpass';
     import { getFormatedDateForFilename } from '~/utils/utils.common';
@@ -74,7 +73,7 @@
         pickColor,
         requestCameraPermission,
         showImagePopoverMenu,
-        showPDFPopoverMenu,
+        getExportMenu,
         showSnack,
         transformPages
     } from '~/utils/ui';
@@ -89,9 +88,15 @@
     const PLATE_OVERLAP = 44;
     // Android: the 64 dp floating toolbar and its 16 dp margin (the app bar pads the bottom of the scroll view by this and the navigation bar)
     const FLOATING_TOOLBAR_OFFSET = 80;
+    // glass over the photo on iOS, tonal on Android
+    const photoEditVariant = __IOS__ ? 'clearGlass' : 'contained';
     const CODE_ZONE_HEIGHT = 270;
     const FILMSTRIP_HEIGHT = 60;
     const FILMSTRIP_COL_WIDTH = 48;
+    // what the pager keeps on both sides of a photo with several photos (the peek of the neighbors and the gap), measured on each platform
+    const PHOTO_INSET = __IOS__ ? 110 : 88;
+    // room under the photo for its shadow
+    const PHOTO_SHADOW_ROOM = 12;
     interface Item {
         page: OCRPage;
         selected: boolean;
@@ -139,6 +144,10 @@
     $: hasCustomName = document.name !== getFormatedDateForFilename(document.createdDate, ApplicationSettings.getString(SETTINGS_DOCUMENT_NAME_FORMAT, DOCUMENT_NAME_FORMAT), false);
     $: details = getDetails(document);
     $: nbImages = document.pages.filter((p) => p.imagePath).length;
+    // the strip is as wide as the screen and its ends can reach the center, like the thumbnails of the iOS Photos viewer
+    // the pager is as tall as the photo (constant card ratio): the strip is always just under it
+    $: photoPagerHeight = Math.round((screenWidthDips - (nbImages > 1 ? PHOTO_INSET : 32)) * CARD_RATIO) + PHOTO_SHADOW_ROOM;
+    $: filmstripPadding = Math.max(0, (screenWidthDips - FILMSTRIP_COL_WIDTH) / 2);
     // iOS: the content goes under the translucent bars, UIKit insets it: the insets give the visible height and let the backdrop reach under the bars
     let scrollHeight = 0;
     let insetTop = 0;
@@ -175,13 +184,20 @@
         const rgb = `${(value >> 16) & 255}, ${(value >> 8) & 255}, ${value & 255}`;
         return `linear-gradient(180deg, rgba(${rgb}, ${dark ? 0.7 : 0.85}) 0%, rgba(${rgb}, 0) 42%, rgba(${rgb}, 0) 70%, rgba(${rgb}, 0.35) 100%)`;
     }
-    // the image sizes itself in its slot from this ratio (Android swaps it by itself for a rotated image)
-    function getAspectRatio({ height, rotation, width }: OCRPage) {
-        return width && height ? (__IOS__ && rotation % 180 === 90 ? height / width : width / height) : undefined;
+    // the color of the photo, behind it while it loads and where it does not cover
+    function getPhotoBackground(photo: OCRPage) {
+        return isEInk ? null : (photo.extra?.color ?? photo.colors?.[1] ?? colorBackground);
     }
     let backdropImage = document.pages.find((p) => p.imagePath)?.imagePath;
+    // iOS: the title is drawn over the blurred photo: it takes the readable color of the current photo
+    function getBackdropTextColor(photo: OCRPage) {
+        return isDarkTheme() ? colorOnBackground : getTileColors(photo?.extra?.color ?? photo?.colors?.[1], colorBackground).text;
+    }
+    let backdropTextColor = getBackdropTextColor(document.pages.find((p) => p.imagePath));
     function updateBackdrop() {
-        backdropImage = items.getItem(currentImageIndex)?.page?.imagePath ?? document.pages.find((p) => p.imagePath)?.imagePath;
+        const photo = items.getItem(currentImageIndex)?.page?.imagePath ? items.getItem(currentImageIndex).page : document.pages.find((p) => p.imagePath);
+        backdropImage = photo?.imagePath;
+        backdropTextColor = getBackdropTextColor(photo);
     }
     onThemeChanged(() => {
         DEV_LOG && console.log('onThemeChanged', $colors.colorOnBackground);
@@ -274,13 +290,6 @@
     function onSelectedIndex(event) {
         currentQRCodeIndex = event.object.selectedIndex;
     }
-    function geAllPages() {
-        const selected: { page: OCRPage; document: OCRDocument }[] = [];
-        items.forEach((d, index) => {
-            selected.push({ page: d.page, document });
-        });
-        return selected;
-    }
     function getSelectedPages() {
         const selected: { page: OCRPage; document: OCRDocument }[] = [];
         items.forEach((d, index) => {
@@ -303,15 +312,6 @@
     function getAnchor() {
         return page?.nativeView;
     }
-    async function showPDFPopover() {
-        try {
-            const pages = nbSelected > 0 ? getSelectedPages() : document.pages.map((p) => ({ page: p, document }));
-            await showPDFPopoverMenu({ pages, document, anchor: getAnchor(), documents: [document] });
-        } catch (err) {
-            showError(err);
-        }
-    }
-
     async function importDocument(importPDFs = true) {
         try {
             await importAndScanImage({ document, importPDFs, canGoToView: false });
@@ -374,13 +374,16 @@
         }
     }
     function unselectAll() {
-        if (items) {
+        // nothing selected: nothing to reload (the pager would report its index again)
+        if (items && nbSelected > 0) {
+            ignorePagerIndexUntil = Date.now() + 600;
             nbSelected = 0;
             items.splice(0, items.length, ...items.map((i) => ({ ...i, selected: false })));
         }
     }
     function selectAll() {
         if (items) {
+            ignorePagerIndexUntil = Date.now() + 600;
             items.splice(0, items.length, ...items.map((i) => ({ ...i, selected: true })));
             nbSelected = items.length;
         }
@@ -392,75 +395,8 @@
             selectItem(item);
         }
     }
-    let inEditMode = false;
-    function switchEditMode() {
-        inEditMode = !inEditMode;
-        collectionView?.nativeElement?.refreshVisibleItems();
-    }
-    let longPressTimer: NodeJS.Timeout;
-    let currentLongPressItem: Item;
-    let dragStarted = false;
-    function onItemLongPress(item: Item, event?) {
-        if (inEditMode) {
-            startDragging(item, event);
-            return;
-        }
-        if (dragStarted) {
-            return;
-        }
-        if (nbSelected > 0) {
-            toggleSelection(item);
-            return;
-        }
-
-        if (longPressTimer) {
-            clearTimeout(longPressTimer);
-        }
-
-        currentLongPressItem = item;
-        dragStarted = false;
-
-        longPressTimer = setTimeout(() => {
-            if (!dragStarted && currentLongPressItem) {
-                toggleSelection(item);
-            }
-            currentLongPressItem = null;
-        }, 200);
-    }
-    async function onPan(item: Item, event) {
-        if (!currentLongPressItem) {
-            return;
-        }
-
-        if (event.state === 2 && !dragStarted) {
-            dragStarted = true;
-
-            if (longPressTimer) {
-                clearTimeout(longPressTimer);
-                longPressTimer = null;
-            }
-            startDragging(item, event);
-
-            currentLongPressItem = null;
-        } else if (event.state === 5 || event.state === 3) {
-            if (longPressTimer) {
-                clearTimeout(longPressTimer);
-                longPressTimer = null;
-            }
-            dragStarted = false;
-            currentLongPressItem = null;
-        }
-    }
-    async function onTouch(item: Item, event?) {
-        if (!inEditMode) {
-            return;
-        }
-        switch (event.action) {
-            case 'down': {
-                startDragging(item, event);
-                break;
-            }
-        }
+    function onItemLongPress(item: Item) {
+        toggleSelection(item);
     }
     async function onItemTap(item: Item) {
         try {
@@ -483,16 +419,6 @@
             }
             navigate({
                 page: PdfEdit,
-                transition:
-                    __ANDROID__ && !CARD_APP
-                        ? SharedTransition.custom(new PageTransition(300, undefined, 10), {
-                              pageStart: {
-                                  sharedTransitionTags: {
-                                      [`document_${document.id}_${page.id}`]: {}
-                                  }
-                              }
-                          })
-                        : undefined,
                 props: {
                     document,
                     startPageIndex: items.findIndex((item) => item.page === page)
@@ -501,9 +427,6 @@
         } catch (error) {
             showError(error);
         }
-    }
-    function editCurrentPage() {
-        editPage(items.getItem(currentImageIndex)?.page ?? document.pages.find((p) => p.imagePath));
     }
     // a modal bottom sheet is the Material pattern for the actions of an item (the iOS context menu is registered above)
     async function onImageLongPress(item: Item) {
@@ -547,17 +470,82 @@
             showError(error);
         }
     }
+    // the current thumbnail is full size, the others are smaller and darker. It is set on the views (not through bindings): rebinding the cells makes RecyclerView animate them as changed items, and a cell which is bound again keeps its old state
+    function setThumbnailState(cell: View, current: boolean, animated: boolean) {
+        // the cell can be a container around the template (a proxy view container has no native view of its own): the views are found by id
+        const thumbnail = cell?.getViewById<View>('thumbnailContent');
+        if (!thumbnail) {
+            return;
+        }
+        const scale = current ? 1 : 0.85;
+        const scrim = thumbnail.getViewById<View>('thumbnailScrim');
+        if (animated) {
+            thumbnail.animate({ scale: { x: scale, y: scale }, duration: 150 });
+            scrim?.animate({ opacity: current ? 0 : 1, duration: 150 });
+        } else {
+            thumbnail.scaleX = scale;
+            thumbnail.scaleY = scale;
+            if (scrim) {
+                scrim.opacity = current ? 0 : 1;
+            }
+        }
+    }
+    // a photo next to the current one is selected first, only the current one opens the fullscreen viewer
+    function onPhotoTap(item: Item) {
+        const index = items.findIndex((i) => i.page === item.page);
+        if (index !== currentImageIndex && pager?.nativeElement) {
+            pager.nativeElement.scrollToIndexAnimated(index, true);
+        } else {
+            showFullscreen(index);
+        }
+    }
+    // the cells are bound before the strip is loaded: the state of the visible ones is set once it is
+    function syncThumbnails() {
+        const strip = collectionView?.nativeView;
+        if (!strip?.isLoaded) {
+            return;
+        }
+        for (let index = 0; index < items.length; index++) {
+            setThumbnailState(strip.getViewForItemAtIndex(index), index === currentImageIndex, false);
+        }
+    }
+    // the strip is created later (once the page is measured): its handler is registered when it exists
+    let thumbnailsStrip: CollectionView;
+    $: {
+        const strip = collectionView?.nativeView;
+        if (strip && strip !== thumbnailsStrip) {
+            thumbnailsStrip = strip;
+            strip.on(CollectionView.itemLoadingEvent, onThumbnailLoading);
+            setTimeout(syncThumbnails, 0);
+            setTimeout(syncThumbnails, 300);
+        }
+    }
+    function onThumbnailLoading(event: CollectionViewItemEventData) {
+        setThumbnailState(event.view, event.index === currentImageIndex, false);
+    }
+    // the strip has half a screen of padding at both ends: the offset of a thumbnail from the start is the offset which centers it
+    function centerStrip(strip: CollectionView, index: number) {
+        const native = strip.nativeViewProtected;
+        const offset = index * FILMSTRIP_COL_WIDTH;
+        if (__IOS__) {
+            native.setContentOffsetAnimated(CGPointMake(offset, 0), true);
+        } else {
+            native.smoothScrollBy(Utils.layout.toDevicePixels(offset) - native.computeHorizontalScrollOffset(), 0);
+        }
+    }
     function onImagesPagerIndex(event) {
         if (Date.now() < ignorePagerIndexUntil) {
             return;
         }
+        const previousImageIndex = currentImageIndex;
         currentImageIndex = event.object.selectedIndex;
         updateBackdrop();
         // UIKit aborts when a collection view that has not been laid out is scrolled
         const strip = collectionView?.nativeView;
         if (strip?.isLoaded && strip.getMeasuredHeight() > 0) {
-            strip.refreshVisibleItems();
-            strip.scrollToIndex(currentImageIndex, true);
+            setThumbnailState(strip.getViewForItemAtIndex(previousImageIndex), false, true);
+            setThumbnailState(strip.getViewForItemAtIndex(currentImageIndex), true, true);
+            centerStrip(strip, currentImageIndex);
         }
     }
     const imageMenuRemovers = new WeakMap<View, () => void>();
@@ -603,9 +591,7 @@
     const onAndroidBackButton = (data: AndroidActivityBackPressedEventData) =>
         onBackButton(page?.nativeView, () => {
             data.cancel = true;
-            if (inEditMode) {
-                switchEditMode();
-            } else if (nbSelected > 0) {
+            if (nbSelected > 0) {
                 unselectAll();
             } else {
                 onGoBack();
@@ -728,6 +714,22 @@
     function onDocumentUpdated(event: DocumentUpdatedEventData) {
         if (document.id === event.doc.id) {
             document = event.doc;
+            // the pages were reordered (reorder, reverse): the pager and the strip follow the new order from the first photo
+            if (event.changedProps?.has('pagesOrder')) {
+                // the pager goes back to its first page by itself with the new items: its events are ignored meanwhile
+                ignorePagerIndexUntil = Date.now() + 600;
+                items.splice(0, items.length, ...document.pages.map((photo, index) => ({ selected: false, page: photo, index, document })));
+                setTimeout(() => {
+                    pager?.nativeElement?.scrollToIndexAnimated(0, false);
+                    currentImageIndex = 0;
+                    updateBackdrop();
+                    // the cells of the strip are reused: their state and the scroll of the strip follow the new first photo
+                    syncThumbnails();
+                    if (thumbnailsStrip) {
+                        centerStrip(thumbnailsStrip, 0);
+                    }
+                }, 200);
+            }
         }
     }
 
@@ -764,26 +766,6 @@
         documentsService.off(EVENT_DOCUMENT_PAGE_UPDATED, onDocumentPageUpdated);
         documentsService.off(EVENT_DOCUMENT_PAGES_ADDED, onPagesAdded);
     });
-
-    function startDragging(item: Item, event) {
-        const index = items.findIndex((p) => p.page === item.page);
-        collectionView?.nativeElement.startDragging(index, event.getActivePointers()[0]);
-    }
-    async function onItemReordered(e) {
-        DEV_LOG && console.log('onItemReordered');
-        (e.view as ContentView).content.opacity = 1;
-        try {
-            if (e.index !== e.data.targetIndex) {
-                await document.movePage(e.index, e.data.targetIndex);
-            }
-            updateQRCodes();
-        } catch (error) {
-            showError(error);
-        }
-    }
-    async function onItemReorderStarting(e) {
-        (e.view as ContentView).content.opacity = 0.6;
-    }
 
     function refreshCollectionView() {
         collectionView?.nativeView?.refresh();
@@ -873,7 +855,7 @@
                     break;
                 case 'reorder':
                     unselectAll();
-                    switchEditMode();
+                    await showReorderPages();
                     break;
                 case 'reverse_pages':
                     await document.reversePages();
@@ -902,50 +884,58 @@
                 { id: 'ocr', name: lc('ocr_document') }
             );
         }
-        return optionsToMenuItems(options, (option) => runDocumentOption(option.id));
+        return [
+            ...optionsToMenuItems(options, (option) => runDocumentOption(option.id)),
+            ...(withImages && !pkpass ? [{ title: lc('show_fullscreen_images'), icon: appIcon('fullscreen'), onSelect: () => showFullscreen(currentImageIndex) }] : []),
+            { separator: true },
+            { title: lc('delete'), icon: appIcon('delete'), destructive: true, onSelect: deleteDoc }
+        ];
     }
-    function getSelectionBottomItems(pkpass: boolean) {
+    function getSelectionMenu(pkpass: boolean): MenuItem[] {
         const withImages = !pkpass && getSelectedPagesWithData().some((p) => p.page.imagePath);
         const menuOptions: { id: string; name: string }[] = [{ id: 'fullscreen', name: lc('show_fullscreen_images') }];
         if (withImages) {
             menuOptions.push({ id: 'transform', name: lc('transform_images') }, { id: 'ocr', name: lc('ocr_document') }, { id: 'qrcode', name: lc('detect_qrcode') });
         }
+        return optionsToMenuItems(menuOptions, (option) => runSelectionOption(option.id));
+    }
+    function getSelectionBottomItems(pkpass: boolean) {
         return [
             { spacer: true },
             { text: lc('share_images'), icon: appIcon('share'), onTap: () => runSelectionOption('share') },
             { spacer: true },
-            { text: lc('more_options'), icon: appIcon('more'), menu: optionsToMenuItems(menuOptions, (option) => runSelectionOption(option.id)) },
+            { text: lc('more_options'), icon: appIcon('more'), menu: getSelectionMenu(pkpass) },
             { spacer: true },
-            { text: lc('delete'), icon: appIcon('delete'), onTap: () => runSelectionOption('delete') },
+            { text: lc('delete'), icon: appIcon('delete'), color: colorError, onTap: () => runSelectionOption('delete') },
             { spacer: true }
         ];
     }
-    function getBottomItems(selected: number, pkpass: boolean, favorite: boolean, withImages: boolean, exportable: boolean, reordering: boolean) {
+    // the export menu of the whole card: PDF, images or pass, share
+    function getDocumentExportMenu(doc: OCRDocument = document) {
+        return getExportMenu({ document: doc, documents: [doc], pages: doc.pages.map((photo) => ({ page: photo, document: doc })) });
+    }
+    function showExportMenu(event: EventData) {
+        showMenu({ anchor: event.object instanceof View ? event.object : null, items: getDocumentExportMenu() });
+    }
+    function getBottomItems(selected: number, pkpass: boolean, exportable: boolean, doc: OCRDocument) {
+        // Android: selecting has its actions in the top bar
+        if (selected > 0 && __ANDROID__) {
+            return [];
+        }
         if (selected > 0) {
             return getSelectionBottomItems(pkpass);
         }
-        if (reordering) {
-            return [];
+        const share = exportable ? { text: lc('export'), icon: appIcon('export'), menu: getDocumentExportMenu(doc) } : null;
+        // iOS: the main action is a prominent button at the right of the toolbar. Android: no toolbar, the buttons at the right of the page
+        return __IOS__ ? [...(share ? [share] : []), ...(!pkpass ? [{ spacer: true }, { text: lc('edit'), prominent: true, color: accent.accent, onTap: openEdit }] : [])] : [];
+    }
+    async function showReorderPages() {
+        try {
+            const ReorderPagesModal = (await import('~/components/view/ReorderPagesModal.svelte')).default;
+            await showModal({ page: ReorderPagesModal, fullscreen: true, props: { document } });
+        } catch (error) {
+            showError(error);
         }
-        const moreMenu: MenuItem[] = [
-            ...(withImages && !pkpass ? [{ title: lc('show_fullscreen_images'), icon: appIcon('fullscreen'), onSelect: () => showFullscreen(currentImageIndex) }] : []),
-            { title: lc('delete'), icon: appIcon('delete'), destructive: true, onSelect: deleteDoc }
-        ];
-        // the bar takes the colors of the pass but the floating toolbar of Android keeps its own surface
-        const color = pkpass && __ANDROID__ ? { color: colorOnSurface } : {};
-        return [
-            { spacer: true },
-            ...(exportable ? [{ ...color, text: lc('share'), icon: appIcon('share'), onTap: () => (pkpass ? showImagePopoverMenu(geAllPages(), getAnchor()) : showPDFPopover()) }, { spacer: true }] : []),
-            { ...color, text: lc('toggle_favorite'), icon: appIcon(favorite ? 'favorite_on' : 'favorite_off'), onTap: toggleFavorite },
-            ...(withImages && !pkpass ? [{ text: lc('adjust'), icon: appIcon('tune'), onTap: editCurrentPage }] : []),
-            ...(pkpass ? [] : [{ text: lc('edit'), icon: appIcon('edit'), onTap: openEdit }]),
-            { spacer: true },
-            // a menu with a single entry (delete) is the button of that entry
-            moreMenu.length > 1
-                ? { ...color, text: lc('more_options'), icon: appIcon('more'), menu: moreMenu }
-                : { text: moreMenu[0].title, icon: moreMenu[0].icon, color: colorError, onTap: () => moreMenu[0].onSelect(moreMenu[0]) },
-            { spacer: true }
-        ];
     }
     async function openEdit() {
         try {
@@ -965,8 +955,9 @@
             showError(error);
         }
     }
+    $: selectionMenu = __ANDROID__ && nbSelected > 0 ? getSelectionMenu(isPKPassDocument) : [];
     $: documentMenu = getDocumentMenu(hasImages, isPKPassDocument, document.pages.length);
-    $: bottomItems = getBottomItems(nbSelected, isPKPassDocument, document.favorite === 1, hasImages, canBeExportedToPDF, inEditMode);
+    $: bottomItems = getBottomItems(nbSelected, isPKPassDocument, canBeExportedToPDF, document);
     // the options of the add button: photos and codes in their own section, a menu (system menu on iOS)
     function getAddMenu(kind?: 'code' | 'photo'): MenuItem[] {
         const photos: MenuItem[] = [
@@ -1082,7 +1073,6 @@
         const component = (await import('~/components/FullScreenImageViewer.svelte')).default;
         navigate({
             page: component,
-            // transition: __ANDROID__ ? SharedTransition.custom(new PageTransition(300, undefined, 10), {}) : undefined,
             props: {
                 images: document.pages.map((page, index) => ({
                     sharedTransitionTag: `document_${document.id}_${page.id}`,
@@ -1119,17 +1109,20 @@
 </script>
 
 <appPage bind:this={page} id="cardview" {...{ keepScreenAwake: hasQRCodes, screenBrightness: hasQRCodes ? 1 : -1, ...(isPKPassDocument ? { statusBarStyle: passColors.isDark ? 'dark' : 'light' } : {}) }}>
-    <appBar {bottomItems} android:backgroundColor={isPKPassDocument ? passColors.backgroundColor : accent.container} android:scrollBehavior="hide" color={isPKPassDocument ? passColors.foregroundColor : colorOnBackground} iosIconRenderingMode="alwaysTemplate" ios:translucent={!isPKPassDocument} scrollBehavior="lift" scrollTargetId="cardScroll" size="small" title={nbSelected > 0 ? lcp('selected', nbSelected) : inEditMode ? lc('reorder_pages') : hasCustomName || __ANDROID__ ? '' : document.name}>
+    <appBar {bottomItems} android:backgroundColor={isPKPassDocument ? passColors.backgroundColor : accent.container} android:scrollBehavior="hide" color={isPKPassDocument ? passColors.foregroundColor : colorOnBackground} iosIconRenderingMode="alwaysTemplate" ios:translucent={!isPKPassDocument} scrollBehavior="lift" scrollTargetId="cardScroll" size="small" title={nbSelected > 0 ? lcp('selected', nbSelected) : ''}>
         {#if __ANDROID__}
-            <navigationButton {...{ 'android.systemIcon': nbSelected > 0 || inEditMode ? 'ic_menu_close_clear_cancel' : 'ic_menu_back' }} on:tap={nbSelected > 0 ? unselectAll : inEditMode ? switchEditMode : onGoBack} />
+            <navigationButton {...{ 'android.systemIcon': nbSelected > 0 ? 'ic_menu_close_clear_cancel' : 'ic_menu_back' }} on:tap={nbSelected > 0 ? unselectAll : onGoBack} />
         {/if}
         {#if nbSelected > 0}
             {#if __IOS__}
                 <appBarItem ios.position="right" prominent={true} text={lc('cancel')} on:tap={unselectAll} />
+            {:else}
+                <appBarItem icon={appIcon('share')} text={lc('share_images')} on:tap={() => runSelectionOption('share')} />
+                <appBarItem color={colorError} icon={appIcon('delete')} text={lc('delete')} on:tap={() => runSelectionOption('delete')} />
+                <appBarItem icon={appIcon('more')} menu={selectionMenu} text={lc('more_options')} />
             {/if}
-        {:else if inEditMode}
-            <appBarItem icon={appIcon('check')} ios.position="right" text={lc('ok')} on:tap={switchEditMode} />
         {:else}
+            <appBarItem icon={appIcon(document.favorite === 1 ? 'favorite_on' : 'favorite_off')} ios.position="right" text={lc('toggle_favorite')} on:tap={toggleFavorite} />
             {#if !isPKPassDocument}
                 <appBarItem icon={appIcon('add')} ios.position="right" menu={addMenu} text={lc('add')} />
             {/if}
@@ -1138,10 +1131,21 @@
     </appBar>
     <gridlayout class="pageContent" backgroundColor={isPKPassDocument ? passColors.backgroundColor : __IOS__ && cardColor ? accent.container : colorBackground}>
         {#if heroGradient}
-            <gridlayout backgroundImage={heroGradient} isUserInteractionEnabled={false} />
+            <gridlayout backgroundImage={heroGradient} {...{ iosOverflowSafeArea: true }} isUserInteractionEnabled={false} />
         {/if}
         {#if __IOS__ && backdropImage}
-            <image blurRadius={12} decodeWidth={160} {...{ iosOverflowSafeArea: true }} isUserInteractionEnabled={false} opacity={isDarkTheme() ? 0.7 : 1} src={backdropImage} stretch="aspectFill" />
+            {#key backdropImage}
+                <image
+                    blurRadius={12}
+                    decodeWidth={160}
+                    {...{ iosOverflowSafeArea: true }}
+                    isUserInteractionEnabled={false}
+                    opacity={isDarkTheme() ? 0.7 : 1}
+                    src={backdropImage}
+                    stretch="aspectFill"
+                    in:fade={{ duration: 300 }}
+                    out:fade={{ duration: 300 }} />
+            {/key}
         {/if}
         {#if CARD_APP && isPKPassDocument}
             <!-- the app bar pads its scroll target for the bottom toolbar: this empty one keeps it off the pager, so the pages go under the toolbar -->
@@ -1157,13 +1161,13 @@
             <scrollview id="cardScroll" on:layoutChanged={onScrollLayout}>
             {#key scrollHeight}
             {#if scrollHeight > 0}
-            <stacklayout paddingBottom={32}>
-                <gridlayout height={hasImages || isEmptyCard ? heroHeight : undefined} rows="auto,auto,*,auto">
+            <stacklayout paddingBottom={details.length ? 32 : 0}>
+                <gridlayout height={hasImages || isEmptyCard ? heroHeight : undefined} rows={hasImages ? 'auto,auto,auto,auto' : 'auto,auto,*,auto'}>
                 {#if __ANDROID__}
                     <gridlayout backgroundColor={accent.container} borderRadius="0 0 40 12" columns="*,auto" rows="auto" padding="0 20 {hasHero ? PLATE_OVERLAP + 20 : 24} 20">
                         <stacklayout margin="8 0 0 0">
-                            <label color={colorOnBackground} fontSize={hasCustomName ? 34 : 22} fontWeight="bold" maxLines={3} text={document.name} textWrap={true} />
-                            <label color={colorOnSurfaceVariant} fontSize={15} text={dayjs(document.createdDate).format('LL')} visibility={hasCustomName ? 'visible' : 'collapsed'} />
+                            <label color={colorOnBackground} fontSize={34} fontWeight="bold" maxLines={3} text={document.name} textWrap={true} />
+                            <label color={colorOnSurfaceVariant} fontSize={15} text={dayjs(document.createdDate).format('LL')} />
                         </stacklayout>
                         <label
                             backgroundColor={accent.accent}
@@ -1181,10 +1185,10 @@
                             visibility={hasCustomName ? 'visible' : 'collapsed'}
                             width={48} />
                     </gridlayout>
-                {:else if hasCustomName}
+                {:else}
                     <stacklayout margin="4 20 8 20">
-                        <label color={heroGradient ? accent.onBackdrop : colorOnBackground} fontSize={34} fontWeight="bold" maxLines={3} text={document.name} textWrap={true} />
-                        <label color={heroGradient ? accent.onBackdrop : colorOnSurfaceVariant} fontSize={15} opacity={heroGradient ? 0.8 : 1} text={dayjs(document.createdDate).format('LL')} />
+                        <label color={heroGradient ? accent.onBackdrop : backdropImage ? backdropTextColor : colorOnBackground} fontSize={34} fontWeight="bold" maxLines={3} text={document.name} textWrap={true} />
+                        <label color={heroGradient ? accent.onBackdrop : backdropImage ? backdropTextColor : colorOnSurfaceVariant} fontSize={15} opacity={heroGradient || backdropImage ? 0.8 : 1} text={dayjs(document.createdDate).format('LL')} />
                     </stacklayout>
                 {/if}
                 {#if isEmptyCard}
@@ -1215,25 +1219,41 @@
                     </gridlayout>
                 {/if}
                 {#if hasImages}
-                <pager bind:this={pager} id="imagesPager" margin="{__ANDROID__ && !hasQRCodes ? -PLATE_OVERLAP : 8} 0 0 0" peaking={nbImages > 1 ? PEEK_WIDTH : 0} row={2} spacing={12} {items} on:selectedIndexChange={onImagesPagerIndex}>
+                <pager bind:this={pager} id="imagesPager" height={photoPagerHeight} preserveIndexOnItemsChange={true} margin="{__ANDROID__ && !hasQRCodes ? -PLATE_OVERLAP : 8} {nbImages > 1 ? 0 : 16} 0 {nbImages > 1 ? 0 : 16}" peaking={nbImages > 1 ? PEEK_WIDTH : 0} row={2} spacing={12} {items} on:selectedIndexChange={onImagesPagerIndex}>
                     <Template let:item>
                         <gridlayout
+                            backgroundColor={getPhotoBackground(item.page)}
+                            borderRadius={20}
+                            boxShadow={__IOS__ ? '0 4 12 #00000040' : undefined}
+                            verticalAlignment="top"
                             visibility={item.page.imagePath ? 'visible' : 'collapsed'}
                             on:loaded={(e) => registerImageMenu(e, item)}
                             on:longPress={() => onImageLongPress(item)}
-                            on:tap={() => showFullscreen(items.findIndex((i) => i.page === item.page))}
+                            on:tap={() => onPhotoTap(item)}
                         >
                             <RotableImageView
                                 id="imageView"
-                                aspectRatio={getAspectRatio(item.page)}
+                                aspectRatio={1 / CARD_RATIO}
                                 borderRadius={20}
                                 decodeWidth={screenWidthDips}
-                                horizontalAlignment="center"
                                 item={item.page}
                                 sharedTransitionTag={`document_${document.id}_${item.page.id}`}
-                                stretch="aspectFit"
-                                verticalAlignment="center"
+                                stretch="aspectFill"
                             />
+                            <!-- the light edge of a card, at the top only -->
+                            <gridlayout backgroundColor="#FFFFFF66" height={1} isUserInteractionEnabled={false} margin="0 14" verticalAlignment="top" />
+                            <uibutton
+                                accessibilityLabel={lc('adjust')}
+                                class="photoEditButton"
+                                height={36}
+                                horizontalAlignment="right"
+                                ios:color="white"
+                                margin="0 12 12 0"
+                                variant={photoEditVariant}
+                                verticalAlignment="bottom"
+                                width={36}
+                                {...{ src: appIcon('edit') }}
+                                on:tap={() => editPage(item.page)} />
                         </gridlayout>
                     </Template>
                 </pager>
@@ -1243,52 +1263,35 @@
                     ios:autoReloadItemOnLayout={true}
                     colWidth={FILMSTRIP_COL_WIDTH}
                     height={FILMSTRIP_HEIGHT}
-                    horizontalAlignment="center"
                     {items}
                     margin="8 0 8 0"
+                    paddingLeft={filmstripPadding}
+                    paddingRight={filmstripPadding}
                     orientation="horizontal"
-                    reorderEnabled={true}
                     row={3}
                     rowHeight={FILMSTRIP_HEIGHT}
                     visibility={nbImages > 1 ? 'visible' : 'collapsed'}
-                    width={Math.min(nbImages * FILMSTRIP_COL_WIDTH, screenWidthDips - 32)}
-                    on:itemReordered={onItemReordered}
-                    on:itemReorderStarting={onItemReorderStarting}
                 >
                     <Template let:index let:item>
                         <gridlayout
                             class="cardItemTemplate"
-                            backgroundColor={getItemBackgroundColor(item)}
-                            borderRadius={6}
                             elevation={0}
-                            longPressGestureOptions={(view, tag, rootTag) => ({
-                                simultaneousHandlers: [rootTag, view['PAN_HANDLER_TAG']],
-                                minDurationMs: 300
-                            })}
                             margin={4}
-                            panGestureOptions={(view, tag, rootTag) => ({
-                                simultaneousHandlers: [rootTag, view['LONGPRESS_HANDLER_TAG']],
-                                minDist: 20
-                            })}
                             rippleColor={colorSurface}
-                            scaleX={index === currentImageIndex ? 1 : 0.85}
-                            scaleY={index === currentImageIndex ? 1 : 0.85}
                             on:tap={() => onItemTap(item)}
-                            on:touch={(e) => onTouch(item, e)}
-                            on:longPress={(e) => onItemLongPress(item, e)}
-                            on:pan={(e) => onPan(item, e)}
+                            on:longPress={() => onItemLongPress(item)}
                         >
-                            <gridlayout opacity={index === currentImageIndex ? 1 : 0.55}>
-                                <RotableImageView
-                                    id="imageView"
-                                    borderRadius={6}
-                                    decodeWidth={FILMSTRIP_COL_WIDTH}
-                                    item={item.page}
-                                    sharedTransitionTag={`document_${document.id}_${item.page.id}`}
-                                    stretch="aspectFill"
-                                    width="100%"
-                                />
-                            </gridlayout>
+                            <!-- the content is what is scaled: the cell itself keeps its size and its touch handlers -->
+                            <gridlayout id="thumbnailContent" backgroundColor={getItemBackgroundColor(item)} borderRadius={6}>
+                            <RotableImageView
+                                id="imageView"
+                                borderRadius={6}
+                                decodeWidth={FILMSTRIP_COL_WIDTH}
+                                item={item.page}
+                                stretch="aspectFill"
+                                width="100%"
+                            />
+                            <gridlayout id="thumbnailScrim" backgroundColor="#00000066" borderRadius={6} isUserInteractionEnabled={false} />
                             <gridlayout backgroundColor="rgba(0, 0, 0, 0.3)" borderRadius={6} isUserInteractionEnabled={false} visibility={item.selected ? 'visible' : 'hidden'}>
                                 <label
                                     backgroundColor={colorPrimary}
@@ -1307,7 +1310,7 @@
                                     verticalTextAlignment="center"
                                     width={20} />
                             </gridlayout>
-                            <label fontFamily={$fonts.mdi} fontSize={20} padding={4} text="mdi-reorder-horizontal" verticalAlignment="bottom" visibility={inEditMode ? 'visible' : 'hidden'} />
+                            </gridlayout>
                         </gridlayout>
                     </Template>
                 </collectionview>
@@ -1344,4 +1347,16 @@
             </scrollview>
         {/if}
     </gridlayout>
+    <appPageOverlay>
+        {#if __ANDROID__ && nbSelected === 0}
+            <stacklayout class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal">
+                {#if canBeExportedToPDF}
+                    <uibutton class="addFab" {...{ src: appIcon('export') }} variant="contained" on:tap={showExportMenu} />
+                {/if}
+                {#if !isPKPassDocument}
+                    <uifloatingactionbutton class="editFab" backgroundColor={accent.accent} color={accent.onAccent} src={appIcon('edit')} text={lc('edit')} on:tap={openEdit} />
+                {/if}
+            </stacklayout>
+        {/if}
+    </appPageOverlay>
 </appPage>
