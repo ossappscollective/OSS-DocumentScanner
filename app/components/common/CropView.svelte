@@ -1,10 +1,11 @@
 <script context="module" lang="ts">
-    import { BitmapShader, Canvas, CanvasView, Cap, Direction, FillType, Join, Matrix, Paint, Path, Style, TileMode } from '@nativescript-community/ui-canvas';
+    import { Canvas, CanvasView, Cap, Direction, FillType, Join, Matrix, Paint, Path, Style } from '@nativescript-community/ui-canvas';
     import { ApplicationSettings, Color, ImageSource, TouchGestureEventData, Utils } from '@nativescript/core';
     import { debounce } from '@nativescript/core/utils';
     import { QRCodeData, QuadPoint, Quads } from 'plugin-nativeprocessor';
     import { onDestroy } from 'svelte';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
+    import { Easing, Tween, animateTween, createTween, easeSlide, stopTween } from '~/utils/animations/tween';
     import { getCardAccent } from '~/utils/cardColors';
     import { IMAGE_DECODE_HEIGHT, MAGNIFIER_SENSITIVITY, SETTINGS_MAGNIFIER_SENSITIVITY } from '~/utils/constants';
     import { hapticTick, isReduceMotion } from '~/utils/haptics';
@@ -52,82 +53,16 @@
     $: accent = isEInk ? '#000000' : getCardAccent(colorPrimary, true, colorPrimary).accent;
     const animationsEnabled = !isEInk && !isReduceMotion();
 
-    interface Tween {
-        value: number;
-        from: number;
-        to: number;
-        start: number;
-        duration: number;
-        ease: (progress: number) => number;
-        onUpdate?: () => void;
-        onEnd?: () => void;
-    }
-    const linear = (progress: number) => progress;
-    const easeInOut = (progress: number) => (progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2);
-    // cubic-bezier(0.2, 0.9, 0.3, 1.15), solved by bisection
-    function easeSlide(progress: number) {
-        const bezier = (time: number, first: number, second: number) => 3 * (1 - time) * (1 - time) * time * first + 3 * (1 - time) * time * time * second + time * time * time;
-        let low = 0;
-        let high = 1;
-        for (let step = 0; step < 12; step++) {
-            const middle = (low + high) / 2;
-            if (bezier(middle, 0.2, 0.3) < progress) {
-                low = middle;
-            } else {
-                high = middle;
-            }
-        }
-        return bezier((low + high) / 2, 0.9, 1.15);
-    }
-    const tweens: Tween[] = [];
-    let ticking = false;
-    function createTween(value = 0, onUpdate?: () => void, onEnd?: () => void): Tween {
-        return { value, from: value, to: value, start: 0, duration: 0, ease: linear, onUpdate, onEnd };
-    }
-    function tick() {
-        const now = Date.now();
-        for (let index = tweens.length - 1; index >= 0; index--) {
-            const tween = tweens[index];
-            const progress = Math.min(1, (now - tween.start) / tween.duration);
-            tween.value = tween.from + (tween.to - tween.from) * tween.ease(progress);
-            tween.onUpdate?.();
-            if (progress === 1) {
-                tweens.splice(index, 1);
-                tween.onEnd?.();
-            }
-        }
+    function invalidate() {
         canvasView?.nativeView?.invalidate();
-        if (tweens.length) {
-            requestAnimationFrame(tick);
-        } else {
-            ticking = false;
-        }
     }
-    function animateTween(tween: Tween, to: number, duration: number, ease = easeInOut) {
-        tween.from = tween.value;
-        tween.to = to;
-        if (!animationsEnabled || duration <= 0) {
-            tween.value = to;
-            tween.onUpdate?.();
-            tween.onEnd?.();
-            canvasView?.nativeView?.invalidate();
-            return;
-        }
-        tween.start = Date.now();
-        tween.duration = duration;
-        tween.ease = ease;
-        if (!tweens.includes(tween)) {
-            tweens.push(tween);
-        }
-        if (!ticking) {
-            ticking = true;
-            requestAnimationFrame(tick);
-        }
+    function animate(tween: Tween, to: number, duration: number, ease?: Easing) {
+        animateTween(tween, to, animationsEnabled ? duration : 0, ease);
     }
     // 0 to 1: how much the grabbed handles are grabbed, and how visible the magnifier is
-    const grabTween = createTween();
+    const grabTween = createTween(0, invalidate);
     // the x of the center of the magnifier
-    const glassTween = createTween();
+    const glassTween = createTween(0, invalidate);
     // 0 to 1: the quad on its way to a new quad (the full image)
     const quadTween = createTween(0, updateQuadTween, endQuadTween);
     let glassPlaced = false;
@@ -152,9 +87,8 @@
     cornersPaint.setStrokeCap(Cap.ROUND);
     const fillPaint = new Paint();
     fillPaint.style = Style.FILL;
-    const shaderPaint = new Paint();
-    shaderPaint.style = Style.FILL;
-    shaderPaint.color = 'black';
+    const zoomImagePaint = new Paint();
+    const glassPath = new Path();
 
     export let imagePath: string = null;
     export let imageWidth: number = null;
@@ -185,7 +119,6 @@
     $: currentQuads = quads;
 
     const rotation = 0;
-    let zoomImageShader: BitmapShader;
     let zoomImage: ImageSource;
     let zoomImagePath: string;
     let zoomImageScale: number = 1;
@@ -311,7 +244,7 @@
                         grabbedQuadIndex = closestQuadIndex;
                         grabbedCorners = closestCornerQuadIndex;
                         glassPlaced = false;
-                        animateTween(grabTween, 1, 100);
+                        animate(grabTween, 1, 100);
                         dispatch('dragging', { detail: true });
                         hapticTick();
                     }
@@ -328,8 +261,10 @@
                 case 'cancel': {
                     closestQuadIndex = -1;
                     closestCornerQuadIndex = [];
-                    animateTween(grabTween, 0, 100);
+                    animate(grabTween, 0, 100);
                     dispatch('dragging', { detail: false });
+                    // the handles followed the finger past the image: back on the crop which was really applied
+                    mapQuads();
                     if (changeOnTouch) {
                         redos.splice(0, redos.length);
                         undos.push(lastUndo);
@@ -447,6 +382,7 @@
             currentQuads[0][index] = [0, 1].map((axis) => Math.round(quadFrom[index][axis] + (point[axis] - quadFrom[index][axis]) * quadTween.value)) as QuadPoint;
         });
         mapQuads();
+        invalidate();
     }
     function endQuadTween() {
         quadChanged = true;
@@ -463,7 +399,7 @@
         quadFrom = current.map((point) => [...point] as QuadPoint);
         quadTo = quad;
         quadTween.value = 0;
-        animateTween(quadTween, 1, 250);
+        animate(quadTween, 1, 250);
     }
 
     function getMatrixMappedPoint(matrix: Matrix, p) {
@@ -490,7 +426,7 @@
         }
     }
     onDestroy(() => {
-        tweens.length = 0;
+        [grabTween, glassTween, quadTween].forEach(stopTween);
         clearImages();
     });
     function mapQuads() {
@@ -509,8 +445,6 @@
                 zoomImage = await loadImage(imagePath, { sourceWidth: width, sourceHeight: height, resizeThreshold: ZOOM_IMAGE_MAX_SIZE });
                 if (zoomImage?.android || zoomImage?.ios) {
                     zoomImageScale = width / zoomImage.width;
-                    zoomImageShader = new BitmapShader(zoomImage, TileMode.CLAMP, TileMode.CLAMP);
-                    shaderPaint.setShader(zoomImageShader);
                 }
             }
             const w = Utils.layout.toDeviceIndependentPixels(nCanvas.getMeasuredWidth()) - 2 * padding;
@@ -572,20 +506,33 @@
             glassPlaced = true;
             glassTween.value = glassTween.to = targetX;
         } else if (targetX !== glassTween.to) {
-            animateTween(glassTween, targetX, 150, easeSlide);
+            animate(glassTween, targetX, 150, easeSlide);
         }
         const centerX = glassTween.value;
         const zoom = 2 * drawingRatio;
+        const imageLeft = centerX - point[0] * zoom;
+        const imageTop = centerY - point[1] * zoom;
         shaderMatrix.reset();
         shaderMatrix.postScale(zoomImageScale * zoom, zoomImageScale * zoom, 0, 0);
-        shaderMatrix.postTranslate(centerX - point[0] * zoom, centerY - point[1] * zoom);
-        zoomImageShader?.setLocalMatrix(shaderMatrix);
+        shaderMatrix.postTranslate(imageLeft, imageTop);
 
         const scale = animationsEnabled ? 0.9 + 0.1 * visibility : 1;
         canvas.save();
         canvas.scale(scale, scale, centerX, centerY);
-        shaderPaint.setAlpha(Math.round(255 * visibility));
-        canvas.drawCircle(centerX, centerY, ZOOOM_GLASS_SIZE, shaderPaint);
+        glassPath.reset();
+        glassPath.addCircle(centerX, centerY, ZOOOM_GLASS_SIZE, Direction.CW);
+        canvas.clipPath(glassPath);
+        // outside of the image is the holder: the image is neither repeated nor stretched there
+        fillPaint.color = isEInk ? WHITE : HOLDER_COLOR;
+        fillPaint.setAlpha(Math.round(255 * visibility));
+        canvas.drawCircle(centerX, centerY, ZOOOM_GLASS_SIZE, fillPaint);
+        if (zoomImage) {
+            canvas.save();
+            canvas.clipRect(imageLeft, imageTop, imageLeft + actualWidth * zoom, imageTop + actualHeight * zoom);
+            zoomImagePaint.setAlpha(Math.round(255 * visibility));
+            canvas.drawBitmap(zoomImage, shaderMatrix, zoomImagePaint);
+            canvas.restore();
+        }
         cornersPaint.color = accent;
         cornersPaint.strokeWidth = 2;
         cornersPaint.setAlpha(Math.round(255 * visibility));
@@ -700,9 +647,16 @@
     }
 </script>
 
-<gridlayout {...$$restProps} id="cropView" on:redo={applyRedo} on:undo={applyUndo}>
-    <gridlayout backgroundColor={isEInk ? WHITE : HOLDER_COLOR} borderColor={isEInk ? '#000000' : null} borderRadius={HOLDER_RADIUS} borderWidth={isEInk ? 1 : 0} margin="0 {HOLDER_MARGIN}">
-        <RotableImageView decodeWidth={ZOOM_IMAGE_MAX_SIZE} margin={padding} src={imagePath} stretch="aspectFit" zoomable={true} />
-        <canvasView bind:this={canvasView} on:draw={onCanvasDraw} on:layoutChanged={() => updateMatrix()} on:touch={onTouch} />
-    </gridlayout>
+<gridlayout
+    backgroundColor={isEInk ? WHITE : HOLDER_COLOR}
+    borderColor={isEInk ? '#000000' : null}
+    borderRadius={HOLDER_RADIUS}
+    borderWidth={isEInk ? 1 : 0}
+    margin="0 {HOLDER_MARGIN}"
+    {...$$restProps}
+    id="cropView"
+    on:redo={applyRedo}
+    on:undo={applyUndo}>
+    <RotableImageView decodeWidth={ZOOM_IMAGE_MAX_SIZE} margin={padding} src={imagePath} stretch="aspectFit" zoomable={true} />
+    <canvasView bind:this={canvasView} on:draw={onCanvasDraw} on:layoutChanged={() => updateMatrix()} on:touch={onTouch} />
 </gridlayout>
