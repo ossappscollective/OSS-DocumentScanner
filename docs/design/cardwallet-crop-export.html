@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crop view and export menu (iOS and Android)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
+<style>
+:root{--text-primary:#1f1f1e;--text-secondary:#5f5e5a;--border-strong:#c8c6bd;--surface-1:#e9e8e1;--page:#fafaf7}
+@media(prefers-color-scheme:dark){:root{--text-primary:#f1f0ea;--text-secondary:#b0aea5;--border-strong:#4a4944;--surface-1:#34332f;--page:#1c1c1a}}
+body{font-family:system-ui,sans-serif;margin:24px;background:var(--page);color:var(--text-primary);max-width:1280px}
+button{font:inherit;font-size:13px;color:var(--text-primary);background:transparent;border:0.5px solid var(--border-strong);border-radius:8px;padding:5px 12px;cursor:pointer}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+ul{font-size:13px;color:var(--text-secondary);line-height:1.5;max-width:900px}
+h3{font-size:15px;font-weight:600;margin:22px 0 4px}
+.sub{font-size:12px;color:var(--text-secondary);margin:0 0 8px;max-width:900px}
+</style>
+</head>
+<body>
+<h2 class="sr-only">Crop view (always dark editor) in four states and the export menu opened from its button in five contexts, on iOS (system menu) and Android (Material 3 Expressive menu), with handle and menu anatomy.</h2>
+<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 14px">
+<button id="bl">Light</button><button id="bd">Dark</button>
+<span style="width:1px;height:20px;background:var(--border-strong)"></span>
+<button id="mi">iOS</button><button id="ma">Android</button><button id="mb">Both</button>
+<span style="width:1px;height:20px;background:var(--border-strong)"></span>
+<button id="va">Crop and menu</button><button id="vc">Crop</button><button id="vm">Export menu</button>
+</div>
+<div id="out"></div>
+<ul>
+<li><b>Crop view:</b> an editor, so dark in both app themes (like the camera). The page sits in a 28 radius holder (#26262A) on a near black screen (#0E0E10); the area outside the outline is dimmed 55%. Round handles (corners 24, edges as 6 thick capsules), each with a 44 hit area; the closest one moves, relative to the finger. The magnifier (100, 2x) shows while a corner is dragged, top-left, flipping to top-right when the finger is there. Full image is one undo step.</li>
+<li><b>iOS:</b> glass close top-left, glass undo and redo top-right; system toolbar with the text button "full image" at the left and the prominent "done" at the right. <b>Android:</b> an edit mode, so every action is in the top bar: close, "crop", undo, redo, "done" text button, overflow with "full image". No bottom bar.</li>
+<li><b>Export menu:</b> one native menu replaces the two popovers (PDF and images). iOS: UIMenu from the export button, which opens above a bottom toolbar and then lists the first item nearest the button (the mockups draw what the user sees). Android: M3 Expressive menu, a segment per section, anchored to the button. Titles are complete ("Share PDF", not "Share"); no section titles. Sections: the format of the app first (Cardwallet: images; Scanner: PDF), then the other, then settings. An item that cannot apply is hidden, not disabled.</li>
+<li>Values, per-context item lists, what each item does and the mapping to the code are in <code>cardwallet-crop-export.md</code>. The mockup is schematic (300 wide): take numbers from the markdown.</li>
+</ul>
+<script>
+const state={dark:false,mode:'both',view:'all'};
+const BF='backdrop-filter:blur(18px) saturate(1.7);-webkit-backdrop-filter:blur(18px) saturate(1.7);';
+const ic=(n,sz,c)=>`<i class="ti ti-${n}" style="font-size:${sz||20}px;${c?'color:'+c:''}"></i>`;
+let uid=0;
+function roles(p){const d=state.dark;
+if(p==='a')return d?{page:'#111318',bar:'#272a31',cont:'#00458f',onCont:'#d8e2ff',acc:'#adc6ff',onAcc:'#002e69',txt:'#e2e2e9',sub:'#c4c6d0',menu:'#1d2024',row:'#2b2d33',sep:'#43474e',paper:'#e8e8ea'}:{page:'#f9f9ff',bar:'#e6e9f2',cont:'#d8e2ff',onCont:'#001a41',acc:'#005ac1',onAcc:'#fff',txt:'#1a1b20',sub:'#44474f',menu:'#f1f3fa',row:'#e8ebf4',sep:'#c4c6d0',paper:'#fff'};
+return d?{page:'#000',acc:'#4d8dff',txt:'#fff',sub:'rgba(235,235,245,.65)',glass:'rgba(70,70,76,.42)',gb:'rgba(255,255,255,.22)',menu:'rgba(44,44,46,.9)',sep:'rgba(84,84,88,.6)',gap:'rgba(0,0,0,.32)',paper:'#e8e8ea'}:{page:'#f2f2f7',acc:'#0a6cff',txt:'#000',sub:'rgba(60,60,67,.65)',glass:'rgba(255,255,255,.42)',gb:'rgba(255,255,255,.8)',menu:'rgba(255,255,255,.9)',sep:'rgba(60,60,67,.18)',gap:'rgba(60,60,67,.1)',paper:'#fff'}}
+const frame=(inner,bg,p,txt)=>`<div style="width:300px;height:650px;border-radius:${p==='i'?46:36}px;background:${bg};border:6px solid #17171a;box-sizing:border-box;position:relative;overflow:hidden;font-family:${p==='i'?'-apple-system,system-ui,sans-serif':'Roboto,system-ui,sans-serif'};color:${txt}"><div style="position:absolute;top:8px;${p==='i'?'left:50%;margin-left:-42px;width:84px;height:24px':'left:50%;margin-left:-7px;width:14px;height:14px'};border-radius:12px;background:#000;z-index:30"></div>${inner}</div>`;
+
+/* ---------- crop ---------- */
+const EDITOR={screen:'#0e0e10',holder:'#26262a'};
+const GL={bg:'rgba(70,70,76,.55)',bd:'1px solid rgba(255,255,255,.22)'};
+const CIMG=[[.13,.09],[.87,.06],[.91,.9],[.1,.93]];
+// the holder with the page image, the crop quad, its handles and (while a corner is dragged) the magnifier. Sizes are the spec values x 0.73 (holder 268 against 369 pt)
+function cropSvg(W,H,st,acc){const id='c'+(++uid);
+const inset=14;let iw=W-2*inset,ih=iw*1.41;if(ih>H-2*inset){ih=H-2*inset;iw=ih/1.41}
+const ox=(W-iw)/2,oy=(H-ih)/2,pt=f=>[ox+f[0]*iw,oy+f[1]*ih];
+const P0=CIMG.map(pt);
+const moved=st==='drag'||st==='undo';
+const Q=(moved?[[.13,.09],[.97,.02],[.91,.9],[.1,.93]]:CIMG).map(pt);
+const poly=a=>a.map(q=>q.map(v=>v.toFixed(1)).join(',')).join(' ');
+const lines=Array.from({length:14},(_,i)=>`<rect x="${ox+iw*.16}" y="${oy+ih*.14+i*ih*.052}" width="${iw*(i%5===4?.34:.62)}" height="3" rx="1.5" fill="#00000030"/>`).join('')+`<rect x="${ox+iw*.16}" y="${oy+ih*.09}" width="${iw*.3}" height="7" rx="2" fill="#0000004a"/>`;
+const mask=`M0 0H${W}V${H}H0Z M${Q.map((q,i)=>(i?'L':'')+q.map(v=>v.toFixed(1)).join(' ')).join(' ')}Z`;
+const scene=`<rect width="${W}" height="${H}" fill="${EDITOR.holder}"/><rect x="${ox}" y="${oy}" width="${iw}" height="${ih}" fill="#7a6e60"/><polygon points="${poly(P0)}" fill="#e9e8ea"/><g clip-path="url(#${id}p)">${lines}</g><path d="${mask}" fill="#0000008c" fill-rule="evenodd"/><polygon points="${poly(Q)}" fill="none" stroke="${acc}" stroke-width="1.5"/>`;
+let edges='',corners='';
+Q.forEach((a,i)=>{const b=Q[(i+1)%4],len=Math.hypot(b[0]-a[0],b[1]-a[1]),L=Math.min(.3*len,35)/2,dx=(b[0]-a[0])/len,dy=(b[1]-a[1])/len,mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2;
+edges+=`<line x1="${mx-dx*L}" y1="${my-dy*L}" x2="${mx+dx*L}" y2="${my+dy*L}" stroke="#fff" stroke-width="7" stroke-linecap="round"/><line x1="${mx-dx*L}" y1="${my-dy*L}" x2="${mx+dx*L}" y2="${my+dy*L}" stroke="${acc}" stroke-width="4.4" stroke-linecap="round"/>`});
+Q.forEach((q,i)=>{const on=st==='drag'&&i===1;corners+=(on?`<circle cx="${q[0]}" cy="${q[1]}" r="16" fill="${acc}" opacity=".28"/>`:'')+`<circle cx="${q[0]}" cy="${q[1]}" r="${on?10:8}" fill="${acc}" stroke="#fff" stroke-width="1.5"/>`});
+let mag='';
+if(st==='drag'){const R=37,cx=8+R,cy=8+R,p=Q[1];
+mag=`<circle cx="${cx}" cy="${cy+3}" r="${R}" fill="#000" opacity=".3"/><g clip-path="url(#${id}m)"><g transform="translate(${cx} ${cy}) scale(2) translate(${-p[0]} ${-p[1]})">${scene}</g></g><circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${acc}" stroke-width="1.5"/><path d="M${cx-9} ${cy}H${cx+9}M${cx} ${cy-9}V${cy+9}" stroke="#ffffffe6" stroke-width="1"/>`}
+return`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block"><defs><clipPath id="${id}p"><polygon points="${poly(P0)}"/></clipPath><clipPath id="${id}m"><circle cx="45" cy="45" r="37"/></clipPath></defs>${scene}${edges}${corners}${mag}</svg>`}
+function crop(p,st){const acc=p==='i'?'#8ab4ff':'#adc6ff';
+const un=st==='undo',re=st==='redo',dis=p==='i'?'#ffffff73':'#e2e2e961',on=p==='i'?'#fff':'#e2e2e9';
+const uC=un?on:dis,rC=re?on:dis;
+const gbtn=n=>`<div style="position:absolute;left:14px;top:44px;width:38px;height:38px;border-radius:50%;background:${GL.bg};border:${GL.bd};${BF}display:flex;align-items:center;justify-content:center;color:#fff">${ic(n,19)}</div>`;
+const top=p==='i'?gbtn('x')+`<div style="position:absolute;right:14px;top:44px;height:38px;padding:0 15px;border-radius:19px;background:${GL.bg};border:${GL.bd};${BF}display:flex;align-items:center;gap:17px">${ic('arrow-back-up',19,uC)}${ic('arrow-forward-up',19,rC)}</div>`
+:`<div style="position:absolute;left:10px;right:8px;top:28px;height:56px;display:flex;align-items:center;gap:6px;color:${on}"><span style="width:40px;text-align:center">${ic('x',23)}</span><div style="flex:1;font-size:20px">crop</div><span style="width:36px;text-align:center">${ic('arrow-back-up',23,uC)}</span><span style="width:36px;text-align:center">${ic('arrow-forward-up',23,rC)}</span><div style="font-size:13px;font-weight:500;color:${acc};padding:0 10px">done</div><span style="width:30px;text-align:center">${ic('dots-vertical',23)}</span></div>`;
+const hT=p==='i'?528:584,hint=`<div style="position:absolute;left:24px;right:24px;top:${hT}px;height:34px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:${p==='i'?12:12}px;line-height:1.3;color:#ffffffb3;opacity:${st==='drag'?0:1}">Drag near a corner or an edge.<br>The closest handle moves.</div>`;
+const bottom=p==='i'?`<div style="position:absolute;left:14px;right:14px;bottom:16px;height:50px;border-radius:25px;background:${GL.bg};border:${GL.bd};${BF}display:flex;align-items:center;justify-content:space-between;padding:0 6px 0 18px;color:#fff;z-index:5"><span style="font-size:14px">full image</span><div style="height:38px;padding:0 20px;border-radius:19px;background:#0a6cff;color:#fff;display:flex;align-items:center;font-size:14px;font-weight:600">done</div></div>`:'';
+const W=p==='i'?268:272,H=p==='i'?426:486,L=p==='i'?10:8,T=p==='i'?96:92;
+const holder=`<div style="position:absolute;left:${L}px;top:${T}px;width:${W}px;height:${H}px;border-radius:20px;overflow:hidden">${cropSvg(W,H,st,acc)}</div>`;
+return frame(top+holder+hint+bottom,EDITOR.screen,p,'#fff')}
+
+/* ---------- crop anatomy (1 pt = 1.5 px) ---------- */
+function anatomy(){const k=1.5,acc='#8ab4ff',lab=(x,y,t)=>`<text x="${x}" y="${y}" text-anchor="middle" font-size="11" fill="#ffffffb3" font-family="system-ui">${t}</text>`;
+const hit=(x,y,w,h)=>`<rect x="${x-w/2}" y="${y-h/2}" width="${w}" height="${h}" rx="${Math.min(w,h)/2}" fill="none" stroke="#ffffff66" stroke-dasharray="4 3"/>`;
+return`<div style="background:${EDITOR.holder};border-radius:28px;padding:10px 6px 4px;display:inline-block"><svg width="760" height="220" viewBox="0 0 760 220">
+${hit(70,90,44*k,44*k)}<circle cx="70" cy="90" r="${11*k}" fill="${acc}" stroke="#fff" stroke-width="${2*k}"/>${lab(70,170,'corner: 24 (disc 20 + ring 2)')}${lab(70,186,'hit 44 x 44')}
+${hit(200,90,44*k,44*k)}<circle cx="200" cy="90" r="${22*k}" fill="${acc}" opacity=".28"/><circle cx="200" cy="90" r="${14*k}" fill="${acc}" stroke="#fff" stroke-width="${2*k}"/>${lab(200,170,'grabbed: 30 + halo 44')}${lab(200,186,'accent 28%, 100 ms')}
+${hit(330,90,48*k,44*k)}<line x1="${330-24*k}" y1="90" x2="${330+24*k}" y2="90" stroke="#fff" stroke-width="${6*k+2*k}" stroke-linecap="round"/><line x1="${330-24*k}" y1="90" x2="${330+24*k}" y2="90" stroke="${acc}" stroke-width="${6*k}" stroke-linecap="round"/>${lab(330,170,'edge: 6 x min(30%, 48)')}${lab(330,186,'hit max(44, length) x 44')}
+<defs><clipPath id="amc"><circle cx="560" cy="95" r="${50*k}"/></clipPath></defs><g clip-path="url(#amc)"><rect x="${560-50*k}" y="${95-50*k}" width="${100*k}" height="${100*k}" fill="#7a6e60"/><rect x="${560-50*k}" y="${95-50*k}" width="${100*k}" height="${100*k}" fill="#0000008c"/><polygon points="560,95 ${560+50*k},95 ${560+50*k},${95+50*k} 556,${95+50*k}" fill="#e9e8ea"/><path d="M560 95H${560+50*k}M560 95L556 ${95+50*k}" stroke="${acc}" stroke-width="${1.5*k}" fill="none"/></g><circle cx="560" cy="95" r="${50*k}" fill="none" stroke="${acc}" stroke-width="${2*k}"/><path d="M${560-12*k} 95H${560+12*k}M560 ${95-12*k}V${95+12*k}" stroke="#ffffffe6" stroke-width="${k}"/>${lab(560,190,'magnifier: 100, 2x, ring 2')}${lab(560,206,'crosshair arms 12, 1 white')}
+</svg></div>`}
+
+/* ---------- export menu ---------- */
+const IR=40,AR=42; // schematic row heights (spec: iOS 44, Android 48)
+function model(ctx,p){const A=p==='a';
+const pdf=o=>[{t:'Preview PDF',i:'eye'},...(o&&o.bulk?[{t:'Export as one PDF…',sub:'12 pages in one file',i:'folder-down'},{t:'Export a PDF per document…',sub:'3 files',i:'folder-down'}]:[{t:'Export PDF…',i:'folder-down'}]),{t:'Share PDF',i:'share-3'},...(A?[{t:'Print PDF',i:'printer'}]:[])];
+const img=one=>[{t:one?'Export image':'Export images',i:'folder-down'},{t:'Save to gallery',i:'photo-down'},{t:one?'Share image':'Share images',i:'share-3'}];
+const pass=[{t:'Export as PKPass',i:'folder-down'},{t:'Export as ESpass',i:'folder-down'},{t:'Share as PKPass',i:'share-3'},{t:'Share as ESpass',i:'share-3'}];
+const set=(withPdf,withFolder)=>[...(withPdf?[{t:'PDF export settings',i:'settings'}]:[]),...(A&&withFolder?[{t:'Export folder',sub:'Download/Scans',i:'folder'}]:[])];
+return({card:[img(),pdf(),set(1,1)],pass:[pass,img(1),set(0,1)],doc:[pdf(),img(),set(1,1)],page:[img(1),set(0,1)],bulk:[pdf({bulk:1}),img(),set(1,1)]}[ctx]).filter(s=>s.length)}
+function iosMenu(r,secs,flip,w){const S=flip?[...secs].reverse().map(s=>[...s].reverse()):secs;
+const row=(x,first)=>`<div style="min-height:${x.sub?48:IR}px;padding:0 14px;display:flex;align-items:center;gap:10px;box-sizing:border-box;${first?'':`border-top:.5px solid ${r.sep};`}${x.dis?'opacity:.45;':''}"><span style="flex:1;line-height:1.2"><div style="font-size:14px">${x.t}</div>${x.sub?`<div style="font-size:11px;color:${r.sub}">${x.sub}</div>`:''}</span>${ic(x.i,18)}</div>`;
+return`<div style="width:${w||228}px;border-radius:18px;background:${r.menu};${BF}box-shadow:0 8px 28px rgba(0,0,0,.28);overflow:hidden">${S.map((s,si)=>`${si?`<div style="height:7px;background:${r.gap}"></div>`:''}${s.map((x,i)=>row(x,i===0)).join('')}`).join('')}</div>`}
+function andMenu(r,secs,w){const row=(x,i,n)=>`<div style="min-height:${AR}px;padding:0 14px;display:flex;align-items:center;gap:11px;box-sizing:border-box;font-size:14px;border-radius:${n===1?'18px':i===0?'18px 18px 5px 5px':i===n-1?'5px 5px 18px 18px':'5px'};background:${r.row};margin-bottom:${i<n-1?2:0}px;${x.dis?'opacity:.38;':''}">${ic(x.i,18)}<span style="flex:1;line-height:1.2"><div>${x.t}</div>${x.sub?`<div style="font-size:11px;color:${r.sub}">${x.sub}</div>`:''}</span></div>`;
+return`<div style="width:${w||232}px;border-radius:26px;background:${r.menu};padding:5px;box-sizing:border-box;box-shadow:0 4px 12px rgba(0,0,0,.28)">${secs.map((s,si)=>`${si?'<div style="height:6px"></div>':''}${s.map((x,i)=>row(x,i,s.length)).join('')}`).join('')}</div>`}
+const paper=(r,p,w,h,n)=>`<div style="width:${w}px;height:${h}px;border-radius:5px;background:${r.paper};${p==='i'?'box-shadow:0 2px 8px rgba(0,0,0,.18);':'border:1px solid '+r.sep+';'}box-sizing:border-box;padding:${Math.round(w/10)}px;flex:none"><div style="height:8px;width:45%;border-radius:2px;background:#0000003d;margin-bottom:8px"></div>${Array.from({length:Math.max(3,Math.floor(h/14)-2)},(_,i)=>`<div style="height:3px;border-radius:2px;background:#0000001f;width:${i%5===4?'55%':'100%'};margin-top:${i?6:0}px"></div>`).join('')}</div>`;
+const gb=(r,n,x)=>`<div style="position:absolute;left:${x}px;top:44px;width:38px;height:38px;border-radius:50%;background:${r.glass};border:1px solid ${r.gb};${BF}display:flex;align-items:center;justify-content:center;color:${r.txt};z-index:6">${ic(n,19)}</div>`;
+const gcap=(r,icons,active)=>`<div style="position:absolute;right:14px;top:44px;height:38px;padding:0 13px;border-radius:19px;background:${r.glass};border:1px solid ${r.gb};${BF}display:flex;align-items:center;gap:13px;color:${r.txt};z-index:6">${icons.map((n,i)=>active===i?`<span style="display:flex;width:30px;height:30px;margin:0 -4px;border-radius:50%;background:${r.acc}33;color:${r.acc};align-items:center;justify-content:center">${ic(n,19)}</span>`:ic(n,19)).join('')}</div>`;
+const icoBtn=(r,n,on)=>`<span style="width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;${on?`background:${r.txt}1f`:''}">${ic(n,23)}</span>`;
+const aTop=(r,title,subt,icons,activeIdx)=>`<div style="position:absolute;left:8px;right:6px;top:28px;height:56px;display:flex;align-items:center;gap:4px;color:${r.txt};z-index:6"><span style="width:38px;text-align:center">${ic('arrow-left',23)}</span><div style="flex:1;line-height:1.15"><div style="font-size:19px">${title}</div>${subt?`<div style="font-size:11px;color:${r.sub}">${subt}</div>`:''}</div>${icons.map((n,i)=>icoBtn(r,n,i===activeIdx)).join('')}</div>`;
+const dim=()=>`<div style="position:absolute;inset:0;background:rgba(0,0,0,${state.dark?.32:.1});z-index:9"></div>`;
+function menuFrame(p,ctx){const r=roles(p),secs=model(ctx,p);let inner='',menu='';
+const photo=`<div style="position:absolute;left:16px;top:140px;width:256px;height:160px;border-radius:20px;background:linear-gradient(135deg,#7b8f86,#566a60)"><div style="position:absolute;right:10px;bottom:10px;width:26px;height:26px;border-radius:50%;background:#ffffff40;display:flex;align-items:center;justify-content:center;color:#fff">${ic('pencil',14)}</div></div><div style="position:absolute;left:16px;top:310px;display:flex;gap:6px"><div style="width:50px;height:32px;border-radius:7px;background:#7b8f86"></div><div style="width:43px;height:27px;margin-top:3px;border-radius:6px;background:#566a60;opacity:.7"></div></div>`;
+const passTile=`<div style="position:absolute;left:16px;top:140px;width:256px;height:160px;border-radius:20px;background:linear-gradient(135deg,#1f6f54,#134a38);color:#fff;padding:14px;box-sizing:border-box"><div style="font-size:15px;font-weight:600">Pharmacie</div><div style="font-size:10px;opacity:.7">Loyalty pass</div><div style="position:absolute;left:68px;bottom:14px;width:120px;height:46px;border-radius:6px;background:#fff;background-image:repeating-linear-gradient(90deg,#111 0 2px,#fff 2px 5px)"></div></div>`;
+if(p==='i'){
+ const nameBlock=`<div style="position:absolute;left:20px;top:92px;font-size:30px;font-weight:700">Pharmacie</div><div style="position:absolute;left:20px;top:128px;font-size:12px;color:${r.sub};display:none"></div>`;
+ const tb=(n,on,edit)=>`<div style="position:absolute;left:14px;${edit?'right:14px;':''}bottom:16px;${edit?'':'width:50px;'}height:50px;border-radius:25px;background:${r.glass};border:1px solid ${r.gb};${BF}display:flex;align-items:center;justify-content:space-between;padding:0 6px 0 6px;z-index:5"><div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;${on?`background:${r.acc}33;color:${r.acc}`:''}">${ic(n,21)}</div>${edit?`<div style="height:38px;padding:0 20px;border-radius:19px;background:${r.acc};color:#fff;display:flex;align-items:center;font-size:14px;font-weight:600">edit</div>`:''}</div>`;
+ if(ctx==='card'||ctx==='pass'){const ps=ctx==='pass';inner=gb(r,'chevron-left',14)+gcap(r,['star','dots'])+nameBlock+(ps?passTile:photo)+tb('upload',true,!ps);menu=dim()+`<div style="position:absolute;left:14px;bottom:72px;z-index:10">${iosMenu(r,secs,true)}</div>`}
+ else if(ctx==='doc'){inner=gb(r,'chevron-left',14)+`<div style="position:absolute;left:70px;right:104px;top:44px;height:38px;text-align:center;display:flex;flex-direction:column;justify-content:center"><div style="font-size:15px;font-weight:600">Passport scan</div><div style="font-size:11px;color:${r.sub}">5 pages</div></div>`+gcap(r,['upload','dots'],0)+`<div style="position:absolute;left:24px;top:104px;display:grid;grid-template-columns:repeat(2,114px);gap:20px">${[1,2,3,4].map(()=>paper(r,p,114,150)).join('')}</div>`;menu=dim()+`<div style="position:absolute;right:14px;top:92px;z-index:10">${iosMenu(r,secs,false)}</div>`}
+ else if(ctx==='page'){const tools=['crop','rotate-2','rotate-clockwise-2','adjustments-horizontal','text-scan-2'].map(n=>`<div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center">${ic(n,21)}</div>`).join('');
+  inner=gb(r,'chevron-left',14)+`<div style="position:absolute;left:70px;right:104px;top:44px;height:38px;text-align:center;display:flex;flex-direction:column;justify-content:center"><div style="font-size:15px;font-weight:600">edit</div><div style="font-size:11px;color:${r.sub}">Passport scan</div></div>`+gcap(r,['upload','dots'],0)+`<div style="position:absolute;left:0;right:0;top:100px;display:flex;justify-content:center">${paper(r,p,208,300)}</div><div style="position:absolute;left:0;right:0;bottom:84px;display:flex;justify-content:center"><div style="height:26px;padding:0 12px;border-radius:13px;background:#7676801f;font-size:12px;display:flex;align-items:center">2 / 5</div></div><div style="position:absolute;left:14px;right:14px;bottom:16px;height:50px;border-radius:25px;background:${r.glass};border:1px solid ${r.gb};${BF}display:flex;align-items:center;justify-content:space-around;padding:0 8px;z-index:5">${tools}</div>`;menu=dim()+`<div style="position:absolute;right:14px;top:92px;z-index:10">${iosMenu(r,secs,false)}</div>`}
+ else{const rows=[['Passport scan','5 pages',1],['Receipts','3 pages',1],['Lease','4 pages',1],['Insurance','2 pages',0]].map((x,i)=>`<div style="height:52px;display:flex;align-items:center;gap:10px;padding:0 14px;${i?`border-top:.5px solid ${r.sep}`:''}"><div style="width:22px;height:22px;border-radius:50%;flex:none;${x[2]?`background:${r.acc};color:#fff`:`border:2px solid ${r.sub}`};display:flex;align-items:center;justify-content:center">${x[2]?ic('check',13):''}</div>${paper(r,p,28,36)}<div style="line-height:1.2"><div style="font-size:14px;font-weight:600">${x[0]}</div><div style="font-size:11px;color:${r.sub}">${x[1]}</div></div></div>`).join('');
+  const bar=`<div style="position:absolute;left:14px;right:14px;bottom:16px;height:50px;border-radius:25px;background:${r.glass};border:1px solid ${r.gb};${BF}display:flex;align-items:center;justify-content:space-around;padding:0 8px;z-index:5"><span style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:${r.acc}33;color:${r.acc}">${ic('upload',21)}</span>${ic('star',21)}${ic('folder',21)}${ic('trash',21,'#ff453a')}</div>`;
+  inner=`<div style="position:absolute;right:14px;top:44px;height:38px;padding:0 16px;border-radius:19px;background:${r.glass};border:1px solid ${r.gb};${BF}display:flex;align-items:center;font-size:14px;font-weight:600;z-index:6">Done</div><div style="position:absolute;left:20px;top:92px;font-size:26px;font-weight:700">3 selected</div><div style="position:absolute;left:14px;right:14px;top:140px;border-radius:16px;background:${state.dark?'#1c1c1e':'#fff'};overflow:hidden">${rows}</div>`+bar;menu=dim()+`<div style="position:absolute;left:14px;bottom:72px;z-index:10">${iosMenu(r,secs,true)}</div>`}
+}else{
+ const fab=(pass,on)=>`<div style="position:absolute;right:16px;bottom:16px;display:flex;align-items:center;gap:12px;z-index:5"><div style="width:40px;height:40px;border-radius:20px;background:${r.cont};color:${r.onCont};display:flex;align-items:center;justify-content:center;${on?`box-shadow:0 0 0 3px ${r.acc}55`:''}">${ic('upload',20)}</div>${pass?'':`<div style="height:56px;padding:0 20px;border-radius:28px;background:${r.acc};color:${r.onAcc};display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500">${ic('pencil',24)}edit</div>`}</div>`;
+ const plate=`<div style="position:absolute;left:0;right:0;top:0;height:150px;background:${r.cont};border-radius:0 0 30px 9px"></div><div style="position:absolute;left:20px;top:76px;font-size:27px;font-weight:500;color:${r.onCont}">Pharmacie</div><div style="position:absolute;left:8px;right:6px;top:28px;height:56px;display:flex;align-items:center;gap:4px;color:${r.onCont}"><span style="width:38px;text-align:center">${ic('arrow-left',23)}</span><span style="flex:1"></span>${ic('star',23)}<span style="width:36px;text-align:center">${ic('dots-vertical',23)}</span></div>`;
+ const tileA=(ps)=>(ps?passTile:photo).replace('top:140px','top:126px').replace('top:310px','top:296px');
+ if(ctx==='card'||ctx==='pass'){const ps=ctx==='pass';inner=plate+tileA(ps)+fab(ps,true);const right=ps?272:148;menu=`<div style="position:absolute;left:${Math.max(8,right-232)}px;bottom:64px;z-index:10">${andMenu(r,secs)}</div>`}
+ else if(ctx==='doc'){inner=aTop(r,'Passport scan','5 pages',['upload','dots-vertical'],0)+`<div style="position:absolute;left:24px;top:100px;display:grid;grid-template-columns:repeat(2,114px);gap:20px">${[1,2,3,4].map(()=>paper(r,p,114,150)).join('')}</div><div style="position:absolute;right:16px;bottom:16px;width:56px;height:56px;border-radius:28px;background:${r.acc};color:${r.onAcc};display:flex;align-items:center;justify-content:center">${ic('camera',24)}</div>`;menu=`<div style="position:absolute;right:40px;top:80px;z-index:10">${andMenu(r,secs)}</div>`}
+ else if(ctx==='page'){const tools=['crop','rotate-2','rotate-clockwise-2','adjustments-horizontal','text-scan-2'].map(n=>`<div style="width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center">${ic(n,22)}</div>`).join('');
+  inner=aTop(r,'edit','Passport scan',['upload','dots-vertical'],0)+`<div style="position:absolute;left:0;right:0;top:96px;display:flex;justify-content:center">${paper(r,p,208,300)}</div><div style="position:absolute;left:0;right:0;bottom:92px;display:flex;justify-content:center"><div style="height:26px;padding:0 12px;border-radius:13px;background:${r.cont};font-size:12px;display:flex;align-items:center">2 / 5</div></div><div style="position:absolute;left:14px;right:14px;bottom:16px;height:56px;border-radius:28px;background:${r.bar};display:flex;align-items:center;justify-content:space-around;padding:0 8px;z-index:5">${tools}</div>`;menu=`<div style="position:absolute;right:40px;top:80px;z-index:10">${andMenu(r,secs)}</div>`}
+ else{const rows=[['Passport scan','5 pages',1],['Receipts','3 pages',1],['Lease','4 pages',1],['Insurance','2 pages',0]].map((x,i)=>`<div style="height:54px;display:flex;align-items:center;gap:10px;padding:0 14px;border-radius:${i===0?'18px 18px 5px 5px':i===3?'5px 5px 18px 18px':'5px'};background:${r.row};margin-bottom:2px"><div style="width:22px;height:22px;border-radius:50%;flex:none;${x[2]?`background:${r.acc};color:${r.onAcc}`:`border:2px solid ${r.sub}`};display:flex;align-items:center;justify-content:center">${x[2]?ic('check',13):''}</div>${paper(r,p,28,36)}<div style="line-height:1.2"><div style="font-size:14px">${x[0]}</div><div style="font-size:11px;color:${r.sub}">${x[1]}</div></div></div>`).join('');
+  inner=`<div style="position:absolute;left:0;right:0;top:0;height:92px;background:${r.cont}"></div><div style="position:absolute;left:8px;right:6px;top:28px;height:56px;display:flex;align-items:center;gap:4px;color:${r.onCont}"><span style="width:38px;text-align:center">${ic('x',23)}</span><div style="flex:1;font-size:17px;white-space:nowrap">3 selected</div><span style="width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:${r.onCont}1f">${ic('upload',22)}</span><span style="width:34px;text-align:center">${ic('star',22)}</span><span style="width:34px;text-align:center">${ic('folder-share',22)}</span><span style="width:34px;text-align:center">${ic('trash',22,'#ba1a1a')}</span><span style="width:26px;text-align:center">${ic('dots-vertical',22)}</span></div><div style="position:absolute;left:10px;right:10px;top:104px">${rows}</div>`;menu=`<div style="position:absolute;left:8px;top:84px;z-index:10">${andMenu(r,secs)}</div>`}
+}
+return frame(inner+menu,r.page,p,r.txt)}
+
+/* ---------- menu anatomy ---------- */
+function menuAnatomy(p){const r=roles(p),secs=[[{t:'Share PDF',i:'share-3'},{t:'Export as one PDF…',sub:'12 pages in one file',i:'folder-down'},{t:'Save to gallery',sub:'Allow photo access in Settings',i:'photo-down',dis:1}]];
+const spec=p==='i'?`Normal row 44 (system). With subtitle: the system makes the row taller. Disabled: 45%. Icon trailing, 20.`:`Normal row 48. With subtitle: two lines, subtitle 12.8 sp secondary. Disabled: 38%, no ripple. Icon leading 20, gap 12.`;
+const bg=p==='i'?(state.dark?'#1c1c1e':'#e5e5ea'):(state.dark?'#111318':'#f9f9ff');
+return`<div style="width:300px"><div style="background:${bg};border-radius:20px;padding:18px 40px;font-family:${p==='i'?'-apple-system,system-ui,sans-serif':'Roboto,system-ui,sans-serif'};color:${r.txt}">${p==='i'?iosMenu(r,secs,false,214):andMenu(r,secs,214)}</div><div style="font-size:12px;color:var(--text-secondary);margin-top:6px;line-height:1.4">${spec}</div></div>`}
+
+/* ---------- page ---------- */
+const CROP=[['Default: hint, undo and redo disabled','default'],['Dragging a corner: magnifier, hint hidden','drag'],['After the drag: undo available','undo'],['After undo: redo available','redo']];
+const MENU=[['Card view, 2 photos (toolbar button)','card'],['Card view, wallet pass (toolbar button)','pass'],['Document, PDF first (top bar)','doc'],['Page edit, one page (top bar)','page'],['3 documents selected (selection bar)','bulk']];
+function scaled(html,label,sc){return`<div style="width:${300*sc}px"><div style="width:${300*sc}px;height:${650*sc}px"><div style="width:300px;height:650px;transform:scale(${sc});transform-origin:0 0">${html}</div></div><div style="font-size:12px;color:var(--text-secondary);text-align:center;margin-top:6px">${label}</div></div>`}
+function render(){const both=state.mode==='both',sc=both?.6:.82,showC=state.view!=='menu',showM=state.view!=='crop';
+const plats=[...(state.mode!=='android'?[['iOS 26','i']]:[]),...(state.mode!=='ios'?[['Android M3 Expressive','a']]:[])];
+let out='';
+if(showC){out+=`<h3>Crop view</h3><p class="sub">Identical in the light and the dark app theme: the editor is always dark.</p>`;
+plats.forEach(([t,p])=>{out+=`<div style="font-size:14px;font-weight:500;margin:6px 0 8px">${t}</div><div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;margin-bottom:18px">${CROP.map(f=>scaled(crop(p,f[1]),f[0],sc)).join('')}</div>`});
+out+=`<div style="font-size:14px;font-weight:500;margin:6px 0 8px">Handles and magnifier (1 pt = 1.5 px)</div><div style="margin-bottom:10px;overflow:auto">${anatomy()}</div>`}
+if(showM){out+=`<h3>Export menu (PDF, images, share)</h3><p class="sub">${state.dark?'Dark':'Light'} app theme. Same function for every screen: only the pages and the documents change the items.</p>`;
+plats.forEach(([t,p])=>{out+=`<div style="font-size:14px;font-weight:500;margin:6px 0 8px">${t}</div><div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;margin-bottom:18px">${MENU.map(f=>scaled(menuFrame(p,f[1]),f[0],sc)).join('')}${menuAnatomy(p)}</div>`})}
+document.getElementById('out').innerHTML=out;
+const on=(id,v)=>document.getElementById(id).style.background=v?'var(--surface-1)':'transparent';
+on('bl',!state.dark);on('bd',state.dark);on('mi',state.mode==='ios');on('ma',state.mode==='android');on('mb',state.mode==='both');on('va',state.view==='all');on('vc',state.view==='crop');on('vm',state.view==='menu')}
+document.getElementById('bl').onclick=()=>{state.dark=false;render()};
+document.getElementById('bd').onclick=()=>{state.dark=true;render()};
+[['mi','ios'],['ma','android'],['mb','both']].forEach(x=>document.getElementById(x[0]).onclick=()=>{state.mode=x[1];render()});
+[['va','all'],['vc','crop'],['vm','menu']].forEach(x=>document.getElementById(x[0]).onclick=()=>{state.view=x[1];render()});
+render();
+</script>
+</body>
+</html>

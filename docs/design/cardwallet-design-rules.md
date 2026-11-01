@@ -21,14 +21,14 @@ Exact values for every component and state, so implementers do not need to ask. 
 | Folder icon background, avatar, stamp (when collapsed) | Text fields (iOS capsule and Android notched outlined follow their own spec) |
 | Segmented control ends | List groups (outer corners) |
 
-- **One exception: the Android FAB** keeps the M3 Expressive squircle, corner radius = height / 3.
+- **No exception: the Android FABs are full round too** (extended, 56 tall: a pill; small, 40: a circle), a deliberate departure from the M3 Expressive squircle so the whole app has one shape language.
 - Consequences: the Android checkbox is a circle with a check (not a rounded square); Android chips are pills (not 8 radius); a selection marker is a circle everywhere.
 - **Container radius from size:** radius = clamp(8, 0.18 x shorter side, 28). Grid tile 174 x 110 gives 20; stacked tile 361 x 228 gives 28; pager page and code tile give 28; list thumbnail 116 x 72 gives 13. Pills are height / 2.
 
 ## 2. FAB and floating controls
 
-- **Android scan FAB:** extended, 56 tall, radius 18 (squircle), horizontal padding 20, icon 24, gap 10, label Label Large (14 sp, medium). Tonal: accentContainer fill, onContainer content. It is the only extended FAB on the screen.
-- **Android add FAB:** small, 40 x 40, radius 12, tonal, placed 12 above the scan FAB, right edges aligned.
+- **Android scan FAB:** extended, 56 tall, full round, horizontal padding 20, icon 24, gap 10, label Label Large (14 sp, medium). Tonal: accentContainer fill, onContainer content. It is the only extended FAB on the screen.
+- **Android add FAB:** small, 40 x 40, full round, tonal, placed 12 to the left of the scan FAB, centered on it vertically.
 - **Position:** 16 from the right edge and 16 above the navigation or gesture inset. Content bottom padding is inset + 88.
 - **Collapse:** the extended FAB collapses to a 56 icon-only FAB (same radius) when the list scrolls down and extends when it scrolls up or reaches the top, with the Material ExtendedFloatingActionButton animation. It hides in selection mode.
 - **iOS:** no FAB. The camera is a 48 circle of system glass to the right of the search capsule.
@@ -48,7 +48,7 @@ Exact values for every component and state, so implementers do not need to ask. 
 | Content | label color | onContainer |
 | Margin to tile edge | 10 | 10 |
 
-- **Title chip:** one line, ellipsis, max width tile width - 20 - info pill width. It is alone in its corner and never merges.
+- **Title chip:** one line, ellipsis, max width tile width - 20 - info pill width. It is alone in its corner and never merges. On a photo tile it is semi-transparent: the readable (contrast) color of the photo at 60%, the text in the inverse color, 24 tall. Top-left in the stacked styles (cardholder, full), bottom-left in the columns style.
 - **Info pill (merge rule):** page count, code glyph and favorite merge into ONE pill, 28 tall, whenever two or more are present. Segments in this order: page count (stack icon + number), code (qr or barcode icon), favorite (star). Segments are separated by a 1 hairline (white 35% on glass, onContainer 20% on tonal); each text segment has 10 padding, each icon segment is 28 wide. A single item is shown as a normal chip. Maximum 3 segments, same on iOS and Android.
 - **Placement:** title chip bottom-left in the grid and top-left in the stacked styles. Info pill top-right in every style.
 - **Tight space:** the info pill keeps its width; the title chip shrinks to a minimum of 3 characters, then hides.
@@ -187,7 +187,9 @@ iOS uses Dynamic Type; Android scales with font scale. Layouts must survive 200%
 | `pdf` | `doc.richtext` | `file-pdf-box` |
 | `qrcode` | `qrcode` | `qrcode` |
 | `rename` | `pencil` | `rename` |
+| `reorder` | `line.3.horizontal` | `reorder-horizontal` |
 | `restore` | `arrow.uturn.backward` | `restore` |
+| `reverse_pages` | `arrow.left.arrow.right` | `swap-horizontal` |
 | `rotate_left` | `rotate.left` | `rotate-left` |
 | `rotate_right` | `rotate.right` | `rotate-right` |
 | `select` | `checkmark.circle` | `check-circle-outline` |
@@ -213,6 +215,14 @@ iOS uses Dynamic Type; Android scales with font scale. Layouts must survive 200%
 | `clear` | `xmark.circle.fill` | `close-circle` | Clear button in fields |
 | `chevron_down` | `chevron.down` | `chevron-down` | Select fields |
 | `error` | `exclamationmark.circle` | `alert-circle-outline` | Field and form errors |
+| `preview` | `eye` | `eye-outline` | Preview PDF |
+| `print` | `printer` | `printer-outline` | Print PDF |
+| `save_to_folder` | `square.and.arrow.down` | `folder-download-outline` | Export PDF, images, passes |
+| `save_gallery` | `photo.badge.arrow.down` | `image-multiple-outline` | Save to gallery |
+| `undo` | `arrow.uturn.backward` | `undo` | Crop |
+| `redo` | `arrow.uturn.forward` | `redo` | Crop |
+| `full_image` | `arrow.up.left.and.down.right.and.arrow.up.right.and.down.left` | `arrow-expand-all` | Crop, Android more menu |
+| `export` | `square.and.arrow.up` | `export-variant` | Export (PDF, images); `share` (three nodes on Android) stays for sharing to other apps |
 
 
 ## 14. Menus
@@ -272,6 +282,10 @@ Most rules are shared. The scanner feels more like a document app:
 | 15 Safe areas and dialogs | Specified; Move to folder changed to name field plus folder chips (PR 781 review) |
 | 16 Remaining components | Specified |
 | 17 Document Scanner | Proposal |
+| Crop view, export menu, PDF preview | Specified (`cardwallet-crop-export.md`, `cardwallet-pdf-preview.md`); popovers to replace by `getExportMenu`, crop bars and the preview to build |
+| 20 Bars | Proposal. Built in the card view: favorite and the one more menu in the top bar, share in the toolbar with the main action at the trailing end (iOS prominent button, Android extended FAB), Android edit modes in the top bar. Needs the ui-appbar changes (prominent bottom item, transparent bar at the top) |
+| 21 Fullscreen viewer | Specified (`cardwallet-fullscreen.html`); code dots and photo counter pill to build |
+| 22 Page edit | Specified (`cardwallet-page-edit.html`); native bars and the adjust sheet built, the subtitle, counter pill and page scaling above the sheet to build |
 
 ## 19. Differences on purpose (code against this document, PRs 777 to 783)
 
@@ -281,3 +295,66 @@ Most rules are shared. The scanner feels more like a document app:
 - **Android menu origin:** fixed in ui-menu with a style per corner; the plugin change is not published.
 - **Sizes x 1.31 (decided, to apply in code):** list rows 88 with a 116 x 72 thumbnail and 20 titles, tile chips 28 tall with 14 text, folder tiles 173 x 71 and vertical folder rows 68, tile titles 18 to 28 (grid) and 26 (stacked).
 - **Open:** the Document Scanner list is still its own canvas list (section 17 is a proposal). The delete confirmation dialog (destructive text action in the error color, section 15) is not built yet.
+
+## 20. Bars: what goes where (proposal)
+
+One rule for every screen with a top bar and a bottom toolbar, so a control is never looked for in two places.
+
+| Place | Holds | Examples |
+| --- | --- | --- |
+| **Top bar, left** | Navigation | Back, close |
+| **Top bar, right** | State of the whole item, then Add, then **the one more menu** | Favorite (star, filled when on), add, more |
+| **Bottom toolbar** | What you do to the item shown, at most 4 icons, the main action last and prominent. An action on one part of the item (a photo) sits on that part, not here | Share, edit |
+| **More menu** | The rest: item actions that are rare, plus delete | Rename, select all, reorder, detect text, fullscreen, delete |
+
+- **One more menu per screen,** in the top bar. The bottom toolbar never has a more button. The card view had two (top and bottom); they are merged, fullscreen and delete joined the top menu.
+- **A toggle is never in a menu or the toolbar:** favorite sits in the top bar, so its state is visible at all times.
+- **Delete is last in the menu,** in its own segment, destructive red (iOS: system red; Android: error).
+- **A tool that needs the original image** (crop, transformations) is hidden when the original is gone, never disabled.
+- **Edit modes on Android** (selecting, reordering, any mode that changes the screen into an editor): every action is in the top bar, which becomes the contextual bar (close on the left, the title says the mode or the count, actions on the right, one more menu). There is no bottom toolbar. This holds on every screen, like the card list. iOS keeps the system bottom toolbar for the actions of a selection.
+- **Destructive is red everywhere:** delete in a menu (iOS system red, Android error), delete as a toolbar button (icon and text in the red), delete in the Android contextual bar (icon in the error color). The color is the same on both platforms because the action cannot be undone; it is never the only cue (the trash icon and the label stay).
+- **The main action is at the trailing end.** iOS: a prominent (tinted glass) button at the right of the bottom toolbar, with a text label ("edit"); the other actions are to its left. Android: an extended FAB at the bottom right, filled with the accent role, icon and label, with the secondary action (export) as a small tonal FAB 12 to its left, centered on it vertically, so the pair never covers more than one row of content (on the card list the small FAB is above the scan FAB because that screen has room); hidden in the edit modes. A floating toolbar is only used from three actions up, never for one. One main action per screen. This matches the iOS 26 toolbar guidance (primary action trailing, prominent) and the M3 floating toolbar with a FAB.
+- The same rule applies to the page edit screen (section 22): share in the top bar, tools in the toolbar, everything else in the menu.
+
+## 21. Fullscreen viewer (mockup: `cardwallet-fullscreen.html`)
+
+- **Code:** white full-bleed in every theme, max brightness and kept awake (restored on exit). Code at 80% of the shorter side, the value under it (22 bold, black, selectable). Swipe between codes with dots at the bottom (6 dots, the selected one 16 wide and black, the others black at 25%). A wide barcode (EAN, Code 128, PDF417) rotates to landscape and fills 90% of the width.
+- **Photo:** black full-bleed (white on e-ink), aspect fit, pinch and double tap to zoom, swipe between photos, light status bar.
+- **Controls:** a 44 close button top-left (always) and an edit button top-right (photos only), 16 from the sides and 8 below the status bar. iOS: system glass buttons, clear glass over a photo and a plain gray fill (118 118 128 at 16%) over the white code. Android: bare 24 icons in the content color, no fill, no ripple background.
+- **Indicator:** codes use dots. Photos use a counter pill "2 / 5", 28 tall, 12 above the bottom inset; glass on iOS, white 18% tonal on Android. Neither is shown for a single item.
+- **Zoomed in** or after a tap, the controls and the counter hide; a tap brings them back.
+- **Dismiss:** close button, Android back, iOS edge swipe.
+
+## 22. Page edit (mockup: `cardwallet-page-edit.html`)
+
+- **Top bar:** back; the title "edit" with the document name as its subtitle (the page number is in the counter under the page); export; more. The more menu is only about the page: the detected text when there is some, then delete page in red. Document level actions (PDF export, card color, rename) belong to the card view.
+- **Page:** the image on the neutral page color (no card color in the scanner), aspect fit, 16 margin, 6 radius; level 1 shadow on iOS, a 1 outline on Android. Swipe between pages, pinch to zoom. The counter pill "2 / 5" (28 tall, 12 above the toolbar) is a flat pill, gray 12% on iOS and secondary container on Android (a glass button reads dark and unreadable on a light page), hidden for one page.
+- **Bottom toolbar:** crop, rotate left, rotate right, then adjust, detect text, detect barcode (card app). iOS system toolbar (glass); Android floating toolbar on the surface container color. The active tool (the open adjust sheet) is tinted: accent at 15% (iOS) or accentContainer (Android).
+- **More menu:** PDF export, card color (card app), detected text and barcodes when present, rename, then delete page in red.
+- **Adjust sheet:** the transparent sheet of section 15 and the camera: no dim, forced dark, grabber, one fixed detent (half of the screen height): the list scrolls inside the sheet, which never grows (the page stays above it, scaled and moved to fit the room left), on-glass roles. At the half detent the page scales and moves up (300 ms ease in out) to stay fully visible above the sheet, and goes back when the sheet closes. Groups: Transformations (switches, trailing on both platforms), Adjustments (brightness 0.00 default, contrast 1.00 default, the value on the right resets on tap), Filters (64 tiles of 12 radius drawn on the page image itself, 80 pitch, 12 side padding, the selected one has a 2.5 accent ring and its label in the accent, semibold; on Android too, no gradient label over the tile). Changes apply live; there is no Save and closing keeps them.
+- **No original image:** crop and the Transformations group are hidden.
+- **Delete** uses the alert and dialog of section 15.
+
+- **Photo edit button (card view).** A 36 round button on the bottom-right of each photo, 12 from the edges, icon `edit` 20, the same as the edit button of the fullscreen viewer: clear glass on iOS (white icon), accent-secondary container on Android. It opens the page edit screen for that photo and is absent when the card has no photo. "Edit" in the toolbar always means the card (name, color, fields, codes).
+
+## 23. Card view details (photos, strip, bars, backdrop)
+
+- **Photo tile in the pager:** a constant size, the card ratio (1.59), 20 radius, the photo aspect fill inside it, over a holder of the main color of the photo (the holder carries the background and the rounding, the image rounds itself too, so a missed rounding of the image never shows square corners). The card edge is a 1 white 40% line at the top only, inset 14 from the sides. The tile is aligned at the top of the pager and the pager is exactly as tall as the tile (plus 12 for the shadow), so the thumbnail strip is always just under it, with or without a code zone. On iOS the tile has a soft shadow (0 4 12, 25% black) so its shape reads over the blurred backdrop (so a slow decode or a transparent photo never shows the page color). The photo edit button (section 21 and `cardwallet-photo-edit-button.html`, option D) is inside the tile: 36 round, 12 from the bottom and right edges of the tile.
+- **Thumbnail strip:** as wide as the screen; the current thumbnail is centered (the strip has half a screen minus half a thumbnail of padding at both ends), like the viewer of the iOS Photos app. Tapping a thumbnail or swiping the pager scrolls the strip to center it. The current thumbnail is full size; the others are 85% with a 40% black scrim (not an opacity, which reads brighter or darker depending on the photo).
+- **Title:** every card shows its title (34 bold) and its date under it below the bar, never in the bar, the same for an auto-named card (its default name) and a named one. A card with photos only has no scroll: the page ends where the thumbnails end. The bar title is only used for the selection count and the reorder mode.
+- **iOS app bar over a colored page:** the page color or gradient extends under the bar (the gradient layer overflows the safe area like the backdrop), and the bar is see-through at the top, so the card color or the photo backdrop continues under the buttons; a blur (system thin material, tinted at 40% with the bar color) fades in only once content scrolls under it.
+- **Backdrop change (iOS):** the blurred photo backdrop crossfades in 300 ms when the current photo changes, whether the pager was swiped or a thumbnail tapped. It does not follow the swipe finger.
+
+- **Thumbnail state (Android and iOS):** the scale (100% current, 85% others) and the scrim are set on the cell views, animated over 150 ms when the current photo changes, and set again every time a cell is bound. They are not bindings of the cell template, because refreshing the cells makes RecyclerView play its change animation and leaves recycled cells in the state of their previous item.
+- **Title over the backdrop (iOS):** the title and the date take the readable color of the current photo (white or black) and follow it when the photo changes.
+
+## 24. Sheets and transitions (built)
+
+- **Sheets with a form** (OCR, PDF export options, transform several pages) share the anatomy of section 15: the `SheetHeader` (iOS Cancel glass pill, centered title, prominent action; Android close icon, title, text action), then the content, with the bottom inset. OCR: Cancel / "OCR" / Start; quality is a segmented control, languages are pill chips (32 tall) with an outline Add button. PDF export: Cancel / "export settings" / Export; the folder is a select row that opens the picker, then the file name (single document only), the JPEG quality slider and an optional password in the platform text fields. Transform pages: the adjust sheet of section 22 with a header, Cancel / "transform images" / Apply and a Reset action; nothing is saved as a default.
+- **Photo transition:** a photo of the card and the same photo in the page edit or in the fullscreen viewer share a transition tag (`document_<id>_<page id>`): opening a photo grows its tile into the new screen in 300 ms and going back returns it to its tile, on both platforms. The thumbnails of the strip do not carry the tag. Codes have no shared element.
+- **Crop view:** the page is on a dark gray (#26262A) in every theme, never white. Details, handles, magnifier and bars: `cardwallet-crop-export.md` (screen #0E0E10, holder 28 radius, Full image is one undo step).
+- **Export menu:** PDF, images and share are one native menu from the export button, never a popover anchored to a page: `cardwallet-crop-export.md`, section 2.
+- **PDF preview:** `cardwallet-pdf-preview.md`.
+- **Reorder pages (card view):** a modal with the pages as a list (88 x 56 thumbnail, "Page n", a handle at the end), reordered by dragging, a long press on a row starts it too. iOS: close at the left, a prominent Save at the right. Android: close, title, a text Save. The card changes only on Save; afterwards the pager and the strip start again from the first page. There is no in-place reorder mode in the card view any more.
+- **Transform pages sheet:** the adjust sheet with a header (Cancel, "transform images", Apply, Reset), a fixed height of 70% of the screen, the list scrolls inside.
+- **Shared transitions:** removed (card view to page edit and fullscreen viewer), they did not hold on either platform.
