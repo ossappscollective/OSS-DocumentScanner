@@ -187,6 +187,11 @@ module.exports = (env, params = {}) => {
 
     // disable resolve of symlinks so that stack dont use real path but node_modules ones
     config.resolve.symlinks = false;
+    // the plugins linked from ui-native-components (portal:) are edited in place: webpack trusts the files of node_modules to never change (managed paths), so its cache kept serving the old build of them
+    config.snapshot = {
+        ...config.snapshot,
+        managedPaths: [/^(.+?[\\/]node_modules[\\/](?!@nativescript-community[\\/](?:ui-appbar|ui-button|ui-datetimepicker|ui-menu|ui-segmentedbar|ui-surface)[\\/]|@akylas[\\/]nativescript[\\/]))/]
+    };
     const coreModulesPackageName = fork ? '@akylas/nativescript' : '@nativescript/core';
     if (fork) {
         config.resolve.modules = [resolve(__dirname, `node_modules/${coreModulesPackageName}`), resolve(__dirname, 'node_modules'), `node_modules/${coreModulesPackageName}`, 'node_modules'];

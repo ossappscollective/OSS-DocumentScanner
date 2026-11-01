@@ -659,6 +659,7 @@
 
     // translucent glass on iOS, plain white icons over the preview on Android
     const overlayButtonVariant = __IOS__ ? 'clearGlass' : 'text';
+    const activeButtonVariant = __IOS__ ? 'prominentGlass' : 'contained';
     const FLASH_ICON_IDS = ['flash_off', 'flash_on', 'flash_auto'];
 
     let batchMessage: string = null;
@@ -791,20 +792,22 @@
         <!-- <canvasView bind:this={canvasView} rowSpan="2" on:draw={onCanvasDraw} on:tap={focusCamera} /> -->
         <gridlayout columns="auto,*,auto" marginLeft={12} marginRight={12} marginTop={8} android:marginTop={8 + $windowInset.top}>
             {#if !startOnCam}
-                <uibutton accessibilityLabel={lc('close')} color="white" height={44} variant={overlayButtonVariant} width={44} {...{ src: appIcon('close') }} on:tap={() => onGoBack()} />
+                <uibutton class="overlayIconButton" accessibilityLabel={lc('close')} color="white" height={44} variant={overlayButtonVariant} width={44} {...{ src: appIcon('close') }} on:tap={() => onGoBack()} />
             {/if}
             <stacklayout col={2} orientation="horizontal">
                 <uibutton
+                    class="overlayIconButton"
                     accessibilityLabel={lc('flash_mode')}
                     color="white"
                     height={44}
                     margin={4}
-                    variant={overlayButtonVariant}
+                    variant={torchEnabled ? activeButtonVariant : overlayButtonVariant}
                     width={44}
-                    {...{ src: appIcon(FLASH_ICON_IDS[flashMode] ?? 'flash_off') }}
+                    {...{ src: appIcon(torchEnabled ? 'torch' : (FLASH_ICON_IDS[flashMode] ?? 'flash_off')) }}
                     on:tap={showFlashMenu} />
-                <uibutton accessibilityLabel={lc('toggle_camera')} color="white" height={44} margin={4} variant={overlayButtonVariant} width={44} {...{ src: appIcon('switch_camera') }} on:tap={toggleCamera} />
+                <uibutton class="overlayIconButton" accessibilityLabel={lc('toggle_camera')} color="white" height={44} margin={4} variant={overlayButtonVariant} width={44} {...{ src: appIcon('switch_camera') }} on:tap={toggleCamera} />
                 <uibutton
+                    class="overlayIconButton"
                     accessibilityLabel={startOnCam ? lc('more_options') : lc('camera_settings')}
                     color="white"
                     height={44}
@@ -871,9 +874,9 @@
             <stacklayout horizontalAlignment="left" marginLeft={16} orientation="horizontal" verticalAlignment="center">
                 {#if !onlyForOCR}
                     {#if batchMode}
-                        <uibutton accessibilityLabel={lc('batch_mode')} color="white" height={44} margin={4} variant={__IOS__ ? 'prominentGlass' : 'contained'} width={44} {...{ src: appIcon('batch') }} on:tap={toggleBatchMode} />
+                        <uibutton class="overlayIconButton" accessibilityLabel={lc('batch_mode')} color="white" height={44} margin={4} variant={activeButtonVariant} width={44} {...{ src: appIcon('batch') }} on:tap={toggleBatchMode} />
                     {:else}
-                        <uibutton accessibilityLabel={lc('batch_mode')} color="white" height={44} margin={4} variant={overlayButtonVariant} width={44} {...{ src: appIcon('image') }} on:tap={toggleBatchMode} />
+                        <uibutton class="overlayIconButton" accessibilityLabel={lc('batch_mode')} color="white" height={44} margin={4} variant={overlayButtonVariant} width={44} {...{ src: appIcon('image') }} on:tap={toggleBatchMode} />
                     {/if}
                 {/if}
                 <gridlayout height={48} margin={4} visibility={smallImage ? 'visible' : 'collapsed'} width={48}>
@@ -909,6 +912,7 @@
             </gridlayout>
 
             <uibutton
+                class="overlayIconButton"
                 accessibilityLabel={lc('finish')}
                 col={2}
                 color="white"
