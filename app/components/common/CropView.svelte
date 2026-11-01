@@ -1,19 +1,36 @@
 <script context="module" lang="ts">
-    import { BitmapShader, Canvas, CanvasView, Matrix, Paint, Path, Style, TileMode } from '@nativescript-community/ui-canvas';
-    import { ApplicationSettings, ImageSource, TouchGestureEventData, Utils } from '@nativescript/core';
+    import { Canvas, CanvasView, Cap, Direction, FillType, Join, Matrix, Paint, Path, Style } from '@nativescript-community/ui-canvas';
+    import { ApplicationSettings, Color, ImageSource, TouchGestureEventData, Utils } from '@nativescript/core';
     import { debounce } from '@nativescript/core/utils';
     import { QRCodeData, QuadPoint, Quads } from 'plugin-nativeprocessor';
     import { onDestroy } from 'svelte';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
+    import { Easing, Tween, animateTween, createTween, easeSlide, stopTween } from '~/utils/animations/tween';
+    import { getCardAccent } from '~/utils/cardColors';
     import { IMAGE_DECODE_HEIGHT, MAGNIFIER_SENSITIVITY, SETTINGS_MAGNIFIER_SENSITIVITY } from '~/utils/constants';
+    import { hapticTick, isReduceMotion } from '~/utils/haptics';
     import { loadImage, recycleImages } from '~/utils/images';
     import { showError } from '@shared/utils/showError';
     import { createEventDispatcher } from '@shared/utils/svelte/ui';
     import { colors } from '~/variables';
     import RotableImageView from './RotableImageView.svelte';
     import { colorTheme, isEInk } from '~/helpers/theme';
-    const padding = 20;
+    const padding = 16;
+    const HOLDER_MARGIN = 12;
+    const HOLDER_RADIUS = 28;
+    // the radius of the magnifier
     const ZOOOM_GLASS_SIZE = 50;
+    const GLASS_INSET = 8;
+    // a touch which starts in this corner of the holder moves the magnifier to the other side
+    const GLASS_CORNER_ZONE = 180;
+    const GRABBED_SCALE = 1.25;
+    const CORNER_RADIUS = 10;
+    const CORNER_RING = 2;
+    const EDGE_THICKNESS = 6;
+    const EDGE_MAX_LENGTH = 48;
+    const HALO_RADIUS = 22;
+    const HOLDER_COLOR = '#26262A';
+    const WHITE = '#FFFFFF';
     // in pixels: it is used as a decode size, both for `loadImage` and for the image view
     const ZOOM_IMAGE_MAX_SIZE = IMAGE_DECODE_HEIGHT;
 
@@ -31,9 +48,30 @@
     // technique for only specific properties to get updated on store change
     $: ({ colorPrimary, colorSecondary } = $colors);
 
+    // the editor is dark in every theme: the accent is lightened until it reads on a dark page
+    let accent: string;
+    $: accent = isEInk ? '#000000' : getCardAccent(colorPrimary, true, colorPrimary).accent;
+    const animationsEnabled = !isEInk && !isReduceMotion();
+
+    function invalidate() {
+        canvasView?.nativeView?.invalidate();
+    }
+    function animate(tween: Tween, to: number, duration: number, ease?: Easing) {
+        animateTween(tween, to, animationsEnabled ? duration : 0, ease);
+    }
+    // 0 to 1: how much the grabbed handles are grabbed, and how visible the magnifier is
+    const grabTween = createTween(0, invalidate);
+    // the x of the center of the magnifier
+    const glassTween = createTween(0, invalidate);
+    // 0 to 1: the quad on its way to a new quad (the full image)
+    const quadTween = createTween(0, updateQuadTween, endQuadTween);
+    let glassPlaced = false;
+    let touchStartedInGlassZone = false;
+    let grabbedQuadIndex = -1;
+    let grabbedCorners: number[] = [];
+
     let canvasView: NativeViewElementNode<CanvasView>;
     let prevTouchPoint;
-    let startTouchPoint;
     let drawingRatio: number;
     const shaderMatrix: Matrix = new Matrix();
     const currentImageMatrix: Matrix = new Matrix();
@@ -45,9 +83,12 @@
     cornersPaint.color = colorPrimary;
     cornersPaint.setStrokeWidth(14);
     cornersPaint.style = Style.STROKE;
-    const shaderPaint = new Paint();
-    shaderPaint.style = Style.FILL;
-    shaderPaint.color = 'black';
+    cornersPaint.setStrokeJoin(Join.ROUND);
+    cornersPaint.setStrokeCap(Cap.ROUND);
+    const fillPaint = new Paint();
+    fillPaint.style = Style.FILL;
+    const zoomImagePaint = new Paint();
+    const glassPath = new Path();
 
     export let imagePath: string = null;
     export let imageWidth: number = null;
@@ -78,7 +119,6 @@
     $: currentQuads = quads;
 
     const rotation = 0;
-    let zoomImageShader: BitmapShader;
     let zoomImage: ImageSource;
     let zoomImagePath: string;
     let zoomImageScale: number = 1;
@@ -184,6 +224,9 @@
     let changeOnTouch = false;
     let lastUndo;
     function onTouch(event: TouchGestureEventData) {
+        if (quadTween.duration && quadTween.value !== quadTween.to) {
+            return;
+        }
         try {
             const x = event.getX();
             const y = event.getY();
@@ -195,8 +238,16 @@
                     };
                     changeOnTouch = false;
                     prevTouchPoint = [x, y];
-                    startTouchPoint = getMatrixMappedPoint(inversedCurrentMatrix, prevTouchPoint);
+                    touchStartedInGlassZone = x <= GLASS_CORNER_ZONE && y <= GLASS_CORNER_ZONE;
                     [closestQuadIndex, closestCornerQuadIndex] = getQuadAndCornerClosestToPoint(prevTouchPoint);
+                    if (closestQuadIndex !== -1) {
+                        grabbedQuadIndex = closestQuadIndex;
+                        grabbedCorners = closestCornerQuadIndex;
+                        glassPlaced = false;
+                        animate(grabTween, 1, 100);
+                        dispatch('dragging', { detail: true });
+                        hapticTick();
+                    }
                     // if (result) {
                     //     closestQuadIndex = [result[0]];
                     //     closestCornerQuadIndex = [result[1]];
@@ -210,6 +261,10 @@
                 case 'cancel': {
                     closestQuadIndex = -1;
                     closestCornerQuadIndex = [];
+                    animate(grabTween, 0, 100);
+                    dispatch('dragging', { detail: false });
+                    // the handles followed the finger past the image: back on the crop which was really applied
+                    mapQuads();
                     if (changeOnTouch) {
                         redos.splice(0, redos.length);
                         undos.push(lastUndo);
@@ -320,6 +375,33 @@
         }
     }
 
+    let quadFrom: QuadPoint[] = [];
+    let quadTo: QuadPoint[] = [];
+    function updateQuadTween() {
+        quadTo.forEach((point, index) => {
+            currentQuads[0][index] = [0, 1].map((axis) => Math.round(quadFrom[index][axis] + (point[axis] - quadFrom[index][axis]) * quadTween.value)) as QuadPoint;
+        });
+        mapQuads();
+        invalidate();
+    }
+    function endQuadTween() {
+        quadChanged = true;
+        dispatch('undosChanged');
+    }
+    // moves the first quad to `quad` in one undo step
+    export function applyQuad(quad: QuadPoint[]) {
+        const current = currentQuads?.[0];
+        if (!current || quad.every((point, index) => point[0] === current[index][0] && point[1] === current[index][1])) {
+            return;
+        }
+        undos.push({ quads: JSON.stringify(currentQuads), mappedQuads: JSON.stringify(mappedQuads) });
+        redos.splice(0, redos.length);
+        quadFrom = current.map((point) => [...point] as QuadPoint);
+        quadTo = quad;
+        quadTween.value = 0;
+        animate(quadTween, 1, 250);
+    }
+
     function getMatrixMappedPoint(matrix: Matrix, p) {
         if (__ANDROID__) {
             const nArray = Array.create('float', 2);
@@ -344,8 +426,12 @@
         }
     }
     onDestroy(() => {
+        [grabTween, glassTween, quadTween].forEach(stopTween);
         clearImages();
     });
+    function mapQuads() {
+        mappedQuads = quads.map((quad) => quad.map((p) => getMatrixMappedPoint(currentCropMatrix, p)));
+    }
     const updateMatrix = debounce(async function updateMatrix(canvas = canvasView, image = imagePath, width = actualWidth, height = actualHeight) {
         try {
             const nCanvas = canvas?.nativeView;
@@ -359,8 +445,6 @@
                 zoomImage = await loadImage(imagePath, { sourceWidth: width, sourceHeight: height, resizeThreshold: ZOOM_IMAGE_MAX_SIZE });
                 if (zoomImage?.android || zoomImage?.ios) {
                     zoomImageScale = width / zoomImage.width;
-                    zoomImageShader = new BitmapShader(zoomImage, TileMode.CLAMP, TileMode.CLAMP);
-                    shaderPaint.setShader(zoomImageShader);
                 }
             }
             const w = Utils.layout.toDeviceIndependentPixels(nCanvas.getMeasuredWidth()) - 2 * padding;
@@ -401,135 +485,147 @@
             currentCropMatrix.postTranslate(cx, cy);
             // inversedCurrentMatrix = new Matrix();
             currentCropMatrix.invert(inversedCurrentMatrix);
-            mappedQuads = quads.map((quad) => quad.map((p) => getMatrixMappedPoint(currentCropMatrix, p)));
+            mapQuads();
             nCanvas.invalidate();
         } catch (error) {
             console.error(error, error.stack);
         }
     }, 1);
-    function drawZoomGlass(canvas: Canvas, point: QuadPoint, mappedPoint: QuadPoint) {
-        // we are working in image coords
-        //find where to draw the zoom glass
-        const [w, h] = getMatrixMappedPoint(inversedCurrentMatrix, [canvas.getWidth() - padding, 0]);
-        const glassSize = ZOOOM_GLASS_SIZE / drawingRatio;
-        const glassDecale = padding + 10 + glassSize;
-        // find furtherst corner
-        // const drawingPosition = point;
-        const drawingPosition = [glassDecale, glassDecale] as QuadPoint;
-        if (startTouchPoint[0] <= 2 * glassDecale + 20 && startTouchPoint[1] <= 2 * glassDecale + 20) {
-            drawingPosition[0] = w - glassDecale;
-            if (distance(point, drawingPosition) <= glassSize) {
-                drawingPosition[0] = glassDecale;
-            }
-        } else {
-            if (distance(point, drawingPosition) <= glassSize) {
-                drawingPosition[0] = w - glassDecale;
-            }
+    // device coordinates: `point` is the corner in image coordinates, `mappedPoint` where it is drawn
+    function drawZoomGlass(canvas: Canvas, point: QuadPoint, mappedPoint: QuadPoint, visibility: number) {
+        const centerY = GLASS_INSET + ZOOOM_GLASS_SIZE;
+        const leftX = centerY;
+        const rightX = canvas.getWidth() - leftX;
+        let targetX = leftX;
+        if (touchStartedInGlassZone) {
+            targetX = distance(mappedPoint, [rightX, centerY]) <= ZOOOM_GLASS_SIZE ? leftX : rightX;
+        } else if (distance(mappedPoint, [leftX, centerY]) <= ZOOOM_GLASS_SIZE) {
+            targetX = rightX;
         }
+        if (!glassPlaced) {
+            glassPlaced = true;
+            glassTween.value = glassTween.to = targetX;
+        } else if (targetX !== glassTween.to) {
+            animate(glassTween, targetX, 150, easeSlide);
+        }
+        const centerX = glassTween.value;
+        const zoom = 2 * drawingRatio;
+        const imageLeft = centerX - point[0] * zoom;
+        const imageTop = centerY - point[1] * zoom;
         shaderMatrix.reset();
-        shaderMatrix.postScale(zoomImageScale, zoomImageScale, 0, 0);
-        shaderMatrix.postScale(2, 2, point[0], point[1]);
-        zoomImageShader?.setLocalMatrix(shaderMatrix);
+        shaderMatrix.postScale(zoomImageScale * zoom, zoomImageScale * zoom, 0, 0);
+        shaderMatrix.postTranslate(imageLeft, imageTop);
 
-        canvas.translate(drawingPosition[0] - point[0], drawingPosition[1] - point[1]);
-        canvas.drawCircle(point[0], point[1], glassSize, shaderPaint);
-        canvas.drawCircle(point[0], point[1], glassSize, cornersPaint);
-        cornersPaint.strokeWidth = 1 / drawingRatio;
-        const arrowWidth = 10 / drawingRatio;
-        canvas.drawLine(point[0] - arrowWidth, point[1], point[0] + arrowWidth, point[1], cornersPaint);
-        canvas.drawLine(point[0], point[1] - arrowWidth, point[0], point[1] + arrowWidth, cornersPaint);
+        const scale = animationsEnabled ? 0.9 + 0.1 * visibility : 1;
+        canvas.save();
+        canvas.scale(scale, scale, centerX, centerY);
+        glassPath.reset();
+        glassPath.addCircle(centerX, centerY, ZOOOM_GLASS_SIZE, Direction.CW);
+        canvas.clipPath(glassPath);
+        // outside of the image is the holder: the image is neither repeated nor stretched there
+        fillPaint.color = isEInk ? WHITE : HOLDER_COLOR;
+        fillPaint.setAlpha(Math.round(255 * visibility));
+        canvas.drawCircle(centerX, centerY, ZOOOM_GLASS_SIZE, fillPaint);
+        if (zoomImage) {
+            canvas.save();
+            canvas.clipRect(imageLeft, imageTop, imageLeft + actualWidth * zoom, imageTop + actualHeight * zoom);
+            zoomImagePaint.setAlpha(Math.round(255 * visibility));
+            canvas.drawBitmap(zoomImage, shaderMatrix, zoomImagePaint);
+            canvas.restore();
+        }
+        cornersPaint.color = accent;
+        cornersPaint.strokeWidth = 2;
+        cornersPaint.setAlpha(Math.round(255 * visibility));
+        canvas.drawCircle(centerX, centerY, ZOOOM_GLASS_SIZE - 1, cornersPaint);
+        cornersPaint.color = '#FFFFFFE6';
+        cornersPaint.strokeWidth = 1;
+        cornersPaint.setAlpha(Math.round(230 * visibility));
+        canvas.drawLine(centerX - 12, centerY, centerX + 12, centerY, cornersPaint);
+        canvas.drawLine(centerX, centerY - 12, centerX, centerY + 12, cornersPaint);
+        canvas.restore();
     }
 
-    function createRectangleAlongLine(point1: QuadPoint, point2: QuadPoint, width, height) {
-        // Calculate the midpoint
-        const mx = (point1[0] + point2[0]) / 2;
-        const my = (point1[1] + point2[1]) / 2;
-
-        // Calculate the angle of the line
-        const theta = Math.atan2(point2[1] - point1[1], point2[0] - point1[0]);
-
-        // Calculate half dimensions
-        const halfWidth = width / 2;
-        const halfHeight = height / 2;
-
-        // Calculate the corners
-        const cosTheta = Math.cos(theta);
-        const sinTheta = Math.sin(theta);
-        const hSinTheta = halfHeight * sinTheta;
-        const hCosTheta = halfHeight * cosTheta;
-        const wSinTheta = halfWidth * sinTheta;
-        const wCosTheta = halfWidth * cosTheta;
-        const dx1 = -wCosTheta - hSinTheta;
-        const dy1 = -wSinTheta + hCosTheta;
-
-        const dx2 = wCosTheta - hSinTheta;
-        const dy2 = wSinTheta + hCosTheta;
-
-        const dx3 = wCosTheta + hSinTheta;
-        const dy3 = wSinTheta - hCosTheta;
-
-        const dx4 = -wCosTheta + hSinTheta;
-        const dy4 = -wSinTheta - hCosTheta;
-
-        return [
-            [mx + dx1, my + dy1],
-            [mx + dx2, my + dy2],
-            [mx + dx3, my + dy3],
-            [mx + dx4, my + dy4]
-        ] as QuadPoint[];
-    }
     const path: Path = new Path();
-    function drawLineAndHandle(canvas: Canvas, pos1: QuadPoint, pos2: QuadPoint, drawingRatio: number) {
-        canvas.drawLine(pos1[0], pos1[1], pos2[0], pos2[1], cornersPaint);
-        const d = distance(pos1, pos2);
-        const rect = createRectangleAlongLine(pos1, pos2, Math.min(0.3 * d, 90 / drawingRatio), 10 / drawingRatio);
+    const dimPath: Path = new Path();
+    function addQuadToPath(target: Path, points: QuadPoint[], reverse = false) {
+        (reverse ? [...points].reverse() : points).forEach((point, index) => (index ? target.lineTo(point[0], point[1]) : target.moveTo(point[0], point[1])));
+        target.close();
+    }
+    // the holder outside of the outline is dimmed: an even-odd path. The quad runs against the holder: iOS fills a UIBezierPath with the winding rule whatever the fill type
+    function drawDim(canvas: Canvas) {
+        dimPath.reset();
+        dimPath.setFillType(FillType.EVEN_ODD);
+        dimPath.addRoundRect(0, 0, canvas.getWidth(), canvas.getHeight(), HOLDER_RADIUS, HOLDER_RADIUS, Direction.CW);
+        mappedQuads.forEach((quad) => {
+            const area = quad.reduce((sum, point, index) => sum + point[0] * quad[(index + 1) % quad.length][1] - quad[(index + 1) % quad.length][0] * point[1], 0);
+            addQuadToPath(dimPath, quad, area > 0);
+        });
+        fillPaint.color = isEInk ? '#FFFFFF99' : '#0000008C';
+        canvas.drawPath(dimPath, fillPaint);
+    }
+    function drawQuad(canvas: Canvas, corners: QuadPoint[], quadIndex: number) {
+        const unit = 1 / drawingRatio;
+        const grab = grabbedQuadIndex === quadIndex ? grabTween.value : 0;
+        const length = corners.length;
+        if (grab > 0 && grabbedCorners.length === length) {
+            path.reset();
+            addQuadToPath(path, corners);
+            fillPaint.color = accent;
+            fillPaint.setAlpha(Math.round(31 * grab));
+            canvas.drawPath(path, fillPaint);
+        }
         path.reset();
-        path.moveTo(rect[0][0], rect[0][1]);
-        path.lineTo(rect[1][0], rect[1][1]);
-        path.lineTo(rect[2][0], rect[2][1]);
-        path.lineTo(rect[3][0], rect[3][1]);
-        path.close();
+        addQuadToPath(path, corners);
+        cornersPaint.color = accent;
+        cornersPaint.strokeWidth = (isEInk ? 3 : 2) * unit;
         canvas.drawPath(path, cornersPaint);
+
+        for (let index = 0; index < length; index++) {
+            const start = corners[index];
+            const end = corners[(index + 1) % length];
+            const edgeLength = distance(start, end);
+            if (!edgeLength) {
+                continue;
+            }
+            const grabbedEdge = grab > 0 && grabbedCorners.length === 2 && grabbedCorners[0] === index;
+            const thickness = (EDGE_THICKNESS + (grabbedEdge ? 2 * grab : 0)) * unit;
+            // the round caps add half the thickness at both ends
+            const half = Math.max(0, Math.min(0.3 * edgeLength, EDGE_MAX_LENGTH * unit) - thickness) / 2;
+            const middleX = (start[0] + end[0]) / 2;
+            const middleY = (start[1] + end[1]) / 2;
+            const directionX = ((end[0] - start[0]) / edgeLength) * half;
+            const directionY = ((end[1] - start[1]) / edgeLength) * half;
+            cornersPaint.color = WHITE;
+            cornersPaint.strokeWidth = thickness + 2 * unit;
+            canvas.drawLine(middleX - directionX, middleY - directionY, middleX + directionX, middleY + directionY, cornersPaint);
+            cornersPaint.color = accent;
+            cornersPaint.strokeWidth = thickness;
+            canvas.drawLine(middleX - directionX, middleY - directionY, middleX + directionX, middleY + directionY, cornersPaint);
+        }
+
+        for (let index = 0; index < length; index++) {
+            const point = corners[index];
+            const grabbed = grab > 0 && grabbedCorners.includes(index);
+            const scale = grabbed ? 1 + (GRABBED_SCALE - 1) * grab : 1;
+            if (grabbed && grabbedCorners.length === 1) {
+                fillPaint.color = accent;
+                fillPaint.setAlpha(Math.round(71 * grab));
+                canvas.drawCircle(point[0], point[1], HALO_RADIUS * unit, fillPaint);
+            }
+            fillPaint.color = WHITE;
+            canvas.drawCircle(point[0], point[1], (CORNER_RADIUS + CORNER_RING) * scale * unit, fillPaint);
+            fillPaint.color = accent;
+            canvas.drawCircle(point[0], point[1], CORNER_RADIUS * scale * unit, fillPaint);
+        }
     }
     function onCanvasDraw({ canvas }: { canvas: Canvas }) {
-        // DEV_LOG && console.log('onCanvasDraw', canvas.getWidth(), canvas.getHeight(), drawingRatio);
-        if (!drawingRatio) {
+        if (!drawingRatio || !mappedQuads) {
             return;
         }
-        // canvas.save();
+        drawDim(canvas);
+        canvas.save();
         canvas.concat(currentImageMatrix);
-        // if (editingImage) {
-        //     canvas.drawBitmap(editingImage, 0, 0, null);
-        // }
-        cornersPaint.color = colorPrimary;
-
-        // canvas.restore();
-        // canvas.concat(currentCropMatrix);
-        // canvas.rotate(-rotation);
-
-        cornersPaint.strokeWidth = 2 / drawingRatio;
-        if (quads?.length > 0) {
-            for (let index = 0; index < quads.length; index++) {
-                const corners = quads[index];
-                let currentCornerPoint = corners[0];
-                for (let index = 1; index < corners.length; index++) {
-                    const point = corners[index];
-                    drawLineAndHandle(canvas, currentCornerPoint, point, drawingRatio);
-                    currentCornerPoint = point;
-                }
-                drawLineAndHandle(canvas, currentCornerPoint, corners[0], drawingRatio);
-
-                //draw corner indicators
-                for (let index2 = 0; index2 < corners.length; index2++) {
-                    const point = corners[index2];
-                    canvas.drawCircle(point[0], point[1], 10 / drawingRatio, cornersPaint);
-                }
-
-                if (closestCornerQuadIndex.length === 1 && closestQuadIndex === index) {
-                    drawZoomGlass(canvas, corners[closestCornerQuadIndex[0]], mappedQuads[index][closestCornerQuadIndex[0]]);
-                }
-            }
-        }
+        quads?.forEach((corners, index) => drawQuad(canvas, corners, index));
         if (qrcode?.length) {
             cornersPaint.color = colorSecondary;
             cornersPaint.strokeWidth = 4 / drawingRatio;
@@ -544,10 +640,23 @@
                 canvas.drawLine(currentCornerPoint[0], currentCornerPoint[1], corners[0][0], corners[0][1], cornersPaint);
             }
         }
+        canvas.restore();
+        if (grabbedCorners.length === 1 && grabTween.value > 0 && mappedQuads[grabbedQuadIndex]) {
+            drawZoomGlass(canvas, quads[grabbedQuadIndex][grabbedCorners[0]], mappedQuads[grabbedQuadIndex][grabbedCorners[0]], grabTween.value);
+        }
     }
 </script>
 
-<gridlayout backgroundColor={isEInk ? 'white' : 'black'} {...$$restProps} id="cropView" on:redo={applyRedo} on:undo={applyUndo}>
-    <RotableImageView backgroundColor="white" decodeWidth={ZOOM_IMAGE_MAX_SIZE} margin={padding} src={imagePath} stretch="aspectFit" zoomable={true} />
+<gridlayout
+    backgroundColor={isEInk ? WHITE : HOLDER_COLOR}
+    borderColor={isEInk ? '#000000' : null}
+    borderRadius={HOLDER_RADIUS}
+    borderWidth={isEInk ? 1 : 0}
+    margin="0 {HOLDER_MARGIN}"
+    {...$$restProps}
+    id="cropView"
+    on:redo={applyRedo}
+    on:undo={applyUndo}>
+    <RotableImageView decodeWidth={ZOOM_IMAGE_MAX_SIZE} margin={padding} src={imagePath} stretch="aspectFit" zoomable={true} />
     <canvasView bind:this={canvasView} on:draw={onCanvasDraw} on:layoutChanged={() => updateMatrix()} on:touch={onTouch} />
 </gridlayout>
