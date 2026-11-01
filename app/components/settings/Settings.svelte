@@ -1245,6 +1245,7 @@
                     const view = (await import('~/components/widgets/ImageProcessingSettingsBottomSheet.svelte')).default;
                     await showBottomSheet({
                         view,
+                        keepStatusBarStyle: true,
                         skipCollapsedState: true
                     });
                     break;

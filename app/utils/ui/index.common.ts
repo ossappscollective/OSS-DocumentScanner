@@ -1580,6 +1580,7 @@ export async function transformPages({ documents, pages }: { documents?: OCRDocu
         const updateOptions = await showBottomSheet({
             view,
             detents: [sheetHeight],
+            keepStatusBarStyle: true,
             props: { sheetHeight, applyMode: true, transforms: [], colorType: DEFAULT_COLORTYPE, colorMatrix: null, brightness: DEFAULT_BRIGHTNESS, contrast: DEFAULT_CONTRAST, cameraOptionsStore: null }
         });
         if (updateOptions) {

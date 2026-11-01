@@ -118,6 +118,7 @@
                 parent: page,
                 view,
                 detents: [{ fraction: 0.5 }, 'large'],
+                keepStatusBarStyle: true,
                 disableDimBackground: true,
                 grabber: true,
                 largestUndimmedDetentIndex: 0,
