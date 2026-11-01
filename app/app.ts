@@ -23,13 +23,13 @@ import { getCurrentISO3Language, lc } from '~/helpers/locale';
 import { start as startThemeHelper } from '~/helpers/theme';
 import { setDocumentsService } from '~/models/OCRDocument';
 import { networkService } from '~/services/api';
-import { documentsService } from '~/services/documents';
+import { DocumentPageUpdatedEventData, documentsService } from '~/services/documents';
 import { ocrService } from '~/services/ocr';
 import { prefs } from '@shared/services/preferences';
 import { securityService } from '~/services/security';
 import { syncService } from '~/services/sync';
 import ZoomOutTransformer from '~/transformers/ZoomOutTransformer';
-import { SETTINGS_APP_VERSION, SETTINGS_ENABLE_CRASH_REPORT, SETTINGS_SYNC_ON_START } from '~/utils/constants';
+import { EVENT_DOCUMENT_PAGE_UPDATED, SETTINGS_APP_VERSION, SETTINGS_ENABLE_CRASH_REPORT, SETTINGS_SYNC_ON_START } from '~/utils/constants';
 import { startOnCam } from './variables';
 import { CollectionViewTraceCategory } from '@nativescript-community/ui-collectionview';
 import { init as sharedInit } from '@shared/index';
@@ -146,6 +146,13 @@ try {
             Application.servicesStarted = false;
             // DEV_LOG && console.log('start');
             setDocumentsService(documentsService);
+            // an updated image file must not be served from the cache: first listener, so the views which update their image get the new file
+            documentsService.on(EVENT_DOCUMENT_PAGE_UPDATED, (event: DocumentPageUpdatedEventData) => {
+                const imagePath = event.imageUpdated ? event.doc.pages[event.pageIndex]?.imagePath : null;
+                if (imagePath) {
+                    getImagePipeline().evictFromCache(imagePath);
+                }
+            });
             await Promise.all([networkService.start(), securityService.start(), syncService.start(), ocrService.start(getCurrentISO3Language()), documentsService.start()]);
             Application.servicesStarted = true;
             // DEV_LOG && console.log('servicesStarted');

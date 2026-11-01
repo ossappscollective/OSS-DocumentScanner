@@ -15,6 +15,7 @@ import type {
     FolderUpdatedEventData
 } from '~/services/documents';
 import type { MatricesTypes, Matrix } from '~/utils/color_matrix';
+import { canFillFirstPage } from '~/utils/pageFill';
 import { getFormatedDateForFilename } from '~/utils/utils.common';
 import {
     DOCUMENT_NAME_FORMAT,
@@ -33,7 +34,6 @@ import {
     getImageExportSettings,
     keepOriginalImages
 } from '../utils/constants';
-import { getImagePipeline } from '@nativescript-community/ui-image';
 import { PKPass } from './PKPass';
 
 export const sql = SqlQuery.createFromTemplateString;
@@ -291,9 +291,12 @@ export class OCRDocument extends Observable implements Document {
             const docData = this.folderPath;
             const pageStartId = Date.now();
             const imageExportSettings = getImageExportSettings();
+            // a page created for a code only (no image yet) receives the first new image instead of staying empty
+            const pageToFill = canFillFirstPage(this.pages?.[0], pagesData[0]) ? this.pages[0] : null;
             const pages = await doInBatch(pagesData, async (data, index) => {
                 const { id, image, imagePath, sourceImage, sourceImagePath, ...pageData } = data;
-                const pageId = id || pageStartId + '_' + index;
+                const fillPage = index === 0 ? pageToFill : null;
+                const pageId = id || fillPage?.id || pageStartId + '_' + index;
                 // const page = new OCRPage(pageId, docId);
                 const pageFileData = docData.getFolder(pageId);
                 const attributes = { ...pageData, id: pageId, document_id: docId } as OCRPage;
@@ -355,6 +358,9 @@ export class OCRDocument extends Observable implements Document {
                     }
                 }
                 attributes.sourceSize = getFileSize(attributes.sourceImagePath);
+                if (fillPage) {
+                    return documentsService.pageRepository.fillPage(fillPage, attributes, dataFolderPath);
+                }
                 if (id) {
                     try {
                         const page = await documentsService.pageRepository.get(id);
@@ -371,6 +377,7 @@ export class OCRDocument extends Observable implements Document {
                 return documentsService.pageRepository.createPage(attributes, dataFolderPath);
             });
             // for (let index = 0; index < length; index++) {}
+            const filledPage = pageToFill ? pages.shift() : null;
             if (this.pages) {
                 this.pages.push(...pages);
             } else {
@@ -387,7 +394,12 @@ export class OCRDocument extends Observable implements Document {
                 this.#observables.push(...pages);
             }
             if (notify) {
-                documentsService.notify({ eventName: EVENT_DOCUMENT_PAGES_ADDED, pages, doc: this } as DocumentPagesAddedEventData);
+                if (filledPage) {
+                    this.onPageUpdated(0, filledPage, true);
+                }
+                if (pages.length) {
+                    documentsService.notify({ eventName: EVENT_DOCUMENT_PAGES_ADDED, pages, doc: this } as DocumentPagesAddedEventData);
+                }
             }
         }
     }
@@ -611,8 +623,7 @@ export class OCRDocument extends Observable implements Document {
         //     // TODO: fix why do we need to clear the whole cache? wrong cache key?
         //     getImagePipeline().clearCaches();
         // } else {
-        // eslint-disable-next-line @typescript-eslint/await-thenable
-        await getImagePipeline().evictFromCache(croppedImagePath);
+        // the image cache is evicted by the main thread when it gets the update (app.ts): this model is also bundled in the PDF export worker, which must not load any view
         // }
         await this.updatePage(
             pageIndex,
