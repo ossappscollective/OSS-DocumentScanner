@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Template } from '@nativescript-community/svelte-native/components';
+    import { closeBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
     import { type RowPosition, updateRowPositions } from '@shared/utils/groupedRows';
     import SheetHeader from '~/components/common/SheetHeader.svelte';
@@ -69,10 +70,8 @@
         (item) => !!item
     );
 
-    let rootView;
-    function close() {
-        rootView.nativeView.bindingContext.closeCallback();
-    }
+    // the rows stand out of the surface of the sheet
+    $: rowColors = { ...$colors, colorSurfaceContainerLow: $colors.colorSurfaceContainerHigh };
 
     function onTap(item) {
         if (item.moduleUrl) {
@@ -81,13 +80,13 @@
     }
 </script>
 
-<gesturerootview bind:this={rootView} padding="0 0 {$windowInset.bottom} 0" rows="auto,auto">
-    <SheetHeader onCancel={close} title={lc('third_parties')} />
+<gesturerootview padding="0 0 {$windowInset.bottom} 0" rows="auto,auto">
+    <SheetHeader onCancel={() => closeBottomSheet()} title={lc('third_parties')} />
     <collectionView id="trackingScrollView" height="300" ios:contentInsetAdjustmentBehavior={2} itemIdGenerator={(item, i) => i} {items} row={1}>
         <Template let:item>
             <ListItemAutoSize
                 item={{ title: item.moduleName, subtitle: item.moduleUrl }}
-                {...getSettingsRowProps({ ...item, description: item.moduleUrl }, $colors, __IOS__)}
+                {...getSettingsRowProps({ ...item, description: item.moduleUrl }, rowColors, __IOS__)}
                 on:tap={() => onTap(item)}
             />
         </Template>

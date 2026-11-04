@@ -4,7 +4,7 @@
     import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { ObservableArray } from '@nativescript/core';
     import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
-    import { updateRowPositions } from '@shared/utils/groupedRows';
+    import { type RowPosition, updateRowPositions } from '@shared/utils/groupedRows';
     import { showError } from '@shared/utils/showError';
     import { showModal } from '@shared/utils/svelte/ui';
     import CActionBar from '@shared/components/CActionBar.svelte';
@@ -104,24 +104,25 @@
 
     const isRow = (item) => !!item;
     const getRowProps = (item) => getSettingsRowProps({ ...item, description: item.subtitle }, $colors, __IOS__);
-    function updatePositions() {
-        updateRowPositions((index) => items.getItem(index), items.length, isRow).forEach((index) => items.setItem(index, items.getItem(index)));
+    // only the rows around a change get a new position, and only those are updated
+    function updatePositions(from: number, to: number) {
+        updateRowPositions((index) => items.getItem(index), items.length, isRow, from, to).forEach((index) => items.setItem(index, items.getItem(index)));
     }
 
     function refresh() {
         const newItems: Item[] = options || [];
 
-        const preparedItems = newItems.map(prepareItem);
+        const preparedItems = newItems.map((item) => prepareItem(item));
         updateRowPositions((index) => preparedItems[index], preparedItems.length, isRow);
         items = new ObservableArray(preparedItems);
     }
     refresh();
 
-    function prepareItem(item: Item) {
+    function prepareItem(item: Item, position?: RowPosition) {
         const iconData = SERVICES_SYNC_ICONS_COLORS[item.type.split('_')[0]];
         const { color, ...others } = item;
         DEV_LOG && console.log('prepareItem0', item.type, iconData);
-        return { ...others, syncColor: color, title: getTitle(item), subtitle: getDescription(item), icon: iconData?.icon, iconColor: iconData?.color, iconFontFamily: iconData?.fontFamily };
+        return { ...others, syncColor: color, title: getTitle(item), subtitle: getDescription(item), icon: iconData?.icon, iconColor: iconData?.color, iconFontFamily: iconData?.fontFamily, position };
     }
     async function onItemTap(item: Item, event) {
         try {
@@ -215,8 +216,7 @@
                 syncService.updateService(configToUpdate);
                 const index = items.findIndex((d) => d.id === item.id);
                 if (index !== -1) {
-                    items.splice(index, 1, prepareItem(configToUpdate));
-                    updatePositions();
+                    items.splice(index, 1, prepareItem(configToUpdate, items.getItem(index).position));
                 }
             }
         } catch (err) {
@@ -230,7 +230,7 @@
                 const index = items.findIndex((d) => d.id === item.id);
                 if (index !== -1) {
                     items.splice(index, 1);
-                    updatePositions();
+                    updatePositions(index - 1, index);
                 }
             }
         } catch (err) {
@@ -361,7 +361,7 @@
                             const data = syncService.addService(selection?.data, configToAdd);
                             DEV_LOG && console.log('adding item', data);
                             items.push(prepareItem(data));
-                            updatePositions();
+                            updatePositions(items.length - 2, items.length - 1);
                         }
                     }
             }
