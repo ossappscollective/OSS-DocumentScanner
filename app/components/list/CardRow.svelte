@@ -70,6 +70,7 @@
                         visibility={hasCode && hasImage ? 'visible' : 'collapsed'}
                     />
                     <CardStatusChips extra={item.doc.extra} {status} marginLeft={subtitle || (hasCode && hasImage) ? 8 : 0} verticalAlignment="center" />
+                    <slot name="chips" hasLeading={!!subtitle || (hasCode && hasImage) || status?.length > 0} />
                 </stacklayout>
             </gridlayout>
             <CardIcon col={2} color={colorPrimary} marginRight={8} size={16} src={appIcon('favorite_on')} verticalAlignment="center" visibility={item.doc.favorite === 1 ? 'visible' : 'collapsed'} />
