@@ -5,31 +5,31 @@
     import { confirm } from '@nativescript-community/ui-dialogs';
     import { VerticalPosition } from '@nativescript-community/ui-popover';
     import { ApplicationSettings, ObservableArray } from '@nativescript/core';
-    import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
+    import { readable } from 'svelte/store';
     import { OptionType } from '@shared/components/OptionSelect.svelte';
     import { showError } from '@shared/utils/showError';
     import { showSnack } from '@shared/utils/ui';
-    import CActionBar from '~/components/common/CActionBar.svelte';
-    import SelectedIndicator from '~/components/common/SelectedIndicator.svelte';
+    import CActionBar from '@shared/components/CActionBar.svelte';
+    import FolderCell from '~/components/list/FolderCell.svelte';
+    import type { Item } from '~/components/list/MainList.svelte';
     import SelectionToolbar from '~/components/common/SelectionToolbar.svelte';
     import { lc, lcp } from '~/helpers/locale';
-    import { isEInk, onThemeChanged } from '~/helpers/theme';
+    import { onThemeChanged } from '~/helpers/theme';
     import { DocFolder } from '~/models/OCRDocument';
     import { documentsService } from '~/services/documents';
     import { collectFoldersToDelete, filterEmptyFolders } from '~/services/folderUtils';
     import { DEFAULT_TRASH_ENABLED, SETTINGS_TRASH_ENABLED } from '~/utils/constants';
+    import { updateRowPositions } from '~/utils/groupedRows';
     import { showPopoverMenu } from '~/utils/ui';
-    import { colors, fonts, windowInset } from '~/variables';
+    import { colors, windowInset } from '~/variables';
 
-    interface Item {
-        folder: DocFolder;
-        selected: boolean;
-    }
+    // every row shows its marker: a tap selects
+    const selectionMode = readable(true);
 </script>
 
 <script lang="ts">
-    let { colorError, colorOutline } = $colors;
-    $: ({ colorError, colorOutline } = $colors);
+    let { colorError } = $colors;
+    $: ({ colorError } = $colors);
 
     let collectionView: NativeViewElementNode<CollectionView>;
     let items: ObservableArray<Item> = new ObservableArray([]);
@@ -39,7 +39,9 @@
         try {
             const folders = await documentsService.folderRepository.findAllFolders();
             nbSelected = 0;
-            items = new ObservableArray(folders.map((folder) => ({ folder, selected: false })));
+            const newItems: Item[] = folders.map((folder) => ({ folder, selected: false }));
+            updateRowPositions((index) => newItems[index], newItems.length);
+            items = new ObservableArray(newItems);
         } catch (error) {
             showError(error);
         }
@@ -200,22 +202,7 @@
     <gridlayout class="pageContent" rows="auto,*">
         <collectionview bind:this={collectionView} {items} row={1} android:paddingBottom={$windowInset.bottom}>
             <Template let:item>
-                <ListItemAutoSize
-                    class="card"
-                    borderWidth={isEInk ? 1 : 0}
-                    columns="auto,*"
-                    fontSize={17}
-                    fontWeight="600"
-                    item={{ ...item, title: item.folder.name, subtitle: lcp('documents_count', item.folder.count) }}
-                    mainCol={1}
-                    margin="4 8 4 8"
-                    padding="0 10 0 10"
-                    subtitleFontSize={12}
-                    useExtraPadding={false}
-                    on:tap={() => onItemTap(item)}>
-                    <label col={0} color={item.folder.color || colorOutline} fontFamily={$fonts.mdi} fontSize={24} padding="0 10 0 0" text="mdi-folder " verticalAlignment="center" />
-                    <SelectedIndicator col={0} horizontalAlignment="left" margin="10 0 10 0" selected={item.selected} verticalAlignment="top" />
-                </ListItemAutoSize>
+                <FolderCell {selectionMode} {item} marginLeft={16} marginRight={16} name={item.folder.name} tile={false} on:tap={() => onItemTap(item)} />
             </Template>
         </collectionview>
         <label horizontalAlignment="center" row={1} text={lc('no_folder')} verticalAlignment="middle" visibility={items.length ? 'collapse' : 'visible'} />

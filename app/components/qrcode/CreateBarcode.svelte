@@ -5,7 +5,7 @@
     import { closeModal } from '@shared/utils/svelte/ui';
     import { Template } from '@nativescript-community/svelte-native/components';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-    import CActionBar from '~/components/common/CActionBar.svelte';
+    import CActionBar from '@shared/components/CActionBar.svelte';
     import { lc } from '~/helpers/locale';
     import { BARCODE_FORMATS, getBarcodeFallbackString, qrcodeService } from '~/services/qrcode';
     import { colors, windowInset } from '~/variables';

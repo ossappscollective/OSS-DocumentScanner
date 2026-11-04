@@ -7,11 +7,13 @@
     import { prompt } from '@nativescript-community/ui-dialogs';
     import { TextField } from '@nativescript-community/ui-textfield';
     import { ObservableArray, View } from '@nativescript/core';
+    import { updateRowPositions } from '@shared/utils/groupedRows';
     import { showError } from '@shared/utils/showError';
     import { Writable } from 'svelte/store';
     import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
     import { l, lc } from '~/helpers/locale';
     import { ALERT_OPTION_MAX_HEIGHT } from '~/utils/constants';
+    import { getSettingsRowProps } from '~/utils/settingsRows';
     import { createView, pickColor, showAlertOptionSelect, showSliderPopover } from '~/utils/ui';
     import { colors, windowInset } from '~/variables';
 </script>
@@ -26,6 +28,14 @@
     const variant = 'outline';
 
     export let items: ObservableArray<any>;
+
+    // the form field and the section titles are not rows of a group
+    updateRowPositions(
+        (index) => items.getItem(index),
+        items.length,
+        (item) => !!item && item.type !== 'sectionHeader' && item.type !== 'textfield'
+    );
+    const getRowProps = (item) => getSettingsRowProps(item, $colors, __IOS__);
 
     function getTitle(item) {
         return item.title;
@@ -212,10 +222,14 @@
 
 <collectionview bind:this={collectionView} ios:autoReloadItemOnLayout={true} itemTemplateSelector={selectTemplate} {items} android:paddingBottom={$windowInset.bottom} {...$$restProps}>
     <Template key="sectionHeader" let:item>
-        <label class="sectionHeader" text={item.title} />
+        <label class="settingsSectionHeader" text={item.title} />
     </Template>
     <Template key="color" let:item>
-        <ListItemAutoSize item={{ subtitle: lc('sync_service_color_desc'), title: lc('color') }} on:tap={(event) => changeColor(item, event)}>
+        <ListItemAutoSize
+            item={{ subtitle: lc('sync_service_color_desc'), title: lc('color') }}
+            {...getRowProps({ ...item, description: lc('sync_service_color_desc') })}
+            on:tap={(event) => changeColor(item, event)}
+        >
             <absolutelayout backgroundColor={$store.color} borderColor={colorOutline} borderRadius="50%" borderWidth={2} col={1} height={40} marginLeft={10} width={40} />
         </ListItemAutoSize>
     </Template>
@@ -235,12 +249,12 @@
         </gridlayout>
     </Template>
     <Template key="switch" let:item>
-        <ListItemAutoSize item={{ ...item, title: getTitle(item), subtitle: getDescription(item) }} on:tap={(event) => onTap(item, event)}>
+        <ListItemAutoSize item={{ ...item, title: getTitle(item), subtitle: getDescription(item) }} {...getRowProps(item)} on:tap={(event) => onTap(item, event)}>
             <switch id="checkbox" checked={item.value} col={1} marginLeft={10} verticalAlignment="center" on:checkedChange={(e) => onCheckBox(item, e)} />
         </ListItemAutoSize>
     </Template>
     <Template let:item>
-        <ListItemAutoSize item={{ ...item, title: getTitle(item), subtitle: getDescription(item) }} showBottomLine={false} on:tap={(event) => onTap(item, event)}></ListItemAutoSize>
+        <ListItemAutoSize item={{ ...item, title: getTitle(item), subtitle: getDescription(item) }} {...getRowProps(item)} on:tap={(event) => onTap(item, event)}></ListItemAutoSize>
     </Template>
     <slot />
 </collectionview>

@@ -4,7 +4,7 @@
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import { closeModal } from '@shared/utils/svelte/ui';
     import { onMount } from 'svelte';
-    import CActionBar from './common/CActionBar.svelte';
+    import CActionBar from '@shared/components/CActionBar.svelte';
     import { lc } from '~/helpers/locale';
     import { colors, windowInset } from '~/variables';
 

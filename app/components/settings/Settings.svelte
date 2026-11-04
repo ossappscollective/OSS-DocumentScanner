@@ -83,10 +83,11 @@
     import { copyFolderContent, removeFolderContent } from '~/utils/file';
     import { StorageSizes } from '~/utils/originals';
     import { PDF_OPTIONS } from '~/utils/localized_constant';
+    import { getSettingsIconProps, getSettingsRowProps } from '~/utils/settingsRows';
     import { restoreSettings } from '~/utils/settings.android';
     import { createView, getNameFormatHTMLArgs, hideLoading, openLink, showLoading, showSnack } from '~/utils/ui';
     import { restartApp, toggleQuickSetting } from '~/utils/utils';
-    import { fontScale, fonts, hasCamera } from '~/variables';
+    import { colors, fontScale, fonts, hasCamera } from '~/variables';
     import OCRSettingsBottomSheet from '~/components/ocr/OCRSettingsBottomSheet.svelte';
     import BaseSettingsPage, { getStoreSetting } from '@shared/components/BaseSettingsPage.svelte';
     const version = __APP_VERSION__ + ' Build ' + __APP_BUILD_NUMBER__;
@@ -101,6 +102,9 @@
     // technique for only specific properties to get updated on store change
     // let { colorOnSurfaceVariant } = $colors;
     // $: ({ colorOnSurfaceVariant } = $colors);
+
+    const getRowProps = (item) => getSettingsRowProps(item, $colors, __IOS__);
+    const getIconProps = () => getSettingsIconProps($colors, __IOS__);
 
     let page: NativeViewElementNode<Page>;
     let settingsCollectionView: BaseSettingsPage;
@@ -1401,6 +1405,10 @@
 <BaseSettingsPage
     bind:this={settingsCollectionView}
     {id}
+    getItemProps={getRowProps}
+    getLeftIconProps={getIconProps}
+    groupRows={true}
+    sectionHeaderClass="settingsSectionHeader"
     {items}
     {onCheckBox}
     onItemLongPress={(item, event) => onLongPress(item.id, event)}

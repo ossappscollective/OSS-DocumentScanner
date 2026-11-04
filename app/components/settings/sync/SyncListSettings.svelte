@@ -4,9 +4,10 @@
     import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { ObservableArray } from '@nativescript/core';
     import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
+    import { updateRowPositions } from '@shared/utils/groupedRows';
     import { showError } from '@shared/utils/showError';
     import { showModal } from '@shared/utils/svelte/ui';
-    import CActionBar from '~/components/common/CActionBar.svelte';
+    import CActionBar from '@shared/components/CActionBar.svelte';
     import { lc, onLanguageChanged } from '~/helpers/locale';
     import { onThemeChanged } from '~/helpers/theme';
     import { syncService } from '~/services/sync';
@@ -17,6 +18,7 @@
     import { WebdavDataSyncOptions } from '~/services/sync/webdav/WebdavDataSyncService';
     import { ALERT_OPTION_MAX_HEIGHT } from '~/utils/constants';
     import { getDirectoryName, hideLoading, requestNotificationPermission, showAlertOptionSelect } from '~/utils/ui';
+    import { getSettingsRowProps } from '~/utils/settingsRows';
     import { colors, fontScale, fonts, windowInset } from '~/variables';
     type Item = BaseSyncServiceOptions & { title?: string; description?: string; syncColor?: string };
 
@@ -100,10 +102,18 @@
 
     const options: Item[] = dataSyncServices.filter((s) => s.type.endsWith(type));
 
+    const isRow = (item) => !!item;
+    const getRowProps = (item) => getSettingsRowProps({ ...item, description: item.subtitle }, $colors, __IOS__);
+    function updatePositions() {
+        updateRowPositions((index) => items.getItem(index), items.length, isRow).forEach((index) => items.setItem(index, items.getItem(index)));
+    }
+
     function refresh() {
         const newItems: Item[] = options || [];
 
-        items = new ObservableArray(newItems.map(prepareItem));
+        const preparedItems = newItems.map(prepareItem);
+        updateRowPositions((index) => preparedItems[index], preparedItems.length, isRow);
+        items = new ObservableArray(preparedItems);
     }
     refresh();
 
@@ -206,6 +216,7 @@
                 const index = items.findIndex((d) => d.id === item.id);
                 if (index !== -1) {
                     items.splice(index, 1, prepareItem(configToUpdate));
+                    updatePositions();
                 }
             }
         } catch (err) {
@@ -219,6 +230,7 @@
                 const index = items.findIndex((d) => d.id === item.id);
                 if (index !== -1) {
                     items.splice(index, 1);
+                    updatePositions();
                 }
             }
         } catch (err) {
@@ -349,6 +361,7 @@
                             const data = syncService.addService(selection?.data, configToAdd);
                             DEV_LOG && console.log('adding item', data);
                             items.push(prepareItem(data));
+                            updatePositions();
                         }
                     }
             }
@@ -471,6 +484,7 @@
                         mainCol={1}
                         prop:mainContent
                         showBottomLine={false}
+                        {...getRowProps(item)}
                         on:tap={(event) => onItemTap(item, event)}
                     >
                         <label

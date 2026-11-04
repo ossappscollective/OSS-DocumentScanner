@@ -6,20 +6,23 @@
     import { createNativeAttributedString } from '@nativescript-community/ui-label';
     import { VerticalPosition } from '@nativescript-community/ui-popover';
     import { ObservableArray, Utils } from '@nativescript/core';
+    import { writable } from 'svelte/store';
     import { OptionType } from '@shared/components/OptionSelect.svelte';
     import { showError } from '@shared/utils/showError';
     import dayjs from 'dayjs';
     import { filesize } from 'filesize';
-    import CActionBar from '~/components/common/CActionBar.svelte';
+    import CActionBar from '@shared/components/CActionBar.svelte';
     import PageIndicator from '~/components/common/PageIndicator.svelte';
     import RotableImageView from '~/components/common/RotableImageView.svelte';
-    import SelectedIndicator from '~/components/common/SelectedIndicator.svelte';
+    import RowSelectionMarker from '~/components/common/RowSelectionMarker.svelte';
     import SelectionToolbar from '~/components/common/SelectionToolbar.svelte';
     import { lc, lcp } from '~/helpers/locale';
     import { isEInk, onThemeChanged } from '~/helpers/theme';
     import { OCRDocument } from '~/models/OCRDocument';
     import { documentsService } from '~/services/documents';
+    import { type RowPosition, getRowCorners, updateRowPositions } from '~/utils/groupedRows';
     import { StorageSizes, computeStorageSizes } from '~/utils/originals';
+    import { selectionTransition } from '~/utils/svelte/actions';
     import { deleteDocumentsWithConfirm, deleteOriginalImages, formatStorageSizes, goToDocumentView, showPopoverMenu } from '~/utils/ui';
     import { ellipsize } from '~/utils/utils.common';
     import { colors, fontScale, windowInset } from '~/variables';
@@ -28,6 +31,7 @@
         doc: OCRDocument;
         selected: boolean;
         sizes: StorageSizes;
+        position?: RowPosition;
     }
 
     const textPaint = new Paint();
@@ -38,13 +42,16 @@
 </script>
 
 <script lang="ts">
-    let { colorError, colorOnBackground, colorOnSurfaceVariant } = $colors;
-    $: ({ colorError, colorOnBackground, colorOnSurfaceVariant } = $colors);
+    let { colorError, colorOnBackground, colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorSurfaceContainerLow } = $colors;
+    $: ({ colorError, colorOnBackground, colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorSurfaceContainerLow } = $colors);
 
     let collectionView: NativeViewElementNode<CollectionView>;
     let items: ObservableArray<Item> = new ObservableArray([]);
     let totals: StorageSizes = { size: 0, sourceSize: 0, total: 0 };
     let nbSelected: number = 0;
+    const selectionMode = writable(false);
+    $: selectionMode.set(nbSelected > 0);
+    $: markerWidth = $selectionMode ? 36 : 0;
 
     $: textPaint.color = colorOnBackground || 'black';
 
@@ -54,6 +61,7 @@
             const newItems = documents.map((doc) => ({ doc, selected: false, sizes: computeStorageSizes(doc.pages) })).sort((firstItem, secondItem) => secondItem.sizes.total - firstItem.sizes.total);
             totals = computeStorageSizes(documents.reduce((acc, doc) => acc.concat(doc.pages), []));
             nbSelected = 0;
+            updateRowPositions((index) => newItems[index], newItems.length);
             items = new ObservableArray(newItems);
         } catch (error) {
             showError(error);
@@ -161,11 +169,10 @@
     function onCanvasDraw(item: Item, { canvas }: { canvas: Canvas; object: CanvasView }) {
         const width = canvas.getWidth();
         const height = canvas.getHeight();
-        const dx = 10 + ITEM_IMAGE_HEIGHT * $fontScale + 16;
         const { doc, sizes } = item;
         textPaint.color = colorOnSurfaceVariant;
         textPaint.textSize = 11;
-        canvas.drawText(formatStorageSizes(sizes), dx, height - 10, textPaint);
+        canvas.drawText(formatStorageSizes(sizes), 0, height - 10, textPaint);
         textPaint.color = colorOnBackground;
         const topText = createNativeAttributedString({
             spans: [
@@ -184,8 +191,8 @@
                 }
             ]
         });
-        const staticLayout = new StaticLayout(topText, textPaint, Math.max(0, width - dx), LayoutAlignment.ALIGN_NORMAL, 1, 0, true);
-        canvas.translate(dx, 10);
+        const staticLayout = new StaticLayout(topText, textPaint, width, LayoutAlignment.ALIGN_NORMAL, 1, 0, true);
+        canvas.translate(0, 10);
         staticLayout.draw(canvas);
     }
 
@@ -206,29 +213,30 @@
         </gridlayout>
         <collectionview bind:this={collectionView} {items} row={2} android:paddingBottom={$windowInset.bottom}>
             <Template let:item>
-                <canvasview
-                    class="card"
+                <gridlayout
+                    backgroundColor={isEInk ? 'transparent' : colorSurfaceContainerLow}
+                    borderColor={colorOutlineVariant}
                     borderWidth={isEInk ? 1 : 0}
                     height={ITEM_ROW_HEIGHT * $fontScale}
+                    marginBottom={__IOS__ ? 0 : 2}
+                    marginLeft={16}
+                    marginRight={16}
+                    marginTop={item.position === 'first' || item.position === 'only' ? 8 : 0}
+                    padding="0 12 0 8"
+                    rippleColor={colorOnSurface}
+                    {...getRowCorners(item.position, __IOS__)}
                     on:tap={() => onItemTap(item)}
                     on:longPress={() => onItemLongPress(item)}
-                    on:draw={(e) => onCanvasDraw(item, e)}
                 >
-                    <RotableImageView
-                        id="imageView"
-                        borderRadius={12}
-                        decodeWidth={IMAGE_DECODE_WIDTH}
-                        horizontalAlignment="left"
-                        item={item.doc.pages[0]}
-                        marginBottom={10}
-                        marginLeft={10}
-                        marginTop={10}
-                        stretch="aspectFill"
-                        width={ITEM_IMAGE_HEIGHT * $fontScale}
-                    />
-                    <SelectedIndicator horizontalAlignment="left" margin={10} selected={item.selected} />
-                    <PageIndicator horizontalAlignment="right" margin={10} scale={$fontScale} text={item.doc.pages.length} />
-                </canvasview>
+                    <gridlayout columns="auto,*" paddingLeft={markerWidth} use:selectionTransition={{ selectionMode, shift: 36 }}>
+                        <gridlayout margin="10 0 10 0" width={ITEM_IMAGE_HEIGHT * $fontScale}>
+                            <RotableImageView id="imageView" borderRadius={8} decodeWidth={IMAGE_DECODE_WIDTH} item={item.doc.pages[0]} stretch="aspectFill" />
+                            <PageIndicator horizontalAlignment="right" margin={2} scale={$fontScale} text={item.doc.pages.length} verticalAlignment="bottom" />
+                        </gridlayout>
+                        <canvasview col={1} marginLeft={12} on:draw={(e) => onCanvasDraw(item, e)} />
+                    </gridlayout>
+                    <RowSelectionMarker marginLeft={0} {selectionMode} selected={item.selected} />
+                </gridlayout>
             </Template>
         </collectionview>
         {#if nbSelected > 0}

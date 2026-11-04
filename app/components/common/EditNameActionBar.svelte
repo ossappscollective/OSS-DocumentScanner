@@ -1,6 +1,6 @@
 <script lang="ts">
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-    import CActionBar from './CActionBar.svelte';
+    import CActionBar from '@shared/components/CActionBar.svelte';
     import { TextField } from '@nativescript-community/ui-textfield';
     import { DocFolder, OCRDocument } from '~/models/OCRDocument';
     import { shortcutService } from '~/services/shortcuts';

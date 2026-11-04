@@ -103,7 +103,6 @@
 </script>
 
 <script lang="ts">
-    import SliderPopover from '../common/SliderPopover.svelte';
     import CardViewEmpty from '~/components/view/CardViewEmpty.svelte';
     import { TextField } from '@nativescript-community/ui-textfield';
     import { Label } from '@nativescript-community/ui-label';

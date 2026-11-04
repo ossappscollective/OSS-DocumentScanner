@@ -13,7 +13,7 @@
     import { Template } from '@nativescript-community/svelte-native/components';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import { writable } from 'svelte/store';
-    import CActionBar from '~/components/common/CActionBar.svelte';
+    import CActionBar from '@shared/components/CActionBar.svelte';
     import { getFileNameForDocument, l, lc } from '~/helpers/locale';
     import { OCRDocument, OCRPage } from '~/models/OCRDocument';
     import PDFCanvas, { PDFCanvasItem, PDFExportBaseOptions } from '~/services/pdf/PDFCanvas';

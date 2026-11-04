@@ -15,7 +15,7 @@
     import { OCRData, QRCodeData, Quad, getImageSize } from 'plugin-nativeprocessor';
     import { onDestroy, onMount } from 'svelte';
     import { Writable } from 'svelte/store';
-    import CActionBar from '~/components/common/CActionBar.svelte';
+    import CActionBar from '@shared/components/CActionBar.svelte';
     import RotableImageView from '~/components/common/RotableImageView.svelte';
     import { lc } from '~/helpers/locale';
     import { onThemeChanged } from '~/helpers/theme';
