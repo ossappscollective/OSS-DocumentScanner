@@ -282,34 +282,15 @@ export class PKPass extends Observable {
         let value = String(field.value);
         // Handle date/time formatting
         if (field.dateStyle || field.timeStyle) {
-            let date = dayjs(field.value as string);
+            // ignoresTimeZone: the time is shown as written, whatever its offset
+            const date = dayjs(field.ignoresTimeZone ? String(field.value).replace(/^(.*T[\d:.]+)(Z|[+-]\d{2}(?::?\d{2})?)$/, '$1') : (field.value as string));
             if (!isNaN(date.valueOf())) {
-                const options: Intl.DateTimeFormatOptions = {};
-
-                // Map PKPass date styles to Intl.DateTimeFormat options
-                if (field.dateStyle && field.dateStyle !== 'PKDateStyleNone') {
-                    const dateStyleMap = {
-                        PKDateStyleShort: 'L',
-                        PKDateStyleMedium: 'll',
-                        PKDateStyleLong: 'LL',
-                        PKDateStyleFull: 'dddd, MMMM D, YYYY'
-                    };
-                    options.dateStyle = dateStyleMap[field.dateStyle] as any;
+                const dateFormats = { PKDateStyleShort: 'L', PKDateStyleMedium: 'll', PKDateStyleLong: 'LL', PKDateStyleFull: 'dddd, MMMM D, YYYY' };
+                const timeFormats = { PKDateStyleShort: 'LT', PKDateStyleMedium: 'LTS', PKDateStyleLong: 'LTS', PKDateStyleFull: 'LTS' };
+                const format = [dateFormats[field.dateStyle], timeFormats[field.timeStyle]].filter(Boolean).join(' ');
+                if (format) {
+                    return date.format(format);
                 }
-
-                if (field.timeStyle && field.timeStyle !== 'PKDateStyleNone') {
-                    const timeStyleMap = {
-                        PKDateStyleShort: 'LT',
-                        PKDateStyleMedium: 'LTS',
-                        PKDateStyleLong: 'LTS',
-                        PKDateStyleFull: 'LTS'
-                    };
-                    options.timeStyle = timeStyleMap[field.timeStyle] as any;
-                }
-                if (field.ignoresTimeZone) {
-                    date = dayjs.utc(field.value);
-                }
-                return date.format(options.timeStyle);
             }
         }
         value = this.getLocalizedValue(value, currentLang);
