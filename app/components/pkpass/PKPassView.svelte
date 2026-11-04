@@ -3,7 +3,7 @@
     import { PKBarcodeFormat, PKPass, PKPassBarcode, PKPassField, PKPassStructure, PKPassStyle, PKPassTransitType, PKPassType } from '~/models/PKPass';
     import { colors, fontScale, windowInset } from '~/variables';
     import { qrcodeService } from '~/services/qrcode';
-    import { getBarcodeSVG, getFieldTextAlignment, getTransitIcon } from '~/utils/pkpass';
+    import { getBarcodeSVG, getFieldTextAlignment, getPKPassColors, getTransitIcon } from '~/utils/pkpass';
     import { lang, lc } from '~/helpers/locale';
     import { isEInk } from '@shared/helpers/theme';
     import { showError } from '@shared/utils/showError';
@@ -18,6 +18,10 @@
     export let document: OCRDocument;
     export let includeBackFields = true;
     export let forImageRendering = false;
+    /** fills the page instead of being a card over it */
+    export let fullscreen = false;
+    /** room for the toolbar over the bottom of the page */
+    export let bottomPadding = 0;
     export let barcodeSvg: string = null;
     let mainGrid: NativeViewElementNode<GridLayout>;
 
@@ -36,9 +40,7 @@
     const primaryFieldsCount = structure?.primaryFields?.length ?? 0;
     const auxiliaryFieldsCount = structure?.auxiliaryFields?.length ?? 0;
 
-    $: backgroundColor = passData.backgroundColor ?? colorSurface;
-    $: foregroundColor = passData.foregroundColor ?? (new Color(backgroundColor).getBrightness() < 145 ? 'white' : 'black');
-    $: labelColor = passData.labelColor ?? (new Color(backgroundColor).getBrightness() < 145 ? 'white' : 'black');
+    $: ({ backgroundColor, foregroundColor, labelColor } = getPKPassColors(passData, colorSurface));
     // Apple PKPass image specifications - prefer @2x for quality
     const logoImage = pkpass?.images?.logo2x || pkpass?.images?.logo; // Max 160x50 points
     const iconImage = pkpass?.images?.icon2x || pkpass?.images?.icon; // 29x29 points
@@ -101,10 +103,10 @@
 <gridlayout
     bind:this={mainGrid}
     {backgroundColor}
-    borderRadius={8}
-    elevation={forImageRendering || isEInk ? 0 : 2}
-    margin={forImageRendering ? 0 : 16}
-    marginBottom={forImageRendering ? 0 : $windowInset.bottom + 16}
+    borderRadius={fullscreen ? 0 : 8}
+    elevation={forImageRendering || fullscreen || isEInk ? 0 : 2}
+    margin={forImageRendering || fullscreen ? 0 : 16}
+    marginBottom={forImageRendering || fullscreen ? 0 : $windowInset.bottom + 16}
     rows={`auto,auto,${forImageRendering ? 'auto' : '*'},auto`}
     {...$$restProps}
     use:conditionalEvent={{ condition: forImageRendering, event: 'layoutChanged', callback: onLayoutChanged }}
@@ -180,7 +182,7 @@
 
     <!-- Main content -->
     <scrollview row={2}>
-        <stacklayout padding={16}>
+        <stacklayout padding="16 16 {16 + bottomPadding} 16">
             <!-- Primary fields -->
             {#if primaryFieldsCount > 0}
                 <!-- Strip image behind primary fields (variable dimensions per Apple spec) -->

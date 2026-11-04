@@ -64,7 +64,7 @@
     import { optionsToMenuItems } from '~/utils/appMenu';
     import { getCardAccent, pickCardColor } from '~/utils/cardColors';
     import { recycleImages } from '~/utils/images';
-    import { documentHasPKPassData } from '~/utils/pkpass';
+    import { documentHasPKPassData, getPKPassColors } from '~/utils/pkpass';
     import { getFormatedDateForFilename } from '~/utils/utils.common';
     import {
         detectOCR,
@@ -128,6 +128,9 @@
     $: hasImages = document.pages.some((p) => p.imagePath);
     // Check if any page in the document has PKPass data
     $: isPKPassDocument = documentHasPKPassData(document);
+    // the bars take the color of the pass shown, so it fills the screen
+    $: currentPass = isPKPassDocument ? (document.pages[currentQRCodeIndex]?.pkpass ?? document.pages.find((p) => p.pkpass)?.pkpass) : null;
+    $: passColors = getPKPassColors(currentPass?.passData ?? {}, colorBackground);
 
     // the color set on the card, else the color extracted from its first photo when it is colorful, else the app seed
     $: firstPhoto = document.pages.find((p) => p.imagePath);
@@ -928,16 +931,18 @@
             ...(withImages && !pkpass ? [{ title: lc('show_fullscreen_images'), icon: appIcon('fullscreen'), onSelect: () => showFullscreen(currentImageIndex) }] : []),
             { title: lc('delete'), icon: appIcon('delete'), destructive: true, onSelect: deleteDoc }
         ];
+        // the bar takes the colors of the pass but the floating toolbar of Android keeps its own surface
+        const color = pkpass && __ANDROID__ ? { color: colorOnSurface } : {};
         return [
             { spacer: true },
-            ...(exportable ? [{ text: lc('share'), icon: appIcon('share'), onTap: () => (pkpass ? showImagePopoverMenu(geAllPages(), getAnchor()) : showPDFPopover()) }, { spacer: true }] : []),
-            { text: lc('toggle_favorite'), icon: appIcon(favorite ? 'favorite_on' : 'favorite_off'), onTap: toggleFavorite },
+            ...(exportable ? [{ ...color, text: lc('share'), icon: appIcon('share'), onTap: () => (pkpass ? showImagePopoverMenu(geAllPages(), getAnchor()) : showPDFPopover()) }, { spacer: true }] : []),
+            { ...color, text: lc('toggle_favorite'), icon: appIcon(favorite ? 'favorite_on' : 'favorite_off'), onTap: toggleFavorite },
             ...(withImages && !pkpass ? [{ text: lc('adjust'), icon: appIcon('tune'), onTap: editCurrentPage }] : []),
             ...(pkpass ? [] : [{ text: lc('edit'), icon: appIcon('edit'), onTap: openEdit }]),
             { spacer: true },
             // a menu with a single entry (delete) is the button of that entry
             moreMenu.length > 1
-                ? { text: lc('more_options'), icon: appIcon('more'), menu: moreMenu }
+                ? { ...color, text: lc('more_options'), icon: appIcon('more'), menu: moreMenu }
                 : { text: moreMenu[0].title, icon: moreMenu[0].icon, color: colorError, onTap: () => moreMenu[0].onSelect(moreMenu[0]) },
             { spacer: true }
         ];
@@ -1113,8 +1118,8 @@
 
 </script>
 
-<appPage bind:this={page} id="cardview" {...{ keepScreenAwake: hasQRCodes, screenBrightness: hasQRCodes ? 1 : -1 }}>
-    <appBar {bottomItems} android:backgroundColor={accent.container} android:scrollBehavior="hide" color={colorOnBackground} iosIconRenderingMode="alwaysTemplate" ios:translucent={true} scrollBehavior="lift" scrollTargetId="cardScroll" size="small" title={nbSelected > 0 ? lcp('selected', nbSelected) : inEditMode ? lc('reorder_pages') : hasCustomName || __ANDROID__ ? '' : document.name}>
+<appPage bind:this={page} id="cardview" {...{ keepScreenAwake: hasQRCodes, screenBrightness: hasQRCodes ? 1 : -1, ...(isPKPassDocument ? { statusBarStyle: passColors.isDark ? 'dark' : 'light' } : {}) }}>
+    <appBar {bottomItems} android:backgroundColor={isPKPassDocument ? passColors.backgroundColor : accent.container} android:scrollBehavior="hide" color={isPKPassDocument ? passColors.foregroundColor : colorOnBackground} iosIconRenderingMode="alwaysTemplate" ios:translucent={!isPKPassDocument} scrollBehavior="lift" scrollTargetId="cardScroll" size="small" title={nbSelected > 0 ? lcp('selected', nbSelected) : inEditMode ? lc('reorder_pages') : hasCustomName || __ANDROID__ ? '' : document.name}>
         {#if __ANDROID__}
             <navigationButton {...{ 'android.systemIcon': nbSelected > 0 || inEditMode ? 'ic_menu_close_clear_cancel' : 'ic_menu_back' }} on:tap={nbSelected > 0 ? unselectAll : inEditMode ? switchEditMode : onGoBack} />
         {/if}
@@ -1131,7 +1136,7 @@
             <appBarItem icon={appIcon('more')} ios.position="right" menu={documentMenu} />
         {/if}
     </appBar>
-    <gridlayout class="pageContent" backgroundColor={__IOS__ && cardColor ? accent.container : colorBackground}>
+    <gridlayout class="pageContent" backgroundColor={isPKPassDocument ? passColors.backgroundColor : __IOS__ && cardColor ? accent.container : colorBackground}>
         {#if heroGradient}
             <gridlayout backgroundImage={heroGradient} isUserInteractionEnabled={false} />
         {/if}
@@ -1139,10 +1144,12 @@
             <image blurRadius={12} decodeWidth={160} {...{ iosOverflowSafeArea: true }} isUserInteractionEnabled={false} opacity={isDarkTheme() ? 0.7 : 1} src={backdropImage} stretch="aspectFill" />
         {/if}
         {#if CARD_APP && isPKPassDocument}
+            <!-- the app bar pads its scroll target for the bottom toolbar: this empty one keeps it off the pager, so the pages go under the toolbar -->
+            <scrollview id="cardScroll" height={0} />
             <pager bind:this={pager} items={document.pages} transformers="zoomOut" on:selectedIndexChange={onSelectedIndex}>
                 <Template let:item>
                     <stacklayout padding="0">
-                        <PKPassView {document} pkpass={item.pkpass} />
+                        <PKPassView bottomPadding={$windowInset.bottom + FLOATING_TOOLBAR_OFFSET} {document} fullscreen={true} pkpass={item.pkpass} />
                     </stacklayout>
                 </Template>
             </pager>
