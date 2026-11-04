@@ -2,8 +2,7 @@
     import CardStatusChips from '~/components/common/CardStatusChips.svelte';
     import { lang } from '~/helpers/locale';
     import { PKPass, PKPassData, PKPassField, PKPassStructure, PKPassStyle, PKPassTransitType, PKPassType } from '~/models/PKPass';
-    import { getFieldTextAlignment, getPKPassColors, getTransitIcon } from '~/utils/pkpass';
-    import { getPKPassStatus, type PKPassStatusLayout } from '~/utils/pkpassStatus';
+    import { getFieldTextAlignment, getPKPassColors, getPKPassStatus, getTransitIcon, type PKPassStatusLayout } from '~/utils/pkpass';
     import { colors } from '~/variables';
     import { Item } from '~/components/list/MainList.svelte';
     import type { CardStatus } from '~/utils/cardStatus';

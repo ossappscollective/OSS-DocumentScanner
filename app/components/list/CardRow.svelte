@@ -9,7 +9,7 @@
     import { getCardDisplay } from '~/utils/cardCell';
     import { getTileColors } from '~/utils/cardColors';
     import { getRowCorners } from '~/utils/groupedRows';
-    import { getPKPassStatus } from '~/utils/pkpassStatus';
+    import { getPKPassStatus } from '~/utils/pkpass';
     import { selectionTransition } from '~/utils/svelte/actions';
     import type { Readable } from 'svelte/store';
     import { colors } from '~/variables';
