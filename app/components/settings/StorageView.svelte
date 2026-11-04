@@ -168,8 +168,9 @@
         color={colorOnBackground}
         iosIconRenderingMode="alwaysTemplate"
         scrollBehavior="lift"
+        android:scrollBehavior="none"
         scrollTargetId="storageCollectionView"
-        size="large"
+        size={__IOS__ ? 'large' : 'medium'}
         ios:translucent={true}
         title={nbSelected > 0 ? lcp('selected', nbSelected) : lc('documents_storage')}
     >
@@ -187,7 +188,15 @@
         {/if}
     </appBar>
     <gridlayout class="pageContent">
-        <collectionview id="storageCollectionView" bind:this={collectionView} itemTemplateSelector={templateSelector} {items} android:paddingBottom={$windowInset.bottom}>
+        <collectionview
+            id="storageCollectionView"
+            bind:this={collectionView}
+            ios:animateItemUpdate={false}
+            ios:autoReloadItemOnLayout={true}
+            itemTemplateSelector={templateSelector}
+            {items}
+            android:paddingBottom={$windowInset.bottom}
+        >
             <Template key="overview">
                 <StorageOverview {nbDocuments} {totals} />
             </Template>
