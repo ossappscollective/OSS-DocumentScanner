@@ -435,7 +435,7 @@
         </CardRow>
     </Template>
 
-    <stacklayout bind:this={fabHolder} slot="fab" class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)}>
+    <stacklayout bind:this={fabHolder} slot="fab" class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal">
         <uibutton class="addFab" {...{ src: appIcon('add') }} variant="contained" verticalAlignment="center" on:tap={throttle((event) => onAddButton(event), 500)} />
         {#if $hasCamera}
             <uifloatingactionbutton
