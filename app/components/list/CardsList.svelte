@@ -15,6 +15,7 @@
     import PKPassCardCell from '~/components/pkpass/PKPassCardCell.svelte';
     import CardPhotoFace from '~/components/list/CardPhotoFace.svelte';
     import CardRow from '~/components/list/CardRow.svelte';
+    import CardRowPass from '~/components/list/CardRowPass.svelte';
     import CardRowPhoto from '~/components/list/CardRowPhoto.svelte';
     import CardRowTile from '~/components/list/CardRowTile.svelte';
     import CardTile from '~/components/list/CardTile.svelte';
@@ -429,10 +430,12 @@
         </CardTile>
     </Template>
     <Template key="pkpass_list" let:item>
-        <CardRow height={itemRowHeight} {selectionMode} {item} pkPassCell={true} on:tap={() => onItemTap(item)} on:longPress={(e) => onItemLongPress(item, e)}></CardRow>
+        <CardRow height={itemRowHeight} {selectionMode} {item} pkPassCell={true} on:tap={() => onItemTap(item)} on:longPress={(e) => onItemLongPress(item, e)}>
+            <CardRowPass {item} />
+        </CardRow>
     </Template>
 
-    <stacklayout bind:this={fabHolder} slot="fab" class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)}>
+    <stacklayout bind:this={fabHolder} slot="fab" class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal">
         <uibutton class="addFab" {...{ src: appIcon('add') }} variant="contained" verticalAlignment="center" on:tap={throttle((event) => onAddButton(event), 500)} />
         {#if $hasCamera}
             <uifloatingactionbutton

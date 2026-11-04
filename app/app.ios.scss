@@ -118,3 +118,11 @@ textview[variant='outline']:focus {
     border-color: var(--colorPrimary);
     border-width: 1.5;
 }
+
+// a settings section: the small caps title over the inset grouped rows
+.settingsSectionHeader {
+    color: var(--colorOnSurfaceVariant);
+    font-size: 13;
+    padding: 20 32 6 32;
+    text-transform: uppercase;
+}

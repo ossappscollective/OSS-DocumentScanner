@@ -1,6 +1,9 @@
 import dayjs from 'dayjs';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { describe, expect, it } from 'vitest';
-import { getCardStatus, getExpirationState } from './cardStatus';
+import { formatShortDate, getCardStatus, getExpirationState } from './cardStatus';
+
+dayjs.extend(localizedFormat);
 
 const now = dayjs('2026-10-30T10:00:00');
 const names = { expiration: 'expire on', balance: 'balance' };
@@ -33,5 +36,17 @@ describe('getCardStatus', () => {
     });
     it('does not take the kind of a field of another type', () => {
         expect(getCardStatus({ 'expire on': { type: 'string', value: 'soon' } }, names, now)).toEqual([]);
+    });
+});
+
+describe('formatShortDate', () => {
+    const now = dayjs('2026-11-04T12:00:00Z');
+
+    it('leaves the year out when it is this one', () => {
+        expect(formatShortDate(dayjs('2026-11-22T12:00:00Z').valueOf(), now)).toBe('Nov 22');
+    });
+
+    it('keeps the year of another one', () => {
+        expect(formatShortDate(dayjs('2027-01-05T12:00:00Z').valueOf(), now)).toBe('Jan 5, 2027');
     });
 });

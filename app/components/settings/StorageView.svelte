@@ -1,58 +1,62 @@
 <script context="module" lang="ts">
     import { Template } from '@nativescript-community/svelte-native/components';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-    import { Canvas, CanvasView, LayoutAlignment, Paint, StaticLayout } from '@nativescript-community/ui-canvas';
     import { CollectionView } from '@nativescript-community/ui-collectionview';
-    import { createNativeAttributedString } from '@nativescript-community/ui-label';
-    import { VerticalPosition } from '@nativescript-community/ui-popover';
     import { ObservableArray, Utils } from '@nativescript/core';
-    import { OptionType } from '@shared/components/OptionSelect.svelte';
+    import { goBack } from '@shared/utils/svelte/ui';
     import { showError } from '@shared/utils/showError';
-    import dayjs from 'dayjs';
-    import { filesize } from 'filesize';
-    import CActionBar from '~/components/common/CActionBar.svelte';
-    import PageIndicator from '~/components/common/PageIndicator.svelte';
-    import RotableImageView from '~/components/common/RotableImageView.svelte';
-    import SelectedIndicator from '~/components/common/SelectedIndicator.svelte';
-    import SelectionToolbar from '~/components/common/SelectionToolbar.svelte';
+    import { writable } from 'svelte/store';
+    import CardRowPass from '~/components/list/CardRowPass.svelte';
+    import CardRow from '~/components/list/CardRow.svelte';
+    import CardRowPhoto from '~/components/list/CardRowPhoto.svelte';
+    import CardRowTile from '~/components/list/CardRowTile.svelte';
+    import type { Item } from '~/components/list/MainList.svelte';
+    import StorageChips from '~/components/settings/StorageChips.svelte';
+    import StorageOverview from '~/components/settings/StorageOverview.svelte';
     import { lc, lcp } from '~/helpers/locale';
-    import { isEInk, onThemeChanged } from '~/helpers/theme';
-    import { OCRDocument } from '~/models/OCRDocument';
     import { documentsService } from '~/services/documents';
+    import { optionsToMenuItems } from '~/utils/appMenu';
+    import { appIcon } from '~/utils/appIcons';
+    import { getCardVariant } from '~/utils/cardCell';
+    import { updateRowPositions } from '~/utils/groupedRows';
     import { StorageSizes, computeStorageSizes } from '~/utils/originals';
-    import { deleteDocumentsWithConfirm, deleteOriginalImages, formatStorageSizes, goToDocumentView, showPopoverMenu } from '~/utils/ui';
-    import { ellipsize } from '~/utils/utils.common';
-    import { colors, fontScale, windowInset } from '~/variables';
+    import { deleteDocumentsWithConfirm, deleteOriginalImages, goToDocumentView } from '~/utils/ui';
+    import { colors, windowInset } from '~/variables';
 
-    interface Item {
-        doc: OCRDocument;
-        selected: boolean;
-        sizes: StorageSizes;
+    interface StorageItem extends Item {
+        sizes?: StorageSizes;
+        title?: string;
     }
 
-    const textPaint = new Paint();
-    const IMAGE_DECODE_WIDTH = Utils.layout.toDevicePixels(200);
-    // same as the main list "condensed" view style
-    const ITEM_IMAGE_HEIGHT = 44;
-    const ITEM_ROW_HEIGHT = 80;
+    const ROW_HEIGHT = 72;
 </script>
 
 <script lang="ts">
-    let { colorError, colorOnBackground, colorOnSurfaceVariant } = $colors;
-    $: ({ colorError, colorOnBackground, colorOnSurfaceVariant } = $colors);
+    let { colorError, colorOnBackground, colorPrimaryContainer } = $colors;
+    $: ({ colorError, colorOnBackground, colorPrimaryContainer } = $colors);
 
     let collectionView: NativeViewElementNode<CollectionView>;
-    let items: ObservableArray<Item> = new ObservableArray([]);
+    let items: ObservableArray<StorageItem> = new ObservableArray([]);
     let totals: StorageSizes = { size: 0, sourceSize: 0, total: 0 };
-    let nbSelected: number = 0;
-
-    $: textPaint.color = colorOnBackground || 'black';
+    let nbDocuments = 0;
+    let nbSelected = 0;
+    const selectionMode = writable(false);
+    $: selectionMode.set(nbSelected > 0);
 
     async function refresh() {
         try {
             const documents = await documentsService.documentRepository.findDocuments();
-            const newItems = documents.map((doc) => ({ doc, selected: false, sizes: computeStorageSizes(doc.pages) })).sort((firstItem, secondItem) => secondItem.sizes.total - firstItem.sizes.total);
-            totals = computeStorageSizes(documents.reduce((acc, doc) => acc.concat(doc.pages), []));
+            const rows: StorageItem[] = documents.map((doc) => ({ doc, selected: false, sizes: computeStorageSizes(doc.pages) }));
+            const using = rows.filter((row) => row.sizes.total > 0).sort((first, second) => second.sizes.total - first.sizes.total);
+            const unused = rows.filter((row) => row.sizes.total === 0);
+            const newItems: StorageItem[] = [
+                { type: 'overview', selected: false },
+                ...(using.length ? [{ type: 'section', title: lc('using_storage'), selected: false }, ...using] : []),
+                ...(unused.length ? [{ type: 'section', title: lc('no_storage_used'), selected: false }, ...unused] : [])
+            ];
+            updateRowPositions((index) => newItems[index], newItems.length);
+            totals = computeStorageSizes(documents.flatMap((doc) => doc.pages));
+            nbDocuments = documents.length;
             nbSelected = 0;
             items = new ObservableArray(newItems);
         } catch (error) {
@@ -60,16 +64,21 @@
         }
     }
 
-    function getSelectedDocuments() {
-        const selected: OCRDocument[] = [];
+    function getDocumentItems() {
+        const documentItems: StorageItem[] = [];
         items.forEach((item) => {
-            if (item.selected) {
-                selected.push(item.doc);
+            if (item.doc) {
+                documentItems.push(item);
             }
         });
-        return selected;
+        return documentItems;
     }
-    function setSelected(item: Item, selected: boolean) {
+    function getSelectedDocuments() {
+        return getDocumentItems()
+            .filter((item) => item.selected)
+            .map((item) => item.doc);
+    }
+    function setSelected(item: StorageItem, selected: boolean) {
         if (item.selected === selected) {
             return;
         }
@@ -78,13 +87,13 @@
         items.setItem(items.indexOf(item), item);
     }
     function unselectAll() {
-        items.forEach((item) => setSelected(item, false));
+        getDocumentItems().forEach((item) => setSelected(item, false));
     }
     function selectAll() {
-        items.forEach((item) => setSelected(item, true));
+        getDocumentItems().forEach((item) => setSelected(item, true));
     }
 
-    async function onItemTap(item: Item) {
+    async function onItemTap(item: StorageItem) {
         try {
             if (nbSelected > 0) {
                 setSelected(item, !item.selected);
@@ -95,22 +104,20 @@
             showError(error);
         }
     }
-    function onItemLongPress(item: Item) {
+    function onItemLongPress(item: StorageItem) {
         setSelected(item, !item.selected);
     }
 
-    function getSelectionToolbarOptions(): OptionType[] {
-        return [
-            { id: 'select_all', name: lc('select_all'), icon: 'mdi-select-all' },
-            { id: 'delete_originals', name: lc('delete_original_images'), icon: 'mdi-image-remove' },
-            { id: 'delete', name: lc('delete'), icon: 'mdi-delete', color: colorError }
-        ];
-    }
-    async function handleSelectionAction(event, option: OptionType) {
+    const selectionOptions = [
+        { id: 'select_all', name: lc('select_all') },
+        { id: 'delete_originals', name: lc('delete_original_images') },
+        { id: 'delete', name: lc('delete'), color: colorError }
+    ];
+    async function onSelectionAction(option: { id: string }) {
         try {
             switch (option.id) {
                 case 'select_all':
-                    if (nbSelected === items.length) {
+                    if (nbSelected === getDocumentItems().length) {
                         unselectAll();
                     } else {
                         selectAll();
@@ -131,111 +138,94 @@
             showError(error);
         }
     }
+    // Android: the actions are in the top bar while selecting, iOS: in the bottom toolbar
+    $: bottomItems =
+        __IOS__ && nbSelected > 0
+            ? selectionOptions.flatMap((option) => [{ spacer: true }, { text: option.name, icon: appIcon(option.id), color: option.color, onTap: () => onSelectionAction(option) }])
+            : [];
 
-    async function showOptions(event) {
+    const optionsMenu = optionsToMenuItems([{ id: 'delete_originals', name: lc('delete_all_original_images') }], async () => {
         try {
-            const options = new ObservableArray([{ id: 'delete_all_originals', name: lc('delete_all_original_images'), icon: 'mdi-image-remove' }] as any);
-            await showPopoverMenu({
-                options,
-                anchor: event.object,
-                vertPos: VerticalPosition.BELOW,
-                onClose: async (option) => {
-                    try {
-                        if (option.id === 'delete_all_originals') {
-                            const documents: OCRDocument[] = [];
-                            items.forEach((item) => documents.push(item.doc));
-                            if (await deleteOriginalImages({ documents })) {
-                                await refresh();
-                            }
-                        }
-                    } catch (error) {
-                        showError(error);
-                    }
-                }
-            });
+            if (await deleteOriginalImages({ documents: getDocumentItems().map((item) => item.doc) })) {
+                await refresh();
+            }
         } catch (error) {
             showError(error);
         }
-    }
+    });
 
-    function onCanvasDraw(item: Item, { canvas }: { canvas: Canvas; object: CanvasView }) {
-        const width = canvas.getWidth();
-        const height = canvas.getHeight();
-        const dx = 10 + ITEM_IMAGE_HEIGHT * $fontScale + 16;
-        const { doc, sizes } = item;
-        textPaint.color = colorOnSurfaceVariant;
-        textPaint.textSize = 11;
-        canvas.drawText(formatStorageSizes(sizes), dx, height - 10, textPaint);
-        textPaint.color = colorOnBackground;
-        const topText = createNativeAttributedString({
-            spans: [
-                {
-                    fontSize: 16 * $fontScale,
-                    fontWeight: 'bold',
-                    lineBreak: 'end',
-                    lineHeight: 18 * $fontScale,
-                    text: ellipsize(doc.name, 50)
-                },
-                {
-                    color: colorOnSurfaceVariant,
-                    fontSize: 14 * $fontScale,
-                    lineHeight: 14,
-                    text: '\n' + dayjs(doc.createdDate).format('L LT')
-                }
-            ]
-        });
-        const staticLayout = new StaticLayout(topText, textPaint, Math.max(0, width - dx), LayoutAlignment.ALIGN_NORMAL, 1, 0, true);
-        canvas.translate(dx, 10);
-        staticLayout.draw(canvas);
+    // the list lays out under the bars: NativeScript then does not lay it out again each time the large title of the bar changes its height,
+    // which made it reload and jump while it came back to the top. UIKit insets the content, only the bottom has to be given back
+    const bottomSafeInset = __IOS__ ? Utils.ios.getRootViewController().view.safeAreaInsets.bottom : 0;
+    function templateSelector(item: StorageItem) {
+        return item.type ?? (getCardVariant(item) || 'tile');
     }
-
-    function refreshCollectionView() {
-        collectionView?.nativeView?.refresh();
-    }
-    onThemeChanged(refreshCollectionView);
 
     refresh();
 </script>
 
-<page id="storageView" actionBarHidden={true}>
-    <gridlayout class="pageContent" rows="auto,auto,*">
-        <gridlayout columns="*,auto" padding="16 16 8 16" row={1} rows="auto,auto">
-            <label color={colorOnBackground} fontSize={20 * $fontScale} fontWeight="bold" text={filesize(totals.total, { output: 'string' })} />
-            <label col={0} color={colorOnSurfaceVariant} fontSize={14 * $fontScale} row={1} text={lc('originals_size', filesize(totals.sourceSize, { output: 'string' }))} />
-            <label col={1} color={colorOnSurfaceVariant} fontSize={14 * $fontScale} rowSpan={2} text={lcp('documents_count', items.length)} verticalAlignment="center" />
-        </gridlayout>
-        <collectionview bind:this={collectionView} {items} row={2} android:paddingBottom={$windowInset.bottom}>
-            <Template let:item>
-                <canvasview
-                    class="card"
-                    borderWidth={isEInk ? 1 : 0}
-                    height={ITEM_ROW_HEIGHT * $fontScale}
-                    on:tap={() => onItemTap(item)}
-                    on:longPress={() => onItemLongPress(item)}
-                    on:draw={(e) => onCanvasDraw(item, e)}
-                >
-                    <RotableImageView
-                        id="imageView"
-                        borderRadius={12}
-                        decodeWidth={IMAGE_DECODE_WIDTH}
-                        horizontalAlignment="left"
-                        item={item.doc.pages[0]}
-                        marginBottom={10}
-                        marginLeft={10}
-                        marginTop={10}
-                        stretch="aspectFill"
-                        width={ITEM_IMAGE_HEIGHT * $fontScale}
-                    />
-                    <SelectedIndicator horizontalAlignment="left" margin={10} selected={item.selected} />
-                    <PageIndicator horizontalAlignment="right" margin={10} scale={$fontScale} text={item.doc.pages.length} />
-                </canvasview>
+<appPage id="storageView">
+    <appBar
+        android:backgroundColor={nbSelected > 0 ? colorPrimaryContainer : undefined}
+        {bottomItems}
+        color={colorOnBackground}
+        iosIconRenderingMode="alwaysTemplate"
+        scrollBehavior="lift"
+        android:scrollBehavior="none"
+        scrollTargetId="storageCollectionView"
+        size={__IOS__ ? 'large' : 'medium'}
+        ios:translucent={true}
+        title={nbSelected > 0 ? lcp('selected', nbSelected) : lc('documents_storage')}
+    >
+        {#if __ANDROID__}
+            <navigationButton {...{ 'android.systemIcon': nbSelected > 0 ? 'ic_menu_close_clear_cancel' : 'ic_menu_back' }} on:tap={nbSelected > 0 ? unselectAll : () => goBack()} />
+        {/if}
+        {#if nbSelected === 0}
+            <appBarItem icon={appIcon('more')} ios.position="right" menu={optionsMenu} />
+        {:else if __IOS__}
+            <appBarItem ios.position="right" prominent={true} text={lc('cancel')} on:tap={unselectAll} />
+        {:else}
+            {#each selectionOptions as option (option.id)}
+                <appBarItem icon={appIcon(option.id)} text={option.name} on:tap={() => onSelectionAction(option)} />
+            {/each}
+        {/if}
+    </appBar>
+    <gridlayout class="pageContent">
+        <collectionview
+            id="storageCollectionView"
+            bind:this={collectionView}
+            ios:animateItemUpdate={false}
+            ios:autoReloadItemOnLayout={true}
+            {...{ iosIgnoreSafeArea: true }}
+            ios:marginBottom={-bottomSafeInset}
+            itemTemplateSelector={templateSelector}
+            {items}
+            android:paddingBottom={$windowInset.bottom}
+        >
+            <Template key="overview">
+                <StorageOverview {nbDocuments} {totals} />
+            </Template>
+            <Template key="section" let:item>
+                <label class="settingsSectionHeader" text={item.title} />
+            </Template>
+            <Template key="tile" let:item>
+                <CardRow height={ROW_HEIGHT} {item} {selectionMode} on:tap={() => onItemTap(item)} on:longPress={() => onItemLongPress(item)}>
+                    <CardRowTile {item} />
+                    <StorageChips slot="chips" let:hasLeading {hasLeading} sizes={item.sizes} />
+                </CardRow>
+            </Template>
+            <Template key="photo" let:item>
+                <CardRow height={ROW_HEIGHT} {item} {selectionMode} on:tap={() => onItemTap(item)} on:longPress={() => onItemLongPress(item)}>
+                    <CardRowPhoto {item} />
+                    <StorageChips slot="chips" let:hasLeading {hasLeading} sizes={item.sizes} />
+                </CardRow>
+            </Template>
+            <Template key="pkpass" let:item>
+                <CardRow height={ROW_HEIGHT} {item} pkPassCell={true} {selectionMode} on:tap={() => onItemTap(item)} on:longPress={() => onItemLongPress(item)}>
+                    <CardRowPass {item} />
+                    <StorageChips slot="chips" let:hasLeading {hasLeading} sizes={item.sizes} />
+                </CardRow>
             </Template>
         </collectionview>
-        {#if nbSelected > 0}
-            <SelectionToolbar onAction={handleSelectionAction} options={getSelectionToolbarOptions()} row={2} />
-        {/if}
-        <CActionBar canGoBack onGoBack={nbSelected ? unselectAll : null} title={nbSelected ? lcp('selected', nbSelected) : lc('documents_storage')}>
-            <uibutton class="actionBarButton" text="mdi-dots-vertical" variant="text" on:tap={showOptions} />
-        </CActionBar>
     </gridlayout>
-</page>
+</appPage>

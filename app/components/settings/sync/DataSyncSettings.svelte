@@ -4,7 +4,7 @@
     import { Color, ObservableArray, Page } from '@nativescript/core';
     import { closeModal } from '@shared/utils/svelte/ui';
     import { get, writable } from 'svelte/store';
-    import CActionBar from '~/components/common/CActionBar.svelte';
+    import CActionBar from '@shared/components/CActionBar.svelte';
     import SyncFoldersSettingsView from '~/components/settings/sync/SyncFoldersSettingsView.svelte';
     import SyncSettingsCollectionView from '~/components/settings/sync/SyncSettingsCollectionView.svelte';
     import { lc } from '~/helpers/locale';

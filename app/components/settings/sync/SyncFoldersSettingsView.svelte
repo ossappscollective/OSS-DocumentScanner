@@ -5,7 +5,9 @@
     import type { DocFolder } from '~/models/OCRDocument';
     import { documentsService } from '~/services/documents';
     import { ALERT_OPTION_MAX_HEIGHT } from '~/utils/constants';
+    import { getSettingsRowProps } from '~/utils/settingsRows';
     import { showAlertOptionSelect } from '~/utils/ui';
+    import { colors } from '~/variables';
     import Chip from '~/components/widgets/Chip.svelte';
     import type { BaseSyncServiceOptions } from '~/services/sync/BaseSyncService';
     import type { Writable } from 'svelte/store';
@@ -56,12 +58,14 @@
         }
     }
 
+    $: rowProps = getSettingsRowProps({ position: 'only', description: lc('sync_folders_desc') }, $colors, __IOS__);
+
     function removeFolder(folderId: number) {
         $store.syncFolders = syncFolders.filter((id) => id !== folderId);
     }
 </script>
 
-<ListItemAutoSize item={{ title: lc('sync_folders'), subtitle: lc('sync_folders_desc'), titleProps: { verticalAlignment: 'top' } }} paddingRight={0} rows="auto,auto">
+<ListItemAutoSize item={{ title: lc('sync_folders'), subtitle: lc('sync_folders_desc'), titleProps: { verticalAlignment: 'top' } }} paddingRight={0} rows="auto,auto" {...rowProps}>
     <uibutton
         class="icon-btn"
         col={1}

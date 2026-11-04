@@ -40,7 +40,7 @@
             verticalAlignment="top"
         />
         <stacklayout col={1} margin="14 10 0 0" verticalAlignment="top">
-            <CardStatusChips extra={item.doc.extra} horizontalAlignment="right" tint={tile.text} />
+            <CardStatusChips background={tile.fill} extra={item.doc.extra} horizontalAlignment="right" tint={tile.text} />
             <stacklayout horizontalAlignment="right" marginTop={hasStatus ? 6 : 30} orientation="horizontal">
                 <CardIcon
                     color={tile.text}
@@ -57,7 +57,7 @@
 {:else}
     <!-- the chips have their own row above the title: they never cover it -->
     <gridlayout rows="auto,*">
-        <CardStatusChips extra={item.doc.extra} horizontalAlignment="right" margin="8 8 0 8" tint={tile.text} verticalAlignment="top" />
+        <CardStatusChips background={tile.fill} extra={item.doc.extra} horizontalAlignment="right" margin="8 8 0 8" tint={tile.text} verticalAlignment="top" />
         <label
             autoFontSize={true}
             color={tile.text}

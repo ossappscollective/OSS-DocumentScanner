@@ -5,7 +5,7 @@
     import { AndroidActivityBackPressedEventData, Application, GridLayout, Page } from '@nativescript/core';
     import { closeModal } from '@shared/utils/svelte/ui';
     import { onDestroy, onMount } from 'svelte';
-    import CActionBar from '~/components/common/CActionBar.svelte';
+    import CActionBar from '@shared/components/CActionBar.svelte';
     import CropView from '~/components/common/CropView.svelte';
     import { lc } from '~/helpers/locale';
     import { isEInk } from '~/helpers/theme';

@@ -4,9 +4,10 @@
     import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { ObservableArray } from '@nativescript/core';
     import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
+    import { type RowPosition, updateRowPositions } from '@shared/utils/groupedRows';
     import { showError } from '@shared/utils/showError';
     import { showModal } from '@shared/utils/svelte/ui';
-    import CActionBar from '~/components/common/CActionBar.svelte';
+    import CActionBar from '@shared/components/CActionBar.svelte';
     import { lc, onLanguageChanged } from '~/helpers/locale';
     import { onThemeChanged } from '~/helpers/theme';
     import { syncService } from '~/services/sync';
@@ -17,6 +18,7 @@
     import { WebdavDataSyncOptions } from '~/services/sync/webdav/WebdavDataSyncService';
     import { ALERT_OPTION_MAX_HEIGHT } from '~/utils/constants';
     import { getDirectoryName, hideLoading, requestNotificationPermission, showAlertOptionSelect } from '~/utils/ui';
+    import { getSettingsRowProps } from '~/utils/settingsRows';
     import { colors, fontScale, fonts, windowInset } from '~/variables';
     type Item = BaseSyncServiceOptions & { title?: string; description?: string; syncColor?: string };
 
@@ -100,18 +102,27 @@
 
     const options: Item[] = dataSyncServices.filter((s) => s.type.endsWith(type));
 
+    const isRow = (item) => !!item;
+    const getRowProps = (item) => getSettingsRowProps({ ...item, description: item.subtitle }, $colors, __IOS__);
+    // only the rows around a change get a new position, and only those are updated
+    function updatePositions(from: number, to: number) {
+        updateRowPositions((index) => items.getItem(index), items.length, isRow, from, to).forEach((index) => items.setItem(index, items.getItem(index)));
+    }
+
     function refresh() {
         const newItems: Item[] = options || [];
 
-        items = new ObservableArray(newItems.map(prepareItem));
+        const preparedItems = newItems.map((item) => prepareItem(item));
+        updateRowPositions((index) => preparedItems[index], preparedItems.length, isRow);
+        items = new ObservableArray(preparedItems);
     }
     refresh();
 
-    function prepareItem(item: Item) {
+    function prepareItem(item: Item, position?: RowPosition) {
         const iconData = SERVICES_SYNC_ICONS_COLORS[item.type.split('_')[0]];
         const { color, ...others } = item;
         DEV_LOG && console.log('prepareItem0', item.type, iconData);
-        return { ...others, syncColor: color, title: getTitle(item), subtitle: getDescription(item), icon: iconData?.icon, iconColor: iconData?.color, iconFontFamily: iconData?.fontFamily };
+        return { ...others, syncColor: color, title: getTitle(item), subtitle: getDescription(item), icon: iconData?.icon, iconColor: iconData?.color, iconFontFamily: iconData?.fontFamily, position };
     }
     async function onItemTap(item: Item, event) {
         try {
@@ -205,7 +216,7 @@
                 syncService.updateService(configToUpdate);
                 const index = items.findIndex((d) => d.id === item.id);
                 if (index !== -1) {
-                    items.splice(index, 1, prepareItem(configToUpdate));
+                    items.splice(index, 1, prepareItem(configToUpdate, items.getItem(index).position));
                 }
             }
         } catch (err) {
@@ -219,6 +230,7 @@
                 const index = items.findIndex((d) => d.id === item.id);
                 if (index !== -1) {
                     items.splice(index, 1);
+                    updatePositions(index - 1, index);
                 }
             }
         } catch (err) {
@@ -349,6 +361,7 @@
                             const data = syncService.addService(selection?.data, configToAdd);
                             DEV_LOG && console.log('adding item', data);
                             items.push(prepareItem(data));
+                            updatePositions(items.length - 2, items.length - 1);
                         }
                     }
             }
@@ -471,6 +484,7 @@
                         mainCol={1}
                         prop:mainContent
                         showBottomLine={false}
+                        {...getRowProps(item)}
                         on:tap={(event) => onItemTap(item, event)}
                     >
                         <label

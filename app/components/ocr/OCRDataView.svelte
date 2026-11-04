@@ -5,7 +5,7 @@
     import { Color, Page } from '@nativescript/core';
     import { showError } from '@shared/utils/showError';
     import { OCRData } from 'plugin-nativeprocessor';
-    import CActionBar from '~/components/common/CActionBar.svelte';
+    import CActionBar from '@shared/components/CActionBar.svelte';
     import { updateOCRBlocks } from '~/components/ocr/OCRDataUpdater';
     import { isEInk } from '~/helpers/theme';
     import { OCRDocument } from '~/models/OCRDocument';

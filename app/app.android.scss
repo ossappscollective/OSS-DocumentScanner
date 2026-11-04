@@ -74,3 +74,11 @@ textfield[variant='outline'] {
     font-size: 20;
     padding: 0;
 }
+
+// a settings section: the accent title over the segmented rows
+.settingsSectionHeader {
+    color: var(--colorPrimary);
+    font-size: 14;
+    font-weight: 500;
+    padding: 20 32 6 32;
+}

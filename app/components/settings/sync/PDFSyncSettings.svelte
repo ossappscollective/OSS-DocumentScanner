@@ -5,7 +5,7 @@
     import { ApplicationSettings, Color, ObservableArray, Page } from '@nativescript/core';
     import { closeModal } from '@shared/utils/svelte/ui';
     import { Writable, get, writable } from 'svelte/store';
-    import CActionBar from '~/components/common/CActionBar.svelte';
+    import CActionBar from '@shared/components/CActionBar.svelte';
     import OCRSettingsBottomSheet from '~/components/ocr/OCRSettingsBottomSheet.svelte';
     import PDFSyncSettingsView from '~/components/settings/sync/PDFSyncSettingsView.svelte';
     import SyncFoldersSettingsView from '~/components/settings/sync/SyncFoldersSettingsView.svelte';

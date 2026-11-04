@@ -1,6 +1,6 @@
 import { Color } from '@nativescript/core';
 import { describe, expect, it } from 'vitest';
-import { contrastRatio, getCardAccent, getChroma, getTileColors, pickCardColor } from './cardColors';
+import { contrastRatio, getCardAccent, getChipColors, getChroma, getTileColors, pickCardColor } from './cardColors';
 
 const rgb = (hex: string) => new Color(hex);
 
@@ -76,5 +76,26 @@ describe('getTileColors', () => {
 
     it('falls back when the card has no usable color', () => {
         expect(getTileColors(undefined, '#006a65').fill).toBe('#006a65');
+    });
+});
+
+describe('getChipColors', () => {
+    it('is opaque: the data of the card under it must not show through', () => {
+        expect(rgb(getChipColors('#000000', '#ffffff', 96).backgroundColor).a).toBe(255);
+    });
+
+    it('is the wash of the tint over the background', () => {
+        const { r, g, b } = rgb(getChipColors('#000000', '#ffffff', 102).backgroundColor);
+        expect([r, g, b]).toEqual([153, 153, 153]);
+    });
+
+    it('keeps the tint as the text color when it reads on the chip', () => {
+        expect(getChipColors('#ffffff', '#6a1b9a', 96).color).toBe('#ffffff');
+    });
+
+    it('takes a readable text color when the tint fades into its wash', () => {
+        const { backgroundColor, color } = getChipColors('#9e9e9e', '#ffffff', 96);
+        expect(contrastRatio(rgb(color), rgb(backgroundColor))).toBeGreaterThanOrEqual(3);
+        expect(color).toBe('#000000');
     });
 });

@@ -1,3 +1,4 @@
+import { updateRowPositions as updateSectionPositions } from '@shared/utils/groupedRows';
 import { expect, test } from 'vitest';
 import { getRowCorners, updateRowPositions as updatePositions } from './groupedRows';
 
@@ -43,4 +44,14 @@ test('updateRowPositions only touches the rows between from and to', () => {
     // the removed first row: only the new first row changes
     expect(updateRowPositions(items, 0, 1)).toEqual([0]);
     expect(items.map((item) => item.position)).toEqual(['first', 'middle', 'last']);
+});
+
+test('rows are grouped per section: a header ends the run', () => {
+    const items: any[] = [{ type: 'header' }, { type: 'sectionheader' }, {}, {}, { type: 'sectionheader' }, {}, {}, {}];
+    updateSectionPositions(
+        (index) => items[index],
+        items.length,
+        (item) => !!item && item.type !== 'header' && item.type !== 'sectionheader'
+    );
+    expect(items.map((item) => item.position)).toEqual([undefined, undefined, 'first', 'last', undefined, 'first', 'middle', 'last']);
 });
