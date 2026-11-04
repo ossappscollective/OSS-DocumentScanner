@@ -341,6 +341,19 @@ export async function extractAndParsePKPassFile(pkpassFilePath: string, targetFo
     }
 }
 
+/** the colors a pass is drawn with: its own, else `fallbackBackground` with the text color readable on it */
+export function getPKPassColors(passData: Pick<PKPassData, 'backgroundColor' | 'foregroundColor' | 'labelColor'>, fallbackBackground: string) {
+    const backgroundColor = passData.backgroundColor || fallbackBackground;
+    const isDark = new Color(backgroundColor).getBrightness() < 145;
+    const readable = isDark ? 'white' : 'black';
+    return {
+        backgroundColor,
+        foregroundColor: passData.foregroundColor || readable,
+        labelColor: passData.labelColor || readable,
+        isDark
+    };
+}
+
 /**
  * Get the display name for a PKPass
  * @param pass PKPass object

@@ -4,11 +4,12 @@
     import RowSelectionMarker from '~/components/common/RowSelectionMarker.svelte';
     import { Item } from '~/components/list/MainList.svelte';
     import { isEInk } from '~/helpers/theme';
-    import { lc, lcp } from '~/helpers/locale';
+    import { lang, lc, lcp } from '~/helpers/locale';
     import { appIcon } from '~/utils/appIcons';
     import { getCardDisplay } from '~/utils/cardCell';
     import { getTileColors } from '~/utils/cardColors';
     import { getRowCorners } from '~/utils/groupedRows';
+    import { getPKPassStatus } from '~/utils/pkpassStatus';
     import { selectionTransition } from '~/utils/svelte/actions';
     import type { Readable } from 'svelte/store';
     import { colors } from '~/variables';
@@ -29,7 +30,8 @@
     $: groupStart = item.position === 'first' || item.position === 'only';
     $: ({ page, hasImage, hasCode, label, cardColor } = getCardDisplay(item));
     $: tile = getTileColors(cardColor, colorPrimary);
-    $: subtitle = pkPassCell ? lc('wallet_pass') : hasImage ? lcp('photos_count', item.doc.pages.length) : '';
+    $: status = pkPassCell && page?.pkpass ? getPKPassStatus(page.pkpass, lang, 'list') : undefined;
+    $: subtitle = pkPassCell ? '' : hasImage ? lcp('photos_count', item.doc.pages.length) : '';
 </script>
 
 <!-- the content of the thumbnail is the slot: a photo, a tile or a pass each have their own template -->
@@ -67,7 +69,7 @@
                         verticalAlignment="center"
                         visibility={hasCode && hasImage ? 'visible' : 'collapsed'}
                     />
-                    <CardStatusChips extra={item.doc.extra} marginLeft={subtitle || (hasCode && hasImage) ? 8 : 0} verticalAlignment="center" />
+                    <CardStatusChips extra={item.doc.extra} {status} marginLeft={subtitle || (hasCode && hasImage) ? 8 : 0} verticalAlignment="center" />
                 </stacklayout>
             </gridlayout>
             <CardIcon col={2} color={colorPrimary} marginRight={8} size={16} src={appIcon('favorite_on')} verticalAlignment="center" visibility={item.doc.favorite === 1 ? 'visible' : 'collapsed'} />

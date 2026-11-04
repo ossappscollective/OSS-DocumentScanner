@@ -1,7 +1,7 @@
 import { File } from '@nativescript/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PKBarcodeFormat, PKPassTransitType, PKPassType } from '~/models/PKPass';
-import { documentHasPKPassData, getBarcodeFormat, getFieldTextAlignment, getPKPassDisplayName, getStoredPassFormat, getTransitIcon, isPKPassFile } from './pkpass';
+import { documentHasPKPassData, getBarcodeFormat, getPKPassColors, getFieldTextAlignment, getPKPassDisplayName, getStoredPassFormat, getTransitIcon, isPKPassFile } from './pkpass';
 
 // Pass parsing/display rules for the wallet app mode. These map Apple's
 // PKPass vocabulary onto what the UI renders, so a silent change here shows up
@@ -140,5 +140,33 @@ describe('documentHasPKPassData', () => {
     it('is false for a document with no pages', () => {
         expect(documentHasPKPassData({ pages: [] } as any)).toBe(false);
         expect(documentHasPKPassData({} as any)).toBe(false);
+    });
+});
+
+describe('getPKPassColors', () => {
+    it('takes the colors of the pass', () => {
+        expect(getPKPassColors({ backgroundColor: '#112233', foregroundColor: '#ffeedd', labelColor: '#999999' } as any, '#ffffff')).toEqual({
+            backgroundColor: '#112233',
+            foregroundColor: '#ffeedd',
+            labelColor: '#999999',
+            isDark: true
+        });
+    });
+
+    it('falls back to the given background and readable white text on a dark one', () => {
+        expect(getPKPassColors({} as any, '#101010')).toEqual({ backgroundColor: '#101010', foregroundColor: 'white', labelColor: 'white', isDark: true });
+    });
+
+    it('uses black text on a light background', () => {
+        const { foregroundColor, labelColor } = getPKPassColors({ backgroundColor: '#f0f0f0' } as any, '#000000');
+        expect([foregroundColor, labelColor]).toEqual(['black', 'black']);
+    });
+
+    it('is not dark on a light background, whatever the text color', () => {
+        expect(getPKPassColors({ backgroundColor: '#f0f0f0', foregroundColor: '#ffffff' } as any, '#000000').isDark).toBe(false);
+    });
+
+    it('ignores empty colors', () => {
+        expect(getPKPassColors({ backgroundColor: '', foregroundColor: '' } as any, '#101010').backgroundColor).toBe('#101010');
     });
 });

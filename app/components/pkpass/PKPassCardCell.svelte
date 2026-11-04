@@ -1,17 +1,19 @@
 <script lang="ts">
+    import CardStatusChips from '~/components/common/CardStatusChips.svelte';
     import { lang } from '~/helpers/locale';
     import { PKPass, PKPassData, PKPassField, PKPassStructure, PKPassStyle, PKPassTransitType, PKPassType } from '~/models/PKPass';
-    import { getFieldTextAlignment, getTransitIcon } from '~/utils/pkpass';
+    import { getFieldTextAlignment, getPKPassColors, getTransitIcon } from '~/utils/pkpass';
+    import { getPKPassStatus, type PKPassStatusLayout } from '~/utils/pkpassStatus';
     import { colors } from '~/variables';
     import { Item } from '~/components/list/MainList.svelte';
-    import { Color } from '@nativescript/core';
+    import type { CardStatus } from '~/utils/cardStatus';
 
     const FIELD_LINE_HEIGHT = 15;
 
     export let item: Item = null;
     export let pkpass: PKPass;
     export let itemWidth: number;
-    export let layout: string = null;
+    export let layout: Exclude<PKPassStatusLayout, 'list'> = 'full';
 
     let { colorOnBackground, colorOnPrimary, colorSurface } = $colors;
     $: ({ colorOnBackground, colorOnPrimary, colorSurface } = $colors);
@@ -35,6 +37,7 @@
     let auxiliaryFieldsCount: number;
     let transitType: PKPassTransitType;
     let transitIcon: string;
+    let status: CardStatus[];
     let withTransitionIcon: boolean;
 
     // Get organization name
@@ -44,9 +47,7 @@
 
     function updatePkPass(pkpass: PKPass) {
         passData = pkpass?.passData;
-        backgroundColor = passData?.backgroundColor || colorSurface;
-        foregroundColor = passData?.foregroundColor || (new Color(backgroundColor).getBrightness() < 145 ? 'white' : 'black');
-        labelColor = passData.labelColor || (new Color(backgroundColor).getBrightness() < 145 ? 'white' : 'black');
+        ({ backgroundColor, foregroundColor, labelColor } = getPKPassColors(passData, colorSurface));
         // Apple PKPass image specifications - prefer @2x for quality
         logoImage = pkpass?.images?.logo2x || pkpass?.images?.logo; // Max 160x50 points
         iconImage = pkpass?.images?.icon2x || pkpass?.images?.icon; // 29x29 points
@@ -61,6 +62,7 @@
         primaryFieldsCount = primaryFields.length;
         headerFieldsCount = headerFields.length;
         auxiliaryFieldsCount = auxiliaryFields.length;
+        status = getPKPassStatus(pkpass, lang, layout);
         transitType = structure?.transitType;
         transitIcon = getTransitIcon(transitType);
         withTransitionIcon = transitIcon && primaryFieldsCount === 2;
@@ -227,4 +229,13 @@
                 </stacklayout>
             {/if} -->
     </gridlayout>
+    <!-- like the other cards: at the top, an expired pass at the right over its data -->
+    <CardStatusChips
+        background={backgroundColor}
+        horizontalAlignment={status.some((current) => current.kind === 'expired') ? 'right' : 'center'}
+        margin={8}
+        {status}
+        tint={foregroundColor}
+        verticalAlignment="top"
+    />
 </gridlayout>

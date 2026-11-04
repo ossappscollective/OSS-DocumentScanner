@@ -10,7 +10,7 @@ interface ExtraEntry {
     kind?: string;
 }
 
-export type CardStatus = { kind: 'expired' | 'expiring'; timestamp: number } | { kind: 'balance'; value: number };
+export type CardStatus = { kind: 'expired' | 'expiring'; timestamp: number } | { kind: 'balance'; value: number } | { kind: 'info'; text: string };
 
 function isExtraEntry(entry: unknown): entry is ExtraEntry {
     return !!entry && typeof entry === 'object' && 'type' in entry && 'value' in entry;
@@ -23,6 +23,11 @@ function findField(extra: Record<string, unknown>, kind: string, localizedName: 
             return entry;
         }
     }
+}
+
+/** the year is only needed when it is not this one */
+export function formatShortDate(timestamp: number, now: Dayjs = dayjs()) {
+    return dayjs(timestamp).format(dayjs(timestamp).isSame(now, 'year') ? 'MMM D' : 'll');
 }
 
 export function getExpirationState(timestamp: number, now: Dayjs = dayjs()) {

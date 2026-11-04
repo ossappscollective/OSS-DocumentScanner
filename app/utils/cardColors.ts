@@ -103,6 +103,16 @@ export function getChipWash(textColor: string, alpha = 56) {
     return new Color(textColor).setAlpha(alpha).hex;
 }
 
+/**
+ * the chip of a tile: the wash of the `tint` over the `background` of the card as a solid color, so it can cover data without it showing through.
+ * the text is the tint, unless it fades into the wash
+ */
+export function getChipColors(tint: string, background: string, alpha = 56) {
+    const front = new Color(tint);
+    const wash = mix(front, new Color(background), alpha / 255);
+    return { backgroundColor: toHex(wash), color: contrastRatio(front, wash) >= 3 ? tint : getReadableText(wash) };
+}
+
 export function getTileColors(color: string | null | undefined, fallback: string): TileColors {
     const base = toColor(color) ?? toColor(fallback) ?? new Color('#006a65');
     return { fill: toHex(base), text: getReadableText(base) };
