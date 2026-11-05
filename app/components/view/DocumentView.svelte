@@ -43,7 +43,7 @@
         EVENT_DOCUMENT_UPDATED,
         SETTINGS_NB_COLUMNS_VIEW,
         SETTINGS_NB_COLUMNS_VIEW_LANDSCAPE,
-        SHEET_SOFT_INPUT_MODE
+        SHEET_PAN_SOFT_INPUT_MODE
     } from '~/utils/constants';
     import { getSyncedServices, getTileRadius, isAutoName } from '~/utils/documentCell';
     import { computeStorageSizes } from '~/utils/originals';
@@ -538,9 +538,8 @@
         try {
             const MoveToFolderSheet = (await import('~/components/common/MoveToFolderSheet.svelte')).default;
             const folderName = await showBottomSheet({
-                parent: page,
                 view: MoveToFolderSheet,
-                windowSoftInputMode: SHEET_SOFT_INPUT_MODE,
+                windowSoftInputMode: SHEET_PAN_SOFT_INPUT_MODE,
                 ignoreTopSafeArea: true,
                 props: {
                     folders: (await documentsService.folderRepository.findAllFolders()).filter((f) => f.name !== 'none'),
@@ -656,7 +655,7 @@
 <appPage bind:this={page} id="documentView">
     <appBar
         {bottomItems}
-        android:backgroundColor={colorBackground}
+        android:backgroundColor={nbSelected > 0 ? colorPrimaryContainer : colorBackground}
         color={colorOnBackground}
         iosIconRenderingMode="alwaysTemplate"
         scrollBehavior="lift"

@@ -86,7 +86,7 @@
         SETTINGS_SORT_ORDER,
         SETTINGS_TRASH_ENABLED,
         SETTINGS_VIEW_STYLE,
-        SHEET_SOFT_INPUT_MODE
+        SHEET_PAN_SOFT_INPUT_MODE
     } from '~/utils/constants';
     import {
         deleteDocumentsWithConfirm,
@@ -1323,7 +1323,7 @@
                     const folderName = await showBottomSheet({
                         parent: this,
                         view: MoveToFolderSheet,
-                        windowSoftInputMode: SHEET_SOFT_INPUT_MODE,
+                        windowSoftInputMode: SHEET_PAN_SOFT_INPUT_MODE,
                         ignoreTopSafeArea: true,
                         props: {
                             folders: (await documentsService.folderRepository.findAllFolders()).filter((f) => f.name !== 'none'),
