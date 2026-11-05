@@ -1,6 +1,6 @@
 <script lang="ts">
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-    import { Frame, Label } from '@nativescript/core';
+    import { Label } from '@nativescript/core';
     import { closeModal } from '@shared/utils/svelte/ui';
     import { QuadPoint } from 'plugin-nativeprocessor';
     import CropView from '~/components/common/CropView.svelte';
@@ -14,7 +14,6 @@
     // technique for only specific properties to get updated on store change
     $: ({ colorPrimary } = $colors);
 
-    let frame: NativeViewElementNode<Frame>;
     let hint: NativeViewElementNode<Label>;
     let cropView: CropView;
 
@@ -29,12 +28,6 @@
     let quads;
     $: quads = quad ? [quad] : [];
 
-    function forceDark() {
-        const controller = frame?.nativeView?.viewController;
-        if (__IOS__ && !isEInk && controller) {
-            controller.overrideUserInterfaceStyle = UIUserInterfaceStyle.Dark;
-        }
-    }
     function onRecropTapFinish() {
         closeModal(quadChanged ? quads[0] : undefined);
     }
@@ -93,8 +86,8 @@
           ];
 </script>
 
-<frame bind:this={frame} id="cropFrame" on:loaded={forceDark}>
-    <appPage id="cropEdit" backgroundColor={screenColor} statusBarStyle="dark">
+<frame id="cropFrame">
+    <appPage id="cropEdit" backgroundColor={screenColor} statusBarStyle={isEInk ? 'light' : 'dark'}>
         <appBar {bottomItems} android:backgroundColor={screenColor} android:bottomBarBackgroundColor="#2B2D33" android:bottomBarColor={textColor} color={textColor} iosIconRenderingMode="alwaysTemplate" size="small" title={__ANDROID__ ? lc('crop') : ''}>
             {#if __ANDROID__}
                 <navigationButton {...{ 'android.systemIcon': 'ic_menu_close_clear_cancel' }} on:tap={onClose} />
