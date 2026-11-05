@@ -1,6 +1,7 @@
 <script lang="ts">
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import type { TextField } from '@nativescript-community/ui-textfield';
+    import { onMount } from 'svelte';
     import SheetHeader from '~/components/common/SheetHeader.svelte';
     import { lc } from '~/helpers/locale';
     import { DocFolder } from '~/models/OCRDocument';
@@ -14,7 +15,7 @@
     /** every folder the documents can go to */
     export let folders: DocFolder[];
     /** the folder the documents are in now, undefined at the root */
-    export let currentFolder: DocFolder = undefined;
+    export let currentFolder: DocFolder;
 
     let rootView;
     let textfield: NativeViewElementNode<TextField>;
@@ -28,8 +29,8 @@
     }
     // an empty name removes the documents from their folder
     const move = (folderName = name) => close(folderName.trim());
-    // the sheet is not shown yet
-    const focus = () => setTimeout(() => textfield?.nativeView?.requestFocus(), 400);
+    // the keyboard opens once the sheet is shown, not while it comes in
+    onMount(() => rootView.nativeView.once('shownInBottomSheet', () => textfield?.nativeView?.requestFocus()));
 </script>
 
 <gesturerootview bind:this={rootView} padding="0 0 {$windowInset.bottom + 16} 0" rows="auto,auto,auto,auto">
@@ -44,10 +45,8 @@
         row={1}
         text={name}
         variant="outline"
-        on:loaded={focus}
         on:returnPress={() => move()}
-        on:textChange={(e) => (name = e['value'])}
-    />
+        on:textChange={(e) => (name = e['value'])} />
     <label color={colorOnSurfaceVariant} fontSize={13} margin="4 20 0 20" row={2} text={lc('move_folder_desc')} textWrap={true} />
     <wraplayout margin="8 16 0 16" row={3} visibility={suggestions.length ? 'visible' : 'collapsed'}>
         {#each suggestions as folder (folder.id)}
