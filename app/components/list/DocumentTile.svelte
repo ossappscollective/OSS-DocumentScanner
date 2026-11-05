@@ -9,7 +9,7 @@
     import { Item } from '~/components/list/MainList.svelte';
     import { isEInk } from '~/helpers/theme';
     import { appIcon } from '~/utils/appIcons';
-    import { getInfoPill, isAutoName } from '~/utils/documentCell';
+    import { getInfoPill, getPaperEdge, isAutoName } from '~/utils/documentCell';
     import { colors } from '~/variables';
 
     export let item: Item;
@@ -19,8 +19,8 @@
     export let syncEnabled: boolean;
     export let syncColors: string[];
 
-    let { colorOnPrimaryContainer, colorOnSurface, colorSurfaceContainerHigh } = $colors;
-    $: ({ colorOnPrimaryContainer, colorOnSurface, colorSurfaceContainerHigh } = $colors);
+    let { colorOnPrimaryContainer, colorOnSurface, colorOutlineVariant, colorSurfaceContainerHigh } = $colors;
+    $: ({ colorOnPrimaryContainer, colorOnSurface, colorOutlineVariant, colorSurfaceContainerHigh } = $colors);
 
     $: color = __IOS__ ? colorOnSurface : colorOnPrimaryContainer;
     $: page = item.doc.pages[0];
@@ -29,12 +29,13 @@
     $: pill = getInfoPill(item.doc.pages.length, item.doc.favorite === 1);
 </script>
 
-<!-- the document is the whole tile: the chips are over the page, never beside it -->
+<!-- the document is the whole tile, with the edge of a page: the chips are over it, never beside it -->
 <gridlayout {height} width="100%" {...$$restProps}>
     <gridlayout
         backgroundColor={isEInk ? null : (page?.colors?.[1] ?? colorSurfaceContainerHigh)}
         borderRadius={radius}
         margin={6}
+        {...getPaperEdge(__IOS__, isEInk, colorOutlineVariant)}
         scaleX={item.selected ? 0.95 : 1}
         scaleY={item.selected ? 0.95 : 1}
         on:tap

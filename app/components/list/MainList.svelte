@@ -58,6 +58,7 @@
     } from '~/services/documents';
     import { syncService, syncServicesStore } from '~/services/sync';
     import { SERVICES_SYNC_COLOR, SERVICES_SYNC_MASK } from '~/services/sync/types';
+    import { getSyncedServices } from '~/utils/documentCell';
     import {
         BOTTOM_BUTTON_OFFSET,
         DEFAULT_FOLDER_VIEW_STYLE,
@@ -183,18 +184,7 @@
     export let viewStyle: string = ApplicationSettings.getString(SETTINGS_VIEW_STYLE, DEFAULT_VIEW_STYLE);
     export let folderViewStyle: string = ApplicationSettings.getString(SETTINGS_FOLDER_VIEW_STYLE, DEFAULT_FOLDER_VIEW_STYLE);
 
-    export const getSyncColors = (item: Item) => {
-        const synced = item.doc._synced;
-        const result = [];
-        $syncServicesStore.forEach((d) => {
-            const mask = SERVICES_SYNC_MASK[d.type];
-            const color = d.color || SERVICES_SYNC_COLOR[d.type];
-            if (synced === 1 || (synced & mask) !== 0) {
-                result.push(color);
-            }
-        });
-        return result;
-    };
+    export const getSyncColors = (item: Item) => getSyncedServices(item.doc._synced, $syncServicesStore, SERVICES_SYNC_MASK, SERVICES_SYNC_COLOR).map((service) => service.color);
 
     $: if ($syncServicesStore) {
         syncEnabled = syncService.enabled;
