@@ -10,6 +10,7 @@
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import { Writable, get } from 'svelte/store';
     import { lc } from '~/helpers/locale';
+    import { appIcon } from '~/utils/appIcons';
     import { MatricesTypes, Matrix } from '~/utils/color_matrix';
     import {
         DEFAULT_BRIGHTNESS,
@@ -33,7 +34,10 @@
     import { colors, windowInset } from '~/variables';
     import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
     import SettingsSlider from '@shared/components/SettingsSlider.svelte';
+    import { closeBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import GlassSliderRow from './GlassSliderRow.svelte';
+    import SheetHeader from '../common/SheetHeader.svelte';
+    import SheetRoot from '../common/SheetRoot.svelte';
 
     // technique for only specific properties to get updated on store change
     // the glass sheet is always dark, like the camera it covers
@@ -44,6 +48,22 @@
     $: ({ colorBackground, colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary, colorSurface } = $colors);
 
     export let showCameraSettings = false;
+    /** edits one page: each change goes to the callbacks and the default settings are left alone */
+    export let pageMode = false;
+    /** the height of the sheet (dip) when it has a single detent: the list is as tall as the sheet, so it scrolls inside it */
+    export let sheetHeight: number = undefined;
+    /** transforms several pages: a header with Cancel and Apply, the values are returned when the sheet closes, the default settings are left alone */
+    export let applyMode = false;
+    export let showTransforms = true;
+    /** the content of a persistent sheet of the page, not of a modal sheet */
+    export let inline = false;
+    /** the id of the list, for the persistent sheet to hand the scrolling over to it */
+    export let listId: string = undefined;
+    /** the image the filters are drawn on: the page being edited, else a sample */
+    export let previewSrc: string = '~/assets/images/filter_color.png';
+    export let onTransformChange: (id: string, value: boolean) => void = null;
+    export let onAdjustmentChange: (brightness: number, contrast: number) => void = null;
+    export let onColorChange: (colorType: MatricesTypes, colorMatrix: Matrix) => void = null;
     /** iOS 26 sheet drawn as glass (shown with `transparent`): the content must not paint an opaque background */
     export let glass = false;
 
@@ -90,6 +110,7 @@
         }
         transforms = transforms.filter((s) => !!s && s.length);
         DEV_LOG && console.log('addOrRemoveTransform', transforms);
+        onTransformChange?.(transform, transforms.indexOf(transform) !== -1);
     }
 
     function onFiltersLoaded(event: EventData) {
@@ -105,6 +126,7 @@
         colorType = type;
         colorMatrix = getColorMatrix(type);
         refreshCollectionView();
+        onColorChange?.(colorType, colorMatrix);
     }
     function onColorMatrixChange(type, value, refreshCV = false) {
         colorType = type;
@@ -112,6 +134,7 @@
         if (refreshCV) {
             refreshCollectionView();
         }
+        onColorChange?.(colorType, colorMatrix);
     }
     async function setColorMatrixLevels(item, event) {
         try {
@@ -244,6 +267,9 @@
     }
 
     function onCloseBottomSheet() {
+        if (pageMode || applyMode) {
+            return;
+        }
         ApplicationSettings.setString(SETTINGS_DEFAULT_COLORTYPE, colorType);
         if (contrast !== DEFAULT_BRIGHTNESS) {
             ApplicationSettings.setNumber(SETTINGS_DEFAULT_CONTRAST, contrast);
@@ -270,11 +296,16 @@
         return Math.round(id === 'brightness' ? Math.max(-1, Math.min(brightness ?? DEFAULT_BRIGHTNESS, 5)) * 100 : Math.max(0, Math.min(contrast ?? DEFAULT_CONTRAST, 4)) * 100);
     }
     function setAdjustmentValue(id: string, value: number) {
+        // the sliders also notify on their initial value
+        if (value === getAdjustmentValue(id)) {
+            return;
+        }
         if (id === 'brightness') {
             brightness = value / 100;
         } else {
             contrast = value / 100;
         }
+        onAdjustmentChange?.(brightness, contrast);
     }
 
     function getOptionValue(item) {
@@ -307,10 +338,12 @@
                 OPTIONS.map((option) => ({ ...option, type: 'option' }))
             );
         }
-        addGroup(
-            lc('transformations'),
-            TRANSFORMS.map((transform) => ({ ...transform, type: __IOS__ ? 'switch' : 'checkbox' }))
-        );
+        if (showTransforms) {
+            addGroup(
+                lc('transformations'),
+                TRANSFORMS.map((transform) => ({ ...transform, type: 'switch' }))
+            );
+        }
         addGroup(
             lc('adjustments'),
             ADJUSTMENTS.map((adjustment) => ({ ...adjustment, type: 'slider' }))
@@ -319,11 +352,26 @@
         return result;
     }
     const listItems = buildItems();
+    function applyTransforms() {
+        closeBottomSheet({ brightness, contrast, transforms, colorType, colorMatrix });
+    }
+    function resetTransforms() {
+        closeBottomSheet({ brightness: DEFAULT_BRIGHTNESS, contrast: DEFAULT_CONTRAST, transforms: [], colorType: DEFAULT_COLORTYPE, colorMatrix: null });
+    }
     const itemTemplateSelector = (item) => item.type;
 </script>
 
-<gesturerootview rows="*" {...(__IOS__ ? { backgroundColor: glass ? 'transparent' : colorBackground } : { padding: '10 10 0 10' })} on:closedBottomSheet={onCloseBottomSheet}>
-    <collectionview bind:this={listView} android:paddingBottom={$windowInset.bottom} {itemTemplateSelector} items={listItems}>
+<SheetRoot
+    height={__ANDROID__ && sheetHeight && !inline ? sheetHeight - 28 : sheetHeight}
+    {inline}
+    rows={applyMode ? 'auto,*' : '*'}
+    {...(__IOS__ ? { backgroundColor: inline ? undefined : glass ? 'transparent' : colorBackground } : { padding: applyMode ? '0' : '10 10 0 10' })}
+    {...$$restProps}
+    on:closedBottomSheet={onCloseBottomSheet}>
+    {#if applyMode}
+        <SheetHeader actionIcon={appIcon('restore')} actionLabel={lc('reset')} doneText={lc('apply')} onAction={resetTransforms} onCancel={() => closeBottomSheet(undefined)} onDone={applyTransforms} title={lc('transform_images')} />
+    {/if}
+    <collectionview bind:this={listView} id={listId} row={applyMode ? 1 : 0} paddingBottom={inline || __ANDROID__ ? $windowInset.bottom : 0} {itemTemplateSelector} items={listItems}>
         <Template key="sectionheader" let:item>
             <label color={secondaryColor} text={__IOS__ ? item.title.toUpperCase() : item.title} {...(__IOS__ ? { fontSize: 13, margin: '20 32 6 32' } : { class: 'sectionHeader' })} />
         </Template>
@@ -340,12 +388,6 @@
                     <switch id="checkbox" checked={transforms.indexOf(item.id) !== -1} col={1} marginLeft={12} verticalAlignment="center" on:checkedChange={(event) => onCheckedChanged(item, event)} />
                 </ListItemAutoSize>
             </gridlayout>
-        </Template>
-
-        <Template key="checkbox" let:item>
-            <ListItemAutoSize fontSize={17} item={getRowItem(item)} on:tap={(event) => onTransformTap(item, event)}>
-                <checkbox id="checkbox" checked={transforms.indexOf(item.id) !== -1} col={1} verticalAlignment="center" on:checkedChange={(event) => onCheckedChanged(item, event)} />
-            </ListItemAutoSize>
         </Template>
 
         <Template key="slider" let:item>
@@ -378,47 +420,33 @@
         </Template>
 
         <Template key="filters">
-            <collectionview
-                colWidth={__IOS__ ? 76 : FILTER_COL_WIDTH}
-                height={__IOS__ ? 100 : FILTER_ROW_HEIGHT}
-                items={filters}
-                orientation="horizontal"
-                on:loaded={onFiltersLoaded}>
+            <!-- the filters drawn on the image itself: a 64 tile with the radius of the tiles, the selected one has a 2.5 ring, its name is under it -->
+            <collectionview colWidth={80} height={104} items={filters} orientation="horizontal" paddingLeft={12} paddingRight={12} on:loaded={onFiltersLoaded}>
                 <Template let:item>
-                    {#if __IOS__}
-                        <gridlayout padding="4 4" rows="auto,auto" on:tap={() => setColorType(item.colorType)} on:longPress={(event) => setColorMatrixLevels(item, event)}>
-                            <image
-                                borderColor={colorPrimary}
-                                borderRadius={8}
-                                borderWidth={isCurrentColorType(item) ? 2.5 : 0}
-                                colorMatrix={getColorMatrix(item.colorType)}
-                                height={64}
-                                src="~/assets/images/filter_color.png"
-                                stretch="aspectFill"
-                                width={64} />
-                            <label color={isCurrentColorType(item) ? colorPrimary : secondaryColor} fontSize={11} marginTop={4} row={1} text={item.text} textAlignment="center" />
-                        </gridlayout>
-                    {:else}
-                        <gridlayout padding={2} on:tap={() => setColorType(item.colorType)} on:longPress={(event) => setColorMatrixLevels(item, event)}>
-                            <image
-                                borderColor={colorPrimary}
-                                borderRadius={4}
-                                borderWidth={isCurrentColorType(item) ? 3 : 0}
-                                colorMatrix={getColorMatrix(item.colorType)}
-                                src="~/assets/images/filter_color.png" />
-                            <label
-                                backgroundImage="linear-gradient(0deg, #000000 0%, #00000066 90%, #00000000 100%)"
-                                borderRadius="0 0 4 4"
-                                color="white"
-                                fontSize={11}
-                                fontWeight="500"
-                                text={item.text}
-                                textAlignment="center"
-                                verticalAlignment="bottom" />
-                        </gridlayout>
-                    {/if}
+                    <gridlayout padding="4 8" rows="auto,auto" on:tap={() => setColorType(item.colorType)} on:longPress={(event) => setColorMatrixLevels(item, event)}>
+                        <image
+                            borderColor={colorPrimary}
+                            borderRadius={12}
+                            borderWidth={isCurrentColorType(item) ? 2.5 : 0}
+                            colorMatrix={getColorMatrix(item.colorType)}
+                            decodeWidth={128}
+                            height={64}
+                            src={previewSrc}
+                            stretch="aspectFill"
+                            width={64} />
+                        <label
+                            color={isCurrentColorType(item) ? colorPrimary : secondaryColor}
+                            fontSize={12}
+                            fontWeight={isCurrentColorType(item) ? '600' : 'normal'}
+                            lineBreak="end"
+                            marginTop={4}
+                            maxLines={1}
+                            row={1}
+                            text={item.text}
+                            textAlignment="center" />
+                    </gridlayout>
                 </Template>
             </collectionview>
         </Template>
     </collectionview>
-</gesturerootview>
+</SheetRoot>

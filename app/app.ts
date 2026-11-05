@@ -6,6 +6,7 @@ import SwipeMenuElement from '@nativescript-community/ui-collectionview-swipemen
 import CollectionViewElement from '@nativescript-community/ui-collectionview/svelte';
 import { register as registerAppBar } from '@nativescript-community/ui-appbar/svelte';
 import DrawerElement from '@nativescript-community/ui-drawer/svelte';
+import PersistentBottomSheetElement from '@nativescript-community/ui-persistent-bottomsheet/svelte';
 import { ImagePipeline, ImageViewTraceCategory, getImagePipeline, initialize } from '@nativescript-community/ui-image';
 import { installMixins as installColorFilters } from '@nativescript-community/ui-image-colorfilter';
 import { Label } from '@nativescript-community/ui-label';
@@ -120,6 +121,7 @@ try {
     CollectionViewElement.register();
     SwipeMenuElement.register();
     DrawerElement.register();
+    PersistentBottomSheetElement.register();
     const shouldEnableSentry = ApplicationSettings.getBoolean(SETTINGS_ENABLE_CRASH_REPORT, PLAY_STORE_BUILD);
     if (shouldEnableSentry) {
         startSentry();

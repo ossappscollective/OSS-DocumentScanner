@@ -1,59 +1,52 @@
 <script lang="ts">
     import { Template } from '@nativescript-community/svelte-native/components';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-    import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { Img } from '@nativescript-community/ui-image';
     import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { confirm } from '@nativescript-community/ui-dialogs';
+    import { MenuItem } from '@nativescript-community/ui-menu';
     import { Pager } from '@nativescript-community/ui-pager';
-    import { HorizontalPosition, VerticalPosition } from '@nativescript-community/ui-popover';
-    import { showPopover } from '@nativescript-community/ui-popover/svelte';
-    import { AndroidActivityBackPressedEventData, Application, Frame, ObservableArray, Page, PageTransition, SharedTransition, View } from '@nativescript/core';
+    import type { PersistentBottomSheet } from '@nativescript-community/ui-persistent-bottomsheet';
+    import { AndroidActivityBackPressedEventData, Application, EventData, Frame, ObservableArray, Page, Utils, View } from '@nativescript/core';
     import { debounce, throttle } from '@nativescript/core/utils';
     import { showError } from '@shared/utils/showError';
     import { goBack, showModal } from '@shared/utils/svelte/ui';
+    import { allowSwipeBack } from '~/utils/swipeBack';
     import { OCRData, QRCodeData, Quad, getImageSize } from 'plugin-nativeprocessor';
     import { onDestroy, onMount } from 'svelte';
     import { Writable } from 'svelte/store';
-    import CActionBar from '@shared/components/CActionBar.svelte';
     import RotableImageView from '~/components/common/RotableImageView.svelte';
+    import SheetHeader from '~/components/common/SheetHeader.svelte';
+    import AdjustSheet from '~/components/widgets/ImageProcessingSettingsBottomSheet.svelte';
     import { lc } from '~/helpers/locale';
     import { onThemeChanged } from '~/helpers/theme';
     import { ImportImageData, OCRDocument, OCRPage } from '~/models/OCRDocument';
     import { DocumentDeletedEventData, DocumentPageUpdatedEventData, DocumentUpdatedEventData, documentsService } from '~/services/documents';
     import { qrcodeService } from '~/services/qrcode';
     import { shortcutService } from '~/services/shortcuts';
-    import { EVENT_DOCUMENT_DELETED, EVENT_DOCUMENT_PAGE_UPDATED, EVENT_DOCUMENT_UPDATED, TRANSFORMS_SPLIT } from '~/utils/constants';
+    import { appIcon } from '~/utils/appIcons';
+    import type { MatricesTypes, Matrix } from '~/utils/color_matrix';
+    import { DEFAULT_BRIGHTNESS, DEFAULT_COLORTYPE, DEFAULT_CONTRAST, EVENT_DOCUMENT_DELETED, EVENT_DOCUMENT_PAGE_UPDATED, EVENT_DOCUMENT_UPDATED, TRANSFORMS_SPLIT } from '~/utils/constants';
+    import { hasOriginalImage } from '~/utils/originals';
+    import { createPageSheetTranslation, getPageFit, setPageFit } from '~/utils/pageSheet';
     import {
-        ColorMatricesTypes,
-        copyOCRToClipboard,
-        copyTextToClipboard,
         detectOCROnPage,
-        getColorMatrix,
         hideLoading,
         onBackButton,
-        pickColor,
-        showImagePopoverMenu,
+        getExportMenu,
         showLoading,
-        showMatrixLevelPopover,
-        showPDFPopoverMenu,
-        showSlidersPopover,
         showSnack
     } from '~/utils/ui';
-    import { colors, fontScale, screenWidthDips, windowInset } from '~/variables';
-    import EditNameActionBar from '../common/EditNameActionBar.svelte';
-    import IconButton from '@shared/components/IconButton.svelte';
-    import PageIndicator from '../common/PageIndicator.svelte';
+    import { colors, screenHeightDips, windowInset } from '~/variables';
 
     // technique for only specific properties to get updated on store change
-    $: ({ colorOutline, colorPrimary, colorSurfaceContainer } = $colors);
+    $: ({ colorBackground, colorOnBackground, colorOutlineVariant, colorSecondaryContainer, colorSurfaceContainerLow } = $colors);
 
     export let startPageIndex: number = 0;
     DEV_LOG && console.log('startPageIndex', startPageIndex);
     export let document: OCRDocument;
     export let transitionOnBack = true;
     let pager: NativeViewElementNode<Pager>;
-    let enhanceFiltersCollectionView: CollectionView;
     let page: NativeViewElementNode<Page>;
 
     const items: ObservableArray<OCRPage> = document.getObservablePages();
@@ -61,27 +54,96 @@
     let currentItem: OCRPage;
     let currentItemOCRData: OCRData;
     let currentItemQRCodeData: QRCodeData;
-    let currentItemSubtitle: string;
     let currentSelectedImagePath: string;
     let currentSelectedImageRotation: number;
     let transforms: string[];
     updateCurrentItem(items.getItem(currentIndex));
-    const filters = ColorMatricesTypes.map((k) => ({
-        ...k,
-        text: lc(k.id),
-        colorType: k.id
-    }));
     let updatingTransform = false;
-    let editingTitle = false;
+    const FLOATING_TOOLBAR_OFFSET = 80;
+    let adjusting = false;
+    // the adjust sheet is a persistent sheet of the page: a grabber, a header, the list of the adjustments, and the room of the bottom toolbar under them.
+    // The pager keeps its width: each page scales and moves with the sheet (so the neighbors stay seen), and the pages stay interactive
+    const SHEET_GRABBER_HEIGHT = 28;
+    const SHEET_HEADER_HEIGHT = 64;
+    const ADJUST_LIST_HEIGHT = Math.round(screenHeightDips * 0.4);
+    let sheet: NativeViewElementNode<PersistentBottomSheet>;
+    // the sheet goes down to the bottom of the screen, over the place of the toolbar: the list scrolls under the safe area
+    $: sheetHeight = SHEET_GRABBER_HEIGHT + SHEET_HEADER_HEIGHT + ADJUST_LIST_HEIGHT;
+    $: steps = [0, sheetHeight];
+    // the width of the sheet is the one of the page: a percentage in the layout of the sheet made it wider than the screen
+    let sheetWidth: number;
+    function onSheetLayout() {
+        const width = Utils.layout.toDeviceIndependentPixels(sheet?.nativeView?.getMeasuredWidth() ?? 0);
+        if (width && Math.abs(width - (sheetWidth ?? 0)) > 1) {
+            sheetWidth = width;
+        }
+    }
+    // the sizes of the views do not change with the transformations: they are measured when the sheet opens
+    let pageArea: { containerHeight: number; areaHeight: number; areaWidth: number };
+    function measurePageArea() {
+        const container = sheet?.nativeView;
+        const area = pager?.nativeView;
+        if (!container || !area) {
+            return undefined;
+        }
+        return {
+            containerHeight: Utils.layout.toDeviceIndependentPixels(container.getMeasuredHeight()),
+            areaHeight: Utils.layout.toDeviceIndependentPixels(area.getMeasuredHeight()),
+            areaWidth: Utils.layout.toDeviceIndependentPixels(area.getMeasuredWidth())
+        };
+    }
+    // the page is fitted in the pager: its height is the one which is scaled, and each page has its own
+    function getFitFor(item: OCRPage) {
+        if (!pageArea || !item) {
+            return undefined;
+        }
+        const turned = (item.rotation ?? 0) % 180 !== 0;
+        const ratio = item.width && item.height ? (turned ? item.width / item.height : item.height / item.width) : 1.41;
+        const { areaHeight, areaWidth, containerHeight } = pageArea;
+        return getPageFit({ containerHeight, pageCenter: areaHeight / 2, pageHeight: Math.min(areaHeight, areaWidth * ratio), roomTop: 0, sheetHeight, viewCenter: areaHeight / 2 });
+    }
+    // the views which hold the pages: the current one and its neighbors
+    function getPageViews() {
+        const result: { item: OCRPage; view: View }[] = [];
+        for (let index = Math.max(0, currentIndex - 2); index <= Math.min(items.length - 1, currentIndex + 2); index++) {
+            const view = pager?.nativeView?.getChildView(index)?.getViewById<View>('fit');
+            if (view) {
+                result.push({ item: items.getItem(index), view });
+            }
+        }
+        return result;
+    }
+    const translationFunction = createPageSheetTranslation(() =>
+        getPageViews()
+            .map(({ item, view }) => ({ target: view, fit: getFitFor(item) }))
+            .filter((current) => !!current.fit)
+    );
+    // a page which is shown after the sheet opened, or which the pager reuses: it is at the fit of the sheet, or as it is
+    function syncPageViews() {
+        getPageViews().forEach(({ item, view }) => setPageFit(view, adjusting ? getFitFor(item) : undefined));
+    }
+    function onPageViewLoaded(item: OCRPage, event: EventData) {
+        if (event.object instanceof View) {
+            setPageFit(event.object, adjusting ? getFitFor(item) : undefined);
+        }
+    }
+    // the sheet follows its steps: the gesture too, so this is where it opens and closes
+    function onSheetStep(event: { value: number }) {
+        adjusting = event.value > 0;
+        if (!adjusting) {
+            toolbarHidden = false;
+        }
+    }
+    function closeAdjustments() {
+        sheet?.nativeView?.animateStepIndex(0);
+    }
+
     // const whitepaper = writable(transforms.indexOf('whitepaper') !== -1);
     // const enhanced = writable(transforms.indexOf('enhance') !== -1);
 
-    async function showPDFPopover(event) {
-        try {
-            await showPDFPopoverMenu({ pages: document.pages.map((page) => ({ page, document })), document, documents: [document], anchor: event.object });
-        } catch (err) {
-            showError(err);
-        }
+    // the popovers still need a view to be anchored to
+    function getAnchor() {
+        return page?.nativeView;
     }
     async function detectOCR() {
         // let ocrImage;
@@ -130,7 +192,6 @@
     }
     function updateCurrentItem(item) {
         currentItem = item;
-        currentItemSubtitle = currentItem ? `${currentItem.width} x ${currentItem.height}` : null;
         currentSelectedImagePath = currentItem?.imagePath;
         currentSelectedImageRotation = currentItem?.rotation || 0;
         currentItemOCRData = currentItem?.ocrData;
@@ -139,12 +200,15 @@
     }
     function onSelectedIndex(event) {
         currentIndex = event.object.selectedIndex;
+        // the pager creates the next pages while it moves: they get their fit once they are there
+        if (adjusting) {
+            setTimeout(syncPageViews, 50);
+        }
         // DEV_LOG && console.log('onSelectedIndex', currentIndex, items.length, currentSelectedImagePath, currentSelectedImageRotation, currentItemQRCodeData);
 
         updateCurrentItem(items.getItem(currentIndex));
         // $whitepaper = transforms.indexOf('whitepaper') !== -1;
         // $enhanced = transforms.indexOf('enhance') !== -1;
-        refreshCollectionView();
     }
     // function onFirstLayout(item, e) {
     //     console.log('onFirstLayout');
@@ -227,89 +291,6 @@
         }
     }
 
-    async function showEnhancements(event) {
-        try {
-            const EnhancementsPopover = (await import('~/components/edit/EnhancementsPopover.svelte')).default;
-            await showPopover({
-                backgroundColor: colorSurfaceContainer,
-                view: EnhancementsPopover,
-                anchor: event.object,
-                horizPos: HorizontalPosition.ALIGN_LEFT,
-                vertPos: VerticalPosition.ABOVE,
-                props: {
-                    transforms,
-                    applyImageColorMatrix,
-                    setColorMatrixLevels,
-                    item: currentItem,
-                    imageRotation: currentSelectedImageRotation,
-                    imagePath: currentSelectedImagePath,
-                    borderRadius: 10,
-                    autoSizeListItem: true,
-                    elevation: __ANDROID__ ? 3 : 0,
-                    margin: 4,
-                    fontWeight: 500,
-                    backgroundColor: colorSurfaceContainer,
-                    containerColumns: 'auto',
-                    width: screenWidthDips - 50,
-                    onLoaded(view) {
-                        enhanceFiltersCollectionView = view;
-                    },
-                    onClose() {
-                        enhanceFiltersCollectionView = null;
-                    },
-                    onCheckBox(item, value, e) {
-                        if (updatingTransform) {
-                            e.object.checked = !value;
-                            return;
-                        }
-                        updateTransform(value, null, item.id);
-                    }
-                }
-            });
-        } catch (error) {
-            DEV_LOG && console.log(error, error.stack);
-            throw error;
-        }
-    }
-    // async function showEnhancements(event) {
-    //     try {
-    //         // const OptionSelect = (await import('~/components/OptionSelect.svelte')).default;
-
-    //         function getData(transformId) {
-    //             const value = transforms.indexOf(transformId) !== -1;
-    //             return { type: 'checkbox', id: transformId, value, data: value };
-    //         }
-    //         await showPopoverMenu({
-    //             options: TRANSFORMS.map((i) => ({
-    //                 ...getData(i.id),
-    //                 ...i
-    //             })),
-    //             vertPos: VerticalPosition.ABOVE,
-    //             anchor: event.object,
-    //             props: {
-    //                 rowHeight: 70,
-    //                 width: screenWidthDips - 50,
-    //                 onCheckBox(item, value, e) {
-    //                     if (updatingTransform) {
-    //                         e.object.checked = !value;
-    //                         return;
-    //                     }
-    //                     updateTransform(value, null, item.id);
-    //                 }
-    //             }
-    //         });
-    //     } catch (error) {
-    //         showError(error);
-    //     }
-    // }
-    async function showImageExportPopover(event) {
-        try {
-            await showImagePopoverMenu([{ page: items.getItem(currentIndex), document }], event.object);
-        } catch (err) {
-            showError(err);
-        }
-    }
-
     async function showCurrentOCRData() {
         try {
             const item = items.getItem(currentIndex);
@@ -334,53 +315,18 @@
         }
     }
 
-    async function showCurrentQRCodeData() {
-        await qrcodeService.showQRCode([document.pages[currentIndex]], document, currentIndex);
-    }
-    let ignoreNextCollectionViewRefresh = false;
-    const saveCurrentItemColorType = debounce(function (index, colorMatrix) {
-        ignoreNextCollectionViewRefresh = true;
-        DEV_LOG && console.log('colorMatrix changed', colorMatrix);
-        try {
-            document.updatePage(index, {
-                colorMatrix
-            });
-        } catch (error) {
-            showError(error);
+    const saveColor = debounce(function (index: number, colorType: MatricesTypes, colorMatrix: Matrix) {
+        document.updatePage(index, { colorType, colorMatrix }).catch(showError);
+        if (CARD_APP) {
+            shortcutService.updateShortcuts(document);
         }
     }, 500);
-    function onColorMatrixChange(colorType, value) {
+    function onColorChange(colorType: MatricesTypes, colorMatrix: Matrix) {
         const current = items.getItem(currentIndex);
         current.colorType = colorType;
-        current.colorMatrix = getColorMatrix(colorType, value);
+        current.colorMatrix = colorMatrix;
         items.setItem(currentIndex, current);
-        saveCurrentItemColorType(currentIndex, current.colorMatrix);
-    }
-
-    async function setColorMatrixLevels(item, event) {
-        if (!item.range) {
-            return;
-        }
-
-        try {
-            const current = items.getItem(currentIndex);
-            const currentValue = current.colorMatrix?.[0] || 1;
-            DEV_LOG && console.log('setColorMatrixLevels', currentValue, current.colorMatrix);
-            onColorMatrixChange(item.colorType, currentValue);
-
-            await showMatrixLevelPopover({
-                item,
-                anchor: event.object,
-                currentValue,
-                onChange(value) {
-                    if (current.colorMatrix?.[0] || 1 !== value) {
-                        onColorMatrixChange(item.colorType, value);
-                    }
-                }
-            });
-        } catch (err) {
-            showError(err);
-        }
+        saveColor(currentIndex, colorType, colorMatrix);
     }
 
     async function deleteCurrentPage() {
@@ -417,30 +363,6 @@
         }
     }
 
-    function isCurrentColorType(i) {
-        return currentItem?.colorType === i.colorType;
-    }
-
-    async function applyImageColorMatrix(i) {
-        try {
-            const current = items.getItem(currentIndex);
-            current.colorMatrix = null;
-            current.colorType = i.colorType;
-            enhanceFiltersCollectionView?.refreshVisibleItems();
-            ignoreNextCollectionViewRefresh = true;
-            DEV_LOG && console.log('applyImageColorMatrix', i.colorType);
-            await document.updatePage(currentIndex, {
-                colorType: i.colorType,
-                colorMatrix: getColorMatrix(i.colorType)
-            });
-            if (CARD_APP) {
-                shortcutService.updateShortcuts(document);
-            }
-        } catch (error) {
-            showError(error);
-        }
-    }
-
     const saveBrightnessContrast = debounce(
         (brightness: number, contrast: number) => {
             document.updatePage(currentIndex, {
@@ -464,67 +386,26 @@
         }
     }
 
-    async function editBrightnessContrast(event) {
-        try {
-            function getCurrentBrightness() {
-                const current = items.getItem(currentIndex);
-                return typeof current.brightness === 'string' ? null : current.brightness;
-            }
-            function getCurrentContrast() {
-                const current = items.getItem(currentIndex);
-                return typeof current.contrast === 'string' ? null : current.contrast;
-            }
-            await showSlidersPopover({
-                debounceDuration: 0,
-                anchor: event.object,
-                vertPos: VerticalPosition.BELOW,
-                items: [
-                    {
-                        title: lc('brightness'),
-                        icon: 'mdi-brightness-5',
-                        min: -100,
-                        max: 100,
-                        resetValue: 0,
-                        step: __IOS__ ? 1 : undefined,
-                        // value: 0,
-                        formatter: (v) => (v / 100).toFixed(2),
-                        value: Math.round(Math.max(-1, Math.min(getCurrentBrightness() ?? 0, 5)) * 100),
-                        onChange: debounce((value) => {
-                            applyBrightnessContrast(value / 100, getCurrentContrast());
-                        }, 10)
-                    },
-                    {
-                        title: lc('contrast'),
-                        icon: 'mdi-contrast-box',
-                        min: 0,
-                        max: 200,
-                        resetValue: 100,
-                        formatter: (v) => (v / 100).toFixed(2),
-                        step: __IOS__ ? 1 : undefined,
-                        // value: 10,
-                        value: Math.round(Math.max(0, Math.min(getCurrentContrast() ?? 1, 4)) * 100),
-                        onChange: debounce((value) => {
-                            applyBrightnessContrast(getCurrentBrightness(), value / 100);
-                        }, 10)
-                    }
-                ]
-            });
-        } catch (error) {
-            showError(error);
+    function showAdjustments() {
+        if (adjusting) {
+            closeAdjustments();
+            return;
         }
+        toolbarHidden = true;
+        // the pager is measured once the toolbar has left, the sheet opens then
+        setTimeout(() => {
+            pageArea = measurePageArea();
+            sheet?.nativeView?.animateStepIndex(1);
+        }, 100);
     }
 
     async function updateImageUris() {
         await getCurrentImageView()?.updateImageUri();
-        enhanceFiltersCollectionView?.eachChildAsync((c: View) => {
-            c.getViewById<Img>('imageView')?.updateImageUri();
-        });
-        // refreshCollectionView();
     }
 
     async function updateTransform(value: boolean, store: Writable<boolean>, type: string) {
         if (updatingTransform) {
-            store.set(!value);
+            store?.set(!value);
             return;
         }
         updatingTransform = true;
@@ -567,12 +448,6 @@
             items.setItem(index, item);
             if (!!event.imageUpdated) {
                 await updateImageUris();
-            } else {
-                if (ignoreNextCollectionViewRefresh) {
-                    ignoreNextCollectionViewRefresh = false;
-                    return;
-                }
-                refreshCollectionView();
             }
         }
     }
@@ -610,10 +485,6 @@
         documentsService.off(EVENT_DOCUMENT_DELETED, onDocumentsDeleted);
         documentsService.off(EVENT_DOCUMENT_PAGE_UPDATED, onDocumentPageUpdated);
     });
-
-    function refreshCollectionView() {
-        enhanceFiltersCollectionView?.refreshVisibleItems();
-    }
 
     let cropItem: ImportImageData = {};
     async function cropEdit() {
@@ -663,157 +534,110 @@
     onThemeChanged(refreshPager);
 
     function onGoBack() {
-        if (editingTitle) {
-            editingTitle = false;
-        } else {
-            const item = items.getItem(currentIndex);
-            DEV_LOG && console.log('onGoBack', currentIndex, !!items, !!item);
-            //we use a new transition to transition the selected item
-            goBack({
-                transition:
-                    __ANDROID__ && !CARD_APP && transitionOnBack && item
-                        ? SharedTransition.custom(new PageTransition(300, undefined, 10), {
-                              pageStart: {
-                                  sharedTransitionTags: {
-                                      [`document_${document.id}_${item.id}`]: {}
-                                  }
-                              }
-                          })
-                        : CARD_APP
-                          ? null
-                          : undefined
-            } as any);
-        }
+        goBack();
     }
     const onAndroidBackButton = (data: AndroidActivityBackPressedEventData) =>
         onBackButton(page?.nativeView, () => {
             data.cancel = true;
-            onGoBack();
+            if (adjusting) {
+                closeAdjustments();
+            } else {
+                onGoBack();
+            }
         });
 
-    function copyText() {
-        try {
-            if (currentItemOCRData) {
-                copyOCRToClipboard(currentItemOCRData.text);
-            }
-        } catch (error) {
-            showError(error);
-        }
+    function getMoreMenu(hasOCRData: boolean): MenuItem[] {
+        return [...(hasOCRData ? [{ title: lc('ocr'), icon: appIcon('ocr'), onSelect: showCurrentOCRData }, { separator: true }] : []), { title: lc('delete_page'), icon: appIcon('delete'), destructive: true, onSelect: deleteCurrentPage }];
     }
-    function copyQRCodeText() {
-        try {
-            if (currentItemQRCodeData) {
-                copyTextToClipboard(currentItemQRCodeData[0].text);
-            }
-        } catch (error) {
-            showError(error);
-        }
+    function getBottomItems(canCrop: boolean) {
+        return [
+            { spacer: true },
+            ...(canCrop ? [{ text: lc('crop'), icon: appIcon('crop'), onTap: cropEdit }, { spacer: true }] : []),
+            { text: lc('rotate_left'), icon: appIcon('rotate_left'), onTap: rotateImageLeft },
+            { text: lc('rotate_right'), icon: appIcon('rotate_right'), onTap: rotateImageRight },
+            { spacer: true },
+            { text: lc('adjust'), icon: appIcon('tune'), onTap: showAdjustments },
+            { text: lc('ocr_document'), icon: appIcon('ocr'), onTap: showOCRSettings },
+            ...(CARD_APP ? [{ text: lc('detect_qrcode'), icon: appIcon('qrcode'), onTap: detectQRCode }] : []),
+            { spacer: true }
+        ];
     }
-
-    async function changeColor(item: OCRPage, event) {
-        try {
-            const currentColor = item?.extra?.color ?? 'black';
-            const newColor = await pickColor(currentColor, { anchor: event.object });
-            if (newColor) {
-                // editingUpdates.extra = editingUpdates.extra || {};
-                // topBackgroundColor = editingUpdates.extra.color = newColor.hex;
-                // updateExtraItem(item, 'type');
-
-                await document.updatePage(
-                    currentIndex,
-                    {
-                        extra: { color: newColor.hex }
-                    },
-                    false
-                );
-            }
-        } catch (error) {
-            showError(error);
-        }
-    }
+    // the current page only: no PDF
+    $: exportMenu = getExportMenu({ document, pages: [{ page: currentItem, document }], pdf: false });
+    $: moreMenu = getMoreMenu(!!currentItemOCRData);
+    // the toolbar leaves its place to the sheet
+    let toolbarHidden = false;
+    $: bottomItems = toolbarHidden ? [] : getBottomItems(!!currentItem?.sourceImagePath);
 </script>
 
-<page bind:this={page} id="pdfEdit" actionBarHidden={true}>
-    <gridlayout class="pageContent" rows="auto,*,auto,auto,auto" android:paddingBottom={$windowInset.bottom}>
-        <pager bind:this={pager} {items} row={1} selectedIndex={startPageIndex} transformers="zoomOut" on:selectedIndexChange={onSelectedIndex}>
-            <Template let:item>
-                <gridlayout width="100%">
-                    <RotableImageView id="imageView" {item} sharedTransitionTag={`document_${document.id}_${item.id}`} zoomable={true} on:rotated={(e) => onImageRotated(item, e)} />
-                </gridlayout>
-            </Template>
-        </pager>
-        <PageIndicator horizontalAlignment="right" margin={10} row={2} scale={$fontScale} text={`${currentIndex + 1}/${items.length}`} verticalAlignment="bottom" />
-
-        <label fontSize={14} horizontalAlignment="left" padding={10} row={2} text={currentItemSubtitle} verticalTextAlignment="center" />
-
-        {#if CARD_APP}
-            <absolutelayout
-                backgroundColor={currentItem?.extra?.color ?? 'black'}
-                borderColor={colorOutline}
-                borderRadius="50%"
-                borderWidth={2}
-                height={40}
-                horizontalAlignment="right"
-                margin={10}
-                row={1}
-                verticalAlignment="top"
-                width={40}
-                on:tap={(event) => changeColor(currentItem, event)}
-            />
+<appPage bind:this={page} id="pdfEdit">
+    <appBar {bottomItems} color={colorOnBackground} iosIconRenderingMode="alwaysTemplate" ios:translucent={true} size="small" subtitle={document.name} title={lc('edit')}>
+        {#if __ANDROID__}
+            <navigationButton {...{ 'android.systemIcon': 'ic_menu_back' }} on:tap={onGoBack} />
         {/if}
-
-        <stacklayout backgroundColor="#00000055" borderRadius={10} horizontalAlignment="right" marginRight={5} row={1} verticalAlignment="center">
-            <IconButton color="white" text="mdi-share-variant" tooltip={lc('share')} on:tap={showImageExportPopover} />
-            <IconButton color="white" isVisible={!!currentItemOCRData} onLongPress={copyText} text="mdi-format-textbox" on:tap={showCurrentOCRData} />
-            {#if CARD_APP}
-                <IconButton color="white" isVisible={currentItemQRCodeData?.length > 0} onLongPress={copyQRCodeText} text="mdi-qrcode" on:tap={showCurrentQRCodeData} />
+        <appBarItem icon={appIcon('export')} ios.position="right" menu={exportMenu} text={lc('export')} />
+        <appBarItem icon={appIcon('more')} ios.position="right" menu={moreMenu} />
+    </appBar>
+    <bottomsheet bind:this={sheet} {steps} scrollViewId="adjustList" {translationFunction} on:layoutChanged={onSheetLayout} on:stepIndexChange={onSheetStep}>
+        <!-- an absolute layout measures its children by their content: the page fills it -->
+        <gridlayout android:paddingBottom={FLOATING_TOOLBAR_OFFSET + $windowInset.bottom} height="100%" rows="*,auto" width="100%">
+            <pager bind:this={pager} {items} rowSpan={2} selectedIndex={startPageIndex} transformers="zoomOut" on:loaded={allowSwipeBack} on:selectedIndexChange={onSelectedIndex}>
+                <Template let:item>
+                    <gridlayout width="100%">
+                        <!-- the page scales and moves in this one: the pager transformer owns the scale of the page view -->
+                        <gridlayout id="fit" on:loaded={(event) => onPageViewLoaded(item, event)}>
+                            <RotableImageView id="imageView" {item} sharedTransitionTag={`document_${document.id}_${item.id}`} zoomable={true} on:rotated={(e) => onImageRotated(item, e)} />
+                        </gridlayout>
+                    </gridlayout>
+                </Template>
+            </pager>
+            {#if items.length > 1 && !adjusting}
+                <label
+                    backgroundColor={__IOS__ ? '#7676801F' : colorSecondaryContainer}
+                    borderRadius={14}
+                    color={colorOnBackground}
+                    fontSize={13}
+                    height={28}
+                    horizontalAlignment="center"
+                    isUserInteractionEnabled={false}
+                    marginBottom={12}
+                    padding="0 12"
+                    row={1}
+                    text={`${currentIndex + 1} / ${items.length}`}
+                    verticalAlignment="bottom"
+                    verticalTextAlignment="center" />
             {/if}
-        </stacklayout>
-
-        <stacklayout borderTopColor={colorOutline} borderTopWidth={1} orientation="horizontal" row={4}>
-            <uibutton class="icon-btn" text="mdi-crop" variant="text" visibility={currentItem?.sourceImagePath ? 'visible' : 'collapse'} on:tap={() => cropEdit()} />
-            <uibutton class="icon-btn" text="mdi-rotate-left" variant="text" on:tap={() => rotateImageLeft()} />
-            <uibutton class="icon-btn" text="mdi-rotate-right" variant="text" on:tap={() => rotateImageRight()} />
-            <uibutton class="icon-btn" text="mdi-auto-fix" variant="text" on:tap={showEnhancements} />
-            <uibutton class="icon-btn" text="mdi-brightness-6" variant="text" on:tap={editBrightnessContrast} />
-            {#if CARD_APP}
-                <uibutton class="actionBarButton" text="mdi-qrcode-scan" variant="text" on:tap={detectQRCode} />
-            {/if}
-            <uibutton class="actionBarButton" text="mdi-text-recognition" variant="text" on:tap={showOCRSettings} />
-        </stacklayout>
-        <!-- <collectionview bind:this={collectionView} id="filters" colWidth={FILTER_COL_WIDTH} height={FILTER_ROW_HEIGHT} items={filters} orientation="horizontal" row={4}>
-            <Template let:item>
-                <gridlayout id={item.text} padding={2} on:tap={() => applyImageColorMatrix(item)} on:longPress={(event) => setColorMatrixLevels(item, event)}>
-                    <image
-                        id="imageView"
-                        borderColor={colorPrimary}
-                        borderRadius={4}
-                        borderWidth={isCurrentColorType(item) ? 3 : 0}
-                        colorMatrix={getColorMatrix(item.colorType)}
-                        decodeHeight={120}
-                        decodeWidth={120}
-                        imageRotation={currentSelectedImageRotation}
-                        src={currentSelectedImagePath}
-                        stretch="aspectFill" />
-                    <label
-                        backgroundImage="linear-gradient(0deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.4) 90%, rgba(0,0,0,0) 100%)"
-                        ios:selectable={true}
-                        borderRadius="0 0 4 4"
-                        color="white"
-                        fontSize={11}
-                        fontWeight="500"
-                        text={item.text}
-                        textAlignment="center"
-                        verticalAlignment="bottom" />
-                </gridlayout>
-            </Template>
-        </collectionview> -->
-        <CActionBar {onGoBack} onTitleTap={() => (editingTitle = true)} title={document.name} titleProps={{ autoFontSize: true, padding: 0 }}>
-            <uibutton class="actionBarButton" text="mdi-file-pdf-box" variant="text" on:tap={showPDFPopover} />
-            <uibutton class="actionBarButton" text="mdi-delete" variant="text" on:tap={deleteCurrentPage} />
-        </CActionBar>
-        {#if editingTitle}
-            <EditNameActionBar {document} bind:editingTitle />
-        {/if}
-    </gridlayout>
-</page>
+        </gridlayout>
+        <gridlayout
+            prop:bottomSheet
+            backgroundColor={__IOS__ ? colorBackground : colorSurfaceContainerLow}
+            borderTopLeftRadius={__IOS__ ? 26 : 28}
+            borderTopRightRadius={__IOS__ ? 26 : 28}
+            boxShadow={__IOS__ ? '0 -3 10 #00000072' : undefined}
+            height={sheetHeight}
+            horizontalAlignment="left"
+            rows="28,auto,auto"
+            width={sheetWidth}>
+            <absolutelayout backgroundColor={colorOutlineVariant} borderRadius={2.5} height={5} horizontalAlignment="center" marginTop={10} width={36} />
+            <!-- the quick way to close it: the sheet is not modal, the page stays in use -->
+            <SheetHeader doneText={lc('done')} onCancel={closeAdjustments} onDone={closeAdjustments} row={1} showCancel={false} title={lc('adjust')} />
+            <AdjustSheet
+                brightness={typeof currentItem?.brightness === 'number' ? currentItem.brightness : DEFAULT_BRIGHTNESS}
+                cameraOptionsStore={null}
+                colorMatrix={currentItem?.colorMatrix}
+                colorType={currentItem?.colorType ?? DEFAULT_COLORTYPE}
+                contrast={typeof currentItem?.contrast === 'number' ? currentItem.contrast : DEFAULT_CONTRAST}
+                inline={true}
+                listId="adjustList"
+                onAdjustmentChange={applyBrightnessContrast}
+                {onColorChange}
+                onTransformChange={(type, value) => updateTransform(value, null, type)}
+                pageMode={true}
+                previewSrc={currentItem?.imagePath}
+                row={2}
+                sheetHeight={ADJUST_LIST_HEIGHT}
+                showTransforms={hasOriginalImage(currentItem)}
+                transforms={[...(transforms ?? [])]} />
+        </gridlayout>
+    </bottomsheet>
+</appPage>

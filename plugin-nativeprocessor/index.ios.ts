@@ -202,3 +202,17 @@ export async function getImageSize(imagePath: string) {
         throw new Error(lc('error_loading_image', imagePath, File.exists(imagePath)));
     }
 }
+
+export function printPDF(filePath: string, name: string) {
+    const controller = UIPrintInteractionController.sharedPrintController;
+    const printInfo = UIPrintInfo.printInfo();
+    printInfo.outputType = UIPrintInfoOutputType.General;
+    printInfo.jobName = name;
+    controller.printInfo = printInfo;
+    controller.printingItem = NSURL.fileURLWithPath(filePath);
+    // on iPad the controller is a popover: it needs a source view
+    // loaded here: this file is also bundled in the workers, which must not load the application module
+    const { Application, Utils } = require('@nativescript/core');
+    const rootView: UIView = Utils.ios.getVisibleViewController(Application.ios.rootController).view;
+    controller.presentFromRectInViewAnimatedCompletionHandler(CGRectMake(rootView.bounds.size.width / 2, rootView.bounds.size.height / 2, 0, 0), rootView, true, null);
+}
