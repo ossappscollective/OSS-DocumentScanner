@@ -1592,7 +1592,6 @@
             <CardsEmpty
                 actionText={CARD_APP ? lc('scan_card') : lc('scan_document')}
                 help={CARD_APP ? lc('no_card_yet_help') : lc('no_document_yet_help')}
-                icon={CARD_APP ? appIcon('wallet') : appIcon('camera')}
                 marginBottom="15%"
                 onScan={() => actions.find((action) => action.primary)?.onTap()}
                 row={2}
