@@ -9,10 +9,12 @@
     export let tint: string = null;
     /** the color of the card under a tinted chip: the chip is then solid, so it can cover data */
     export let background: string = null;
+    /** the exact fill of a tinted chip, as is (a semi-transparent color over a photo): `background` is then ignored */
+    export let fill: string = null;
     let { colorOnPrimaryContainer, colorOnSurface } = $colors;
     $: ({ colorOnPrimaryContainer, colorOnSurface } = $colors);
     $: color = __IOS__ ? colorOnSurface : colorOnPrimaryContainer;
-    $: tinted = tint ? (background ? getChipColors(tint, background) : { backgroundColor: getChipWash(tint), color: tint }) : null;
+    $: tinted = tint ? (fill ? { backgroundColor: fill, color: tint } : background ? getChipColors(tint, background) : { backgroundColor: getChipWash(tint), color: tint }) : null;
 </script>
 
 {#if tint}

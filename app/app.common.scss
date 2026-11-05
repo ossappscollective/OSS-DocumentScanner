@@ -211,7 +211,7 @@ textfield,
     background-color: var(--colorPrimaryContainer);
     ripple-color: var(--colorPrimaryContainer);
     color: var(--colorOnPrimaryContainer);
-    shape: medium;
+    shape: round;
     elevation: 2;
     font-size: 24;
     padding: 0;
@@ -231,7 +231,7 @@ textfield,
 
 .small-fab {
     @extend .mdi;
-    shape: small;
+    shape: round;
     background-color: var(--colorSecondaryContainer);
     ripple-color: var(--colorSecondaryContainer);
     color: var(--colorOnSecondaryContainer);
@@ -335,4 +335,12 @@ textfield,
     horizontal-align: center;
     margin-bottom: 18;
     width: 84;
+}
+
+// the thumbnails of the photos of a card: the one of the current photo is full size, the others are smaller and darker
+.thumbnail {
+    transform: scale(0.85);
+}
+.thumbnailCurrent .thumbnailScrim {
+    opacity: 0;
 }
