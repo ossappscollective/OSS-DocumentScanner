@@ -524,6 +524,7 @@
     "select_color_theme": "select color theme",
     "select_documents_to_import": "select documents to import pages from",
     "select_language": "select language",
+    "select_pages": "select pages",
     "select_sync_service": "select sync service",
     "select_theme": "select theme",
     "selected_one": "%1$s selected",

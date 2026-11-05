@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getInfoPill, getSyncDots, getTileRadius, isAutoName } from './documentCell';
+import { getInfoPill, getPaperEdge, getSyncDots, getSyncedServices, getTileRadius, isAutoName } from './documentCell';
 
 describe('isAutoName', () => {
     it('is true without a name', () => {
@@ -51,5 +51,40 @@ describe('getTileRadius', () => {
     });
     it('is at most 28', () => {
         expect(getTileRadius(250, 352)).toBe(28);
+    });
+});
+
+describe('getSyncedServices', () => {
+    const masks = { webdav_pdf: 1 << 6, gdrive_pdf: 1 << 9, folder_pdf: 1 << 4 };
+    const defaultColors = { webdav_pdf: '#8293CE', gdrive_pdf: '#FBBC05', folder_pdf: '#4CA49D' };
+    const services = [{ type: 'webdav_pdf' }, { type: 'gdrive_pdf', color: '#112233' }, { type: 'folder_pdf' }];
+
+    it('has every service for a document synced everywhere (1)', () => {
+        expect(getSyncedServices(1, services, masks, defaultColors)).toEqual([
+            { type: 'webdav_pdf', color: '#8293CE' },
+            { type: 'gdrive_pdf', color: '#112233' },
+            { type: 'folder_pdf', color: '#4CA49D' }
+        ]);
+    });
+    it('has the services whose bit is set', () => {
+        expect(getSyncedServices(1 << 6, services, masks, defaultColors)).toEqual([{ type: 'webdav_pdf', color: '#8293CE' }]);
+    });
+    it('uses the color set on the service over the default one', () => {
+        expect(getSyncedServices(1 << 9, services, masks, defaultColors)).toEqual([{ type: 'gdrive_pdf', color: '#112233' }]);
+    });
+    it('has nothing for a document synced nowhere', () => {
+        expect(getSyncedServices(0, services, masks, defaultColors)).toEqual([]);
+    });
+});
+
+describe('getPaperEdge', () => {
+    it('is a soft shadow on iOS', () => {
+        expect(getPaperEdge(true, false, '#C4C6D0')).toEqual({ boxShadow: '0 2 10 #0000006C' });
+    });
+    it('is a 1 outline on Android', () => {
+        expect(getPaperEdge(false, false, '#C4C6D0')).toEqual({ borderColor: '#C4C6D0', borderWidth: 1 });
+    });
+    it('is a 1 outline on e-ink, whatever the platform', () => {
+        expect(getPaperEdge(true, true, '#000000')).toEqual({ borderColor: '#000000', borderWidth: 1 });
     });
 });
