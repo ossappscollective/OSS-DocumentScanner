@@ -14,13 +14,12 @@
         autocapitalizationType="none"
         autocorrect={false}
         hint={lc('remote_folder_desc')}
-        paddingRight={60}
+        ios:paddingRight={60}
         placeholder={lc('remote_folder')}
         returnKeyType="done"
         {text}
         {variant}
         on:returnPress
-        on:textChange
-    />
+        on:textChange />
     <uibutton class="icon-btn" color={colorOnSurfaceVariant} horizontalAlignment="right" text="mdi-folder-open" variant="text" verticalAlignment="middle" />
 </gridlayout>
