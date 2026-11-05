@@ -14,6 +14,8 @@ Read these in order. Everything here is the target design; the implementation st
 | `cardwallet-card-view-variants.html` | Mockup: card view variants on iOS and Android |
 | `cardwallet-card-view-ios-states.html` | Mockup: eight iOS card view states |
 | `cardwallet-card-list.html` | Mockup: card list styles, folders, selection, tile anatomy |
+| `scanner-document-list.html` / `scanner-document-view.html` | Mockups: Document Scanner document list (grid, list, folders, sync, selection, menu, empty) and document view (pages, selection, menus, rename, reorder) |
+| `scanner-document-list-view.md` | Spec (proposal): document list and view, mapping to `DocumentsList.svelte` and `DocumentView.svelte`, decisions to confirm |
 | `cardwallet-components.html` | Mockup: buttons, text fields, chips, selection, sheets (opaque and transparent) |
 | `cardwallet-textfields.html` | Mockup: text field options (adopted: iOS capsule, Android notched outlined) |
 | `cardwallet-menus.html` | Mockup: menus |

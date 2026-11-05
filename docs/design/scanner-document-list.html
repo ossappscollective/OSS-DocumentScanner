@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Document Scanner document list: grid, list, selection, menu (iOS and Android)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
+<style>
+:root{--text-primary:#1f1f1e;--text-secondary:#5f5e5a;--border-strong:#c8c6bd;--surface-1:#e9e8e1;--page:#fafaf7}
+@media(prefers-color-scheme:dark){:root{--text-primary:#f1f0ea;--text-secondary:#b0aea5;--border-strong:#4a4944;--surface-1:#34332f;--page:#1c1c1a}}
+body{font-family:system-ui,sans-serif;margin:24px;background:var(--page);color:var(--text-primary);max-width:720px}
+button{font:inherit;font-size:13px;color:var(--text-primary);background:transparent;border:0.5px solid var(--border-strong);border-radius:8px;padding:5px 12px;cursor:pointer}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+</style>
+</head>
+<body>
+<h2 class="sr-only">Document Scanner document list on iOS and Android: grid and list view styles, horizontal or vertical folders, selection mode, empty state, view and sort menu and tile anatomy.</h2>
+<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 14px">
+<button id="bl">Light</button><button id="bd">Dark</button>
+<span style="width:1px;height:20px;background:var(--border-strong)"></span>
+<button id="pi">iOS</button><button id="pa">Android</button>
+<span style="width:1px;height:20px;background:var(--border-strong)"></span>
+<span style="font-size:13px;color:var(--text-secondary)">Folders</span>
+<button id="fh">Horizontal</button><button id="fv">Vertical</button>
+<span style="width:1px;height:20px;background:var(--border-strong)"></span>
+<span style="font-size:13px;color:var(--text-secondary)">Sync</span>
+<button id="so">On</button><button id="sf">Off</button>
+</div>
+<div id="out"></div>
+<script>
+const S={dark:false,plat:'ios',fold:'h',sync:true};
+const BF='backdrop-filter:blur(18px) saturate(1.7);-webkit-backdrop-filter:blur(18px) saturate(1.7);';
+const ic=(n,sz,c)=>`<i class="ti ti-${n}" style="font-size:${sz||20}px;${c?'color:'+c:''}"></i>`;
+function roles(){const d=S.dark;if(S.plat==='ios')return{acc:d?'#6fb3ff':'#0a60ff',onAcc:d?'#000':'#fff',page:d?'#000':'#f2f2f7',row:d?'#1c1c1e':'#fff',txt:d?'#fff':'#000',sub:d?'rgba(235,235,245,.65)':'rgba(60,60,67,.65)',glass:d?'rgba(70,70,76,.5)':'rgba(255,255,255,.55)',chip:d?'rgba(40,40,44,.66)':'rgba(255,255,255,.7)',gb:d?'rgba(255,255,255,.2)':'rgba(255,255,255,.85)',sep:d?'rgba(84,84,88,.6)':'rgba(60,60,67,.18)',ok:'#30d158',warn:'#ff9f0a'};
+return{acc:d?'#a8c7fa':'#0b57d0',onAcc:d?'#062e6f':'#fff',cont:d?'#1d3a6a':'#d3e3fd',onCont:d?'#d3e3fd':'#041e49',page:d?'#131314':'#fdfcfb',low:d?'#1e1f20':'#f3f3f6',bar:d?'#2b2c2e':'#e9eef6',txt:d?'#e3e3e3':'#1f1f1f',sub:d?'#c4c7c5':'#5f6368',chip:d?'#1d3a6a':'#d3e3fd',ok:d?'#6dd58c':'#1e8e3e',warn:d?'#fdd663':'#b06000'}}
+const DOCS=[
+{name:'Rental contract',pages:6,kind:'letter',fav:1,sync:['gd','nc'],size:'2.4 MB',date:'Nov 2, 2026'},
+{name:'',date:'Nov 1',full:'11/1/2026, 9:12 AM',pages:1,kind:'receipt',sync:['gd'],size:'310 KB'},
+{name:'Passport',pages:2,kind:'id',sync:[],size:'1.1 MB',date:'Oct 29, 2026'},
+{name:'Tax return 2025',pages:12,kind:'table',fav:1,sync:['gd','nc','wd'],size:'5.8 MB',date:'Oct 27, 2026'},
+{name:'Whiteboard',pages:1,kind:'photo',sync:['wd'],size:'1.9 MB',date:'Oct 24, 2026'},
+{name:'Invoice 0042',pages:3,kind:'letter',sync:['gd'],size:'1.0 MB',date:'Oct 20, 2026'},
+{name:'',date:'Oct 18',full:'10/18/2026, 6:40 PM',pages:1,kind:'receipt',sync:[],size:'280 KB'},
+{name:'Lecture notes',pages:9,kind:'table',sync:['gd','nc','wd','fo','db','od','sf'],size:'4.2 MB',date:'Oct 12, 2026'}];
+const label=d=>d.name||d.full;
+function seed(n){let s=n*9301+49297;return()=>(s=(s*9301+49297)%233280)/233280}
+function lines(rnd,w,h,top,gap,min){let o='',y=top;while(y<h-gap){o+=`<div style="position:absolute;left:10%;top:${y}px;width:${Math.round(w*(min+rnd()*(0.8-min)))}px;height:${Math.max(1.5,gap/3.2)}px;border-radius:1px;background:#c9c9c4"></div>`;y+=gap}return o}
+function pageArt(d,w,h,rad){const rnd=seed(d.pages*7+d.kind.length);const gap=Math.max(5,Math.round(h/20));let bg='#fbfbf8',inner='';
+if(d.kind==='letter')inner=`<div style="position:absolute;left:10%;top:9%;width:34%;height:${gap*1.2}px;background:#8d8d88;border-radius:1px"></div>`+lines(rnd,w,h,h*.2,gap,.55);
+else if(d.kind==='receipt'){bg=S.dark?'#2a2a2c':'#dcdcd6';inner=`<div style="position:absolute;left:24%;right:24%;top:5%;bottom:5%;background:#fbfbf8;box-shadow:0 1px 3px rgba(0,0,0,.25)">${lines(rnd,w*.52,h*.9,h*.1,gap,.45).replace(/left:10%/g,'left:12%')}</div>`}
+else if(d.kind==='id'){bg=S.dark?'#2a2a2c':'#cfd3d8';inner=`<div style="position:absolute;left:11%;right:11%;top:26%;height:36%;border-radius:4px;background:#f4f4ef;box-shadow:0 1px 3px rgba(0,0,0,.25)"><div style="position:absolute;left:8%;top:14%;width:30%;height:60%;background:#b8c4d0;border-radius:2px"></div><div style="position:absolute;left:46%;top:18%;width:42%;height:3px;background:#8d8d88"></div><div style="position:absolute;left:46%;top:36%;width:34%;height:2px;background:#c9c9c4"></div><div style="position:absolute;left:46%;top:50%;width:38%;height:2px;background:#c9c9c4"></div></div>`}
+else if(d.kind==='table'){let g='';for(let c=0;c<4;c++)g+=`<div style="position:absolute;left:${10+c*20}%;top:18%;bottom:10%;width:1px;background:#d6d6d0"></div>`;for(let r=0;r<9;r++)g+=`<div style="position:absolute;left:10%;right:10%;top:${18+r*8.5}%;height:1px;background:#d6d6d0"></div>`;inner=`<div style="position:absolute;left:10%;top:8%;width:46%;height:${gap}px;background:#8d8d88;border-radius:1px"></div>`+g}
+else{bg=S.dark?'#2c3a34':'#bfd0c6';inner=`<div style="position:absolute;left:8%;right:8%;top:10%;bottom:12%;background:#f7f7f4;border-radius:2px"><div style="position:absolute;left:12%;top:20%;width:60%;height:3px;background:#2a6fd6;transform:rotate(-4deg)"></div><div style="position:absolute;left:12%;top:40%;width:44%;height:3px;background:#d63a2a;transform:rotate(2deg)"></div><div style="position:absolute;left:12%;top:60%;width:52%;height:3px;background:#2a6fd6;transform:rotate(-2deg)"></div></div>`}
+return`<div style="position:absolute;inset:0;border-radius:${rad}px;overflow:hidden;background:${bg}">${inner}</div>`}
+function chip(r,a,html,x){return`<div style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:11px;font-size:11px;font-weight:600;white-space:nowrap;max-width:100%;box-sizing:border-box;${a?`background:${r.chip};color:${r.onCont}`:`background:${r.chip};border:1px solid ${r.gb};${BF}color:${r.txt}`};${x||''}"><span style="overflow:hidden;text-overflow:ellipsis;display:inline-flex;align-items:center;gap:4px">${html}</span></div>`}
+function pill(r,a,segs){const sep=a?`${r.onCont}33`:'rgba(128,128,128,.4)';return`<div style="display:inline-flex;align-items:stretch;border-radius:11px;font-size:11px;font-weight:600;white-space:nowrap;${a?`background:${r.chip};color:${r.onCont}`:`background:${r.chip};border:1px solid ${r.gb};${BF}color:${r.txt}`}">${segs.map((x,n)=>`${n?`<span style="width:1px;background:${sep}"></span>`:''}<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 7px">${x}</span>`).join('')}</div>`}
+const SVC={gd:['Google Drive','#34a853'],nc:['Nextcloud','#0082c9'],wd:['WebDAV','#ff9800'],fo:['Folder','#9c27b0'],db:['Dropbox','#0061ff'],od:['OneDrive','#00a4ef'],sf:['SFTP','#607d8b']};
+const dots=(arr,ring,max)=>`<span style="display:inline-flex;align-items:center;gap:4px">${arr.slice(0,max).map(k=>`<span style="width:9px;height:9px;border-radius:5px;background:${SVC[k][1]};box-shadow:0 0 0 1px ${ring}"></span>`).join('')}${arr.length>max?`<span style="font-size:10px">+${arr.length-max}</span>`:''}</span>`;
+const ringOf=(r,a)=>a?r.chip:(S.dark?'rgba(0,0,0,.45)':'rgba(255,255,255,.8)');
+const listChip=(r,a,html)=>`<span style="display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 8px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap;background:${a?r.chip:(S.dark?'rgba(118,118,128,.3)':'rgba(118,118,128,.14)')};color:${a?r.onCont:r.txt}">${html}</span>`;
+function tile(d,r,w,o){o=o||{};const a=S.plat==='android',h=Math.round(w*1.41),rad=Math.max(6,Math.min(21,Math.round(.18*Math.min(w,h))));
+const auto=!d.name;const lab=o.chip===false?'':`<div style="position:absolute;left:8px;bottom:8px;right:8px">${chip(r,a,auto?`${ic('calendar',11)}${d.date}`:d.name,auto?'font-weight:500':'')}</div>`;
+const segs=[];if(d.pages>1)segs.push(`${ic('stack-2',12)}${d.pages}`);if(d.fav)segs.push(ic('star',12));
+const info=segs.length&&o.chip!==false?`<div style="position:absolute;right:8px;top:8px">${pill(r,a,segs)}</div>`:'';
+const syncPill=S.sync&&d.sync.length&&o.chip!==false?`<div style="position:absolute;right:8px;top:${segs.length?36:8}px">${pill(r,a,[dots(d.sync,ringOf(r,a),5)])}</div>`:'';
+const sel=o.sel?`<div style="position:absolute;left:8px;top:8px;width:22px;height:22px;border-radius:11px;background:${r.acc};color:${r.onAcc};display:flex;align-items:center;justify-content:center;border:2px solid ${a?r.page:'#fff'};box-sizing:content-box;margin:-2px 0 0 -2px;z-index:2">${ic('check',13)}</div>`:'';
+return`<div style="position:relative;width:${w}px;height:${h}px;border-radius:${rad}px;overflow:hidden;${o.sel?'transform:scale(.95);':''}${S.dark?'':'box-shadow:0 0 0 .5px rgba(0,0,0,.12);'}">${pageArt(d,w,h,rad)}${lab}${info}${syncPill}${sel}</div>`}
+const frame=(inner,r)=>{const i=S.plat==='ios';return`<div style="width:300px;height:650px;border-radius:${i?46:36}px;background:${r.page};border:6px solid #17171a;box-sizing:border-box;position:relative;overflow:hidden;font-family:${i?'-apple-system,system-ui,sans-serif':'Roboto,system-ui,sans-serif'};color:${r.txt}"><div style="position:absolute;top:8px;${i?'left:50%;margin-left:-42px;width:84px;height:24px':'left:50%;margin-left:-7px;width:14px;height:14px'};border-radius:12px;background:#000;z-index:100"></div>${inner}</div>`};
+const Z='z-index:50;';
+function chrome(r,o){o=o||{};const i=S.plat==='ios';
+if(i){const glass=`background:${r.glass};border:1px solid ${r.gb};${BF}`;
+const head=o.sel?`<div style="position:absolute;left:20px;top:58px;font-size:26px;font-weight:700;${Z}">3 selected</div><div style="position:absolute;right:14px;top:52px;height:44px;padding:0 18px;border-radius:22px;${glass}display:flex;align-items:center;font-size:15px;color:${r.acc};font-weight:600;${Z}">Done</div>`:`<div style="position:absolute;left:20px;top:100px;font-size:32px;font-weight:700;${Z}">Documents</div><div style="position:absolute;right:14px;top:52px;height:44px;width:128px;border-radius:22px;${glass}display:flex;align-items:center;justify-content:space-around;${Z}">${ic('plus',22)}${ic('settings',22,r.acc)}${ic('dots',22)}</div>`;
+const foot=o.sel?`<div style="position:absolute;left:14px;right:14px;bottom:16px;height:52px;border-radius:26px;${glass}display:flex;align-items:center;justify-content:space-around;${Z}">${ic('share',22)}${ic('star',22)}${ic('folder',22)}${ic('trash',22,'#ff453a')}</div>`:`<div style="position:absolute;left:16px;right:76px;bottom:16px;height:48px;border-radius:24px;${glass}display:flex;align-items:center;gap:8px;padding:0 16px;color:${r.sub};font-size:15px;${Z}">${ic('search',19,r.txt)} Search</div><div style="position:absolute;right:16px;bottom:16px;width:48px;height:48px;border-radius:24px;${glass}display:flex;align-items:center;justify-content:center;${Z}">${ic('camera',22)}</div>`;
+return head+foot}
+const head=o.sel?`<div style="position:absolute;left:0;right:0;top:36px;height:60px;background:${r.cont};display:flex;align-items:center;gap:16px;padding:0 16px;color:${r.onCont};${Z}">${ic('x',24)}<span style="font-size:20px;flex:1">3</span>${ic('star',24)}${ic('folder',24)}${ic('trash',24)}${ic('dots-vertical',24)}</div>`:`<div style="position:absolute;left:16px;right:16px;top:44px;height:52px;border-radius:26px;background:${r.bar};display:flex;align-items:center;gap:14px;padding:0 16px;color:${r.txt};${Z}">${ic('search',22)}<span style="flex:1;font-size:15px;color:${r.sub};white-space:nowrap">Search</span>${ic('dots-vertical',22)}<span style="width:30px;height:30px;border-radius:15px;background:${r.cont};color:${r.onCont};display:flex;align-items:center;justify-content:center">${ic('settings',17)}</span></div>`;
+const fab=o.sel?'':`<div style="position:absolute;right:20px;bottom:86px;width:40px;height:40px;border-radius:20px;background:${r.cont};color:${r.onCont};display:flex;align-items:center;justify-content:center;${Z}">${ic('file-import',21)}</div><div style="position:absolute;right:16px;bottom:18px;height:56px;padding:0 20px;border-radius:28px;background:${r.cont};color:${r.onCont};display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600;${Z}">${ic('camera',22)} Scan</div>`;
+return head+fab}
+const FO=[['Travel',3],['Work',12],['Taxes',4]];
+function folders(r,top){const a=S.plat==='android';
+if(S.fold==='h'){let x=16,out='';FO.forEach((f,i)=>{out+=`<div style="position:absolute;left:${x}px;top:${top}px;width:132px;height:54px;border-radius:${a?20:16}px;background:${a?r.low:r.row};display:flex;align-items:center;gap:8px;padding:0 10px"><div style="width:32px;height:32px;border-radius:16px;background:${a?r.cont:'color-mix(in srgb,'+r.acc+' 20%,transparent)'};color:${a?r.onCont:r.acc};display:flex;align-items:center;justify-content:center">${ic('folder',18)}</div><div><div style="font-size:13px;font-weight:600">${f[0]}</div><div style="font-size:11px;color:${r.sub}">${f[1]} documents</div></div></div>`;x+=140});return{html:out,bottom:top+66}}
+const rows=FO.slice(0,2).map((f,i)=>`<div style="height:46px;display:flex;align-items:center;gap:10px;padding:0 14px;${a?`border-radius:${i===0?'20px 20px 6px 6px':'6px 6px 20px 20px'};background:${r.low};margin-bottom:${i===0?2:0}px`:`border-top:${i?'0.5px solid '+r.sep:'none'}`}"><div style="width:30px;height:30px;border-radius:15px;background:${a?r.cont:'color-mix(in srgb,'+r.acc+' 20%,transparent)'};color:${a?r.onCont:r.acc};display:flex;align-items:center;justify-content:center">${ic('folder',17)}</div><span style="flex:1;font-size:14px;font-weight:600">${f[0]}</span><span style="font-size:12px;color:${r.sub}">${f[1]}</span>${ic('chevron-right',16,r.sub)}</div>`).join('');
+return{html:`<div style="position:absolute;left:16px;right:16px;top:${top}px;${a?'':`border-radius:18px;background:${r.row};overflow:hidden`}">${rows}</div>`,bottom:top+(a?98:96)+12}}
+function viewGrid(r,top,o){const f=folders(r,top);let out=f.html;const w=128;DOCS.slice(0,6).forEach((d,i)=>{const x=16+(i%2)*(w+12),yy=f.bottom+Math.floor(i/2)*(Math.round(w*1.41)+12);out+=`<div style="position:absolute;left:${x}px;top:${yy}px">${tile(d,r,w,{sel:o&&o.sel&&(i===0||i===3||i===4)})}</div>`});return out}
+function viewList(r,top){const f=folders(r,top),a=S.plat==='android';const n=6;const rows=DOCS.slice(0,n).map((d,i)=>{const rad=a?(i===0?'20px 20px 6px 6px':i===n-1?'6px 6px 20px 20px':'6px'):'0';const ring=a?r.chip:'transparent';const chips=[d.pages>1?`<div style="display:flex">${listChip(r,a,`${ic('stack-2',12)}${d.pages}`)}</div>`:'',S.sync&&d.sync.length?`<div style="display:flex">${listChip(r,a,dots(d.sync,ring,6))}</div>`:''].filter(Boolean).join('');return`<div style="min-height:84px;box-sizing:border-box;display:flex;align-items:center;gap:12px;padding:10px 12px;${a?`background:${r.low};border-radius:${rad};margin-bottom:2px`:`border-top:${i?'0.5px solid '+r.sep:'none'}`}"><div style="position:relative;width:48px;height:62px;flex:none">${pageArt(d,48,62,9)}</div><div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${label(d)}</div><div style="font-size:12px;color:${r.sub};margin-top:2px;white-space:nowrap">${d.date} · ${d.size}</div>${chips?`<div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px;margin-top:5px">${chips}</div>`:''}</div>${d.fav?ic('star',16,r.acc):''}${ic('chevron-right',16,r.sub)}</div>`
+}).join('');
+return f.html+`<div style="position:absolute;left:16px;right:16px;top:${f.bottom}px;${a?'':`border-radius:18px;background:${r.row};overflow:hidden`}">${rows}</div>`}
+function empty(r){const a=S.plat==='android';return`<div style="position:absolute;left:0;right:0;top:230px;text-align:center;padding:0 36px"><div style="width:84px;height:84px;margin:0 auto 18px;border-radius:${a?'30px':'42px'};${a?`background:${r.cont};color:${r.onCont}`:`background:${r.glass};border:1px solid ${r.gb};${BF}color:${r.acc}`};display:flex;align-items:center;justify-content:center">${ic('scan',40)}</div><div style="font-size:20px;font-weight:700">Scan your first document</div><div style="font-size:14px;color:${r.sub};margin-top:6px;line-height:1.4">Use the camera, or import images and PDF files.</div><div style="display:inline-block;margin-top:18px;padding:12px 24px;border-radius:${a?'28px':'24px'};background:${r.acc};color:${r.onAcc};font-size:15px;font-weight:600">Scan a document</div><div style="margin-top:14px;font-size:15px;font-weight:600;color:${r.acc}">Import</div></div>`}
+function menu(r){const a=S.plat==='android',d=S.dark;const ck=(on)=>on?ic('check',17,r.acc):'<span style="width:17px"></span>';
+const hdr=t=>`<div style="padding:${a?'10px 16px 4px':'8px 16px 2px'};font-size:${a?12:11}px;font-weight:600;letter-spacing:${a?0:.4}px;${a?'':'text-transform:uppercase;'}color:${a?r.acc:r.sub}">${t}</div>`;
+const it=(t,on,icn)=>`<div style="height:${a?44:42}px;display:flex;align-items:center;gap:12px;padding:0 16px;font-size:15px">${icn?ic(icn,19,r.txt):ck(on)}<span style="flex:1">${t}</span>${icn&&on?ic('check',17,r.acc):''}</div>`;
+const sep=`<div style="height:${a?1:6}px;background:${a?r.sep||r.sub+'33':(d?'rgba(255,255,255,.08)':'rgba(0,0,0,.06)')};margin:${a?'4px 0':'2px 0'}"></div>`;
+const box=a?`background:${d?'#2b2c2e':'#e9eef6'};border-radius:16px;box-shadow:0 4px 12px rgba(0,0,0,.25)`:`${BF}background:${d?'rgba(44,44,48,.78)':'rgba(255,255,255,.78)'};border:1px solid ${r.gb};border-radius:18px;box-shadow:0 8px 28px rgba(0,0,0,.22)`;
+const m=`<div style="position:absolute;right:${a?16:14}px;top:${a?96:100}px;width:226px;padding:4px 0;${box};z-index:60">${it('Select',0,'checkbox')}${sep}${hdr('View')}${it('Grid',1,'layout-grid')}${it('List',0,'list')}${sep}${hdr('Sort by')}${it('Date, newest first',1)}${it('Name',0)}${it('Most used',0)}${sep}${hdr('Folders')}${it('Horizontal',1)}${it('Vertical',0)}${sep}${it('Trash',0,'trash')}</div>`;
+return viewGrid(r,TOP())+`<div style="position:absolute;inset:0;background:rgba(0,0,0,.18);z-index:55"></div>`+m+chrome(r)}
+const TOP=()=>S.plat==='ios'?152:110;
+function phone(kind){const r=roles();let body='';const top=TOP();
+if(kind==='grid')body=viewGrid(r,top);if(kind==='list')body=viewList(r,top);if(kind==='sel')body=viewGrid(r,top,{sel:true});if(kind==='empty')body=empty(r);if(kind==='menu')return frame(menu(r),r);
+return frame(body+chrome(r,{sel:kind==='sel'}),r)}
+const scaled=(html,label)=>`<div style="width:160px"><div style="width:160px;height:347px"><div style="width:300px;height:650px;transform:scale(.5333);transform-origin:0 0">${html}</div></div><div style="font-size:12px;color:var(--text-secondary);text-align:center;margin-top:6px">${label}</div></div>`;
+function anatomy(){const r=roles();const T=[['Named',DOCS[0],0],['Auto name (date)',DOCS[1],0],['Several pages, not synced',{...DOCS[2],fav:0},0],['3 services, favorite, selected',DOCS[3],1],['One service',DOCS[4],0],['7 services: 5 dots and +2',DOCS[7],0]];
+return`<div style="display:grid;grid-template-columns:repeat(4,128px);gap:14px 12px">${T.map(t=>`<div>${tile(t[1],r,128,{sel:t[2]})}<div style="font-size:12px;color:var(--text-secondary);margin-top:6px">${t[0]}</div></div>`).join('')}</div>`}
+function render(){const row=(items)=>`<div style="display:flex;gap:12px;margin-bottom:18px">${items.map(x=>scaled(phone(x[0]),x[1])).join('')}</div>`;
+document.getElementById('out').innerHTML=row([['grid','Grid'],['list','List'],['sel','Selection'],['menu','View and sort menu']])+row([['empty','Empty']])+`<div style="font-size:14px;font-weight:500;margin:6px 0 10px">Tile anatomy</div>`+anatomy()+`<div style="font-size:14px;font-weight:500;margin:18px 0 8px">Sync services (color set in Settings, Sync)</div><div style="display:flex;gap:14px;font-size:13px">${Object.values(SVC).map(v=>`<span style="display:inline-flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:5px;background:${v[1]}"></span>${v[0]}</span>`).join('')}</div>`;
+const on=(id,v)=>document.getElementById(id).style.background=v?'var(--surface-1)':'transparent';on('bl',!S.dark);on('bd',S.dark);on('pi',S.plat==='ios');on('pa',S.plat==='android');on('fh',S.fold==='h');on('fv',S.fold==='v');on('so',S.sync);on('sf',!S.sync)}
+[['bl',()=>S.dark=false],['bd',()=>S.dark=true],['pi',()=>S.plat='ios'],['pa',()=>S.plat='android'],['fh',()=>S.fold='h'],['fv',()=>S.fold='v'],['so',()=>S.sync=true],['sf',()=>S.sync=false]].forEach(x=>document.getElementById(x[0]).onclick=()=>{x[1]();render()});
+render();
+</script>
+</body>
+</html>

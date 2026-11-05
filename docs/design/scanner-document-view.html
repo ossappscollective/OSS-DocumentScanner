@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Document Scanner document view: pages grid, selection, menu, rename, reorder (iOS and Android)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
+<style>
+:root{--text-primary:#1f1f1e;--text-secondary:#5f5e5a;--border-strong:#c8c6bd;--surface-1:#e9e8e1;--page:#fafaf7}
+@media(prefers-color-scheme:dark){:root{--text-primary:#f1f0ea;--text-secondary:#b0aea5;--border-strong:#4a4944;--surface-1:#34332f;--page:#1c1c1a}}
+body{font-family:system-ui,sans-serif;margin:24px;background:var(--page);color:var(--text-primary);max-width:720px}
+button{font:inherit;font-size:13px;color:var(--text-primary);background:transparent;border:0.5px solid var(--border-strong);border-radius:8px;padding:5px 12px;cursor:pointer}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+</style>
+</head>
+<body>
+<h2 class="sr-only">Document Scanner document view on iOS and Android: pages grid in two or three columns, page selection, more menu, export menu, rename, reorder pages sheet and page tile anatomy.</h2>
+<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 14px">
+<button id="bl">Light</button><button id="bd">Dark</button>
+<span style="width:1px;height:20px;background:var(--border-strong)"></span>
+<button id="pi">iOS</button><button id="pa">Android</button>
+<span style="width:1px;height:20px;background:var(--border-strong)"></span>
+<span style="font-size:13px;color:var(--text-secondary)">Columns</span>
+<button id="c2">2</button><button id="c3">3</button>
+</div>
+<div id="out"></div>
+<script>
+const S={dark:false,plat:'ios',cols:2};
+const BF='backdrop-filter:blur(18px) saturate(1.7);-webkit-backdrop-filter:blur(18px) saturate(1.7);';
+const ic=(n,sz,c)=>`<i class="ti ti-${n}" style="font-size:${sz||20}px;${c?'color:'+c:''}"></i>`;
+function roles(){const d=S.dark;if(S.plat==='ios')return{acc:d?'#6fb3ff':'#0a60ff',onAcc:d?'#000':'#fff',page:d?'#000':'#f2f2f7',row:d?'#1c1c1e':'#fff',txt:d?'#fff':'#000',sub:d?'rgba(235,235,245,.65)':'rgba(60,60,67,.65)',glass:d?'rgba(70,70,76,.5)':'rgba(255,255,255,.55)',chip:d?'rgba(40,40,44,.66)':'rgba(255,255,255,.7)',gb:d?'rgba(255,255,255,.2)':'rgba(255,255,255,.85)',sep:d?'rgba(84,84,88,.6)':'rgba(60,60,67,.18)',fill:d?'rgba(118,118,128,.24)':'rgba(118,118,128,.12)'};
+return{acc:d?'#a8c7fa':'#0b57d0',onAcc:d?'#062e6f':'#fff',cont:d?'#1d3a6a':'#d3e3fd',onCont:d?'#d3e3fd':'#041e49',page:d?'#131314':'#fdfcfb',low:d?'#1e1f20':'#f3f3f6',bar:d?'#2b2c2e':'#e9eef6',txt:d?'#e3e3e3':'#1f1f1f',sub:d?'#c4c7c5':'#5f6368',chip:d?'#1d3a6a':'#d3e3fd',sep:d?'#c4c7c533':'#5f636833'}}
+const DOC={name:'Rental contract',date:'Nov 2, 2026',size:'2.4 MB',sync:['gd','nc']};
+const SVC={gd:['Google Drive','#34a853'],nc:['Nextcloud','#0082c9'],wd:['WebDAV','#ff9800']};
+const syncRow=r=>{const a=S.plat==='android';return`<div style="display:flex;gap:6px;margin-top:8px">${DOC.sync.map(k=>`<span style="display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 10px;border-radius:12px;font-size:12px;font-weight:600;background:${a?r.chip:(S.dark?'rgba(118,118,128,.3)':'rgba(118,118,128,.14)')};color:${a?r.onCont:r.txt}"><span style="width:9px;height:9px;border-radius:5px;background:${SVC[k][1]}"></span>${SVC[k][0]}</span>`).join('')}</div>`};
+const PAGES=[{kind:'title',size:'2480 x 3508'},{kind:'letter',size:'2480 x 3508',ocr:1},{kind:'letter',size:'2480 x 3508',ocr:1},{kind:'table',size:'2480 x 3508'},{kind:'letter',size:'2480 x 3508',ocr:1},{kind:'sign',size:'2480 x 3508'},{kind:'letter',size:'2480 x 3508'},{kind:'photo',size:'3024 x 4032'}];
+function seed(n){let s=n*9301+49297;return()=>(s=(s*9301+49297)%233280)/233280}
+function lines(rnd,w,h,top,gap,min){let o='',y=top;while(y<h-gap){o+=`<div style="position:absolute;left:10%;top:${y}px;width:${Math.round(w*(min+rnd()*(0.8-min)))}px;height:${Math.max(1.5,gap/3.2)}px;border-radius:1px;background:#c9c9c4"></div>`;y+=gap}return o}
+function pageArt(p,i,w,h,rad){const rnd=seed(i*11+3);const gap=Math.max(5,Math.round(h/20));let bg='#fbfbf8',inner='';
+if(p.kind==='title')inner=`<div style="position:absolute;left:10%;top:14%;width:62%;height:${gap*1.6}px;background:#8d8d88;border-radius:1px"></div><div style="position:absolute;left:10%;top:${14+gap*.9}%;width:40%;height:${gap*.9}px;background:#c9c9c4;border-radius:1px"></div>`+lines(rnd,w,h,h*.45,gap,.5);
+else if(p.kind==='letter')inner=`<div style="position:absolute;left:10%;top:9%;width:34%;height:${gap*1.1}px;background:#8d8d88;border-radius:1px"></div>`+lines(rnd,w,h,h*.2,gap,.55);
+else if(p.kind==='table'){let g='';for(let c=0;c<4;c++)g+=`<div style="position:absolute;left:${10+c*20}%;top:18%;bottom:10%;width:1px;background:#d6d6d0"></div>`;for(let r=0;r<9;r++)g+=`<div style="position:absolute;left:10%;right:10%;top:${18+r*8.5}%;height:1px;background:#d6d6d0"></div>`;inner=`<div style="position:absolute;left:10%;top:8%;width:46%;height:${gap}px;background:#8d8d88;border-radius:1px"></div>`+g}
+else if(p.kind==='sign')inner=lines(rnd,w,h*.55,h*.1,gap,.55)+`<div style="position:absolute;left:12%;top:72%;width:34%;height:1px;background:#8d8d88"></div><div style="position:absolute;left:58%;top:72%;width:30%;height:1px;background:#8d8d88"></div><div style="position:absolute;left:16%;top:62%;width:24%;height:14px;border-bottom:2px solid #2a6fd6;border-radius:0 0 50% 50%;transform:rotate(-6deg)"></div>`;
+else{bg=S.dark?'#2c3a34':'#bfd0c6';inner=`<div style="position:absolute;left:8%;right:8%;top:10%;bottom:12%;background:#f7f7f4;border-radius:2px"><div style="position:absolute;left:12%;top:20%;width:60%;height:3px;background:#2a6fd6;transform:rotate(-4deg)"></div><div style="position:absolute;left:12%;top:40%;width:44%;height:3px;background:#d63a2a;transform:rotate(2deg)"></div></div>`}
+return`<div style="position:absolute;inset:0;border-radius:${rad}px;overflow:hidden;background:${bg}">${inner}</div>`}
+function chip(r,a,html,x){return`<div style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:11px;font-size:11px;font-weight:600;white-space:nowrap;${a?`background:${r.chip};color:${r.onCont}`:`background:${r.chip};border:1px solid ${r.gb};${BF}color:${r.txt}`};${x||''}">${html}</div>`}
+function tile(p,i,r,w,o){o=o||{};const a=S.plat==='android',h=Math.round(w*1.41),rad=Math.max(6,Math.min(21,Math.round(.18*Math.min(w,h))));
+const num=`<div style="position:absolute;left:8px;bottom:8px">${chip(r,a,i+1)}</div>`;
+const ocr=p.ocr?`<div style="position:absolute;right:8px;top:8px">${chip(r,a,ic('text-recognition',12),'padding:0;width:22px;height:22px;justify-content:center;border-radius:11px')}</div>`:'';
+const sel=o.sel?`<div style="position:absolute;left:8px;top:8px;width:22px;height:22px;border-radius:11px;background:${r.acc};color:${r.onAcc};display:flex;align-items:center;justify-content:center;border:2px solid ${a?r.page:'#fff'};box-sizing:content-box;margin:-2px 0 0 -2px;z-index:2">${ic('check',13)}</div>`:'';
+const handle=o.handle?`<div style="position:absolute;right:8px;bottom:8px;color:${r.sub}">${ic('grip-vertical',16)}</div>`:'';
+return`<div style="position:relative;width:${w}px;height:${h}px;border-radius:${rad}px;overflow:hidden;${o.sel?'transform:scale(.95);':''}${S.dark?'':'box-shadow:0 0 0 .5px rgba(0,0,0,.12);'}">${pageArt(p,i,w,h,rad)}${o.sel?'':num}${ocr}${sel}${handle}</div>`}
+const frame=(inner,r)=>{const i=S.plat==='ios';return`<div style="width:300px;height:650px;border-radius:${i?46:36}px;background:${r.page};border:6px solid #17171a;box-sizing:border-box;position:relative;overflow:hidden;font-family:${i?'-apple-system,system-ui,sans-serif':'Roboto,system-ui,sans-serif'};color:${r.txt}"><div style="position:absolute;top:8px;${i?'left:50%;margin-left:-42px;width:84px;height:24px':'left:50%;margin-left:-7px;width:14px;height:14px'};border-radius:12px;background:#000;z-index:100"></div>${inner}</div>`};
+const Z='z-index:50;';
+function head(r,o){o=o||{};const i=S.plat==='ios',glass=`background:${r.glass};border:1px solid ${r.gb};${BF}`;
+if(i){const left=o.sel||o.rename?'':`<div style="position:absolute;left:14px;top:52px;width:44px;height:44px;border-radius:22px;${glass}display:flex;align-items:center;justify-content:center;${Z}">${ic('chevron-left',22,r.acc)}</div>`;
+const right=o.sel?`<div style="position:absolute;right:14px;top:52px;height:44px;padding:0 18px;border-radius:22px;${glass}display:flex;align-items:center;font-size:15px;color:${r.acc};font-weight:600;${Z}">Done</div>`:o.rename?`<div style="position:absolute;right:14px;top:52px;height:44px;padding:0 18px;border-radius:22px;background:${r.acc};color:${r.onAcc};display:flex;align-items:center;font-size:15px;font-weight:600;${Z}">Save</div><div style="position:absolute;left:14px;top:52px;height:44px;padding:0 18px;border-radius:22px;${glass}display:flex;align-items:center;font-size:15px;${Z}">Cancel</div>`:`<div style="position:absolute;right:14px;top:52px;height:44px;width:96px;border-radius:22px;${glass}display:flex;align-items:center;justify-content:space-around;${Z}">${ic('star',22,r.acc)}${ic('dots',22)}</div>`;
+const title=o.sel?`<div style="position:absolute;left:20px;top:106px;font-size:26px;font-weight:700;${Z}">3 selected</div>`:o.rename?'':`<div style="position:absolute;left:20px;top:104px;right:20px;${Z}"><div style="font-size:32px;font-weight:700;line-height:1.1">${DOC.name}</div><div style="font-size:13px;color:${r.sub};margin-top:4px">${DOC.date} · ${PAGES.length} pages · ${DOC.size}</div>${syncRow(r)}</div>`;
+return left+right+title}
+if(o.sel)return`<div style="position:absolute;left:0;right:0;top:36px;height:60px;background:${r.cont};display:flex;align-items:center;gap:16px;padding:0 16px;color:${r.onCont};${Z}">${ic('x',24)}<span style="font-size:20px;flex:1">3</span>${ic('share',24)}${ic('trash',24)}${ic('dots-vertical',24)}</div>`;
+if(o.rename)return`<div style="position:absolute;left:0;right:0;top:36px;height:60px;display:flex;align-items:center;gap:16px;padding:0 16px;${Z}">${ic('x',24)}<span style="flex:1"></span><span style="font-size:14px;font-weight:600;color:${r.acc}">Save</span></div>`;
+return`<div style="position:absolute;left:0;right:0;top:36px;height:60px;display:flex;align-items:center;gap:16px;padding:0 16px;${Z}">${ic('arrow-left',24)}<span style="flex:1"></span>${ic('star',24,r.acc)}${ic('dots-vertical',24)}</div><div style="position:absolute;left:16px;right:16px;top:100px;${Z}"><div style="font-size:28px;font-weight:600;line-height:1.15">${DOC.name}</div><div style="font-size:13px;color:${r.sub};margin-top:4px">${DOC.date} · ${PAGES.length} pages · ${DOC.size}</div>${syncRow(r)}</div>`}
+function foot(r,o){o=o||{};const i=S.plat==='ios';
+if(i){const glass=`background:${r.glass};border:1px solid ${r.gb};${BF}`;
+if(o.sel)return`<div style="position:absolute;left:14px;right:14px;bottom:16px;height:52px;border-radius:26px;${glass}display:flex;align-items:center;justify-content:space-around;${Z}">${ic('share',22)}${ic('file-type-pdf',22)}${ic('text-recognition',22)}${ic('trash',22,'#ff453a')}</div>`;
+return`<div style="position:absolute;left:14px;right:14px;bottom:16px;height:52px;border-radius:26px;${glass}display:flex;align-items:center;padding:0 6px 0 10px;gap:4px;${Z}"><div style="width:44px;display:flex;justify-content:center">${ic('share',22)}</div><div style="width:44px;display:flex;justify-content:center">${ic('photo-plus',22)}</div><span style="flex:1"></span><div style="height:40px;padding:0 18px;border-radius:20px;background:${r.acc};color:${r.onAcc};display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600">${ic('camera',20)} Add</div></div>`}
+if(o.sel)return'';
+return`<div style="position:absolute;right:20px;bottom:86px;width:40px;height:40px;border-radius:20px;background:${r.cont};color:${r.onCont};display:flex;align-items:center;justify-content:center;${Z}">${ic('share',21)}</div><div style="position:absolute;right:16px;bottom:18px;height:56px;padding:0 20px;border-radius:28px;background:${r.cont};color:${r.onCont};display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600;${Z}">${ic('camera',22)} Add</div>`}
+function grid(r,top,o){o=o||{};const n=S.cols,gap=12,w=Math.floor((268-gap*(n-1))/n),h=Math.round(w*1.41);let out='';PAGES.slice(0,n===2?6:9).forEach((p,i)=>{if(i>=PAGES.length)return;const x=16+(i%n)*(w+gap),y=top+Math.floor(i/n)*(h+gap);out+=`<div style="position:absolute;left:${x}px;top:${y}px">${tile(p,i,r,w,{sel:o.sel&&(i===1||i===2||i===4),handle:o.handle})}</div>`});return out}
+const GRID_TOP=S=>S.plat==='ios'?204:208;
+function menuBox(r){const a=S.plat==='android',d=S.dark;return a?`background:${d?'#2b2c2e':'#e9eef6'};border-radius:16px;box-shadow:0 4px 12px rgba(0,0,0,.25)`:`${BF}background:${d?'rgba(44,44,48,.78)':'rgba(255,255,255,.78)'};border:1px solid ${r.gb};border-radius:18px;box-shadow:0 8px 28px rgba(0,0,0,.22)`}
+function menuItem(r,t,icn,col){const a=S.plat==='android';return`<div style="height:${a?44:42}px;display:flex;align-items:center;gap:12px;padding:0 16px;font-size:15px;${col?'color:'+col:''}">${ic(icn,19,col||r.txt)}<span style="flex:1">${t}</span></div>`}
+const msep=r=>`<div style="height:${S.plat==='android'?1:6}px;background:${S.plat==='android'?r.sep:(S.dark?'rgba(255,255,255,.08)':'rgba(0,0,0,.06)')};margin:${S.plat==='android'?'4px 0':'2px 0'}"></div>`;
+const red=()=>S.plat==='ios'?'#ff453a':(S.dark?'#f2b8b5':'#b3261e');
+function moreMenu(r){const a=S.plat==='android';const m=`<div style="position:absolute;right:${a?16:14}px;top:${a?96:100}px;width:226px;padding:4px 0;${menuBox(r)};z-index:60">${menuItem(r,'Rename','pencil')}${menuItem(r,'Select pages','checkbox')}${menuItem(r,'Reorder pages','arrows-sort')}${menuItem(r,'Move to folder','folder')}${msep(r)}${menuItem(r,'Detect text (OCR)','text-recognition')}${menuItem(r,'Transform pages','wand')}${menuItem(r,'Remove originals','photo-off')}${msep(r)}${menuItem(r,'Delete','trash',red())}</div>`;return grid(r,GRID_TOP(S))+`<div style="position:absolute;inset:0;background:rgba(0,0,0,.18);z-index:55"></div>`+m+head(r)+foot(r)}
+function exportMenu(r){const a=S.plat==='android';const m=a?`<div style="position:absolute;right:20px;bottom:150px;width:226px;padding:4px 0;${menuBox(r)};z-index:60">${menuItem(r,'PDF','file-type-pdf')}${menuItem(r,'Images','photo')}${menuItem(r,'Share','share')}</div>`:`<div style="position:absolute;left:14px;bottom:80px;width:226px;padding:4px 0;${menuBox(r)};z-index:60">${menuItem(r,'PDF','file-type-pdf')}${menuItem(r,'Images','photo')}${menuItem(r,'Share','share')}</div>`;return grid(r,GRID_TOP(S))+`<div style="position:absolute;inset:0;background:rgba(0,0,0,.18);z-index:55"></div>`+m+head(r)+foot(r)}
+function rename(r){const a=S.plat==='android',d=S.dark;const caret=`<span style="display:inline-block;width:1.5px;height:20px;background:${r.acc};vertical-align:-4px"></span>`;
+const field=a?`<div style="position:absolute;left:16px;right:16px;top:110px;height:56px;box-sizing:border-box;border-radius:20px 20px 20px 6px;border:2px solid ${r.acc};padding:0 14px;display:flex;flex-direction:column;justify-content:center;${Z}"><div style="font-size:11px;color:${r.acc}">Name</div><div style="font-size:16px;margin-top:1px">${DOC.name}${caret}</div></div>`:`<div style="position:absolute;left:16px;right:16px;top:110px;${Z}"><div style="height:48px;box-sizing:border-box;border-radius:24px;background:${r.fill};box-shadow:inset 0 0 0 1.5px ${r.acc};padding:0 16px;display:flex;align-items:center;font-size:17px">${DOC.name}${caret}</div></div>`;
+const kb=`<div style="position:absolute;left:0;right:0;bottom:0;height:230px;background:${d?'#2b2b2e':'#d1d3d9'};display:flex;align-items:center;justify-content:center;color:${r.sub};font-size:12px;z-index:60">keyboard</div>`;
+return grid(r,196)+head(r,{rename:1})+field+kb}
+function reorder(r){const a=S.plat==='android',d=S.dark;const rows=PAGES.slice(0,6).map((p,i)=>`<div style="height:72px;display:flex;align-items:center;gap:12px;padding:0 14px;${i===2?`background:${r.acc}22;`:''}${a?'':`border-top:${i?'0.5px solid '+r.sep:'none'}`}"><div style="position:relative;width:40px;height:56px;flex:none;border-radius:6px;overflow:hidden">${pageArt(p,i,40,56,6)}</div><span style="flex:1;font-size:15px">Page ${i+1}</span>${ic('grip-horizontal',20,r.sub)}</div>`).join('');
+const hd=a?`<div style="display:flex;align-items:center;gap:10px;height:40px;margin-bottom:6px">${ic('x',22)}<div style="flex:1;font-size:16px">Reorder pages</div><div style="font-size:14px;font-weight:500;color:${r.acc}">Save</div></div>`:`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="padding:7px 12px;border-radius:17px;background:${r.fill};font-size:13px">Cancel</div><div style="font-size:14px;font-weight:600">Reorder pages</div><div style="padding:7px 14px;border-radius:17px;background:${r.acc};color:${r.onAcc};font-size:13px;font-weight:600">Save</div></div>`;
+const sheet=`<div style="position:absolute;left:0;right:0;top:120px;bottom:0;background:${a?r.low:r.page};border-radius:${a?28:26}px ${a?28:26}px 0 0;padding:14px 16px 0;z-index:60;box-shadow:0 -4px 16px rgba(0,0,0,.2)">${hd}<div style="${a?'':`border-radius:18px;background:${r.row};overflow:hidden;`}">${rows}</div></div>`;
+return grid(r,GRID_TOP(S))+`<div style="position:absolute;inset:0;background:rgba(0,0,0,.32);z-index:55"></div>`+sheet+head(r)}
+function phone(kind){const r=roles();
+if(kind==='default')return frame(grid(r,GRID_TOP(S))+head(r)+foot(r),r);
+if(kind==='sel')return frame(grid(r,GRID_TOP(S),{sel:true})+head(r,{sel:1})+foot(r,{sel:1}),r);
+if(kind==='menu')return frame(moreMenu(r),r);
+if(kind==='export')return frame(exportMenu(r),r);
+if(kind==='rename')return frame(rename(r),r);
+if(kind==='reorder')return frame(reorder(r),r)}
+const scaled=(html,label)=>`<div style="width:160px"><div style="width:160px;height:347px"><div style="width:300px;height:650px;transform:scale(.5333);transform-origin:0 0">${html}</div></div><div style="font-size:12px;color:var(--text-secondary);text-align:center;margin-top:6px">${label}</div></div>`;
+function anatomy(){const r=roles();const T=[['Page, number chip',PAGES[1],0,0],['Page with detected text',PAGES[2],0,0],['Selected',PAGES[3],1,0],['Reordering (handle)',PAGES[4],0,1],['Photo page',PAGES[7],0,0],['Signature page',PAGES[5],0,0]];
+return`<div style="display:grid;grid-template-columns:repeat(4,128px);gap:14px 12px">${T.map((t,i)=>`<div>${tile(t[1],i,r,128,{sel:t[2],handle:t[3]})}<div style="font-size:12px;color:var(--text-secondary);margin-top:6px">${t[0]}</div></div>`).join('')}</div>`}
+function render(){const row=(items)=>`<div style="display:flex;gap:12px;margin-bottom:18px">${items.map(x=>scaled(phone(x[0]),x[1])).join('')}</div>`;
+document.getElementById('out').innerHTML=row([['default','Pages'],['sel','Selection'],['menu','More menu'],['export','Export menu']])+row([['rename','Rename'],['reorder','Reorder pages']])+`<div style="font-size:14px;font-weight:500;margin:6px 0 10px">Page tile anatomy</div>`+anatomy();
+const on=(id,v)=>document.getElementById(id).style.background=v?'var(--surface-1)':'transparent';on('bl',!S.dark);on('bd',S.dark);on('pi',S.plat==='ios');on('pa',S.plat==='android');on('c2',S.cols===2);on('c3',S.cols===3)}
+[['bl',()=>S.dark=false],['bd',()=>S.dark=true],['pi',()=>S.plat='ios'],['pa',()=>S.plat='android'],['c2',()=>S.cols=2],['c3',()=>S.cols=3]].forEach(x=>document.getElementById(x[0]).onclick=()=>{x[1]();render()});
+render();
+</script>
+</body>
+</html>
