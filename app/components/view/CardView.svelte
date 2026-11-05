@@ -1,7 +1,7 @@
 <script context="module" lang="ts">
     import { Template } from '@nativescript-community/svelte-native/components';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-    import { CollectionView, CollectionViewItemEventData } from '@nativescript-community/ui-collectionview';
+    import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { Img } from '@nativescript-community/ui-image';
     import { SVGView } from '@nativescript-community/ui-svg';
     import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
@@ -101,6 +101,8 @@
         page: OCRPage;
         selected: boolean;
         index: number;
+        /** the photo shown by the pager: its thumbnail is the one at full size */
+        current?: boolean;
     }
     const QRCODES_TYPE = 'qrcodes';
 
@@ -212,7 +214,7 @@
     }
     // $: {
     const pages = document.getObservablePages();
-    let items = pages.map((page, index) => ({ selected: false, page, index, document })) as ObservableArray<Item>;
+    let items = pages.map((page, index) => ({ selected: false, page, index, document, current: index === 0 })) as ObservableArray<Item>;
     // pages.on('change', (event)=>{
     //     switch(event.action) {
     //         case ChangeType.Splice:
@@ -470,26 +472,6 @@
             showError(error);
         }
     }
-    // the current thumbnail is full size, the others are smaller and darker. It is set on the views (not through bindings): rebinding the cells makes RecyclerView animate them as changed items, and a cell which is bound again keeps its old state
-    function setThumbnailState(cell: View, current: boolean, animated: boolean) {
-        // the cell can be a container around the template (a proxy view container has no native view of its own): the views are found by id
-        const thumbnail = cell?.getViewById<View>('thumbnailContent');
-        if (!thumbnail) {
-            return;
-        }
-        const scale = current ? 1 : 0.85;
-        const scrim = thumbnail.getViewById<View>('thumbnailScrim');
-        if (animated) {
-            thumbnail.animate({ scale: { x: scale, y: scale }, duration: 150 });
-            scrim?.animate({ opacity: current ? 0 : 1, duration: 150 });
-        } else {
-            thumbnail.scaleX = scale;
-            thumbnail.scaleY = scale;
-            if (scrim) {
-                scrim.opacity = current ? 0 : 1;
-            }
-        }
-    }
     // a photo next to the current one is selected first, only the current one opens the fullscreen viewer
     function onPhotoTap(item: Item) {
         const index = items.findIndex((i) => i.page === item.page);
@@ -499,29 +481,14 @@
             showFullscreen(index);
         }
     }
-    // the cells are bound before the strip is loaded: the state of the visible ones is set once it is
-    function syncThumbnails() {
-        const strip = collectionView?.nativeView;
-        if (!strip?.isLoaded) {
-            return;
-        }
-        for (let index = 0; index < items.length; index++) {
-            setThumbnailState(strip.getViewForItemAtIndex(index), index === currentImageIndex, false);
-        }
-    }
-    // the strip is created later (once the page is measured): its handler is registered when it exists
-    let thumbnailsStrip: CollectionView;
-    $: {
-        const strip = collectionView?.nativeView;
-        if (strip && strip !== thumbnailsStrip) {
-            thumbnailsStrip = strip;
-            strip.on(CollectionView.itemLoadingEvent, onThumbnailLoading);
-            setTimeout(syncThumbnails, 0);
-            setTimeout(syncThumbnails, 300);
-        }
-    }
-    function onThumbnailLoading(event: CollectionViewItemEventData) {
-        setThumbnailState(event.view, event.index === currentImageIndex, false);
+    // the thumbnail at full size is the one of the current photo: the cells are styled from `current` (see the classes of the template)
+    function setCurrentImage(index: number) {
+        items.forEach((item, position) => {
+            const current = position === index;
+            if (!!item.current !== current) {
+                items.setItem(position, { ...item, current });
+            }
+        });
     }
     // the strip has half a screen of padding at both ends: the offset of a thumbnail from the start is the offset which centers it
     function centerStrip(strip: CollectionView, index: number) {
@@ -537,14 +504,12 @@
         if (Date.now() < ignorePagerIndexUntil) {
             return;
         }
-        const previousImageIndex = currentImageIndex;
         currentImageIndex = event.object.selectedIndex;
+        setCurrentImage(currentImageIndex);
         updateBackdrop();
         // UIKit aborts when a collection view that has not been laid out is scrolled
         const strip = collectionView?.nativeView;
         if (strip?.isLoaded && strip.getMeasuredHeight() > 0) {
-            setThumbnailState(strip.getViewForItemAtIndex(previousImageIndex), false, true);
-            setThumbnailState(strip.getViewForItemAtIndex(currentImageIndex), true, true);
             centerStrip(strip, currentImageIndex);
         }
     }
@@ -718,15 +683,15 @@
             if (event.changedProps?.has('pagesOrder')) {
                 // the pager goes back to its first page by itself with the new items: its events are ignored meanwhile
                 ignorePagerIndexUntil = Date.now() + 600;
-                items.splice(0, items.length, ...document.pages.map((photo, index) => ({ selected: false, page: photo, index, document })));
+                items.splice(0, items.length, ...document.pages.map((photo, index) => ({ selected: false, page: photo, index, document, current: index === 0 })));
                 setTimeout(() => {
                     pager?.nativeElement?.scrollToIndexAnimated(0, false);
                     currentImageIndex = 0;
                     updateBackdrop();
-                    // the cells of the strip are reused: their state and the scroll of the strip follow the new first photo
-                    syncThumbnails();
-                    if (thumbnailsStrip) {
-                        centerStrip(thumbnailsStrip, 0);
+                    // the strip follows the new first photo
+                    const strip = collectionView?.nativeView;
+                    if (strip) {
+                        centerStrip(strip, 0);
                     }
                 }, 200);
             }
@@ -1282,7 +1247,7 @@
                             on:longPress={() => onItemLongPress(item)}
                         >
                             <!-- the content is what is scaled: the cell itself keeps its size and its touch handlers -->
-                            <gridlayout id="thumbnailContent" backgroundColor={getItemBackgroundColor(item)} borderRadius={6}>
+                            <gridlayout class={item.current ? 'thumbnailCurrent' : 'thumbnail'} backgroundColor={getItemBackgroundColor(item)} borderRadius={6}>
                             <RotableImageView
                                 id="imageView"
                                 borderRadius={6}
@@ -1291,7 +1256,7 @@
                                 stretch="aspectFill"
                                 width="100%"
                             />
-                            <gridlayout id="thumbnailScrim" backgroundColor="#00000066" borderRadius={6} isUserInteractionEnabled={false} />
+                            <gridlayout class="thumbnailScrim" backgroundColor="#00000066" borderRadius={6} isUserInteractionEnabled={false} />
                             <gridlayout backgroundColor="rgba(0, 0, 0, 0.3)" borderRadius={6} isUserInteractionEnabled={false} visibility={item.selected ? 'visible' : 'hidden'}>
                                 <label
                                     backgroundColor={colorPrimary}

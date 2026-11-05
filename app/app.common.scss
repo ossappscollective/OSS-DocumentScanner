@@ -336,3 +336,11 @@ textfield,
     margin-bottom: 18;
     width: 84;
 }
+
+// the thumbnails of the photos of a card: the one of the current photo is full size, the others are smaller and darker
+.thumbnail {
+    transform: scale(0.85);
+}
+.thumbnailCurrent .thumbnailScrim {
+    opacity: 0;
+}
