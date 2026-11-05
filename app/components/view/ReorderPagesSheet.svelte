@@ -38,6 +38,11 @@
     function startDragging(row: Row, event) {
         collectionView?.nativeElement.startDragging(rows.indexOf(row), event.getActivePointers()[0]);
     }
+    function onHandleTouch(row: Row, event) {
+        if (event.action === 'down') {
+            startDragging(row, event);
+        }
+    }
     function onItemReordered(event) {
         if (event.index !== event.data.targetIndex) {
             const [moved] = rows.splice(event.index, 1);
@@ -50,10 +55,13 @@
     <SheetHeader doneText={lc('save')} onCancel={() => close()} onDone={save} title={lc('reorder_pages')} />
     <collectionview bind:this={collectionView} items={rows} reorderEnabled={true} row={1} rowHeight={72} on:itemReordered={onItemReordered}>
         <Template let:item>
-            <gridlayout backgroundColor={colorSurfaceContainerLow} columns="auto,*,auto" height={72} padding="0 16" on:longPress={(event) => startDragging(item, event)}>
+            <gridlayout backgroundColor={colorSurfaceContainerLow} columns="auto,*,auto" height={72} padding="0 0 0 16" on:longPress={(event) => startDragging(item, event)}>
                 <RotableImageView borderRadius={6} decodeWidth={Utils.layout.toDevicePixels(40)} height={56} item={item.page} stretch="aspectFill" verticalAlignment="center" width={40} />
                 <label col={1} color={colorOnSurface} fontSize={16} marginLeft={12} text={lc('page') + ' ' + item.number} verticalAlignment="center" />
-                <CardIcon col={2} color={colorOnSurfaceVariant} size={20} src={appIcon('reorder')} verticalAlignment="center" />
+                <!-- the handle starts the drag as soon as it is touched -->
+                <gridlayout col={2} width={56} on:touch={(event) => onHandleTouch(item, event)}>
+                    <CardIcon color={colorOnSurfaceVariant} horizontalAlignment="center" size={20} src={appIcon('reorder')} verticalAlignment="center" />
+                </gridlayout>
             </gridlayout>
         </Template>
     </collectionview>

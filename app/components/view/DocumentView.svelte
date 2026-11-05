@@ -152,6 +152,15 @@
             (option) => runSelectionOption(option.id)
         );
     }
+    // the pages come from the camera, a file, the gallery or another document
+    function getAddMenu(camera: boolean): MenuItem[] {
+        return [
+            ...(camera ? [{ id: 'camera', title: lc('add_from_camera'), icon: appIcon('camera') }] : []),
+            { id: 'files', title: lc('import_from_file'), icon: appIcon('import_file') },
+            { id: 'import_image', title: lc('import_from_image'), icon: appIcon('import_image') },
+            { id: 'import_document', title: lc('import_from_other_document'), icon: appIcon('batch') }
+        ].map((item) => ({ ...item, onSelect: () => runAddOption(item.id) }));
+    }
     // iOS: the bottom toolbar, the main action at its trailing end. Android has the FABs, and the bar of the selection
     function getBottomItems(selected: number, withOriginals: boolean, camera: boolean) {
         if (!__IOS__) {
@@ -172,15 +181,15 @@
         }
         return [
             { text: lc('export'), icon: appIcon('export'), menu: getExportMenu() },
-            { text: lc('import_from_image'), icon: appIcon('import_image'), onTap: () => importAndScanImage({ document, importPDFs: false, canGoToView: false, forceGalleryPick: true }) },
             { spacer: true },
             ...(camera
                 ? [{ text: lc('add'), icon: appIcon('camera'), prominent: true, onTap: () => addPages() }]
-                : [{ text: lc('add'), icon: appIcon('add'), prominent: true, onTap: () => onAddButton() }])
+                : [{ text: lc('add'), icon: appIcon('add'), prominent: true, menu: getAddMenu(false) }])
         ];
     }
     $: documentMenu = getDocumentMenu(hasOriginals);
     $: selectionMenu = getSelectionMenu(hasOriginals);
+    $: addMenu = getAddMenu($hasCamera);
     $: bottomItems = getBottomItems(nbSelected, hasOriginals, $hasCamera);
 
     async function showPDFPopover() {
@@ -199,10 +208,10 @@
         }
     }
 
-    async function showExportMenu(event: EventData) {
+    async function showMenuAbove(event: EventData, items: MenuItem[]) {
         try {
             if (event.object instanceof View) {
-                await showMenu({ anchor: event.object, placement: { horizontal: 'end', vertical: 'above' }, items: getExportMenu() });
+                await showMenu({ anchor: event.object, placement: { horizontal: 'end', vertical: 'above' }, items });
             }
         } catch (error) {
             showError(error);
@@ -606,66 +615,36 @@
         }
     }
 
-    // Android: the add button opens a menu next to it
-    const onAddButton = tryCatchFunction(
-        async () => {
-            const OptionSelect = (await import('@shared/components/OptionSelect.svelte')).default;
-            const rowHeight = 58;
-            const options = [
-                {
-                    id: 'files',
-                    name: lc('import_from_file'),
-                    icon: 'mdi-file-document-plus-outline'
-                },
-                {
-                    id: 'import_image',
-                    name: lc('import_from_image'),
-                    icon: 'mdi-image-plus-outline'
-                },
-                {
-                    id: 'import_document',
-                    name: lc('import_from_other_document'),
-                    icon: 'mdi-file-document-arrow-right'
-                }
-            ];
-            const height = Math.min(rowHeight * options.length, 400);
-            const option = await showBottomSheet({
-                parent: this,
-                view: OptionSelect,
-                peekHeight: height,
-                ignoreTopSafeArea: true,
-                props: {
-                    rowHeight,
-                    height,
-                    options
-                }
-            });
-            if (option) {
-                switch (option.id) {
-                    case 'files':
-                        await importAndScanImage({ document, importPDFs: true, canGoToView: false });
-                        break;
-                    case 'import_image':
-                        await importAndScanImage({ canGoToView: false, forceGalleryPick: true, document, importPDFs: false });
-                        break;
-                    case 'import_document':
-                        const component = (await import('~/components/common/DocumentPicker.svelte')).default;
-                        const result: OCRDocument[] = await showModal({
-                            page: component,
-                            fullscreen: true,
-                            props: {}
-                        });
-                        if (result?.length) {
-                            await showLoading(lc('importing'));
-                            const imported = result
-                                .reduce((acc, v) => acc.concat(v.pages), [])
-                                .map((current: OCRPage) => {
-                                    const { id, ...others } = current.toJSON();
-                                    return { ...others };
-                                });
-                            await document.addPages(imported);
-                        }
-                        break;
+    const runAddOption = tryCatchFunction(
+        async (id: string) => {
+            switch (id) {
+                case 'camera':
+                    await addPages();
+                    break;
+                case 'files':
+                    await importAndScanImage({ document, importPDFs: true, canGoToView: false });
+                    break;
+                case 'import_image':
+                    await importAndScanImage({ canGoToView: false, forceGalleryPick: true, document, importPDFs: false });
+                    break;
+                case 'import_document': {
+                    const component = (await import('~/components/common/DocumentPicker.svelte')).default;
+                    const result: OCRDocument[] = await showModal({
+                        page: component,
+                        fullscreen: true,
+                        props: {}
+                    });
+                    if (result?.length) {
+                        await showLoading(lc('importing'));
+                        const imported = result
+                            .reduce((acc, v) => acc.concat(v.pages), [])
+                            .map((current: OCRPage) => {
+                                const { id, ...others } = current.toJSON();
+                                return { ...others };
+                            });
+                        await document.addPages(imported);
+                    }
+                    break;
                 }
             }
         },
@@ -699,6 +678,7 @@
             {/if}
         {:else}
             <appBarItem icon={appIcon(favorite ? 'favorite_on' : 'favorite_off')} ios.position="right" text={lc('toggle_favorite')} on:tap={toggleFavorite} />
+            <appBarItem icon={appIcon('add')} ios.position="right" menu={addMenu} text={lc('add')} />
             <appBarItem icon={appIcon('more')} ios.position="right" menu={documentMenu} />
         {/if}
     </appBar>
@@ -744,7 +724,7 @@
         </collectionview>
         {#if __ANDROID__ && nbSelected === 0}
             <stacklayout bind:this={fabHolder} class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal" row={2}>
-                <uibutton class="addFab" {...{ src: appIcon('export') }} variant="contained" verticalAlignment="center" on:tap={(event) => showExportMenu(event)} />
+                <uibutton class="addFab" {...{ src: appIcon('export') }} variant="contained" verticalAlignment="center" on:tap={(event) => showMenuAbove(event, getExportMenu())} />
                 <uifloatingactionbutton
                     class="scanFab"
                     backgroundColor={colorPrimaryContainer}
@@ -752,7 +732,7 @@
                     shrinkOnScroll={collectionView?.nativeView}
                     src={appIcon($hasCamera ? 'camera' : 'add')}
                     text={lc('add')}
-                    on:tap={() => ($hasCamera ? addPages() : onAddButton())}
+                    on:tap={(event) => ($hasCamera ? addPages() : showMenuAbove(event, addMenu))}
                     on:longPress={() => addPages(true)} />
             </stacklayout>
         {/if}
