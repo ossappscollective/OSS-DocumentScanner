@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/md_theme_background" />
     <item
-    android:drawable="@color/seed"
-    android:gravity="fill" />
-    <item android:left="27dp" android:right="27dp">
-        <bitmap
-        android:gravity="clip_horizontal|center_vertical"
-        android:height="400dp" android:width="400dp"
-        android:src="@drawable/ic_launcher_foreground"/>
-    </item>
+        android:width="144dp"
+        android:height="144dp"
+        android:drawable="@drawable/splash_icon"
+        android:gravity="center" />
 </layer-list>
