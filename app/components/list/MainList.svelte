@@ -1,7 +1,6 @@
 <script context="module" lang="ts">
     import { Template } from '@nativescript-community/svelte-native/components';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-    import { Canvas, CanvasView, LayoutAlignment, Paint, StaticLayout } from '@nativescript-community/ui-canvas';
     import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { Img } from '@nativescript-community/ui-image';
     import { createNativeAttributedString } from '@nativescript-community/ui-label';
@@ -27,7 +26,6 @@
     } from '@nativescript/core';
     import { AndroidActivityBackPressedEventData } from '@nativescript/core/application/application-interfaces';
     import { debounce, throttle } from '@nativescript/core/utils';
-    import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
     import { OptionType } from '@shared/components/OptionSelect.svelte';
     import { prefs } from '@shared/services/preferences';
     import { showError } from '@shared/utils/showError';
@@ -109,9 +107,7 @@
         tryCatchFunction
     } from '~/utils/ui';
     import { sortByKey } from '~/utils/utils.common';
-    import { actionBarHeight, colors, folderBackgroundColor, fontScale, fonts, isLandscape, onFolderBackgroundColorChanged, onFontScaleChanged, startOnCam, windowInset } from '~/variables';
-
-    const textPaint = new Paint();
+    import { actionBarHeight, colors, fontScale, fonts, isLandscape, onFolderBackgroundColorChanged, onFontScaleChanged, startOnCam, windowInset } from '~/variables';
 
     export interface Item {
         type?: string;
@@ -129,7 +125,6 @@
         colorError,
         colorOnBackground,
         colorOnSurfaceVariant,
-        colorOutline,
         colorPrimary,
         colorPrimaryContainer,
         colorSurface,
@@ -141,7 +136,6 @@
         colorError,
         colorOnBackground,
         colorOnSurfaceVariant,
-        colorOutline,
         colorPrimary,
         colorPrimaryContainer,
         colorSurface,
@@ -389,6 +383,8 @@
                     }
                 }
                 updatePositions();
+                // the folders rows are part of the list: it can only be empty once they are gone
+                updateNoDocument();
             }
         } catch (error) {
             showError(error);
@@ -1167,43 +1163,6 @@
         }
     }
 
-    function onFolderCanvasDraw(item: Item, { canvas, object }: { canvas: Canvas; object: CanvasView }) {
-        const w = canvas.getWidth();
-        const h = canvas.getHeight();
-        const dx = 10;
-        const { folder: itemFolder } = item;
-        textPaint.color = colorOnBackground;
-        const topText = createNativeAttributedString({
-            spans: [
-                {
-                    fontFamily: $fonts.mdi,
-                    fontSize: 20 * $fontScale,
-                    color: !$folderBackgroundColor && itemFolder.color ? itemFolder.color : colorOutline,
-                    lineHeight: 20 * $fontScale,
-                    text: 'mdi-folder '
-                },
-                {
-                    fontSize: 16 * $fontScale,
-                    fontWeight: 'bold',
-                    lineBreak: 'end',
-                    lineHeight: 16 * $fontScale,
-                    text: folder ? itemFolder.name.replace(folder.name + '/', '') : itemFolder.name
-                },
-                {
-                    fontSize: 14 * $fontScale,
-                    color: colorOutline,
-                    lineHeight: 20 * $fontScale,
-                    text: '\n' + lcp('documents_count', itemFolder.count)
-                }
-            ]
-        });
-        canvas.save();
-        const staticLayout = new StaticLayout(topText, textPaint, Math.max(0, w - dx), LayoutAlignment.ALIGN_NORMAL, 1, 0, true);
-        canvas.translate(dx, h / 2 - staticLayout.getHeight() / 2);
-        staticLayout.draw(canvas);
-        canvas.restore();
-    }
-
     async function showImageExportPopover(event) {
         const selection = await getSelectedPagesAndPossibleSingleDocument();
         return showImagePopoverMenu(selection[0], event.object, { vertPos: VerticalPosition.ABOVE });
@@ -1601,92 +1560,55 @@
             {...collectionViewOptions}
         >
             <Template key="folder" let:item>
-                {#if CARD_APP}
-                    <FolderCell
-                        {selectionMode}
-                        name={folder ? item.folder.name.replace(folder.name + '/', '') : item.folder.name}
-                        {item}
-                        marginLeft={folderMargin}
-                        marginRight={folderMargin}
-                        tile={false}
-                        on:longPress={(e) => onItemLongPress(item, e)}
-                        on:tap={() => onItemTap(item)}
-                    />
-                {:else}
-                    <ListItemAutoSize
-                        class="card"
-                        columns="auto,*"
-                        fontSize={17}
-                        fontWeight="600"
-                        item={{ ...item, title: folder ? item.folder.name.replace(folder.name + '/', '') : item.folder.name, subtitle: lcp('documents_count', item.folder.count) }}
-                        mainCol={1}
-                        margin={__IOS__ ? '4 16' : '4 8 4 8'}
-                        padding="0 10 0 10"
-                        subtitleFontSize={12}
-                        useExtraPadding={false}
-                        on:longPress={(e) => onItemLongPress(item, e)}
-                        on:tap={() => onItemTap(item)}
-                    >
-                        <label
-                            col={0}
-                            color={!$folderBackgroundColor && item.folder.color ? item.folder.color : colorOutline}
-                            fontFamily={$fonts.mdi}
-                            fontSize={24}
-                            padding="0 10 0 0"
-                            text="mdi-folder "
-                            verticalAlignment="center"
-                        />
-                        <SelectedIndicator col={0} horizontalAlignment="left" margin="10 0 10 0" selected={item.selected} verticalAlignment="top" />
-                    </ListItemAutoSize>
-                {/if}
+                <FolderCell
+                    {selectionMode}
+                    name={folder ? item.folder.name.replace(folder.name + '/', '') : item.folder.name}
+                    {item}
+                    marginLeft={folderMargin}
+                    marginRight={folderMargin}
+                    tile={false}
+                    on:longPress={(e) => onItemLongPress(item, e)}
+                    on:tap={() => onItemTap(item)}
+                />
             </Template>
             <Template key="folders" let:item>
                 <collectionView
                     bind:this={foldersCollectionView}
-                    colWidth={CARD_APP ? 140 : 150}
-                    height={CARD_APP ? 62 : 70}
+                    colWidth={140}
+                    height={62}
                     items={folderItems}
                     orientation="horizontal"
-                    paddingLeft={CARD_APP ? Math.max(0, folderMargin - 4) : 0}
+                    paddingLeft={Math.max(0, folderMargin - 4)}
                     row={1}
                     visibility={folders?.length ? 'visible' : 'collapsed'}
                     on:itemLoading={onCollectionViewItemLoading}
                 >
                     <Template let:item>
-                        {#if CARD_APP}
-                            <FolderCell
-                                {selectionMode}
-                                name={folder ? item.folder.name.replace(folder.name + '/', '') : item.folder.name}
-                                {item}
-                                margin={4}
-                                on:longPress={(e) => onItemLongPress(item, e)}
-                                on:tap={() => onItemTap(item)}
-                            />
-                        {:else}
-                            <canvasview
-                                backgroundColor={($folderBackgroundColor && item.folder.color) || isEInk ? 'transparent' : colorSurfaceContainerLow}
-                                borderColor={colorOutline}
-                                borderRadius={12}
-                                borderWidth={__IOS__ ? 0 : 1}
-                                margin={__IOS__ ? '4 16 0 16' : '4 8 0 8'}
-                                rippleColor={colorSurface}
-                                on:tap={() => onItemTap(item)}
-                                on:longPress={(e) => onItemLongPress(item, e)}
-                                on:draw={(e) => onFolderCanvasDraw(item, e)}
-                            >
-                                <SelectedIndicator horizontalAlignment="right" margin={10} selected={item.selected} verticalAlignment="top" />
-                                <!-- <SyncIndicator synced={item.doc._synced} visible={syncEnabled} /> -->
-                                <!-- <PageIndicator horizontalAlignment="right" margin={10} text={item.doc.pages.length} /> -->
-                            </canvasview>
-                        {/if}
+                        <FolderCell
+                            {selectionMode}
+                            name={folder ? item.folder.name.replace(folder.name + '/', '') : item.folder.name}
+                            {item}
+                            margin={4}
+                            on:longPress={(e) => onItemLongPress(item, e)}
+                            on:tap={() => onItemTap(item)}
+                        />
                     </Template>
                 </collectionView>
             </Template>
             <slot />
         </collectionView>
         <progress backgroundColor="transparent" busy={true} indeterminate={true} row={2} verticalAlignment="top" visibility={loading ? 'visible' : 'hidden'} />
-        {#if showNoDocument && CARD_APP && !isTrash && !(lastRefreshFilter && showSearch)}
-            <CardsEmpty marginBottom="15%" onScan={() => actions.find((action) => action.primary)?.onTap()} row={2} verticalAlignment="center" />
+        {#if showNoDocument && !isTrash && !(lastRefreshFilter && showSearch)}
+            <CardsEmpty
+                actionText={CARD_APP ? lc('scan_card') : lc('scan_document')}
+                help={CARD_APP ? lc('no_card_yet_help') : lc('no_document_yet_help')}
+                icon={CARD_APP ? appIcon('wallet') : appIcon('camera')}
+                marginBottom="15%"
+                onScan={() => actions.find((action) => action.primary)?.onTap()}
+                row={2}
+                title={CARD_APP ? lc('no_card_yet_title') : lc('no_document_yet_title')}
+                verticalAlignment="center"
+            />
         {:else if showNoDocument}
             <flexlayout
                 flexDirection="column"
