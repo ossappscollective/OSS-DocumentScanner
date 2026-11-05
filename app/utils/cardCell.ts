@@ -5,6 +5,7 @@ import { pickCardColor } from '~/utils/cardColors';
 import { lc } from '~/helpers/locale';
 import { isEInk } from '~/helpers/theme';
 import { getCardStatus } from '~/utils/cardStatus';
+import { isAutoName } from '~/utils/documentCell';
 
 export type CardVariant = '' | 'photo' | 'pkpass';
 
@@ -22,8 +23,7 @@ export function getCardVariant(item?: Item): CardVariant {
 export function getCardDisplay(item: Item) {
     const { doc } = item;
     const page = doc.pages[0];
-    // the default name is a timestamp: a tile only shows its date
-    const autoName = !doc.name || /\d+:\d+:\d+/.test(doc.name);
+    const autoName = isAutoName(doc.name);
     return {
         page,
         hasImage: !!page?.imagePath,

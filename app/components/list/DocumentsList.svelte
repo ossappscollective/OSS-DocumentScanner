@@ -1,41 +1,43 @@
 <script context="module" lang="ts">
     import { lc } from '@nativescript-community/l';
-    import { createNativeAttributedString } from '@nativescript-community/text';
-    import { LayoutAlignment, Paint, StaticLayout } from '@nativescript-community/ui-canvas';
-    import { CollectionView } from '@nativescript-community/ui-collectionview';
-    import { AndroidActivityResultEventData, Application, ObservableArray, StackLayout, Utils } from '@nativescript/core';
-    import { openFile, openUrl, throttle } from '@nativescript/core/utils';
-    import { showError } from '@shared/utils/showError';
-    import dayjs from 'dayjs';
     import { Template } from '@nativescript-community/svelte-native/components';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-    import { isEInk } from '~/helpers/theme';
+    import { showMenu } from '@nativescript-community/ui-menu';
+    import { CollectionView } from '@nativescript-community/ui-collectionview';
+    import { ObservableArray, StackLayout, View } from '@nativescript/core';
+    import { throttle } from '@nativescript/core/utils';
+    import { showError } from '@shared/utils/showError';
+    import { Writable } from 'svelte/store';
+    import DocumentRow from '~/components/list/DocumentRow.svelte';
+    import DocumentTile from '~/components/list/DocumentTile.svelte';
     import { DocFolder } from '~/models/OCRDocument';
-    import { formatStorageSizes, importImageFromCamera } from '~/utils/ui';
-    import { computeStorageSizes } from '~/utils/originals';
-    import { colors, fontScale, hasCamera, windowInset } from '~/variables';
-    import PageIndicator from '../common/PageIndicator.svelte';
-    import RotableImageView from '../common/RotableImageView.svelte';
-    import SelectedIndicator from '../common/SelectedIndicator.svelte';
-    import SyncIndicator from '../common/SyncIndicator.svelte';
+    import { appIcon } from '~/utils/appIcons';
+    import { DOCUMENT_TILE_RATIO } from '~/utils/constants';
+    import { getTileRadius } from '~/utils/documentCell';
+    import { importImageFromCamera } from '~/utils/ui';
+    import { colors, hasCamera, isLandscape, screenHeightDips, screenWidthDips, windowInset } from '~/variables';
     import MainList, { Item } from './MainList.svelte';
-    import { ellipsize } from '~/utils/utils.common';
-    import FavoriteIndicator from '~/components/common/FavoriteIndicator.svelte';
 
-    const textPaint = new Paint();
-    const IMAGE_DECODE_WIDTH = Utils.layout.toDevicePixels(200);
+    // 16 from the screen edge to a tile, 12 between two tiles
+    const rowMargin = 6;
+    const gridPadding = 10;
+    const GRID_COLUMNS = 2;
+    const GRID_COLUMNS_LANDSCAPE = 4;
+    const LIST_ROW_HEIGHT = 84;
 </script>
 
 <script lang="ts">
-    let { colorOnBackground, colorOnSurfaceVariant } = $colors;
-    $: ({ colorOnBackground, colorOnSurfaceVariant } = $colors);
+    let { colorOnPrimaryContainer, colorPrimaryContainer } = $colors;
+    $: ({ colorOnPrimaryContainer, colorPrimaryContainer } = $colors);
     export let title = lc('documents');
     export let folder: DocFolder;
     let fabHolder: NativeViewElementNode<StackLayout>;
     let collectionView: NativeViewElementNode<CollectionView>;
+    // the stored keys are shared with the trash and the picker: `default` is the grid, `condensed` the list
     let viewStyle: string;
+    let nbColumns: Writable<number>;
+    let selectionMode: Writable<boolean>;
     let syncEnabled: boolean;
-    let nbSelected: number = 0;
     let folderItems: ObservableArray<Item>;
     let documents: ObservableArray<Item>;
     let getSyncColors: (item: Item) => string[];
@@ -45,53 +47,49 @@
     let importDocument: (importPDFs?: boolean) => Promise<void>;
     let refreshCollectionView: () => void;
 
-    $: condensed = viewStyle === 'condensed';
-    function getItemRowHeight(viewStyle) {
-        return condensed ? 80 : 150;
-    }
-    function getImageMargin(viewStyle) {
-        return 10;
-    }
-    function getItemImageHeight(viewStyle) {
-        return condensed ? 44 : 94;
+    // a list in landscape is a grid: a row would be too wide
+    $: asList = viewStyle === 'condensed' && !$isLandscape;
+    $: contentPadding = asList ? 0 : gridPadding;
+    $: itemWidth = (($isLandscape ? screenHeightDips : screenWidthDips) - $windowInset.left - $windowInset.right - 2 * contentPadding) / $nbColumns - 2 * rowMargin;
+    $: tileHeight = itemWidth * DOCUMENT_TILE_RATIO + 2 * rowMargin;
+    $: tileRadius = getTileRadius(itemWidth, itemWidth * DOCUMENT_TILE_RATIO);
+    $: if (tileHeight) {
+        refreshCollectionView?.();
     }
 
-    $: textPaint.color = colorOnBackground || 'black';
+    function updateColumns(isLandscape: boolean, orientationChanged = false) {
+        $nbColumns = isLandscape ? GRID_COLUMNS_LANDSCAPE : viewStyle === 'condensed' ? 1 : GRID_COLUMNS;
+        if (orientationChanged) {
+            refreshCollectionView?.();
+        }
+    }
 
-    function onCanvasDraw(item: Item, { canvas, object }: { canvas: Canvas; object: CanvasView }) {
-        const w = canvas.getWidth();
-        const h = canvas.getHeight();
-        const dx = 10 + getItemImageHeight(viewStyle) * $fontScale + 16;
-        textPaint.color = colorOnSurfaceVariant;
-        const { doc } = item;
-        textPaint.textSize = condensed ? 11 : 14 * $fontScale;
-        canvas.drawText(formatStorageSizes(computeStorageSizes(doc.pages)), dx, h - (condensed ? 0 : 16) - 10, textPaint);
-        textPaint.color = colorOnBackground;
-        const topText = createNativeAttributedString({
-            spans: [
-                {
-                    fontSize: 16 * $fontScale,
-                    fontWeight: 'bold',
-                    lineBreak: 'end',
-                    lineHeight: 18 * $fontScale,
-                    text: ellipsize(doc.name, 50)
-                },
-                {
-                    color: colorOnSurfaceVariant,
-                    fontSize: 14 * $fontScale,
-                    lineHeight: condensed ? 14 : 20 * $fontScale,
-                    text: '\n' + dayjs(doc.createdDate).format('L LT')
-                }
-            ]
-        });
-        const staticLayout = new StaticLayout(topText, textPaint, Math.max(0, w - dx), LayoutAlignment.ALIGN_NORMAL, 1, 0, true);
-        canvas.translate(dx, (condensed ? 0 : 10) + 10);
-        staticLayout.draw(canvas);
+    function itemTemplateSelector(currentViewStyle: string, item?: Item) {
+        if (item?.type) {
+            return item.type;
+        }
+        return currentViewStyle === 'condensed' && !$isLandscape ? 'list' : 'grid';
     }
 
     async function onStartCam(inverseUseSystemCamera = false) {
         try {
             await importImageFromCamera({ folder, inverseUseSystemCamera });
+        } catch (error) {
+            showError(error);
+        }
+    }
+
+    // Android: the small add button opens a menu next to it
+    async function onAddButton(event: { object: View }) {
+        try {
+            await showMenu({
+                anchor: event.object,
+                placement: { horizontal: 'end', vertical: 'above' },
+                items: [
+                    { title: lc('import_from_file'), icon: appIcon('import_file'), onSelect: () => importDocument() },
+                    { title: lc('import_from_image'), icon: appIcon('import_image'), onSelect: () => importImages() }
+                ]
+            });
         } catch (error) {
             showError(error);
         }
@@ -104,70 +102,61 @@
         { text: lc('import_from_file'), icon: 'import_file', onTap: () => importDocument() },
         { text: lc('camera'), icon: 'camera', primary: true, onTap: () => onStartCam() }
     ]}
+    {contentPadding}
     folderViewStyles={{
         horizontal: { name: lc('horizontal') },
         vertical: { name: lc('vertical') }
     }}
+    {itemTemplateSelector}
     {title}
+    {updateColumns}
+    viewStyleChanged={(oldValue, newValue) => itemTemplateSelector(oldValue) !== itemTemplateSelector(newValue)}
     viewStyles={{
-        default: { name: lc('expanded') },
-        condensed: { name: lc('condensed') }
+        default: { name: lc('grid'), icon: 'mdi-view-grid' },
+        condensed: { name: lc('list'), icon: 'mdi-view-day' }
     }}
     bind:fabHolder
+    bind:nbColumns
+    bind:selectionMode
     bind:viewStyle
     bind:onItemTap
     bind:onItemLongPress
     bind:syncEnabled
     bind:folder
-    bind:nbSelected
     bind:importDocument
     bind:importImages
     bind:refreshCollectionView
     bind:getSyncColors
     bind:documents
     bind:folderItems
-    bind:collectionView
->
-    <Template let:item>
-        <canvasview
-            class="card"
-            borderWidth={isEInk ? 1 : 0}
-            height={getItemRowHeight(viewStyle) * $fontScale}
+    bind:collectionView>
+    <Template key="grid" let:item>
+        <DocumentTile
+            height={tileHeight}
+            {item}
+            radius={tileRadius}
+            syncColors={getSyncColors(item)}
+            {syncEnabled}
+            width={itemWidth}
             on:tap={() => onItemTap(item)}
-            on:longPress={(e) => onItemLongPress(item, e)}
-            on:draw={(e) => onCanvasDraw(item, e)}
-        >
-            <RotableImageView
-                id="imageView"
-                borderRadius={12}
-                decodeWidth={IMAGE_DECODE_WIDTH}
-                horizontalAlignment="left"
-                item={item.doc.pages[0]}
-                marginBottom={getImageMargin(viewStyle)}
-                marginLeft={10}
-                marginTop={getImageMargin(viewStyle)}
-                sharedTransitionTag={`document_${item.doc.id}_${item.doc.pages[0]?.id}`}
-                stretch="aspectFill"
-                width={getItemImageHeight(viewStyle) * $fontScale}
-            />
-            <SelectedIndicator horizontalAlignment="left" margin={10} selected={item.selected} />
-            <SyncIndicator syncColors={getSyncColors(item)} visible={syncEnabled} />
-            <PageIndicator horizontalAlignment="right" margin={10} scale={$fontScale} text={item.doc.pages.length} />
-            <FavoriteIndicator favorite={item.doc.favorite === 1} />
-        </canvasview>
+            on:longPress={(e) => onItemLongPress(item, e)} />
+    </Template>
+    <Template key="list" let:item>
+        <DocumentRow height={LIST_ROW_HEIGHT} {item} {selectionMode} syncColors={getSyncColors(item)} {syncEnabled} on:tap={() => onItemTap(item)} on:longPress={(e) => onItemLongPress(item, e)} />
     </Template>
 
     <stacklayout bind:this={fabHolder} slot="fab" class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal">
-        <uibutton class="small-fab" horizontalAlignment="center" text="mdi-image-plus-outline" verticalAlignment="center" on:tap={throttle(() => importImages(), 500)} />
-        <uibutton
-            class={$hasCamera ? 'small-fab' : 'fab'}
-            horizontalAlignment="center"
-            text="mdi-file-document-plus-outline"
-            verticalAlignment="center"
-            on:tap={throttle(() => importDocument(), 500)}
-        />
+        <uibutton class="addFab" {...{ src: appIcon('add') }} variant="contained" verticalAlignment="center" on:tap={throttle((event) => onAddButton(event), 500)} />
         {#if $hasCamera}
-            <uibutton id="fab" class="fab" text="mdi-camera" verticalAlignment="center" on:tap={throttle(() => onStartCam(), 500)} on:longPress={() => onStartCam(true)} />
+            <uifloatingactionbutton
+                class="scanFab"
+                backgroundColor={colorPrimaryContainer}
+                color={colorOnPrimaryContainer}
+                shrinkOnScroll={collectionView?.nativeView}
+                src={appIcon('camera')}
+                text={lc('scan')}
+                on:tap={throttle(() => onStartCam(), 500)}
+                on:longPress={() => onStartCam(true)} />
         {/if}
     </stacklayout>
 </MainList>
