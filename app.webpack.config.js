@@ -242,6 +242,7 @@ module.exports = (env, params = {}) => {
         CARD_APP: appId === 'com.akylas.cardwallet',
         SUPPORTED_LOCALES: JSON.stringify(supportedLocales),
         SUPPORTED_COLOR_THEMES: JSON.stringify(supportedColorThemes),
+        APP_DEFAULT_COLOR_THEME: `"default"`,
         __INAPP_PURCHASE_ID_PREFIX__: `"1"`,
         FALLBACK_LOCALE: `"${locale}"`,
         DEFAULT_THEME: `"${theme}"`,
