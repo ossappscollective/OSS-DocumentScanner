@@ -259,7 +259,7 @@ Most rules are shared. The scanner feels more like a document app:
 - **No code zone, no code glyph.** The info pill has the page count and the favorite only.
 - **Surfaces:** calmer: no ambient backdrop on lists, neutral page background, the camera and edit screens use the transparent sheet appearance over the live image.
 - **Edit tools and camera controls** are glass controls over the image on iOS and tonal controls on Android, never over the document itself.
-- This section is a proposal: confirm with the scanner screens when they are designed.
+- The scanner list and document view are specified in `scanner-document-list-view.md` (page edge, sync dots, title zone, bars and menus); this section keeps the shared principles.
 
 ## 18. Implementation status
 
@@ -281,7 +281,7 @@ Most rules are shared. The scanner feels more like a document app:
 | 14 Menu origin | Specified; may need a plugin fix |
 | 15 Safe areas and dialogs | Specified; Move to folder changed to name field plus folder chips (PR 781 review) |
 | 16 Remaining components | Specified |
-| 17 Document Scanner | Proposal |
+| 17 Document Scanner | Built for the list and the document view (`scanner-document-list-view.md`); the camera and edit screens follow their own specs |
 | Crop view, export menu, PDF preview | Specified (`cardwallet-crop-export.md`, `cardwallet-pdf-preview.md`); popovers to replace by `getExportMenu`, crop bars and the preview to build |
 | 20 Bars | Proposal. Built in the card view: favorite and the one more menu in the top bar, share in the toolbar with the main action at the trailing end (iOS prominent button, Android extended FAB), Android edit modes in the top bar. Needs the ui-appbar changes (prominent bottom item, transparent bar at the top) |
 | 21 Fullscreen viewer | Specified (`cardwallet-fullscreen.html`); code dots and photo counter pill to build |
@@ -294,7 +294,7 @@ Most rules are shared. The scanner feels more like a document app:
 - **Move to folder:** replaced by the sheet in section 15 (name field plus folder chips), decided in the PR 781 review; the earlier remove_from_folder row and its string are gone.
 - **Android menu origin:** fixed in ui-menu with a style per corner; the plugin change is not published.
 - **Sizes x 1.31 (decided, to apply in code):** list rows 88 with a 116 x 72 thumbnail and 20 titles, tile chips 28 tall with 14 text, folder tiles 173 x 71 and vertical folder rows 68, tile titles 18 to 28 (grid) and 26 (stacked).
-- **Open:** the Document Scanner list is still its own canvas list (section 17 is a proposal). The delete confirmation dialog (destructive text action in the error color, section 15) is not built yet.
+- **Open:** the delete confirmation dialog (destructive text action in the error color, section 15) is not built yet.
 
 ## 20. Bars: what goes where (proposal)
 
