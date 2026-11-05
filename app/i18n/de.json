@@ -435,7 +435,7 @@
     "please_choose_export_folder_again": "Bitte wählen Sie den Exportordner erneut, um dies zu beheben. Es sollte nicht erneut nachgefragt werden",
     "please_restart_app": "Bitte die App neu starten, um die Änderungen zu sehen",
     "portrait": "Hochformat",
-    "preferences": "Präferenzen",
+    "preferences": "Einstellungen",
     "preview": "Vorschau",
     "preview_resize_threshold": "Grenzbereich der Bildergröße",
     "preview_resize_threshold_desc": "Größe, auf welche das Bild angepasst wird, um Dokumente zu erkennen. Ein größerer Wert bedeutet ein besseres Erkennen, aber eine langsamere Verarbeitung.",
