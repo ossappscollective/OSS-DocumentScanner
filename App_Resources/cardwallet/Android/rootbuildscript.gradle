@@ -3,5 +3,5 @@ repositories {
     mavenCentral()
 }
 dependencies {
-    classpath 'androidx.benchmark:benchmark-baseline-profile-gradle-plugin:1.4.0'
+    classpath 'androidx.benchmark:benchmark-baseline-profile-gradle-plugin:1.5.0'
 }

@@ -35,7 +35,7 @@ module.exports = {
             }
         },
         runtimePackageName: '@nativescript/android-quickjs-ng',
-        gradleVersion: '8.14.3',
+        gradleVersion: '9.7.1',
         markingMode: 'none',
         codeCache: true,
         // for cardwallet we enable qrcode. and then we filter aar to only use the one we want
@@ -52,7 +52,7 @@ module.exports = {
     cssParser: 'rework',
     hooks: [
         {
-            type: 'after-prepareNativeApp',
+            type: 'before-prepareNativeApp',
             script: 'tools/scripts/after-prepareNativeApp.js'
         }
     ]
