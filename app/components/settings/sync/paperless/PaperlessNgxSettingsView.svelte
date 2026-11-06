@@ -2,6 +2,7 @@
     import { SilentError } from '@akylas/nativescript-app-utils/error';
     import { showError } from '@shared/utils/showError';
     import { Writable, get } from 'svelte/store';
+    import FormTextField from '~/components/common/FormTextField.svelte';
     import { lc } from '~/helpers/locale';
     import { acquireToken, testPaperlessConnection } from '~/services/sync/paperless/PaperlessNgx';
     import type { PaperlessNgxSyncOptions } from '~/services/sync/paperless/PaperlessNgx';
@@ -9,7 +10,6 @@
 
     $: ({ colorError, colorOnError, colorSecondary } = $colors);
 
-    const variant = 'outline';
     export let store: Writable<PaperlessNgxSyncOptions & { token?: string }>;
     let testing = false;
     let testConnectionSuccess = 0;
@@ -60,73 +60,61 @@
     }
 </script>
 
-<stacklayout padding="4 10 4 10">
-    <textfield
+<stacklayout padding="4 0 4 0">
+    <FormTextField
+        margin="4 16 4 16"
         autocapitalizationType="none"
-        hint={lc('server_address')}
         keyboardType="url"
-        margin="5 0 5 0"
-        placeholder={lc('server_address') + ' https://...'}
+        label={lc('server_address')}
         returnKeyType="next"
         text={$store.serverUrl}
-        {variant}
-        on:textChange={(e) => {
-            $store.serverUrl = e['value'];
+        onChange={(event) => {
+            $store.serverUrl = event.value;
             testConnectionSuccess = 0;
-        }}
-    />
+        }} />
 
-    <label fontSize={12} margin="2 0 6 2" opacity={0.7} text={lc('paperless_token_hint')} textWrap={true} />
+    <label fontSize={12} margin="2 16 6 18" opacity={0.7} text={lc('paperless_token_hint')} textWrap={true} />
 
-    <textfield
+    <FormTextField
+        margin="4 16 4 16"
         autocapitalizationType="none"
         autocorrect={false}
-        hint={lc('api_token')}
-        margin="5 0 5 0"
-        placeholder={lc('api_token')}
+        label={lc('api_token')}
         returnKeyType="next"
         text={$store.token}
-        {variant}
-        on:textChange={(e) => {
-            $store.token = e['value'];
+        onChange={(event) => {
+            $store.token = event.value;
             testConnectionSuccess = 0;
-        }}
-    />
+        }} />
 
-    <label fontSize={12} margin="6 0 2 2" opacity={0.7} text={lc('or')} />
+    <label fontSize={12} margin="6 16 2 18" opacity={0.7} text={lc('or')} />
 
-    <textfield
+    <FormTextField
+        margin="4 16 4 16"
         autocapitalizationType="none"
         autocorrect={false}
-        hint={lc('username')}
-        margin="5 0 5 0"
-        placeholder={lc('username')}
+        label={lc('username')}
         returnKeyType="next"
         text={$store.username}
-        {variant}
-        on:textChange={(e) => {
-            $store.username = e['value'];
+        onChange={(event) => {
+            $store.username = event.value;
             testConnectionSuccess = 0;
-        }}
-    />
-    <textfield
+        }} />
+    <FormTextField
+        margin="4 16 4 16"
         autocapitalizationType="none"
         autocorrect={false}
         hint={lc('password_not_saved')}
-        margin="5 0 5 0"
-        placeholder={lc('password')}
-        placeholderColor="gray"
+        label={lc('password')}
         returnKeyType="done"
         secure={true}
         text={$store.password}
-        {variant}
-        on:textChange={(e) => {
-            $store.password = e['value'];
+        onChange={(event) => {
+            $store.password = event.value;
             testConnectionSuccess = 0;
-        }}
-    />
+        }} />
 
-    <gridlayout columns="*,*" margin="5 0 0 0" rows="auto">
+    <gridlayout columns="*,*" margin="8 16 8 16" rows="auto">
         <gridlayout col={1} columns="auto" horizontalAlignment="right" rows="auto" verticalAlignment="middle">
             <uibutton
                 backgroundColor={testConnectionSuccess < 0 ? colorError : testConnectionSuccess > 0 ? 'lightgreen' : colorSecondary}

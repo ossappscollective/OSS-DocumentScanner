@@ -1274,7 +1274,7 @@ export function getExportMenu({ document, documents, pages, pdf = true }: { page
     const runPDF = (action: string) => showPDFPopoverMenu({ pages, document, documents: allDocuments, action }).catch(showError);
     const runImages = (action: string) => showImagePopoverMenu(pages, null, { action }).catch(showError);
     const sections: MenuItem[][] = [];
-    if (pdf && hasImages && !hasPass) {
+    if (pdf && (hasImages || hasPass)) {
         sections.push([
             { id: 'preview_pdf', title: lc('preview_pdf'), icon: appIcon('preview'), onSelect: () => runPDF('preview') },
             { id: 'export_pdf', title: lc('export_pdf'), icon: appIcon('save_to_folder'), onSelect: () => runPDF('export') },
@@ -1299,7 +1299,7 @@ export function getExportMenu({ document, documents, pages, pdf = true }: { page
         ]);
     }
     const settings: MenuItem[] = [];
-    if (pdf && hasImages && !hasPass) {
+    if (pdf && (hasImages || hasPass)) {
         settings.push({ id: 'pdf_settings', title: lc('pdf_export_settings'), icon: appIcon('settings'), onSelect: () => showSettings({ subSettingsOptions: 'pdf_export' }) });
     }
     if (__ANDROID__ && (hasImages || hasPass)) {

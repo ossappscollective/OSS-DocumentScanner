@@ -3,6 +3,12 @@ checkbox {
     margin-right: 0;
 }
 
+// the buttons have no side padding by default: the classes of the icon ones (padding: 0) are more specific
+button {
+    padding-left: 20;
+    padding-right: 20;
+}
+
 // the primary button is a 40 tall pill
 button[variant='contained'] {
     height: 40;
