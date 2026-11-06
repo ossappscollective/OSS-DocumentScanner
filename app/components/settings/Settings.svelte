@@ -121,11 +121,7 @@
 
     export let title = null;
     export let id = 'settingsPage';
-    const optionsMenu = [
-        { title: lc('send_feedback'), onSelect: () => onTap({ id: 'feedback' }, null) },
-        { title: lc('share'), onSelect: () => onTap({ id: 'share' }, null) },
-        { title: 'GitHub', onSelect: () => onTap({ id: 'github' }, null) }
-    ];
+    const optionsMenu = [{ title: lc('send_feedback'), onSelect: () => onTap({ id: 'feedback' }, null) }];
     export let subSettingsOptions: string = null;
     export let searchable: boolean = null;
     export let searchItemsProvider: (items: any[], filter: string) => any[] = null;
@@ -145,6 +141,7 @@
         clearTimeout(searchTimer);
         refresh(false, undefined);
     }
+    $: bottomItems = __IOS__ && searchEnabled ? [{ search: true }] : [];
     $: searchEnabled = searchable ?? (!subSettingsOptions && !options);
 
     let documentsStorageSizes: StorageSizes = null;
@@ -1436,6 +1433,7 @@
     bind:refresh>
     <appBar
         slot="appBar"
+        {bottomItems}
         color={colorOnBackground}
         iosIconRenderingMode="alwaysTemplate"
         scrollBehavior="lift"
@@ -1453,6 +1451,8 @@
             <appBarSearchField><textfield backgroundColor="transparent" floating={false} fontSize={16} hint={lc('search')} returnKeyType="search" variant="none" /></appBarSearchField>
             <navigationButton {...{ 'android.systemIcon': 'ic_menu_back' }} on:tap={() => goBack()} />
         {/if}
+        <appBarItem icon={appIcon('github')} ios.position="right" text="GitHub" on:tap={() => onTap({ id: 'github' }, null)} />
+        <appBarItem icon={appIcon('share')} ios.position="right" text={lc('share')} on:tap={() => onTap({ id: 'share' }, null)} />
         <appBarItem icon={appIcon('more')} ios.position="right" menu={optionsMenu} />
     </appBar>
 
