@@ -10,13 +10,13 @@
     import { lc } from '~/helpers/locale';
     import { OCRLanguages, ocrService } from '~/services/ocr';
     import { colors, fonts } from '~/variables';
-    import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
+    import { getRowCorners } from '~/utils/groupedRows';
     import SheetHeader from '../common/SheetHeader.svelte';
     import Chip from '../widgets/Chip.svelte';
     import { checkOrDownloadOCRLanguages, localizedLanguage } from '~/utils/ui';
 
     // technique for only specific properties to get updated on store change
-    $: ({ colorOnPrimary, colorOnSurface, colorOnSurfaceVariant, colorOutline, colorPrimary, colorSurfaceContainer } = $colors);
+    $: ({ colorOnPrimary, colorOnSurface, colorOnSurfaceVariant, colorOutline, colorPrimary, colorSurfaceContainer, colorSurfaceContainerLow } = $colors);
     $: secondaryColor = colorOnSurfaceVariant;
 
     let collectionView: NativeViewElementNode<CollectionView>;
@@ -94,54 +94,54 @@
 
 <gesturerootview id="ocrSettingsBottomSheet" rows="auto">
     {#if onlySettings}
-        <stacklayout>
-            <ListItemAutoSize item={{ title: lc('quality'), titleProps: { verticalAlignment: 'top' } }}>
-                <stacklayout marginTop={50} orientation="horizontal" verticalAlignment="bottom">
-                    {#each qualities as quality (quality)}
-                        <gridlayout
-                            backgroundColor={dataType === quality ? colorPrimary : undefined}
-                            borderColor={colorOutline}
-                            borderRadius={8}
-                            borderWidth={dataType === quality ? 0 : 1}
-                            columns="auto,auto"
-                            height={32}
-                            margin={4}
-                            paddingLeft={dataType === quality ? 8 : 12}
-                            paddingRight={12}
-                            rippleColor={colorPrimary}
-                            on:tap={() => setDataType(quality)}
-                        >
-                            <label
-                                color={dataType === quality ? colorOnPrimary : colorOnSurface}
-                                fontFamily={$fonts.mdi}
-                                fontSize={16}
-                                marginRight={4}
-                                text="mdi-check"
-                                verticalAlignment="middle"
-                                visibility={dataType === quality ? 'visible' : 'collapse'}
-                            />
-                            <label
-                                col={1}
-                                color={dataType === quality ? colorOnPrimary : colorOnSurface}
-                                fontSize={14}
-                                fontWeight={dataType === quality ? 'bold' : 'normal'}
-                                text={lc(quality)}
-                                verticalAlignment="middle"
-                            />
-                        </gridlayout>
-                    {/each}
-                </stacklayout>
-            </ListItemAutoSize>
-            <ListItemAutoSize item={{ title: lc('languages'), titleProps: { verticalAlignment: 'top' } }} paddingRight={0}>
-                <uibutton class="icon-btn" col={1} marginTop={6} text="mdi-plus" variant="text" verticalAlignment="top" on:tap={addLanguages} />
-                <wraplayout marginTop={50} verticalAlignment="bottom">
-                    {#each languages as language (language)}
-                        <Chip rightIcon={downloaded.indexOf(language) !== -1 ? 'mdi-download' : null} text={localizedLanguage(language, OCRLanguages)} on:tap={() => removeLanguage(language)} />
-                    {/each}
-                </wraplayout>
-            </ListItemAutoSize>
+        <stacklayout backgroundColor={colorSurfaceContainerLow} margin="0 16 0 16" padding="14 16 14 16" {...getRowCorners('last', __IOS__)}>
+            <label color={colorOnSurface} fontSize={__IOS__ ? 17 : 16} text={lc('quality')} />
+            <wraplayout marginTop={8}>
+                {#each qualities as quality (quality)}
+                    <gridlayout
+                        backgroundColor={dataType === quality ? colorPrimary : undefined}
+                        borderColor={colorOutline}
+                        borderRadius={8}
+                        borderWidth={dataType === quality ? 0 : 1}
+                        columns="auto,auto"
+                        height={32}
+                        margin="0 8 8 0"
+                        paddingLeft={dataType === quality ? 8 : 12}
+                        paddingRight={12}
+                        rippleColor={colorPrimary}
+                        on:tap={() => setDataType(quality)}
+                    >
+                        <label
+                            color={dataType === quality ? colorOnPrimary : colorOnSurface}
+                            fontFamily={$fonts.mdi}
+                            fontSize={16}
+                            marginRight={4}
+                            text="mdi-check"
+                            verticalAlignment="middle"
+                            visibility={dataType === quality ? 'visible' : 'collapse'}
+                        />
+                        <label
+                            col={1}
+                            color={dataType === quality ? colorOnPrimary : colorOnSurface}
+                            fontSize={14}
+                            fontWeight={dataType === quality ? 'bold' : 'normal'}
+                            text={lc(quality)}
+                            verticalAlignment="middle"
+                        />
+                    </gridlayout>
+                {/each}
+            </wraplayout>
+            <gridlayout columns="*,auto" marginTop={8}>
+                <label color={colorOnSurface} fontSize={__IOS__ ? 17 : 16} text={lc('languages')} verticalAlignment="middle" />
+                <uibutton class="icon-btn" col={1} text="mdi-plus" variant="text" verticalAlignment="middle" on:tap={addLanguages} />
+            </gridlayout>
+            <wraplayout marginTop={4}>
+                {#each languages as language (language)}
+                    <Chip rightIcon={downloaded.indexOf(language) !== -1 ? 'mdi-download' : null} text={localizedLanguage(language, OCRLanguages)} on:tap={() => removeLanguage(language)} />
+                {/each}
+            </wraplayout>
             {#if showDownloadButton}
-                <uibutton horizontalAlignment="right" padding="10 16 10 16" text={lc('download')} on:tap={downloadLanguages} />
+                <uibutton horizontalAlignment="right" marginTop={8} text={lc('download')} on:tap={downloadLanguages} />
             {/if}
         </stacklayout>
     {:else}
