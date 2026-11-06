@@ -87,7 +87,7 @@
     }
 </script>
 
-<wraplayout margin="5 10 5 10">
+<wraplayout margin="4 12 4 12">
     <textfield
         editable={false}
         hint={lc('orientation')}

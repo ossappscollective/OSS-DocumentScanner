@@ -2,16 +2,16 @@
     import { SilentError } from '@akylas/nativescript-app-utils/error';
     import { showError } from '@shared/utils/showError';
     import { Writable } from 'svelte/store';
-    import RemoteFolderTextField from '~/components/common/RemoteFolderTextField.svelte';
+    import FormTextField from '~/components/common/FormTextField.svelte';
     import { lc } from '~/helpers/locale';
     import { OAuthProvider, OAuthTokens, refreshAccessToken } from '~/services/sync/OAuthHelper';
     import { performOAuthFlow } from '~/services/sync/OAuthHelperUI';
     import { ONEDRIVE_PROVIDER } from '~/services/sync/onedrive/OneDrive';
+    import { appIcon } from '~/utils/appIcons';
+    import { getRowCorners } from '~/utils/groupedRows';
     import { colors } from '~/variables';
 
-    $: ({ colorError, colorOnError, colorOnSurfaceVariant, colorSecondary } = $colors);
-
-    const variant = 'outline';
+    $: ({ colorError, colorOnError, colorOnSurface, colorOnSurfaceVariant, colorSecondary, colorSurfaceContainerLow } = $colors);
 
     export let store: Writable<any>;
     export let provider: OAuthProvider;
@@ -83,30 +83,37 @@
 </script>
 
 <stacklayout>
-    <gridlayout columns="*,auto" rows="auto">
-        <label color={colorOnSurfaceVariant} fontSize={13} padding="0 16 0 16" text={isAuthenticated ? lc('authenticated') : lc('not_authenticated')} textWrap={true} verticalAlignment="center" />
-        <uibutton
-            col={1}
-            margin="0 16 0 0"
-            text={isAuthenticated ? lc('re_authenticate') : lc('authenticate')}
-            variant={isAuthenticated ? 'outline' : 'contained'}
-            verticalAlignment="center"
-            on:tap={authenticate}
-        />
-    </gridlayout>
+    <stacklayout backgroundColor={colorSurfaceContainerLow} margin="0 16 0 16" padding="12 16 12 16" {...getRowCorners('only', __IOS__)}>
+        <gridlayout columns="*,auto" rows="auto">
+            <label color={colorOnSurface} fontSize={__IOS__ ? 17 : 16} text={isAuthenticated ? lc('authenticated') : lc('not_authenticated')} textWrap={true} verticalAlignment="center" />
+            <uibutton col={1} text={isAuthenticated ? lc('re_authenticate') : lc('authenticate')} variant={isAuthenticated ? 'outline' : 'contained'} verticalAlignment="center" on:tap={authenticate} />
+        </gridlayout>
 
-    <gridlayout columns="auto,auto,*" margin="10 16" visibility={isAuthenticated ? 'visible' : 'collapsed'}>
-        <label text={lc('connection_status')} verticalAlignment="center" />
-        <label
-            class="mdi"
-            col={1}
-            color={testConnectionSuccess > 0 ? 'green' : colorError}
-            fontSize={24}
-            text={testConnectionSuccess > 0 ? 'mdi-check-circle' : 'mdi-alert-circle'}
-            verticalAlignment="center"
-            visibility={testConnectionSuccess !== 0 ? 'visible' : 'collapse'}
-        />
-        <uibutton col={2} horizontalAlignment="right" text={lc('test_connection')} variant="outline" on:tap={testConnectionAction} />
-    </gridlayout>
-    <RemoteFolderTextField hint={lc('remote_folder')} margin="20 4 10 4" text={$store.remoteFolder} {variant} on:textChange={(e) => ($store.remoteFolder = e['value'])} />
+        <gridlayout columns="auto,auto,*" marginTop={8} visibility={isAuthenticated ? 'visible' : 'collapsed'}>
+            <label color={colorOnSurface} text={lc('connection_status')} verticalAlignment="center" />
+            <label
+                class="mdi"
+                col={1}
+                color={testConnectionSuccess > 0 ? 'green' : colorError}
+                fontSize={24}
+                marginLeft={8}
+                text={testConnectionSuccess > 0 ? 'mdi-check-circle' : 'mdi-alert-circle'}
+                verticalAlignment="center"
+                visibility={testConnectionSuccess !== 0 ? 'visible' : 'collapse'}
+            />
+            <uibutton col={2} horizontalAlignment="right" text={lc('test_connection')} variant="outline" on:tap={testConnectionAction} />
+        </gridlayout>
+    </stacklayout>
+    <label class="settingsSectionHeader" text={lc('remote_folder')} />
+    <FormTextField
+        autocapitalizationType="none"
+        autocorrect={false}
+        hint={lc('remote_folder_desc')}
+        label={lc('remote_folder')}
+        margin="4 16 16 16"
+        returnKeyType="done"
+        showLabel={false}
+        text={$store.remoteFolder}
+        trailingIcon={appIcon('folder')}
+        onChange={(event) => ($store.remoteFolder = event.value)} />
 </stacklayout>

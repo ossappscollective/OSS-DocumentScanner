@@ -390,6 +390,8 @@
     "no_qrcode_found": "no QRCode found",
     "no_space_left": "your device seems to be running out of free storage",
     "no_storage_used": "using no storage",
+    "no_sync_yet_help": "pick where to sync, you can add several services",
+    "no_sync_yet_title": "no sync service yet",
     "no_text_found_in_page": "no text was detected in your document",
     "no_trashed_document": "trash is empty",
     "none": "none",

@@ -16,6 +16,10 @@
 
     const topItems = (st: Writable<LocalFolderPDFSyncServiceOptions>) => [
         {
+            type: 'sectionHeader',
+            title: lc('folder')
+        },
+        {
             id: 'selectFolder',
             type: 'selectFolder',
             text: get(st).localFolderPath

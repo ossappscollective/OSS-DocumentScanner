@@ -4,7 +4,7 @@
     import { Color, ObservableArray, Page } from '@nativescript/core';
     import { closeModal } from '@shared/utils/svelte/ui';
     import { get, writable } from 'svelte/store';
-    import CActionBar from '@shared/components/CActionBar.svelte';
+    import SyncSettingsBar from '~/components/settings/sync/SyncSettingsBar.svelte';
     import SyncFoldersSettingsView from '~/components/settings/sync/SyncFoldersSettingsView.svelte';
     import SyncSettingsCollectionView from '~/components/settings/sync/SyncSettingsCollectionView.svelte';
     import { lc } from '~/helpers/locale';
@@ -83,17 +83,14 @@
     ]);
 </script>
 
-<page bind:this={page} actionBarHidden={true} {...$$restProps}>
-    <gridlayout class="pageContent" rows="auto,*">
-        <SyncSettingsCollectionView {items} row={1} bind:store bind:updateItem>
+<appPage bind:this={page} {...$$restProps}>
+    <SyncSettingsBar title={lc('data_sync_settings')} onSave={save} />
+    <gridlayout class="pageContent">
+        <SyncSettingsCollectionView id="syncSettingsCollectionView" {items} bind:store bind:updateItem>
             <slot />
-            <Template key="syncfolders">
-                <SyncFoldersSettingsView {store} />
+            <Template key="syncfolders" let:item>
+                <SyncFoldersSettingsView position={item.position} {store} />
             </Template>
         </SyncSettingsCollectionView>
-
-        <CActionBar canGoBack modalWindow={true} title={lc('data_sync_settings')}>
-            <uibutton text={lc('save')} variant="text" verticalAlignment="middle" on:tap={save} />
-        </CActionBar>
     </gridlayout>
-</page>
+</appPage>
