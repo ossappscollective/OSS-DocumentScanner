@@ -12,7 +12,7 @@
     import { presentInAppSponsorBottomsheet } from '@shared/utils/inapp-purchase';
     import { Sentry, startSentry, stopSentry } from '@shared/utils/sentry';
     import { showError } from '@shared/utils/showError';
-    import { navigate } from '@shared/utils/svelte/ui';
+    import { goBack, navigate } from '@shared/utils/svelte/ui';
     import dayjs from 'dayjs';
     import { filesize } from 'filesize';
     import { getLocaleDisplayName, l, lc, lu, selectLanguage, slc } from '~/helpers/locale';
@@ -90,6 +90,8 @@
     import { colors, fontScale, fonts, hasCamera } from '~/variables';
     import OCRSettingsBottomSheet from '~/components/ocr/OCRSettingsBottomSheet.svelte';
     import BaseSettingsPage, { getStoreSetting } from '@shared/components/BaseSettingsPage.svelte';
+    import AppPageRoot from '~/components/common/AppPageRoot.svelte';
+    import { appIcon } from '~/utils/appIcons';
     const version = __APP_VERSION__ + ' Build ' + __APP_BUILD_NUMBER__;
     const variant = 'outline';
 
@@ -102,6 +104,9 @@
     // technique for only specific properties to get updated on store change
     // let { colorOnSurfaceVariant } = $colors;
     // $: ({ colorOnSurfaceVariant } = $colors);
+
+    let { colorOnBackground } = $colors;
+    $: ({ colorOnBackground } = $colors);
 
     const getRowProps = (item) => getSettingsRowProps(item, $colors, __IOS__);
     const getIconProps = () => getSettingsIconProps($colors, __IOS__);
@@ -116,10 +121,10 @@
 
     export let title = null;
     export let id = 'settingsPage';
-    export let actionBarButtons = [
-        { icon: 'mdi-message-alert', id: 'feedback' },
-        { icon: 'mdi-share-variant', id: 'share' },
-        { icon: 'mdi-github', id: 'github' }
+    const optionsMenu = [
+        { title: lc('send_feedback'), onSelect: () => onTap({ id: 'feedback' }, null) },
+        { title: lc('share'), onSelect: () => onTap({ id: 'share' }, null) },
+        { title: 'GitHub', onSelect: () => onTap({ id: 'github' }, null) }
     ];
     export let subSettingsOptions: string = null;
     export let searchable: boolean = null;
@@ -130,6 +135,16 @@
     }
 
     let refresh: (force?: boolean, filter?: string) => void;
+    let searchTimer: ReturnType<typeof setTimeout>;
+    function onSearchChange(event: { text: string }) {
+        const query = event.text?.toLowerCase();
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => refresh(false, query?.length > 1 ? query : undefined), 500);
+    }
+    function onSearchCancel() {
+        clearTimeout(searchTimer);
+        refresh(false, undefined);
+    }
     $: searchEnabled = searchable ?? (!subSettingsOptions && !options);
 
     let documentsStorageSizes: StorageSizes = null;
@@ -1414,15 +1429,32 @@
     onItemLongPress={(item, event) => onLongPress(item.id, event)}
     onItemTap={onTap}
     optionsProvider={getAvailableOptions}
+    pageComponent={AppPageRoot}
     {searchEnabled}
     {searchItemsProvider}
     title={title || $slc('settings.title')}
     bind:refresh>
-    <svelte:fragment slot="actionBarButtons">
-        {#each actionBarButtons as button (button.id)}
-            <uibutton class="actionBarButton" text={button.icon} variant="text" on:tap={(event) => onTap({ id: button.id }, event)} />
-        {/each}
-    </svelte:fragment>
+    <appBar
+        slot="appBar"
+        color={colorOnBackground}
+        iosIconRenderingMode="alwaysTemplate"
+        scrollBehavior="lift"
+        scrollTargetId="settingsCollectionView"
+        searchable={searchEnabled}
+        searchHint={lc('search')}
+        searchMode="collapsible"
+        searchPlacement="integrated"
+        size={__IOS__ ? 'large' : 'small'}
+        title={title || $slc('settings.title')}
+        ios:translucent={true}
+        on:searchChange={onSearchChange}
+        on:searchCancel={onSearchCancel}>
+        {#if __ANDROID__}
+            <appBarSearchField><textfield backgroundColor="transparent" floating={false} fontSize={16} hint={lc('search')} returnKeyType="search" variant="none" /></appBarSearchField>
+            <navigationButton {...{ 'android.systemIcon': 'ic_menu_back' }} on:tap={() => goBack()} />
+        {/if}
+        <appBarItem icon={appIcon('more')} ios.position="right" menu={optionsMenu} />
+    </appBar>
 
     <Template key="header" let:item>
         <gridlayout rows="auto,auto">
