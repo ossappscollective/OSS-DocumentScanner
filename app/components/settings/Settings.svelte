@@ -680,6 +680,8 @@
                                                   }
                                                   showLoading(lc('moving_files'));
                                                   const srcDbPath = path.join(srcFolder, DocumentsService.DB_NAME);
+                                                  // the db is in WAL mode: flush it into the file before copying it
+                                                  await documentsService.db.db.execute('PRAGMA wal_checkpoint(TRUNCATE)');
                                                   await File.fromPath(srcDbPath).copy(path.join(dstFolder, DocumentsService.DB_NAME));
                                                   await copyFolderContent(path.join(srcFolder, 'data'), path.join(dstFolder, 'data'));
                                                   ApplicationSettings.setString(SETTINGS_ROOT_DATA_FOLDER, dstFolder);

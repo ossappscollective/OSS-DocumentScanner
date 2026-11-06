@@ -57,13 +57,13 @@ export class BackupWorkerService extends BaseWorkerHandler<BackupWorker> {
             forceSAF: true
         });
         if (folders.folders?.[0]) {
-            const result = await this.sendMessageToWorker('createBackup', { zipPath: folders.folders?.[0] }, Date.now(), undefined, false, 0, { db: documentsService.db.db.db });
+            const result = await this.sendMessageToWorker('createBackup', { zipPath: folders.folders?.[0] }, Date.now());
             return result.path;
         }
     }
 
     async restoreBackup(zipPath: string): Promise<void> {
-        await this.sendMessageToWorker('restoreBackup', { zipPath }, Date.now(), undefined, false, 0, { db: documentsService.db.db.db });
+        await this.sendMessageToWorker('restoreBackup', { zipPath }, Date.now());
     }
 }
 

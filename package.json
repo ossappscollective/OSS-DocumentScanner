@@ -59,7 +59,7 @@
         "@nativescript-community/perms": "3.0.12",
         "@nativescript-community/preferences": "1.3.2",
         "@nativescript-community/sentry": "4.6.49",
-        "@nativescript-community/sqlite": "3.5.9",
+        "@nativescript-community/sqlite": "4.1.1",
         "@nativescript-community/svelte-native": "1.0.32",
         "@nativescript-community/systemui": "1.1.26",
         "@nativescript-community/text": "1.6.25",

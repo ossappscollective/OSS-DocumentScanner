@@ -340,8 +340,7 @@ export class SyncService extends BaseWorkerHandler<SyncWorker> {
         } = {}
     ) {
         try {
-            const db = documentsService.db?.db?.db;
-            if (!this.enabled || !db) {
+            if (!this.enabled || !documentsService.db?.isOpen()) {
                 return;
             }
             // send syncState event right now for the UI to be updated as soon as possible
@@ -356,18 +355,10 @@ export class SyncService extends BaseWorkerHandler<SyncWorker> {
                 // }
                 DEV_LOG && console.log('syncDocumentsInternal', data.type, data.fromEvent, Object.keys(otherProps));
             }
-            await this.sendMessageToWorker(
-                'sync',
-                {
-                    ...data,
-                    event: eventData
-                },
-                undefined,
-                undefined,
-                false,
-                0,
-                { db: documentsService.db.db.db }
-            );
+            await this.sendMessageToWorker('sync', {
+                ...data,
+                event: eventData
+            });
         } catch (error) {
             DEV_LOG && console.error(error);
             showError(error);

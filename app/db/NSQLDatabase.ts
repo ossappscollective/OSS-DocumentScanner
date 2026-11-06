@@ -1,9 +1,8 @@
 import SqlQuery from 'kiss-orm/dist/Queries/SqlQuery';
 import DatabaseInterface from 'kiss-orm/dist/Databases/DatabaseInterface';
 import migrate from 'kiss-orm/dist/Databases/Common/migrate';
-import { SQLiteDatabase, openOrCreate, wrapDb } from '@nativescript-community/sqlite';
+import { DatabaseOptions, SQLiteDatabase, openOrCreate } from '@nativescript-community/sqlite';
 import { NoSpaceLeftError } from '@akylas/nativescript-app-utils/error';
-import { DatabaseOptions } from '@nativescript-community/sqlite/sqlite.common';
 
 function formatIdentifier(i: string): string {
     return i;
@@ -11,12 +10,8 @@ function formatIdentifier(i: string): string {
 
 export default class NSQLDatabase implements DatabaseInterface {
     db: SQLiteDatabase;
-    constructor(filePathOrDb: any, options?: DatabaseOptions) {
-        if (typeof filePathOrDb === 'string') {
-            this.db = openOrCreate(filePathOrDb, options);
-        } else {
-            this.db = wrapDb(filePathOrDb, options);
-        }
+    constructor(filePath: string, options?: DatabaseOptions) {
+        this.db = openOrCreate(filePath, options);
     }
 
     async disconnect(): Promise<void> {
@@ -42,7 +37,7 @@ export default class NSQLDatabase implements DatabaseInterface {
         const compiledQuery = query.compile(this.indexToPlaceholder, formatIdentifier);
         const sqlQuery = compiledQuery.sql.trim();
         try {
-            const result = await this.db.select(sqlQuery, compiledQuery.params);
+            const result = await this.db.select(sqlQuery, [...compiledQuery.params]);
             return result as any[];
         } catch (error) {
             this.wrapAndThrowError(error);
@@ -60,13 +55,9 @@ export default class NSQLDatabase implements DatabaseInterface {
         const compiledQuery = standardInsertQuery.compile(this.indexToPlaceholder, formatIdentifier);
         const sqlQuery = compiledQuery.sql.trim();
         try {
-            let result = await this.db.execute(sqlQuery, compiledQuery.params);
-            // console.info('insertAndGet', sqlQuery, compiledQuery.params, result);
-            if (!result) {
-                // create await an array result.
-                result = [undefined];
-            }
-            return result as any[];
+            await this.db.execute(sqlQuery, [...compiledQuery.params]);
+            // the rowid is not the primary key of every table: let kiss-orm use the inserted attributes
+            return [undefined];
         } catch (error) {
             this.wrapAndThrowError(error);
         }
