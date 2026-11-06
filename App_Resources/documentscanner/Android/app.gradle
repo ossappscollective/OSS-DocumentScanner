@@ -115,6 +115,8 @@ android {
     pickFirst 'lib/x86_64/libc++_shared.so'
     pickFirst 'lib/x86/libc++_shared.so'
     exclude "assets/app/**/*.js.map"
+    // sqlite uses its Node-API binding on android: the JNI one is never loaded
+    exclude '**/libnssqlite_jni.so'
     exclude "com/itextpdf/**/afm/Courier*.afm"
     exclude "com/itextpdf/**/afm/Times*.afm"
     exclude "com/itextpdf/**/afm/Symbol*.afm"

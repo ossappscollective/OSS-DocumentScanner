@@ -26,7 +26,7 @@ export default class BackupWorker extends BaseWorker {
                 this.notify({ ...other, target: 'documentsService', object: object === this ? undefined : object });
             };
             setDocumentsService(documentsService);
-            await documentsService.start(event.data.nativeData.db);
+            await documentsService.start(true);
         }
     }
 

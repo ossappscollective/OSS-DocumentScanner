@@ -988,7 +988,8 @@ export class DocumentsService extends Observable {
         super();
         this.id = ID++;
     }
-    async start(db?) {
+    // inWorker: the main thread already created the tables and ran the migrations
+    async start(inWorker = false) {
         if (this.started) {
             return;
         }
@@ -1018,28 +1019,13 @@ export class DocumentsService extends Observable {
         }
         this.rootDataFolder = rootDataFolder;
         dataFolder = this.dataFolder = Folder.fromPath(rootDataFolder).getFolder('data');
-        DEV_LOG && console.info('DocumentsService', 'start', this.id, rootDataFolder, !!db, dataFolder.path);
+        DEV_LOG && console.info('DocumentsService', 'start', this.id, rootDataFolder, inWorker, dataFolder.path);
 
-        let databaseFileExisted = true;
-        if (db) {
-            this.db = new NSQLDatabase(db, {
-                // for now it breaks
-                // threading: true,
-                transformBlobs: false
-            } as any);
-        } else {
-            const filePath = path.join(rootDataFolder, DocumentsService.DB_NAME);
-            databaseFileExisted = File.exists(filePath);
-            DEV_LOG && console.log('DocumentsService', 'dbFileName', filePath, databaseFileExisted);
+        const filePath = path.join(rootDataFolder, DocumentsService.DB_NAME);
+        const databaseFileExisted = File.exists(filePath);
+        DEV_LOG && console.log('DocumentsService', 'dbFileName', filePath, databaseFileExisted);
 
-            this.db = new NSQLDatabase(filePath, {
-                // for now it breaks
-                // threading: true,
-                transformBlobs: false,
-                //TODO: it seems ocrData can be sometimes too big. Maybe the best would be not to store it in db
-                cursorWindowSize: 10 * 1024 * 1024
-            } as any);
-        }
+        this.db = new NSQLDatabase(filePath, { transformBlobs: false });
 
         this.pageRepository = new PageRepository(this.db);
         this.tagRepository = new TagRepository(this.db);
@@ -1048,7 +1034,7 @@ export class DocumentsService extends Observable {
             this.pkpassRepository = new PKPassRepository(this.db);
         }
         this.documentRepository = new DocumentRepository(this.db, this.pageRepository, this.tagRepository, this.folderRepository, this.pkpassRepository);
-        if (!db) {
+        if (!inWorker) {
             await this.documentRepository.createTables();
             await this.pageRepository.createTables();
             await this.tagRepository.createTables();
@@ -1077,8 +1063,8 @@ export class DocumentsService extends Observable {
             }
         }
 
-        this.notify({ eventName: 'started' });
         this.started = true;
+        this.notify({ eventName: 'started' });
     }
     /** What every page of every document uses on disk, split between processed and original images. */
     async getStorageSizes(): Promise<StorageSizes & { documentsCount: number }> {

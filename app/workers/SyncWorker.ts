@@ -110,7 +110,7 @@ export default class SyncWorker extends BaseWorker {
     async handleStart(event: WorkerEvent) {
         if (!documentsService) {
             documentsService = new DocumentsService();
-            DEV_LOG && console.warn('SyncWorker', 'handleStart', documentsService.id, event.data.nativeData.db);
+            DEV_LOG && console.warn('SyncWorker', 'handleStart', documentsService.id);
             documentsService.notify = (e: any) => {
                 if (e.eventName === 'started') {
                     return;
@@ -122,7 +122,7 @@ export default class SyncWorker extends BaseWorker {
                 this.notify({ ...other, target: 'documentsService', object: object === this ? undefined : object });
             };
             setDocumentsService(documentsService);
-            await documentsService.start(event.data.nativeData.db);
+            await documentsService.start(true);
         }
         if (!this.services) {
             const syncServices = this.getStoredSyncServices().filter((s) => s.enabled !== false);
