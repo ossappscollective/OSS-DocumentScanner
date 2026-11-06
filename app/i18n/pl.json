@@ -527,6 +527,7 @@
     "select_color_theme": "Wybierz kolor motywu",
     "select_documents_to_import": "wybierz dokumenty, z których chcesz zaimportować strony",
     "select_language": "Wybierz język",
+    "select_pages": "wybierz strony",
     "select_sync_service": "wybierz usługę synchronizacji",
     "select_theme": "wybierz motyw",
     "selected_one": "Wybrano %1$s",
