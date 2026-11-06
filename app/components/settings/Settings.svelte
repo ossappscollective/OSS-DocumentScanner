@@ -843,16 +843,7 @@
                           ]
                         : []
                 )
-                .concat([
-                    {
-                        id: 'sub_settings',
-                        icon: 'mdi-database-outline',
-                        title: lc('storage'),
-                        description: lc('storage_settings_desc'),
-                        options: () => getSubSettings('storage')
-                    }
-                ])
-
+                .concat([{ type: 'sectionheader', title: lc('scan') }])
                 .concat(
                     $hasCamera
                         ? [
@@ -898,6 +889,7 @@
                         : []
                 )
                 .concat([
+                    { type: 'sectionheader', title: lc('documents') },
                     {
                         id: 'sub_settings',
                         icon: 'mdi-file-document-edit',
@@ -947,13 +939,52 @@
                         description: lc('trash_settings'),
                         options: () => getSubSettings('trash')
                     },
+                    { type: 'sectionheader', title: lc('data') },
+                    {
+                        id: 'sub_settings',
+                        icon: 'mdi-database-outline',
+                        title: lc('storage'),
+                        description: lc('storage_settings_desc'),
+                        options: () => getSubSettings('storage')
+                    },
                     {
                         id: 'sub_settings',
                         icon: 'mdi-sync',
                         title: lc('sync'),
                         description: lc('sync_settings_desc'),
                         options: () => getSubSettings('sync')
-                    }
+                    },
+                    {
+                        type: 'sectionheader',
+                        title: lc('backup_restore')
+                    },
+                    {
+                        id: 'create_backup',
+                        title: lc('create_backup'),
+                        description: lc('create_backup_desc')
+                    },
+                    {
+                        id: 'restore_backup',
+                        title: lc('restore_backup'),
+                        description: lc('restore_backup_desc')
+                    },
+                    {
+                        type: 'sectionheader',
+                        title: lc('settings')
+                    },
+                    {
+                        id: 'export_settings',
+                        title: lc('export_settings'),
+                        description: lc('export_settings_desc')
+                        // rightBtnIcon: 'mdi-chevron-right'
+                    },
+                    {
+                        id: 'import_settings',
+                        title: lc('import_settings'),
+                        description: lc('import_settings_desc')
+                        // rightBtnIcon: 'mdi-chevron-right'
+                    },
+                    { type: 'sectionheader', title: lc('about') }
                 ])
                 .concat(
                     PLAY_STORE_BUILD
@@ -993,38 +1024,6 @@
                           ]
                         : []
                 )
-                .concat([
-                    {
-                        type: 'sectionheader',
-                        title: lc('backup_restore')
-                    },
-                    {
-                        id: 'create_backup',
-                        title: lc('create_backup'),
-                        description: lc('create_backup_desc')
-                    },
-                    {
-                        id: 'restore_backup',
-                        title: lc('restore_backup'),
-                        description: lc('restore_backup_desc')
-                    },
-                    {
-                        type: 'sectionheader',
-                        title: lc('settings')
-                    },
-                    {
-                        id: 'export_settings',
-                        title: lc('export_settings'),
-                        description: lc('export_settings_desc')
-                        // rightBtnIcon: 'mdi-chevron-right'
-                    },
-                    {
-                        id: 'import_settings',
-                        title: lc('import_settings'),
-                        description: lc('import_settings_desc')
-                        // rightBtnIcon: 'mdi-chevron-right'
-                    }
-                ])
         );
     }
 
