@@ -1,9 +1,10 @@
+import javax.inject.Inject
+import org.gradle.process.ExecOperations
 
 project.ext.abiCodes = ['armeabi':1, 'armeabi-v7a':2, 'arm64-v8a':3, 'x86':4, 'x86_64':5]
 def BUILD_TOOLS_PATH = "$rootDir/build-tools"
 
 apply plugin: "androidx.baselineprofile"
-apply plugin: "org.jetbrains.kotlin.android"
 
 android { 
   // we only enable split if specified as an arg or if in debug and abiFilters is used(through cli)
@@ -139,10 +140,15 @@ android {
   experimentalProperties["android.experimental.r8.dex-startup-optimization"] = true
 }
 
+interface InjectedExecOps {
+    @Inject
+    ExecOperations getExecOps()
+}
+
 task createProguard {
     dependsOn 'buildMetadata'
     doLast {
-        exec {
+        project.objects.newInstance(InjectedExecOps).execOps.exec {
             workingDir "$USER_PROJECT_ROOT"
             println("node tools/scripts/createProguard.js ${rootDir} ${getAppResourcesPath()}")
             commandLine 'node', "tools/scripts/createProguard.js", "${rootDir}", "${getAppResourcesPath()}"
