@@ -5,6 +5,7 @@
     import type { DocFolder } from '~/models/OCRDocument';
     import { documentsService } from '~/services/documents';
     import { ALERT_OPTION_MAX_HEIGHT } from '~/utils/constants';
+    import type { RowPosition } from '~/utils/groupedRows';
     import { getSettingsRowProps } from '~/utils/settingsRows';
     import { showAlertOptionSelect } from '~/utils/ui';
     import { colors } from '~/variables';
@@ -13,6 +14,7 @@
     import type { Writable } from 'svelte/store';
 
     export let store: Writable<BaseSyncServiceOptions>;
+    export let position: RowPosition = 'only';
 
     let allFolders: DocFolder[] = [];
 
@@ -58,7 +60,7 @@
         }
     }
 
-    $: rowProps = getSettingsRowProps({ position: 'only', description: lc('sync_folders_desc') }, $colors, __IOS__);
+    $: rowProps = getSettingsRowProps({ position, description: lc('sync_folders_desc') }, $colors, __IOS__);
 
     function removeFolder(folderId: number) {
         $store.syncFolders = syncFolders.filter((id) => id !== folderId);

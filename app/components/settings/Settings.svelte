@@ -12,7 +12,7 @@
     import { presentInAppSponsorBottomsheet } from '@shared/utils/inapp-purchase';
     import { Sentry, startSentry, stopSentry } from '@shared/utils/sentry';
     import { showError } from '@shared/utils/showError';
-    import { navigate } from '@shared/utils/svelte/ui';
+    import { goBack, navigate } from '@shared/utils/svelte/ui';
     import dayjs from 'dayjs';
     import { filesize } from 'filesize';
     import { getLocaleDisplayName, l, lc, lu, selectLanguage, slc } from '~/helpers/locale';
@@ -90,6 +90,8 @@
     import { colors, fontScale, fonts, hasCamera } from '~/variables';
     import OCRSettingsBottomSheet from '~/components/ocr/OCRSettingsBottomSheet.svelte';
     import BaseSettingsPage, { getStoreSetting } from '@shared/components/BaseSettingsPage.svelte';
+    import AppPageRoot from '~/components/common/AppPageRoot.svelte';
+    import { appIcon } from '~/utils/appIcons';
     const version = __APP_VERSION__ + ' Build ' + __APP_BUILD_NUMBER__;
     const variant = 'outline';
 
@@ -102,6 +104,9 @@
     // technique for only specific properties to get updated on store change
     // let { colorOnSurfaceVariant } = $colors;
     // $: ({ colorOnSurfaceVariant } = $colors);
+
+    let { colorOnBackground } = $colors;
+    $: ({ colorOnBackground } = $colors);
 
     const getRowProps = (item) => getSettingsRowProps(item, $colors, __IOS__);
     const getIconProps = () => getSettingsIconProps($colors, __IOS__);
@@ -116,11 +121,7 @@
 
     export let title = null;
     export let id = 'settingsPage';
-    export let actionBarButtons = [
-        { icon: 'mdi-message-alert', id: 'feedback' },
-        { icon: 'mdi-share-variant', id: 'share' },
-        { icon: 'mdi-github', id: 'github' }
-    ];
+    const optionsMenu = [{ title: lc('send_feedback'), onSelect: () => onTap({ id: 'feedback' }, null) }];
     export let subSettingsOptions: string = null;
     export let searchable: boolean = null;
     export let searchItemsProvider: (items: any[], filter: string) => any[] = null;
@@ -130,6 +131,17 @@
     }
 
     let refresh: (force?: boolean, filter?: string) => void;
+    let searchTimer: ReturnType<typeof setTimeout>;
+    function onSearchChange(event: { text: string }) {
+        const query = event.text?.toLowerCase();
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => refresh(false, query?.length > 1 ? query : undefined), 500);
+    }
+    function onSearchCancel() {
+        clearTimeout(searchTimer);
+        refresh(false, undefined);
+    }
+    $: bottomItems = __IOS__ && searchEnabled ? [{ search: true }] : [];
     $: searchEnabled = searchable ?? (!subSettingsOptions && !options);
 
     let documentsStorageSizes: StorageSizes = null;
@@ -843,16 +855,7 @@
                           ]
                         : []
                 )
-                .concat([
-                    {
-                        id: 'sub_settings',
-                        icon: 'mdi-database-outline',
-                        title: lc('storage'),
-                        description: lc('storage_settings_desc'),
-                        options: () => getSubSettings('storage')
-                    }
-                ])
-
+                .concat([{ type: 'sectionheader', title: lc('scan') }])
                 .concat(
                     $hasCamera
                         ? [
@@ -898,6 +901,7 @@
                         : []
                 )
                 .concat([
+                    { type: 'sectionheader', title: lc('documents') },
                     {
                         id: 'sub_settings',
                         icon: 'mdi-file-document-edit',
@@ -947,13 +951,52 @@
                         description: lc('trash_settings'),
                         options: () => getSubSettings('trash')
                     },
+                    { type: 'sectionheader', title: lc('data') },
+                    {
+                        id: 'sub_settings',
+                        icon: 'mdi-database-outline',
+                        title: lc('storage'),
+                        description: lc('storage_settings_desc'),
+                        options: () => getSubSettings('storage')
+                    },
                     {
                         id: 'sub_settings',
                         icon: 'mdi-sync',
                         title: lc('sync'),
                         description: lc('sync_settings_desc'),
                         options: () => getSubSettings('sync')
-                    }
+                    },
+                    {
+                        type: 'sectionheader',
+                        title: lc('backup_restore')
+                    },
+                    {
+                        id: 'create_backup',
+                        title: lc('create_backup'),
+                        description: lc('create_backup_desc')
+                    },
+                    {
+                        id: 'restore_backup',
+                        title: lc('restore_backup'),
+                        description: lc('restore_backup_desc')
+                    },
+                    {
+                        type: 'sectionheader',
+                        title: lc('settings')
+                    },
+                    {
+                        id: 'export_settings',
+                        title: lc('export_settings'),
+                        description: lc('export_settings_desc')
+                        // rightBtnIcon: 'mdi-chevron-right'
+                    },
+                    {
+                        id: 'import_settings',
+                        title: lc('import_settings'),
+                        description: lc('import_settings_desc')
+                        // rightBtnIcon: 'mdi-chevron-right'
+                    },
+                    { type: 'sectionheader', title: lc('about') }
                 ])
                 .concat(
                     PLAY_STORE_BUILD
@@ -993,38 +1036,6 @@
                           ]
                         : []
                 )
-                .concat([
-                    {
-                        type: 'sectionheader',
-                        title: lc('backup_restore')
-                    },
-                    {
-                        id: 'create_backup',
-                        title: lc('create_backup'),
-                        description: lc('create_backup_desc')
-                    },
-                    {
-                        id: 'restore_backup',
-                        title: lc('restore_backup'),
-                        description: lc('restore_backup_desc')
-                    },
-                    {
-                        type: 'sectionheader',
-                        title: lc('settings')
-                    },
-                    {
-                        id: 'export_settings',
-                        title: lc('export_settings'),
-                        description: lc('export_settings_desc')
-                        // rightBtnIcon: 'mdi-chevron-right'
-                    },
-                    {
-                        id: 'import_settings',
-                        title: lc('import_settings'),
-                        description: lc('import_settings_desc')
-                        // rightBtnIcon: 'mdi-chevron-right'
-                    }
-                ])
         );
     }
 
@@ -1415,15 +1426,35 @@
     onItemLongPress={(item, event) => onLongPress(item.id, event)}
     onItemTap={onTap}
     optionsProvider={getAvailableOptions}
+    pageComponent={AppPageRoot}
     {searchEnabled}
     {searchItemsProvider}
     title={title || $slc('settings.title')}
     bind:refresh>
-    <svelte:fragment slot="actionBarButtons">
-        {#each actionBarButtons as button (button.id)}
-            <uibutton class="actionBarButton" text={button.icon} variant="text" on:tap={(event) => onTap({ id: button.id }, event)} />
-        {/each}
-    </svelte:fragment>
+    <appBar
+        slot="appBar"
+        {bottomItems}
+        color={colorOnBackground}
+        iosIconRenderingMode="alwaysTemplate"
+        scrollBehavior="lift"
+        scrollTargetId="settingsCollectionView"
+        searchable={searchEnabled}
+        searchHint={lc('search')}
+        searchMode="collapsible"
+        searchPlacement="integrated"
+        size={__IOS__ ? 'large' : 'small'}
+        title={title || $slc('settings.title')}
+        ios:translucent={true}
+        on:searchChange={onSearchChange}
+        on:searchCancel={onSearchCancel}>
+        {#if __ANDROID__}
+            <appBarSearchField><textfield backgroundColor="transparent" floating={false} fontSize={16} hint={lc('search')} returnKeyType="search" variant="none" /></appBarSearchField>
+            <navigationButton {...{ 'android.systemIcon': 'ic_menu_back' }} on:tap={() => goBack()} />
+        {/if}
+        <appBarItem icon={appIcon('github')} ios.position="right" text="GitHub" on:tap={() => onTap({ id: 'github' }, null)} />
+        <appBarItem icon={appIcon('share')} ios.position="right" text={lc('share')} on:tap={() => onTap({ id: 'share' }, null)} />
+        <appBarItem icon={appIcon('more')} ios.position="right" menu={optionsMenu} />
+    </appBar>
 
     <Template key="header" let:item>
         <gridlayout rows="auto,auto">

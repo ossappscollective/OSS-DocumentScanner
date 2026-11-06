@@ -55,3 +55,10 @@ test('rows are grouped per section: a header ends the run', () => {
     );
     expect(items.map((item) => item.position)).toEqual([undefined, undefined, 'first', 'last', undefined, 'first', 'middle', 'last']);
 });
+
+test('a getItem which reads from the end with a negative index does not make the first row a middle one', () => {
+    const items = [doc(), doc(), doc()];
+    // an ObservableArray reads getItem(-1) as the last item
+    updatePositions((index) => items.at(index), items.length);
+    expect(items.map((item) => item.position)).toEqual(['first', 'middle', 'last']);
+});

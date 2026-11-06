@@ -1315,10 +1315,12 @@
     <appPageOverlay>
         {#if __ANDROID__ && nbSelected === 0}
             <stacklayout class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal">
-                {#if canBeExportedToPDF}
-                    <uibutton class="addFab" {...{ src: appIcon('export') }} variant="contained" on:tap={showExportMenu} />
-                {/if}
-                {#if !isPKPassDocument}
+                {#if isPKPassDocument}
+                    <uifloatingactionbutton class="editFab" backgroundColor={passColors.foregroundColor} color={passColors.backgroundColor} src={appIcon('export')} text={lc('export')} on:tap={showExportMenu} />
+                {:else}
+                    {#if canBeExportedToPDF}
+                        <uibutton class="addFab" {...{ src: appIcon('export') }} variant="contained" on:tap={showExportMenu} />
+                    {/if}
                     <uifloatingactionbutton class="editFab" backgroundColor={accent.accent} color={accent.onAccent} src={appIcon('edit')} text={lc('edit')} on:tap={openEdit} />
                 {/if}
             </stacklayout>

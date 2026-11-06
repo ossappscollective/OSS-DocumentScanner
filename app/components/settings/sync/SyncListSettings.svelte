@@ -2,25 +2,31 @@
     import { Template } from '@nativescript-community/svelte-native/components';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import { CollectionView } from '@nativescript-community/ui-collectionview';
-    import { ObservableArray } from '@nativescript/core';
+    import type { MenuItem } from '@nativescript-community/ui-menu';
+    import { Color, FormattedString, ObservableArray, Span } from '@nativescript/core';
     import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
     import { type RowPosition, updateRowPositions } from '@shared/utils/groupedRows';
     import { showError } from '@shared/utils/showError';
-    import { showModal } from '@shared/utils/svelte/ui';
-    import CActionBar from '@shared/components/CActionBar.svelte';
+    import { goBack, showModal as showModalBase } from '@shared/utils/svelte/ui';
+    import CardIcon from '~/components/common/CardIcon.svelte';
+    import ModalFrame from '~/components/common/ModalFrame.svelte';
+    import { appIcon } from '~/utils/appIcons';
+    import { getChipWash } from '~/utils/cardColors';
     import { lc, onLanguageChanged } from '~/helpers/locale';
     import { onThemeChanged } from '~/helpers/theme';
     import { syncService } from '~/services/sync';
     import { LocalFolderImageSyncServiceOptions } from '~/services/sync/local/LocalFolderImageSyncService';
     import { LocalFolderPDFSyncServiceOptions } from '~/services/sync/local/LocalFolderPDFSyncService';
-    import { SERVICES_SYNC_COLOR, SERVICES_SYNC_ICONS_COLORS, SyncTypes } from '~/services/sync/types';
+    import { SERVICES_SYNC_COLOR, SERVICES_SYNC_ICONS_COLORS, SYNC_TYPES, SyncTypes } from '~/services/sync/types';
     import { WebdavSyncOptions, createWebdavConfig } from '~/services/sync/webdav/Webdav';
     import { WebdavDataSyncOptions } from '~/services/sync/webdav/WebdavDataSyncService';
-    import { ALERT_OPTION_MAX_HEIGHT } from '~/utils/constants';
-    import { getDirectoryName, hideLoading, requestNotificationPermission, showAlertOptionSelect } from '~/utils/ui';
+    import { getDirectoryName, hideLoading, requestNotificationPermission } from '~/utils/ui';
     import { getSettingsRowProps } from '~/utils/settingsRows';
     import { colors, fontScale, fonts, windowInset } from '~/variables';
     type Item = BaseSyncServiceOptions & { title?: string; description?: string; syncColor?: string };
+    // the pages of the services have a native app bar, which needs a frame in a modal
+    const showModal = (options: { page: unknown; fullscreen: boolean; props: Record<string, unknown> }): Promise<any> =>
+        showModalBase({ ...options, page: ModalFrame, props: { page: options.page, ...options.props } });
 
     import type GoogleDriveDataSyncSettings__SvelteComponent_ from '~/components/settings/sync/gdrive/GoogleDriveDataSyncSettings.svelte';
     import type GoogleDriveImageSyncSettings__SvelteComponent_ from '~/components/settings/sync/gdrive/GoogleDriveImageSyncSettings.svelte';
@@ -87,8 +93,8 @@
 
 <script lang="ts">
     // technique for only specific properties to get updated on store change
-    let { colorError, colorOnError, colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary, colorSurfaceContainerHigh } = $colors;
-    $: ({ colorError, colorOnError, colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary, colorSurfaceContainerHigh } = $colors);
+    let { colorError, colorOnBackground, colorOnError, colorOnPrimaryContainer, colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary, colorPrimaryContainer, colorSurfaceContainerHigh } = $colors;
+    $: ({ colorError, colorOnBackground, colorOnError, colorOnPrimaryContainer, colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary, colorPrimaryContainer, colorSurfaceContainerHigh } = $colors);
 
     let collectionView: NativeViewElementNode<CollectionView>;
 
@@ -96,7 +102,6 @@
 
     export let type: 'pdf' | 'data' | 'image' = 'data';
     export let title = null;
-    export let actionBarButtons = [{ icon: 'mdi-plus', id: 'add' }];
 
     const dataSyncServices = syncService.getStoredSyncServices();
 
@@ -109,12 +114,14 @@
         updateRowPositions((index) => items.getItem(index), items.length, isRow, from, to).forEach((index) => items.setItem(index, items.getItem(index)));
     }
 
+    let empty = false;
     function refresh() {
         const newItems: Item[] = options || [];
 
         const preparedItems = newItems.map((item) => prepareItem(item));
         updateRowPositions((index) => preparedItems[index], preparedItems.length, isRow);
         items = new ObservableArray(preparedItems);
+        empty = preparedItems.length === 0;
     }
     refresh();
 
@@ -231,6 +238,7 @@
                 if (index !== -1) {
                     items.splice(index, 1);
                     updatePositions(index - 1, index);
+                    empty = items.length === 0;
                 }
             }
         } catch (err) {
@@ -238,35 +246,41 @@
         }
     }
 
-    async function onTap(item, event) {
+    const isSyncType = (key: string): key is SYNC_TYPES => key in SERVICES_SYNC_TITLES;
+    const serviceOptions = Object.keys(SERVICES_SYNC_TITLES)
+        .filter(isSyncType)
+        .filter((s) => s.endsWith(type))
+        .map((s) => {
+            const key = s.split('_')[0];
+            const iconData = SERVICES_SYNC_ICONS_COLORS[key];
+            return {
+                data: s,
+                icon: iconData?.icon,
+                iconColor: iconData?.color,
+                iconFontFamily: iconData?.fontFamily,
+                name: SERVICES_SYNC_TITLES[s]
+            };
+        });
+
+    // the menu of the add button: the glyph of each service in its color
+    function getServiceIcon(option: (typeof serviceOptions)[number]) {
+        const span = new Span();
+        span.text = option.icon;
+        span.fontFamily = option.iconFontFamily || $fonts.mdi;
+        span.color = option.iconColor ? new Color(option.iconColor) : undefined;
+        const icon = new FormattedString();
+        icon.spans.push(span);
+        return icon;
+    }
+    const addMenu: MenuItem[] = serviceOptions.map((option) => ({ id: option.data, title: option.name, icon: getServiceIcon(option), onSelect: () => onTap({ id: 'add' }, null, option.data) }));
+
+    // `service` is the type to add
+    async function onTap(item, event, service?: SYNC_TYPES) {
         try {
             // DEV_LOG && console.log('SyncListSettings', 'onItemTap', item);
             switch (item.id) {
                 case 'add':
-                    const options = Object.keys(SERVICES_SYNC_TITLES)
-                        .filter((s) => s.endsWith(type))
-                        .map((s) => {
-                            const key = s.split('_')[0];
-                            const iconData = SERVICES_SYNC_ICONS_COLORS[key];
-                            return {
-                                data: s,
-                                icon: iconData?.icon,
-                                iconColor: iconData?.color,
-                                iconFontFamily: iconData?.fontFamily,
-                                name: SERVICES_SYNC_TITLES[s]
-                            };
-                        });
-                    const selection = await showAlertOptionSelect(
-                        {
-                            fontWeight: 'normal',
-                            height: Math.min(options.length * 56, ALERT_OPTION_MAX_HEIGHT),
-                            rowHeight: 56,
-                            options
-                        },
-                        {
-                            title: lc('select_sync_service')
-                        }
-                    );
+                    const selection = { data: service };
                     if (selection?.data) {
                         const { id, ...data } = item;
                         let configToAdd;
@@ -362,6 +376,7 @@
                             DEV_LOG && console.log('adding item', data);
                             items.push(prepareItem(data));
                             updatePositions(items.length - 2, items.length - 1);
+                            empty = false;
                         }
                     }
             }
@@ -461,9 +476,22 @@
     }
 </script>
 
-<page id="syncSettingsPage" actionBarHidden={true}>
-    <gridlayout class="pageContent" rows="auto,*">
-        <collectionview bind:this={collectionView} itemTemplateSelector={selectTemplate} {items} row={1} android:paddingBottom={$windowInset.bottom}>
+<appPage id="syncSettingsPage">
+    <appBar
+        color={colorOnBackground}
+        iosIconRenderingMode="alwaysTemplate"
+        scrollBehavior="lift"
+        scrollTargetId="syncCollectionView"
+        size={__IOS__ ? 'large' : 'small'}
+        {title}
+        ios:translucent={true}>
+        {#if __ANDROID__}
+            <navigationButton {...{ 'android.systemIcon': 'ic_menu_back' }} on:tap={() => goBack()} />
+        {/if}
+        <appBarItem icon={appIcon('add')} ios.position="right" menu={addMenu} text={lc('add')} />
+    </appBar>
+    <gridlayout class="pageContent">
+        <collectionview id="syncCollectionView" bind:this={collectionView} itemTemplateSelector={selectTemplate} {items} android:paddingBottom={$windowInset.bottom}>
             <Template let:item>
                 <swipemenu
                     gestureHandlerOptions={{
@@ -514,10 +542,25 @@
                 </swipemenu>
             </Template>
         </collectionview>
-        <CActionBar canGoBack {title}>
-            {#each actionBarButtons as button (button.id)}
-                <uibutton class="actionBarButton" text={button.icon} variant="text" on:tap={(event) => onTap({ id: button.id }, event)} />
-            {/each}
-        </CActionBar>
+        {#if empty}
+            <stacklayout horizontalAlignment="center" marginBottom="15%" paddingLeft={36} paddingRight={36} verticalAlignment="center">
+                <uisurface class="cardsEmptyIcon" android:variant="clear" backgroundColor={__IOS__ ? getChipWash(colorPrimary, 41) : colorPrimaryContainer}>
+                    <CardIcon color={__IOS__ ? colorPrimary : colorOnPrimaryContainer} horizontalAlignment="center" size={40} src={appIcon('sync')} verticalAlignment="center" />
+                </uisurface>
+                <label textAlignment="center" textWrap={true}>
+                    <span color={colorOnBackground} fontSize={20} fontWeight="bold" text={lc('no_sync_yet_title')} />
+                    <span color={colorOnSurfaceVariant} fontSize={14} text={'\n' + lc('no_sync_yet_help')} />
+                </label>
+                {#each serviceOptions as option, index (option.data)}
+                    <uibutton
+                        height={44}
+                        horizontalAlignment="center"
+                        marginTop={index === 0 ? 20 : 8}
+                        text={option.name}
+                        variant={index === 0 ? 'contained' : 'text'}
+                        on:tap={(event) => onTap({ id: 'add' }, event, option.data)} />
+                {/each}
+            </stacklayout>
+        {/if}
     </gridlayout>
-</page>
+</appPage>

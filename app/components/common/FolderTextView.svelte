@@ -1,15 +1,14 @@
 <script context="module" lang="ts">
     import { lc } from '@nativescript-community/l';
     import { pickFolder } from '@nativescript-community/ui-document-picker';
-    import { colors } from '~/variables';
+    import FormTextField from '~/components/common/FormTextField.svelte';
+    import { appIcon } from '~/utils/appIcons';
     import { createEventDispatcher } from '@shared/utils/svelte/ui';
     import { getDirectoryName } from '~/utils/ui';
 </script>
 
 <script lang="ts">
-    export let variant = 'outline';
     export let text;
-    $: ({ colorOnSurfaceVariant } = $colors);
     const dispatch = createEventDispatcher();
 
     async function selectFolder() {
@@ -28,18 +27,4 @@
     }
 </script>
 
-<gridlayout margin="5 10 5 10" rows="auto" {...$$restProps} on:tap={selectFolder}>
-    <textfield
-        autocapitalizationType="none"
-        autocorrect={false}
-        editable={false}
-        hint={lc('folder_sync_desc')}
-        isUserInteractionEnabled={false}
-        paddingRight={60}
-        placeholder={lc('folder')}
-        returnKeyType="done"
-        text={getDirectoryActualName(text)}
-        {variant}
-    />
-    <uibutton class="icon-btn" color={colorOnSurfaceVariant} horizontalAlignment="right" text="mdi-folder-open" variant="text" verticalAlignment="middle" />
-</gridlayout>
+<FormTextField editable={false} hint={lc('folder_sync_desc')} label={lc('folder')} margin="4 16 16 16" showLabel={false} {...$$restProps} text={getDirectoryActualName(text)} trailingIcon={appIcon('folder')} onTap={selectFolder} onTrailingTap={selectFolder} />

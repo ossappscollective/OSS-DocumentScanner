@@ -5,19 +5,22 @@
     import { WebdavSyncOptions, testWebdavConnection } from '~/services/sync/webdav/Webdav';
 
     import { SilentError } from '@akylas/nativescript-app-utils/error';
-    import RemoteFolderTextField from '~/components/common/RemoteFolderTextField.svelte';
+    import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
+    import FormTextField from '~/components/common/FormTextField.svelte';
+    import { getSettingsRowProps } from '~/utils/settingsRows';
+    import { appIcon } from '~/utils/appIcons';
     import { showPopoverMenu } from '~/utils/ui';
     import { colors } from '~/variables';
     import { AuthType } from '~/webdav';
 
     $: ({ colorError, colorOnError, colorOnSurfaceVariant, colorSecondary } = $colors);
     $: ({ authType } = $store);
+    $: authRowProps = getSettingsRowProps({ position: 'only' }, $colors, __IOS__);
+    const fieldMargin = '4 16 4 16';
 
-    const variant = 'outline';
     export let store: Writable<WebdavSyncOptions>;
     let testing = false;
     let testConnectionSuccess = 0;
-    function focusTextfield(id: string) {}
 
     async function selectAuthentication(event) {
         try {
@@ -78,76 +81,46 @@
     }
 </script>
 
-<stacklayout padding="4 10 4 10">
-    <textfield
+<stacklayout padding="4 0 4 0">
+    <FormTextField
         autocapitalizationType="none"
-        hint={lc('server_address')}
         keyboardType="url"
-        margin="5 0 5 0"
-        placeholder={lc('server_address') + ' https://...'}
+        label={lc('server_address')}
+        margin={fieldMargin}
         returnKeyType="next"
         text={$store.remoteURL}
-        {variant}
-        on:returnPress={() => focusTextfield('username')}
-        on:textChange={(e) => ($store.remoteURL = e['value'])}
-    />
-    <gridLayout columns="auto,*">
-        <textfield
-            editable={false}
-            hint={lc('authentication')}
-            margin="5 4 5 0"
-            text={authType || AuthType.Password}
-            textTransform="uppercase"
-            {variant}
-            width={130}
-            on:tap={(e) => selectAuthentication(e)}
-        />
-        <textfield
+        onChange={(event) => ($store.remoteURL = event.value)} />
+    <ListItemAutoSize item={{ title: lc('authentication'), rightValue: (authType || AuthType.Password).toUpperCase() }} {...authRowProps} on:tap={selectAuthentication} />
+    {#if authType === AuthType.Token}
+        <FormTextField
             autocapitalizationType="none"
             autocorrect={false}
-            col={1}
-            editable={authType === AuthType.Token}
-            hint={lc('token')}
-            margin="5 0 5 4"
-            placeholder={lc('token')}
+            label={lc('token')}
+            margin={fieldMargin}
             returnKeyType="next"
             text={$store.token}
-            {variant}
-            on:returnPress={() => focusTextfield('username')}
-            on:textChange={(e) => ($store.token = e['value'])}
-        />
-    </gridLayout>
-    <textfield
-        autocapitalizationType="none"
-        autocorrect={false}
-        hint={lc('username')}
-        margin="5 0 5 0"
-        placeholder={lc('username')}
-        returnKeyType="next"
-        row={1}
-        text={$store.username}
-        {variant}
-        on:returnPress={() => focusTextfield('password')}
-        on:textChange={(e) => ($store.username = e['value'])}
-    />
-    <textfield
-        autocapitalizationType="none"
-        autocorrect={false}
-        hint={lc('password_not_saved')}
-        margin="5 0 5 0"
-        placeholder={lc('password')}
-        placeholderColor="gray"
-        returnKeyType="next"
-        row={2}
-        secure={true}
-        text={$store.password}
-        {variant}
-        on:returnPress={() => focusTextfield('remote_folder')}
-        on:textChange={(e) => ($store.password = e['value'])}
-    />
-    <RemoteFolderTextField columns="*" row={3} text={$store.remoteFolder} on:returnPress={testConnection} on:textChange={(e) => ($store.remoteFolder = e['value'])} />
-    <gridlayout columns="*,*" row={4} rows="auto">
-        <!-- <uibutton text={lc('save')} verticalAlignment="middle" on:tap={save} /> -->
+            onChange={(event) => ($store.token = event.value)} />
+    {:else if (authType || AuthType.Password) === AuthType.Password}
+        <FormTextField
+            autocapitalizationType="none"
+            autocorrect={false}
+            label={lc('username')}
+            margin={fieldMargin}
+            returnKeyType="next"
+            text={$store.username}
+            onChange={(event) => ($store.username = event.value)} />
+        <FormTextField
+            autocapitalizationType="none"
+            autocorrect={false}
+            hint={lc('password_not_saved')}
+            label={lc('password')}
+            margin={fieldMargin}
+            returnKeyType="next"
+            secure={true}
+            text={$store.password}
+            onChange={(event) => ($store.password = event.value)} />
+    {/if}
+    <gridlayout columns="*,*" margin="8 16 8 16" rows="auto">
         <gridlayout col={1} columns="auto" horizontalAlignment="right" rows="auto" verticalAlignment="middle">
             <uibutton
                 backgroundColor={testConnectionSuccess < 0 ? colorError : testConnectionSuccess > 0 ? 'lightgreen' : colorSecondary}
@@ -160,4 +133,17 @@
             <activityindicator busy={testing} height={20} horizontalAlignment="center" verticalAlignment="middle" visibility={testing ? 'visible' : 'hidden'} />
         </gridlayout>
     </gridlayout>
+    <label class="settingsSectionHeader" text={lc('remote_folder')} />
+    <FormTextField
+        autocapitalizationType="none"
+        autocorrect={false}
+        hint={lc('remote_folder_desc')}
+        label={lc('remote_folder')}
+        margin="4 16 16 16"
+        returnKeyType="done"
+        showLabel={false}
+        text={$store.remoteFolder}
+        trailingIcon={appIcon('folder')}
+        onChange={(event) => ($store.remoteFolder = event.value)}
+        on:returnPress={testConnection} />
 </stacklayout>

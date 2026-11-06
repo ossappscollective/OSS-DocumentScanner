@@ -23,17 +23,27 @@
     $: ({ colorOnSurfaceVariant, colorOutline } = $colors);
 
     let collectionView: NativeViewElementNode<CollectionView>;
+    // the first measure of the rows can happen before the modal has its width: measure again once it has
+    let measuredWidth = 0;
+    function onLayoutChanged() {
+        const width = collectionView?.nativeView?.getMeasuredWidth();
+        if (width && width !== measuredWidth) {
+            measuredWidth = width;
+            collectionView.nativeView.refresh();
+        }
+    }
     export let store: Writable<any>;
     // let folderPathName = data.folderPathName;
     const variant = 'outline';
 
     export let items: ObservableArray<any>;
 
-    // the form field and the section titles are not rows of a group
+    // the section titles and the forms (fields) are not rows of a group
+    const NOT_ROWS = ['sectionHeader', 'sectionheader', 'textfield', 'webdav', 'oauth', 'paperless', 'selectFolder', 'pdfoptions'];
     updateRowPositions(
         (index) => items.getItem(index),
         items.length,
-        (item) => !!item && item.type !== 'sectionHeader' && item.type !== 'textfield'
+        (item) => !!item && !NOT_ROWS.includes(item.type)
     );
     const getRowProps = (item) => getSettingsRowProps(item, $colors, __IOS__);
 
@@ -220,7 +230,7 @@
     // }
 </script>
 
-<collectionview bind:this={collectionView} ios:autoReloadItemOnLayout={true} itemTemplateSelector={selectTemplate} {items} android:paddingBottom={$windowInset.bottom} {...$$restProps}>
+<collectionview bind:this={collectionView} itemTemplateSelector={selectTemplate} {items} android:paddingBottom={$windowInset.bottom} {...$$restProps} on:layoutChanged={onLayoutChanged}>
     <Template key="sectionHeader" let:item>
         <label class="settingsSectionHeader" text={item.title} />
     </Template>
@@ -234,7 +244,7 @@
         </ListItemAutoSize>
     </Template>
     <Template key="textfield" let:item>
-        <gridlayout columns="*" margin={5} row={3} rows="auto" on:tap={(e) => item.onTap(item, e)}>
+        <gridlayout columns="*" margin="4 16 4 16" row={3} rows="auto" on:tap={(e) => item.onTap(item, e)}>
             <textfield isUserInteractionEnabled={false} text={item.text} {variant} {...item.textFieldProperties} on:loaded={onTextChange} />
             <uibutton
                 class="icon-btn"

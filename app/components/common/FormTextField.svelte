@@ -6,6 +6,8 @@
     /** the name of the field: the hint of the empty field, the caption above the field once it has a value, its accessibility label */
     export let label: string;
     export let text: string = '';
+    /** the caption above the field on iOS, off when a section title says it */
+    export let showLabel = true;
     /** a text view (a value which can take several lines) instead of a single line */
     export let multiline = false;
     // the placement in the parent, the other attributes (keyboardType, editable, error...) are the ones of the field
@@ -68,7 +70,7 @@
     types or focuses, fields are 8 apart (72 pitch). Android: the native outlined field floats its hint on the outline.
 -->
 <stacklayout {col} {colSpan} margin={containerMargin} {row}>
-    <label color={colorOnSurfaceVariant} fontSize={11} height={14} ios:marginBottom={2} ios:marginLeft={16} opacity={hasValue ? 1 : 0} text={label} visibility={__IOS__ ? 'visible' : 'collapsed'} />
+    <label color={colorOnSurfaceVariant} fontSize={11} height={14} ios:marginBottom={2} ios:marginLeft={16} opacity={hasValue ? 1 : 0} text={label} visibility={__IOS__ && showLabel ? 'visible' : 'collapsed'} />
     <gridlayout>
         {#if multiline}
             <textview accessibilityLabel={label} hint={label} {text} variant="outline" {...$$restProps} on:textChange={track} use:tap={onTap} />
@@ -81,6 +83,7 @@
                 {text}
                 variant="outline"
                 {...$$restProps}
+                on:returnPress
                 on:textChange={track}
                 use:tap={onTap}
             />

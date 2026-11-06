@@ -2,7 +2,7 @@
     import { Template } from '@nativescript-community/svelte-native/components';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import { CollectionView } from '@nativescript-community/ui-collectionview';
-    import { ObservableArray, Utils } from '@nativescript/core';
+    import { ObservableArray } from '@nativescript/core';
     import { goBack } from '@shared/utils/svelte/ui';
     import { showError } from '@shared/utils/showError';
     import { writable } from 'svelte/store';
@@ -154,9 +154,6 @@
         }
     });
 
-    // the list lays out under the bars: NativeScript then does not lay it out again each time the large title of the bar changes its height,
-    // which made it reload and jump while it came back to the top. UIKit insets the content, only the bottom has to be given back
-    const bottomSafeInset = __IOS__ ? Utils.ios.getRootViewController().view.safeAreaInsets.bottom : 0;
     function templateSelector(item: StorageItem) {
         return item.type ?? (getCardVariant(item) || 'tile');
     }
@@ -196,8 +193,6 @@
             bind:this={collectionView}
             ios:animateItemUpdate={false}
             ios:autoReloadItemOnLayout={true}
-            {...{ iosIgnoreSafeArea: true }}
-            ios:marginBottom={-bottomSafeInset}
             itemTemplateSelector={templateSelector}
             {items}
             android:paddingBottom={$windowInset.bottom}
