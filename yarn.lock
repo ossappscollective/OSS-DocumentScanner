@@ -20,7 +20,7 @@ __metadata:
 
 "@akylas/nativescript-app-tools@file:tools::locator=root-workspace-0b6124%40workspace%3A.":
   version: 1.0.0
-  resolution: "@akylas/nativescript-app-tools@file:tools#tools::hash=dd6ac3&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@akylas/nativescript-app-tools@file:tools#tools::hash=d8e3c6&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@dotenvx/dotenvx": "npm:1.51.4"
     "@nativescript-community/fontmin": "npm:0.9.11"
@@ -74,7 +74,7 @@ __metadata:
     typescript: "npm:5.9.3"
     typescript-eslint: "npm:8.53.0"
     webpack-bundle-analyzer: "npm:4.10.2"
-  checksum: 10/af71ae9848e5b91a84dc9fd68538c37786bafbe0d5372695a138511c5e41df4239a0dfc94a38cf5962b8b9dcb9d7739d8c2c048c329771b48f2960dfe38f96c1
+  checksum: 10/f479b44b6e30713dd3f78c2ae0ff0847cd07015744c5dbc9f5902f75949588774e086e4853ae8e3dd905cb50ddf2d981a7ec4b6d4cb08d654782cf9e90393cbf
   languageName: node
   linkType: hard
 
@@ -1390,7 +1390,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/gesturehandler@npm:2.1.0":
+"@nativescript-community/gesturehandler@npm:2.1.0, @nativescript-community/gesturehandler@npm:^2.0.43":
   version: 2.1.0
   resolution: "@nativescript-community/gesturehandler@npm:2.1.0"
   dependencies:
@@ -1567,12 +1567,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-activityindicator@npm:1.4.2":
-  version: 1.4.2
-  resolution: "@nativescript-community/ui-activityindicator@npm:1.4.2"
+"@nativescript-community/ui-activityindicator@npm:1.5.2":
+  version: 1.5.2
+  resolution: "@nativescript-community/ui-activityindicator@npm:1.5.2"
   dependencies:
-    "@nativescript-community/ui-core": "npm:^1.4.2"
-  checksum: 10/982c6e30b21756306eac5bff9e3526ab0a164dbe7705fbde12fcb2f084aa4c85f330866b49c74f41370cf2259713962ec23e6f6878764337ed3353523788a309
+    "@nativescript-community/ui-core": "npm:^1.5.2"
+  checksum: 10/dcb19e3a9822429cda951f12281f20367b81d96afaa268c510cd238f39edf9d211ffe50cd062d5088e9a3b89031bf6393ae03e7385682cf34b7bbb8d59f1f275
   languageName: node
   linkType: hard
 
@@ -1580,17 +1580,17 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@nativescript-community/ui-appbar@portal:../ui-native-components/packages/ui-appbar::locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
-    "@nativescript-community/ui-core": "npm:^1.4.2"
-    "@nativescript-community/ui-menu": "npm:^1.4.2"
+    "@nativescript-community/ui-core": "npm:^1.5.0"
+    "@nativescript-community/ui-menu": "npm:^1.5.0"
   languageName: node
   linkType: soft
 
-"@nativescript-community/ui-bottomsheet@npm:1.4.2":
-  version: 1.4.2
-  resolution: "@nativescript-community/ui-bottomsheet@npm:1.4.2"
+"@nativescript-community/ui-bottomsheet@npm:1.5.2":
+  version: 1.5.2
+  resolution: "@nativescript-community/ui-bottomsheet@npm:1.5.2"
   dependencies:
-    "@nativescript-community/ui-core": "npm:^1.4.2"
-  checksum: 10/c75a245ae56cb197ac7d7ba1a271701fb155846c35656254c2c44ddde74cccd7886f6f9d3e9d86573f43eb6fc2a28669e0297db9ab6db77cb8910716d5e55f7a
+    "@nativescript-community/ui-core": "npm:^1.5.2"
+  checksum: 10/8c19e14ed204f10f00355f530fc318d9f6d68aa8aeab170c1055d59005092665c5ae3daec601e0da0018f1081c383e78fc8db140487d934b1297ad79a8020ee2
   languageName: node
   linkType: hard
 
@@ -1599,7 +1599,7 @@ __metadata:
   resolution: "@nativescript-community/ui-button@portal:../ui-native-components/packages/ui-button::locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@nativescript-community/text": "npm:^1.5.2"
-    "@nativescript-community/ui-core": "npm:^1.4.2"
+    "@nativescript-community/ui-core": "npm:^1.5.0"
   languageName: node
   linkType: soft
 
@@ -1628,38 +1628,38 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-checkbox@npm:1.4.2":
-  version: 1.4.2
-  resolution: "@nativescript-community/ui-checkbox@npm:1.4.2"
+"@nativescript-community/ui-checkbox@npm:1.5.2":
+  version: 1.5.2
+  resolution: "@nativescript-community/ui-checkbox@npm:1.5.2"
   dependencies:
-    "@nativescript-community/ui-core": "npm:^1.4.2"
-  checksum: 10/4fae0a3e0cdc9bca112a26f576cba79d5bcbc248afcba3df599161f2ab5ce7c05a1ff2a84f4ac829224031e970f3737c5437b5ec5b4a9b2f58354530288baddd
+    "@nativescript-community/ui-core": "npm:^1.5.2"
+  checksum: 10/ead48a3d51cc0a1c849454845da916450747cca9b7eb2ed5440d8fd1e6c54ffbc28374c631ce5db0d8ad2f5d941d34e68569ac9f22ac564d4d5d8142b14841e8
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-collectionview-swipemenu@npm:6.0.35":
-  version: 6.0.35
-  resolution: "@nativescript-community/ui-collectionview-swipemenu@npm:6.0.35"
+"@nativescript-community/ui-collectionview-swipemenu@npm:6.0.36":
+  version: 6.0.36
+  resolution: "@nativescript-community/ui-collectionview-swipemenu@npm:6.0.36"
   dependencies:
     "@nativescript-community/class-mixins": "npm:^1.0.0"
-    "@nativescript-community/ui-collectionview": "npm:^6.0.35"
+    "@nativescript-community/ui-collectionview": "npm:^6.0.36"
     "@nativescript-community/ui-drawer": "npm:^0.1.31"
-  checksum: 10/b861a7e94787b319d04569aabd13dd990ee8fde2348ac070b4f64e66269b6b80e09f1593d4d75aac294aaf24cec15c2bebf03368f3a96752583dfc8a856e536a
+  checksum: 10/bfb8f255797fae3f6b039723774a497f34cc3813e3db6cbf7fd70a8d3e1ebcfc094c1c9f0f63e6831dc2c548f3dd2e08d74afcf6f2cab929822710fd4873c649
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-collectionview@npm:6.0.35, @nativescript-community/ui-collectionview@npm:^6.0.35":
-  version: 6.0.35
-  resolution: "@nativescript-community/ui-collectionview@npm:6.0.35"
+"@nativescript-community/ui-collectionview@npm:6.0.36, @nativescript-community/ui-collectionview@npm:^6.0.36":
+  version: 6.0.36
+  resolution: "@nativescript-community/ui-collectionview@npm:6.0.36"
   dependencies:
     "@nativescript-community/arraybuffers": "npm:^1.1.5"
-  checksum: 10/96858e9d77e6a8fc5cfc79da6b4620bb53206d6e05a62d99743bf40ce34368a50350c75cb18661107e4e8717bbf8060d6b7a7a22f5e5c4d89b4cc8a37d6808ac
+  checksum: 10/8773e29bc890b566c0ba13f8c9cb2db014e7c8fa61c5bb62e848c00ae9a15069d9717c18f1ff91acf269b32c2404dff484b9cce2a36182fdd9adf11a9cbee7b3
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-core@npm:1.4.2, @nativescript-community/ui-core@npm:^1.4.2":
-  version: 1.4.2
-  resolution: "@nativescript-community/ui-core@npm:1.4.2"
+"@nativescript-community/ui-core@npm:1.5.2, @nativescript-community/ui-core@npm:^1.5.0, @nativescript-community/ui-core@npm:^1.5.2":
+  version: 1.5.2
+  resolution: "@nativescript-community/ui-core@npm:1.5.2"
   dependencies:
     "@nativescript-community/text": "npm:^1.6.25"
   peerDependencies:
@@ -1667,7 +1667,7 @@ __metadata:
   peerDependenciesMeta:
     "@nativescript-community/text":
       optional: true
-  checksum: 10/b9150337f743f3d0607f4bd08e3b4cdb93f1d432d988b0f474f9f2b026361459ca69c42ebae9bc6c528cceb58eaad9fa2fb57585944b13ef360f89ac5e798ff5
+  checksum: 10/1a7b547f97c70b9ead0c905b573b6ed38213dd350ca018fe8aeb7576ca85f1bdc1fa75a9b6f4c1b0a8a10dab747b9096daf3b45baba89b09754de231465870a5
   languageName: node
   linkType: hard
 
@@ -1675,17 +1675,17 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@nativescript-community/ui-datetimepicker@portal:../ui-native-components/packages/ui-datetimepicker::locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
-    "@nativescript-community/ui-core": "npm:^1.4.2"
+    "@nativescript-community/ui-core": "npm:^1.5.0"
   languageName: node
   linkType: soft
 
-"@nativescript-community/ui-dialogs@npm:1.4.2":
-  version: 1.4.2
-  resolution: "@nativescript-community/ui-dialogs@npm:1.4.2"
+"@nativescript-community/ui-dialogs@npm:1.5.2":
+  version: 1.5.2
+  resolution: "@nativescript-community/ui-dialogs@npm:1.5.2"
   dependencies:
-    "@nativescript-community/ui-core": "npm:^1.4.2"
-    "@nativescript-community/ui-textfield": "npm:^1.4.2"
-  checksum: 10/3ecc6250fbda9b454ee5f0e25faa357f1d3868ec3247e420b0ee0a87ab5d5b510438d1c1512356439aa3180df35316aff735cf3a3cb2ed3f8e43cda714317f7e
+    "@nativescript-community/ui-core": "npm:^1.5.2"
+    "@nativescript-community/ui-textfield": "npm:^1.5.2"
+  checksum: 10/fba8121a23768430ae56e19686df42b78367385147aa2c0290ecc3589dd1a93f5fd056b933e2a79f3a1b0b85d46774543b0dfc52903793e184d15b3d3f88db4d
   languageName: node
   linkType: hard
 
@@ -1707,12 +1707,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-floatingactionbutton@npm:1.4.2":
-  version: 1.4.2
-  resolution: "@nativescript-community/ui-floatingactionbutton@npm:1.4.2"
+"@nativescript-community/ui-floatingactionbutton@npm:1.5.2":
+  version: 1.5.2
+  resolution: "@nativescript-community/ui-floatingactionbutton@npm:1.5.2"
   dependencies:
-    "@nativescript-community/ui-core": "npm:^1.4.2"
-  checksum: 10/dd851e8822075660afca35bb1ac8726dd1f32acb743a602de3472174b847d489b8acb7c0f485c0d7c7690347c72fc8ca1820d0e1275d03119527e1f54ac65e6d
+    "@nativescript-community/ui-core": "npm:^1.5.2"
+  checksum: 10/821b84468ed5f43b15978194d2279364740a09630879f27081869b091e52ddfccdb8aa99884bf14cba2e2c9b5f817f5f2f66c39d6278f7684589a459fa224551
   languageName: node
   linkType: hard
 
@@ -1732,12 +1732,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-label@npm:2.0.4":
-  version: 2.0.4
-  resolution: "@nativescript-community/ui-label@npm:2.0.4"
+"@nativescript-community/ui-label@npm:2.0.5":
+  version: 2.0.5
+  resolution: "@nativescript-community/ui-label@npm:2.0.5"
   dependencies:
     "@nativescript-community/text": "npm:^1.6.25"
-  checksum: 10/e46af600c046505836ee81ff902765b4ef20efdcf307a9746e41b81389852b09f5be422cb832afaab0eed9a926eb3176c1ce3920052ccdce3ac72fb3846ca756
+  checksum: 10/a983781a3b965b6b7ba74d5c598fcc5b96bbf00a718b48ff472410832af392cc51bf6956ff7d8ecaca898dd3f41ef08fbb79f24bbc9ee453cfcaba9c3d455d67
   languageName: node
   linkType: hard
 
@@ -1752,7 +1752,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@nativescript-community/ui-menu@portal:../ui-native-components/packages/ui-menu::locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
-    "@nativescript-community/ui-core": "npm:^1.4.2"
+    "@nativescript-community/ui-core": "npm:^1.5.0"
   languageName: node
   linkType: soft
 
@@ -1770,6 +1770,14 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@nativescript-community/ui-persistent-bottomsheet@portal:../ui-persistent-bottomsheet/packages/ui-persistent-bottomsheet::locator=root-workspace-0b6124%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@nativescript-community/ui-persistent-bottomsheet@portal:../ui-persistent-bottomsheet/packages/ui-persistent-bottomsheet::locator=root-workspace-0b6124%40workspace%3A."
+  dependencies:
+    "@nativescript-community/gesturehandler": "npm:^2.0.43"
+  languageName: node
+  linkType: soft
+
 "@nativescript-community/ui-popover@npm:0.1.22":
   version: 0.1.22
   resolution: "@nativescript-community/ui-popover@npm:0.1.22"
@@ -1777,12 +1785,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-progress@npm:1.4.2":
-  version: 1.4.2
-  resolution: "@nativescript-community/ui-progress@npm:1.4.2"
+"@nativescript-community/ui-progress@npm:1.5.2":
+  version: 1.5.2
+  resolution: "@nativescript-community/ui-progress@npm:1.5.2"
   dependencies:
-    "@nativescript-community/ui-core": "npm:^1.4.2"
-  checksum: 10/793f3f9b1002d0b3de2587eb4015bb44f3f26d35170ab717cb9ed73732d0308782f13b7c242a3d055ee639821f97edd14d8fa6e125a0e6f11023471bfaea7e75
+    "@nativescript-community/ui-core": "npm:^1.5.2"
+  checksum: 10/fb7cbb575ee143173135dc5d268b91521d5c2609f355ab946921c89db718424f9de9a586db7fef9f85ddfaeb9fb93f1544df894957d52a69dda002960d296a9a
   languageName: node
   linkType: hard
 
@@ -1790,7 +1798,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@nativescript-community/ui-segmentedbar@portal:../ui-native-components/packages/ui-segmentedbar::locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
-    "@nativescript-community/ui-core": "npm:^1.4.2"
+    "@nativescript-community/ui-core": "npm:^1.5.0"
   languageName: node
   linkType: soft
 
@@ -1801,21 +1809,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-slider@npm:1.4.2":
-  version: 1.4.2
-  resolution: "@nativescript-community/ui-slider@npm:1.4.2"
+"@nativescript-community/ui-slider@npm:1.5.2":
+  version: 1.5.2
+  resolution: "@nativescript-community/ui-slider@npm:1.5.2"
   dependencies:
-    "@nativescript-community/ui-core": "npm:^1.4.2"
-  checksum: 10/786776413e90e5c5bb8fbe311731dcd9533c3c3abcf4f6ad6174ee1bab5277f30ed6e162b830a37f8964cbfbecc63ea264465131d9bcab5c19252811c6ade054
+    "@nativescript-community/ui-core": "npm:^1.5.2"
+  checksum: 10/038caa54b4bdfb2c63e4642dea4c4c8ee60fae62eab813e69e1c2a09cadcba42b0da4d9a61e6a07641422a485a8d6820e499d2a71de5d9ce0fbba81b01542e14
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-snackbar@npm:1.4.2":
-  version: 1.4.2
-  resolution: "@nativescript-community/ui-snackbar@npm:1.4.2"
+"@nativescript-community/ui-snackbar@npm:1.5.2":
+  version: 1.5.2
+  resolution: "@nativescript-community/ui-snackbar@npm:1.5.2"
   dependencies:
-    "@nativescript-community/ui-core": "npm:^1.4.2"
-  checksum: 10/59ba1926d9b0acf7a679f7fd46976fe34c64bb08ec9a291d08a7f8a92487e8371810dbdf0f180eac189ba70e5e5075e69597d84126b67dc178fb1daa429038a0
+    "@nativescript-community/ui-core": "npm:^1.5.2"
+  checksum: 10/9cf94f372ebb4079ba84b410618f2d701d58bbdcbb4e11d3d2ec61cbdaaf4c5dcf08a9321a4d8cf983a414d7acc63a39ec3afab402f4f368f30ff040ed46b992
   languageName: node
   linkType: hard
 
@@ -1823,7 +1831,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@nativescript-community/ui-surface@portal:../ui-native-components/packages/ui-surface::locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
-    "@nativescript-community/ui-core": "npm:^1.4.2"
+    "@nativescript-community/ui-core": "npm:^1.5.0"
   languageName: node
   linkType: soft
 
@@ -1836,41 +1844,41 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-switch@npm:1.4.2":
-  version: 1.4.2
-  resolution: "@nativescript-community/ui-switch@npm:1.4.2"
+"@nativescript-community/ui-switch@npm:1.5.2":
+  version: 1.5.2
+  resolution: "@nativescript-community/ui-switch@npm:1.5.2"
   dependencies:
-    "@nativescript-community/ui-core": "npm:^1.4.2"
-  checksum: 10/05147ee8cf2aea4645cad9c082a0f12d2b3c647773b33f0898b14ceef668467166449d796ea6dad41692388c6526884d28d5b381078a856c693908ae099960ec
+    "@nativescript-community/ui-core": "npm:^1.5.2"
+  checksum: 10/425163eff848be6c34cc2ad02cab8a2665d90709eb1f92ae33db5fc3e507e8916281cf28ccb1c66eb206b8517d4ee507d5b9e28c1f89a374c12a74a1321bad8e
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-textfield@npm:1.4.2, @nativescript-community/ui-textfield@npm:^1.4.2":
-  version: 1.4.2
-  resolution: "@nativescript-community/ui-textfield@npm:1.4.2"
-  dependencies:
-    "@nativescript-community/text": "npm:^1.5.33"
-    "@nativescript-community/ui-core": "npm:^1.4.2"
-  checksum: 10/221e48ffb627f05167cef21993b77bff2105c638cbad78895f8a6f7f064758647dca93e12bd31a7e6ea08065b00365ef440bcef6f8c27ba7d2dbbd8644d8c554
-  languageName: node
-  linkType: hard
-
-"@nativescript-community/ui-textview@npm:1.4.2":
-  version: 1.4.2
-  resolution: "@nativescript-community/ui-textview@npm:1.4.2"
+"@nativescript-community/ui-textfield@npm:1.5.2, @nativescript-community/ui-textfield@npm:^1.5.2":
+  version: 1.5.2
+  resolution: "@nativescript-community/ui-textfield@npm:1.5.2"
   dependencies:
     "@nativescript-community/text": "npm:^1.5.33"
-    "@nativescript-community/ui-core": "npm:^1.4.2"
-  checksum: 10/3c36c228dc8ec87c2582844ce8cc373110dc1ddd6259ec9af23f1135f3554b62b3089db344059b1b5e8d0c1779c3ad662d509838c175d306a99ac5ab09243087
+    "@nativescript-community/ui-core": "npm:^1.5.2"
+  checksum: 10/2c3c4ef3eae9c3da2879ae0a26963b85c69514c7a0720dc7aae7c96f839e4ddb9c40f609e9305e31a5da06538c5f55cfba1c3a0072c458144a03b32f57f1e5a0
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-webview@npm:1.6.2":
-  version: 1.6.2
-  resolution: "@nativescript-community/ui-webview@npm:1.6.2"
+"@nativescript-community/ui-textview@npm:1.5.2":
+  version: 1.5.2
+  resolution: "@nativescript-community/ui-textview@npm:1.5.2"
+  dependencies:
+    "@nativescript-community/text": "npm:^1.5.33"
+    "@nativescript-community/ui-core": "npm:^1.5.2"
+  checksum: 10/2c77f93725d850f8d5193e8218f4b3d80338836ed669ceefe71dee90e8fd94f78fdda6d6cd76a7d228ed85836ae609b285e1523556835e09b205e0d40a8ffa1d
+  languageName: node
+  linkType: hard
+
+"@nativescript-community/ui-webview@npm:1.7.0":
+  version: 1.7.0
+  resolution: "@nativescript-community/ui-webview@npm:1.7.0"
   dependencies:
     url: "npm:^0.11.0"
-  checksum: 10/659bca9bb41e701176d985300221611bf94a772070d67a2834226698e846e386cbbbd45c382032e907fda482eadc6b4d533fdd6e48520465a4eb775d32c16135
+  checksum: 10/79d2e7e1f4098358e20dbd9afcee70b5ee425c9ada80d9a93c8f0f80c6a61357b85ae9c156733f14e5389dff069304208d1fc13d29faf018d9bce387f44463b2
   languageName: node
   linkType: hard
 
@@ -11169,40 +11177,41 @@ __metadata:
     "@nativescript-community/svelte-native": "npm:1.0.32"
     "@nativescript-community/systemui": "npm:1.1.26"
     "@nativescript-community/text": "npm:1.6.25"
-    "@nativescript-community/ui-activityindicator": "npm:1.4.2"
-    "@nativescript-community/ui-appbar": "npm:1.4.2"
-    "@nativescript-community/ui-bottomsheet": "npm:1.4.2"
-    "@nativescript-community/ui-button": "npm:1.4.2"
+    "@nativescript-community/ui-activityindicator": "npm:1.5.2"
+    "@nativescript-community/ui-appbar": "npm:1.5.2"
+    "@nativescript-community/ui-bottomsheet": "npm:1.5.2"
+    "@nativescript-community/ui-button": "npm:1.5.2"
     "@nativescript-community/ui-cameraview": "npm:0.8.0"
     "@nativescript-community/ui-canvas": "npm:4.6.57"
     "@nativescript-community/ui-canvaslabel": "npm:1.2.60"
-    "@nativescript-community/ui-checkbox": "npm:1.4.2"
-    "@nativescript-community/ui-collectionview": "npm:6.0.35"
-    "@nativescript-community/ui-collectionview-swipemenu": "npm:6.0.35"
-    "@nativescript-community/ui-core": "npm:1.4.2"
-    "@nativescript-community/ui-datetimepicker": "npm:1.4.2"
-    "@nativescript-community/ui-dialogs": "npm:1.4.2"
+    "@nativescript-community/ui-checkbox": "npm:1.5.2"
+    "@nativescript-community/ui-collectionview": "npm:6.0.36"
+    "@nativescript-community/ui-collectionview-swipemenu": "npm:6.0.36"
+    "@nativescript-community/ui-core": "npm:1.5.2"
+    "@nativescript-community/ui-datetimepicker": "npm:1.5.2"
+    "@nativescript-community/ui-dialogs": "npm:1.5.2"
     "@nativescript-community/ui-document-picker": "npm:1.1.29"
-    "@nativescript-community/ui-floatingactionbutton": "npm:1.4.2"
+    "@nativescript-community/ui-floatingactionbutton": "npm:1.5.2"
     "@nativescript-community/ui-image": "npm:4.6.20"
     "@nativescript-community/ui-image-colorfilter": "npm:4.6.20"
-    "@nativescript-community/ui-label": "npm:2.0.4"
+    "@nativescript-community/ui-label": "npm:2.0.5"
     "@nativescript-community/ui-lottie": "npm:5.0.11"
-    "@nativescript-community/ui-menu": "npm:1.4.2"
+    "@nativescript-community/ui-menu": "npm:1.5.2"
     "@nativescript-community/ui-pager": "npm:14.1.42"
     "@nativescript-community/ui-pager-indicator": "npm:14.1.42"
+    "@nativescript-community/ui-persistent-bottomsheet": "npm:0.1.14"
     "@nativescript-community/ui-popover": "npm:0.1.22"
-    "@nativescript-community/ui-progress": "npm:1.4.2"
-    "@nativescript-community/ui-segmentedbar": "npm:1.4.2"
+    "@nativescript-community/ui-progress": "npm:1.5.2"
+    "@nativescript-community/ui-segmentedbar": "npm:1.5.2"
     "@nativescript-community/ui-share-file": "npm:1.3.3"
-    "@nativescript-community/ui-slider": "npm:1.4.2"
-    "@nativescript-community/ui-snackbar": "npm:1.4.2"
-    "@nativescript-community/ui-surface": "npm:1.4.2"
+    "@nativescript-community/ui-slider": "npm:1.5.2"
+    "@nativescript-community/ui-snackbar": "npm:1.5.2"
+    "@nativescript-community/ui-surface": "npm:1.5.2"
     "@nativescript-community/ui-svg": "npm:0.2.29"
-    "@nativescript-community/ui-switch": "npm:1.4.2"
-    "@nativescript-community/ui-textfield": "npm:1.4.2"
-    "@nativescript-community/ui-textview": "npm:1.4.2"
-    "@nativescript-community/ui-webview": "npm:1.6.2"
+    "@nativescript-community/ui-switch": "npm:1.5.2"
+    "@nativescript-community/ui-textfield": "npm:1.5.2"
+    "@nativescript-community/ui-textview": "npm:1.5.2"
+    "@nativescript-community/ui-webview": "npm:1.7.0"
     "@nativescript-community/ui-zoomimage": "npm:4.6.20"
     "@nativescript/android": "npm:9.1.1"
     "@nativescript/android-quickjs-ng": "npm:9.0.0-alpha.5"
