@@ -12,7 +12,7 @@
 
 struct ScanPlusQRCodeResult {
     std::vector<std::vector<cv::Point>> points;
-    ZXing::Results qrcodes;
+    ZXing::Barcodes qrcodes;
     float resizeScale;
 };
 
@@ -22,9 +22,7 @@ std::string generateQRCodeSVG(std::string text, std::string format, int size_hin
 
 JSONCONS_ALL_MEMBER_TRAITS(ScanPlusQRCodeResult, points, qrcodes, resizeScale);
 
-JSONCONS_ENUM_TRAITS(ZXing::BarcodeFormat, None, Aztec, Codabar, Code39, Code93, Code128, DataBar, DataBarExpanded, DataMatrix, EAN8, EAN13, ITF, MaxiCode, PDF417, QRCode, UPCA, UPCE, MicroQRCode);
 //JSONCONS_ALL_GETTER_CTOR_TRAITS(ZXing::Position, topLeft, topRight, bottomRight, bottomLeft);
 JSONCONS_ALL_MEMBER_TRAITS(ZXing::PointI, x, y);
-JSONCONS_N_CTOR_GETTER_TRAITS(ZXing::Result, 1, text, format, ecLevel, orientation, isMirrored, isInverted, position);
 
 #endif //UTILS_H

@@ -4,10 +4,12 @@
 #ifdef __APPLE__
 #include <ZXingCpp/BitMatrix.h>
 #include <ZXingCpp/Barcode.h>
+#include <ZXingCpp/CreateBarcode.h>
 #include <ZXingCpp/WriteBarcode.h>
 #else
 #include <BitMatrix.h>
 #include <Barcode.h>
+#include <CreateBarcode.h>
 #include <WriteBarcode.h>
 #endif
 #include <regex>
@@ -22,7 +24,7 @@ ZXing::ImageView ImageViewFromMat(const cv::Mat& image)
   switch (image.channels()) {
     case 1: fmt = ImageFormat::Lum; break;
     case 3: fmt = ImageFormat::BGR; break;
-    case 4: fmt = ImageFormat::BGRX; break;
+    case 4: fmt = ImageFormat::BGRA; break;
   }
   
   if (image.depth() != CV_8U || fmt == ImageFormat::None)
@@ -31,6 +33,26 @@ ZXing::ImageView ImageViewFromMat(const cv::Mat& image)
   return {image.data, image.cols, image.rows, fmt};
 }
 
+// the identifier of the format, e.g. "EAN13", as BarcodeFormatFromString accepts it back
+static std::string barcodeFormatName(ZXing::BarcodeFormat format)
+{
+  switch (format) {
+#define ZX_FORMAT_NAME(NAME, SYM, VAR, FLAGS, ZINT, ENABLED, HRI) case ZXing::BarcodeFormat::NAME: return #NAME;
+    ZX_BCF_LIST(ZX_FORMAT_NAME)
+#undef ZX_FORMAT_NAME
+    default: return "None";
+  }
+}
+
+// BarcodeFormatFromString throws on an unknown name, the callers expect None and the creation to fail later
+static ZXing::BarcodeFormat parseBarcodeFormat(const std::string& format)
+{
+  try {
+    return ZXing::BarcodeFormatFromString(format);
+  } catch (const std::exception&) {
+    return ZXing::BarcodeFormat::None;
+  }
+}
 
 
 namespace jsoncons {
@@ -66,7 +88,7 @@ struct json_type_traits<Json, ZXing::Position>
 
 std::string readQRCode(cv::Mat &srcMat, int jRotation, string options, double scale)
 {
-  auto hints = ZXing::DecodeHints().setFormats(ZXing::BarcodeFormat::Any).setMaxNumberOfSymbols(1);
+  auto hints = ZXing::ReaderOptions().setFormats(ZXing::BarcodeFormat::All).setMaxNumberOfSymbols(1);
   int rotation = jRotation;
   if (!options.empty()) {
     jsoncons::json j = jsoncons::json::parse(options);
@@ -92,17 +114,26 @@ std::string readQRCode(cv::Mat &srcMat, int jRotation, string options, double sc
       }
     }
   }
-  ZXing::Results results = ZXing::ReadBarcodes(ImageViewFromMat(srcMat).rotated(rotation), hints);
-  for (int i = 0; i < results.size(); ++i) {
-    auto position = results[i].position();
+  ZXing::Barcodes barcodes = ZXing::ReadBarcodes(ImageViewFromMat(srcMat).rotated(rotation), hints);
+  jsoncons::json results(jsoncons::json_array_arg);
+  for (const auto& barcode : barcodes) {
+    auto position = barcode.position();
     auto topLeft = position.topLeft();
     auto topRight = position.topRight();
     auto bottomRight = position.bottomRight();
     auto bottomLeft = position.bottomLeft();
-    results[i].setPosition(ZXing::QuadrilateralI(ZXing::PointI(topLeft.x * scale, topLeft.y * scale),
-                                                 ZXing::PointI(topRight.x * scale, topRight.y * scale),
-                                                 ZXing::PointI(bottomRight.x * scale, bottomRight.y * scale),
-                                                 ZXing::PointI(bottomLeft.x * scale, bottomLeft.y * scale)));
+    jsoncons::json result;
+    result["text"] = barcode.text();
+    result["format"] = barcodeFormatName(barcode.format());
+    result["ecLevel"] = barcode.ecLevel();
+    result["orientation"] = barcode.orientation();
+    result["isMirrored"] = barcode.isMirrored();
+    result["isInverted"] = barcode.isInverted();
+    result["position"] = ZXing::QuadrilateralI(ZXing::PointI(topLeft.x * scale, topLeft.y * scale),
+                                               ZXing::PointI(topRight.x * scale, topRight.y * scale),
+                                               ZXing::PointI(bottomRight.x * scale, bottomRight.y * scale),
+                                               ZXing::PointI(bottomLeft.x * scale, bottomLeft.y * scale));
+    results.push_back(std::move(result));
   }
   
   string s;
@@ -114,8 +145,8 @@ cv::Mat generateQRCode(std::string text, std::string format, int width, int heig
 {
   //    auto writer = ZXing::MultiFormatWriter(ZXing::BarcodeFormatFromString(format));
   //
-  auto cOpts = ZXing::CreatorOptions(ZXing::BarcodeFormatFromString(format));
-  auto wOpts = ZXing::WriterOptions().sizeHint(max(width, height));
+  auto cOpts = ZXing::CreatorOptions(parseBarcodeFormat(format));
+  auto wOpts = ZXing::WriterOptions().scale(-max(width, height));
   //
   if (!options.empty()) {
     jsoncons::json j = jsoncons::json::parse(options);
@@ -124,7 +155,7 @@ cv::Mat generateQRCode(std::string text, std::string format, int width, int heig
     //            wOpts = wOpts.setEncoding(ZXing::CharacterSetFromString(j["encoding"].as<string>()));
     //        }
     if (j.contains("ecclevel")) {
-      cOpts.ecLevel(j["ecclevel"].as<string>());
+      cOpts.options("ecLevel=" + j["ecclevel"].as<string>());
     }
     //        if (j.contains("margin")) {
     //            wOpts = wOpts.setMargin(j["margin"].as<int>());
@@ -192,8 +223,8 @@ std::string generateQRCodeSVG(std::string text, std::string format, int size_hin
   if (!options.empty()) {
     j = jsoncons::json::parse(options);
   }
-  auto cOpts = ZXing::CreatorOptions(ZXing::BarcodeFormatFromString(format));
-  auto wOpts = ZXing::WriterOptions().sizeHint(size_hint);
+  auto cOpts = ZXing::CreatorOptions(parseBarcodeFormat(format));
+  auto wOpts = ZXing::WriterOptions().scale(-size_hint);
   try {
     //
     //
@@ -203,7 +234,7 @@ std::string generateQRCodeSVG(std::string text, std::string format, int size_hin
       //            wOpts = wOpts.setEncoding(ZXing::CharacterSetFromString(j["encoding"].as<string>()));
       //        }
       if (j.contains("ecclevel")) {
-        cOpts.ecLevel(j["ecclevel"].as<string>());
+        cOpts.options("ecLevel=" + j["ecclevel"].as<string>());
       }
       //        if (j.contains("margin")) {
       //            wOpts = wOpts.setMargin(j["margin"].as<int>());
