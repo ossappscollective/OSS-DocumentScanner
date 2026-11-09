@@ -1477,13 +1477,13 @@
         searchMode={folder && __ANDROID__ ? 'collapsible' : 'inline'}
         searchPlacement="integrated"
         {bottomItems}
-        formattedTitle={nbSelected > 0 ? null : folderTitle}
+        formattedTitle={nbSelected > 0 || __IOS__ ? null : folderTitle}
         size={folder && __IOS__ ? 'large' : 'small'}
-        subtitle={folder && nbSelected === 0 ? (__IOS__ ? folder.name : lcp('documents_count', folder.count)) : null}
+        subtitle={folder && nbSelected === 0 ? lcp('documents_count', folder.count) : null}
         titleAlignment="leading"
         ios:translucent={true}
         class="listAppBar"
-        title={nbSelected > 0 ? lp('selected', nbSelected) : __IOS__ || isTrash ? title : folder?.name}
+        title={nbSelected > 0 ? lp('selected', nbSelected) : (__IOS__ && !folder) || isTrash ? title : folder?.name}
         on:searchChange={onSearchChange}
         on:searchCancel={onSearchCancel}
     >
