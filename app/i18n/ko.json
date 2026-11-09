@@ -390,6 +390,8 @@
     "no_qrcode_found": "QR코드 없음",
     "no_space_left": "기기의 여유 저장공간이 부족한 것 같습니다",
     "no_storage_used": "사용 중인 저장공간 없음",
+    "no_sync_yet_help": "동기화할 곳을 고르세요, 여러 서비스를 추가할 수 있습니다",
+    "no_sync_yet_title": "아직 동기화 서비스 없음",
     "no_text_found_in_page": "문서에서 인식한 텍스트 없음",
     "no_trashed_document": "휴지통 비었음",
     "none": "없음",
