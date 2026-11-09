@@ -51,6 +51,9 @@ if(DEFINED WITH_QRCODE)
     set(ZXING_USE_BUNDLED_ZINT ON)
     set(ZXING_EXPERIMENTAL_API ON)
     add_subdirectory(${ZXING_SRC} ZXing EXCLUDE_FROM_ALL)
+    # size: -Os + thin LTO on ZXing only saves ~12% of its code
+    target_compile_options(ZXing PRIVATE -Os -flto=thin)
+    target_link_options(${TARGET} PRIVATE -flto=thin)
     target_link_libraries(${TARGET} ZXing::ZXing)
 endif(DEFINED WITH_QRCODE)
 
