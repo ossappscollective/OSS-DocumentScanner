@@ -15,8 +15,32 @@ function readSetting<T>(key: string, defaultValue?: T): T | undefined {
     return settingsStore.has(key) ? (settingsStore.get(key) as T) : defaultValue;
 }
 
+/**
+ * In-memory stand-in for the native file system: path -> size in bytes. It is
+ * cleared before every test, like the settings store.
+ */
+const fileStore = new Map<string, number>();
+
+function createFile(filePath: string) {
+    return {
+        path: filePath,
+        get size() {
+            return fileStore.get(filePath);
+        },
+        writeSync: (content: ArrayLike<unknown>) => {
+            fileStore.set(filePath, content.length);
+        },
+        remove: () => fileStore.delete(filePath),
+        renameSync: (newPath: string) => {
+            fileStore.set(newPath, fileStore.get(filePath));
+            fileStore.delete(filePath);
+        }
+    };
+}
+
 beforeEach(() => {
     settingsStore.clear();
+    fileStore.clear();
 });
 
 /**
@@ -47,8 +71,11 @@ vi.mock('@nativescript/core', async () => ({
     },
     knownFolders: {
         temp: () => ({ path: '/tmp' }),
-        currentApp: () => ({ path: '/app' })
+        currentApp: () => ({ path: '/app' }),
+        documents: () => ({ path: '/docs' })
     },
+    path: { join: (...parts: string[]) => parts.join('/') },
+    Utils: { executeOnMainThread: (callback: () => void) => callback() },
     Observable: class Observable {
         on() {}
         off() {}
@@ -58,12 +85,16 @@ vi.mock('@nativescript/core', async () => ({
     },
     EventData: {},
     File: {
-        exists: vi.fn(() => false),
-        fromPath: vi.fn()
+        exists: vi.fn((filePath: string) => fileStore.has(filePath)),
+        fromPath: vi.fn(createFile)
     },
     Folder: {
         exists: vi.fn(() => false),
-        fromPath: vi.fn()
+        fromPath: vi.fn((folderPath: string) => ({
+            path: folderPath,
+            getFolder: (name: string) => ({ path: `${folderPath}/${name}` }),
+            getEntitiesSync: () => []
+        }))
     },
     // Utilities exported directly from the core barrel
     isString: (v: unknown) => typeof v === 'string',

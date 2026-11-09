@@ -3,7 +3,7 @@ import { ApplicationSettings, File, Folder, Observable, Utils, knownFolders, pat
 import { NoNetworkError } from '@akylas/nativescript-app-utils/error';
 import { ocrDocumentFromFile } from 'plugin-nativeprocessor';
 import type { OCRDocument } from '~/models/OCRDocument';
-import { networkService, wrapNativeHttpException } from '~/services/api';
+import { handleRequestResponseError, networkService, wrapNativeHttpException } from '~/services/api';
 import { OCR_ITERATOR_LEVEL } from '~/utils/constants';
 
 export const OCRLanguages = {
@@ -333,6 +333,8 @@ export class OCRService extends Observable {
             const url = downloadURL + lang + '.traineddata';
             const destinationFolder = Folder.fromPath(this.baseDataPath).getFolder(dataType);
             const destinationFile = path.join(destinationFolder.path, lang + '.traineddata');
+            // outside of the scanned data folder, same volume so the final rename is atomic
+            const partialFile = path.join(Folder.fromPath(this.baseDataPath).getFolder('tmp').path, `${dataType}_${lang}.traineddata`);
             const requestParams = {
                 url,
                 method: 'GET'
@@ -343,6 +345,10 @@ export class OCRService extends Observable {
                     ...requestParams,
                     progressOnMainThread: false,
                     onProgress(current, total) {
+                        // total is -1 when the server sends no content length
+                        if (total <= 0) {
+                            return;
+                        }
                         const progress = Math.round(((index + current / total) / langArray.length) * 100);
                         if (progress !== currentProgress) {
                             currentProgress = progress;
@@ -352,12 +358,20 @@ export class OCRService extends Observable {
                         }
                     }
                 });
-                await result.content.toFile(destinationFile);
+                await handleRequestResponseError(result, requestParams);
+                await result.content.toFile(partialFile);
+                if (result.contentLength > 0 && File.fromPath(partialFile).size !== result.contentLength) {
+                    throw new Error(`incomplete download of ${lang}: ${File.fromPath(partialFile).size}/${result.contentLength} bytes`);
+                }
+                if (File.exists(destinationFile)) {
+                    File.fromPath(destinationFile).remove();
+                }
+                File.fromPath(partialFile).renameSync(destinationFile);
                 this.mDownloadedLanguages.push(lang);
                 ApplicationSettings.setString(`tesseract_data_${this.mDataType}`, JSON.stringify(this.mDownloadedLanguages));
             } catch (error) {
-                if (File.exists(destinationFile)) {
-                    File.fromPath(destinationFile).remove();
+                if (File.exists(partialFile)) {
+                    File.fromPath(partialFile).remove();
                 }
                 throw wrapNativeHttpException(error, requestParams);
             }
