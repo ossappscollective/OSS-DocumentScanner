@@ -20,7 +20,7 @@ __metadata:
 
 "@akylas/nativescript-app-tools@file:tools::locator=root-workspace-0b6124%40workspace%3A.":
   version: 1.0.0
-  resolution: "@akylas/nativescript-app-tools@file:tools#tools::hash=d8e3c6&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@akylas/nativescript-app-tools@file:tools#tools::hash=9ba15e&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@dotenvx/dotenvx": "npm:1.51.4"
     "@nativescript-community/fontmin": "npm:0.9.11"
@@ -74,7 +74,7 @@ __metadata:
     typescript: "npm:5.9.3"
     typescript-eslint: "npm:8.53.0"
     webpack-bundle-analyzer: "npm:4.10.2"
-  checksum: 10/f479b44b6e30713dd3f78c2ae0ff0847cd07015744c5dbc9f5902f75949588774e086e4853ae8e3dd905cb50ddf2d981a7ec4b6d4cb08d654782cf9e90393cbf
+  checksum: 10/519ee2ffc88b3affb14735c4fcc002c47897d5b17e196279c2228d295b000de5a0d9aa42a4b8fa3bb0a7d55c132720e52fdf49e66830cf684fb229ff246232df
   languageName: node
   linkType: hard
 
@@ -176,6 +176,7 @@ __metadata:
     css-tree: "npm:^3.1.0"
     css-what: "npm:^6.1.0"
     emoji-regex: "npm:^10.2.1"
+    semver: "npm:^7.0.0"
     source-map: "npm:0.7.6"
     source-map-js: "npm:^1.2.1"
     tslib: "npm:^2.0.0"
@@ -1679,23 +1680,32 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-collectionview-swipemenu@npm:6.0.36":
-  version: 6.0.36
-  resolution: "@nativescript-community/ui-collectionview-swipemenu@npm:6.0.36"
+"@nativescript-community/ui-collectionview-swipemenu@npm:6.0.38":
+  version: 6.0.38
+  resolution: "@nativescript-community/ui-collectionview-swipemenu@npm:6.0.38"
   dependencies:
     "@nativescript-community/class-mixins": "npm:^1.0.0"
-    "@nativescript-community/ui-collectionview": "npm:^6.0.36"
+    "@nativescript-community/ui-collectionview": "npm:^6.0.38"
     "@nativescript-community/ui-drawer": "npm:^0.1.31"
-  checksum: 10/bfb8f255797fae3f6b039723774a497f34cc3813e3db6cbf7fd70a8d3e1ebcfc094c1c9f0f63e6831dc2c548f3dd2e08d74afcf6f2cab929822710fd4873c649
+  checksum: 10/fec9be42213ad85b8bd52f10c9a3161487fa8f8f4f44bf168da2da56655894577de92bf863f9a2de62615e552637809bbde114b24ce4caea3319b11b68ad4b79
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-collectionview@npm:6.0.36, @nativescript-community/ui-collectionview@npm:^6.0.36":
-  version: 6.0.36
-  resolution: "@nativescript-community/ui-collectionview@npm:6.0.36"
+"@nativescript-community/ui-collectionview@npm:6.0.38":
+  version: 6.0.38
+  resolution: "@nativescript-community/ui-collectionview@npm:6.0.38"
   dependencies:
     "@nativescript-community/arraybuffers": "npm:^1.1.5"
-  checksum: 10/8773e29bc890b566c0ba13f8c9cb2db014e7c8fa61c5bb62e848c00ae9a15069d9717c18f1ff91acf269b32c2404dff484b9cce2a36182fdd9adf11a9cbee7b3
+  checksum: 10/69d68c0fef6e1b7ffe6f3cbf744be8c9634eef09b506d7c4d604872a3cacb54255a9d930e92de2e7f132bab30ca0442280678c10e242a7893ccc827da263e22e
+  languageName: node
+  linkType: hard
+
+"@nativescript-community/ui-collectionview@npm:^6.0.38":
+  version: 6.1.0
+  resolution: "@nativescript-community/ui-collectionview@npm:6.1.0"
+  dependencies:
+    "@nativescript-community/arraybuffers": "npm:^1.1.5"
+  checksum: 10/7bf665287430daf7af522f95f7633b9de8f5d91f06e3925d232fa453bf7438abd2dda1720cddb36974fd2d60d18fa26cf434fa77353da49a8cb1518aa798060f
   languageName: node
   linkType: hard
 
@@ -1937,13 +1947,6 @@ __metadata:
   version: 9.0.0-alpha.5
   resolution: "@nativescript/android-quickjs-ng@npm:9.0.0-alpha.5"
   checksum: 10/c66a932604e234909bac37e6d76f02f69e9af03b3a1df82dc0aa8bb3468da7ab1a120031dc4bb656ce53dfd9514811824ef0381c4ea628086715693976f74938
-  languageName: node
-  linkType: hard
-
-"@nativescript/android@npm:9.1.1":
-  version: 9.1.1
-  resolution: "@nativescript/android@npm:9.1.1"
-  checksum: 10/97dc91516fe64be1731d3c142441b091f32465420a8663c3b268312de0b99fdd946a901ba9ad2efde78d5eff9f580ee2484561c3c3dcdabd6cbe0557c1f7baef
   languageName: node
   linkType: hard
 
@@ -11227,8 +11230,8 @@ __metadata:
     "@nativescript-community/ui-canvas": "npm:4.6.57"
     "@nativescript-community/ui-canvaslabel": "npm:1.2.60"
     "@nativescript-community/ui-checkbox": "npm:1.5.2"
-    "@nativescript-community/ui-collectionview": "npm:6.0.36"
-    "@nativescript-community/ui-collectionview-swipemenu": "npm:6.0.36"
+    "@nativescript-community/ui-collectionview": "npm:6.0.38"
+    "@nativescript-community/ui-collectionview-swipemenu": "npm:6.0.38"
     "@nativescript-community/ui-core": "npm:1.5.2"
     "@nativescript-community/ui-datetimepicker": "npm:1.5.2"
     "@nativescript-community/ui-dialogs": "npm:1.5.2"
@@ -11255,7 +11258,6 @@ __metadata:
     "@nativescript-community/ui-textview": "npm:1.5.2"
     "@nativescript-community/ui-webview": "npm:1.7.0"
     "@nativescript-community/ui-zoomimage": "npm:4.6.20"
-    "@nativescript/android": "npm:9.1.1"
     "@nativescript/android-quickjs-ng": "npm:9.0.0-alpha.5"
     "@nativescript/biometrics": "patch:@nativescript/biometrics@npm%3A1.3.1#~/.yarn/patches/@nativescript-biometrics-npm-1.3.1-b5d39a8970.patch"
     "@nativescript/core": "npm:9.0.20"
@@ -11484,6 +11486,15 @@ __metadata:
   bin:
     semver: bin/semver.js
   checksum: 10/1ef3a85bd02a760c6ef76a45b8c1ce18226de40831e02a00bad78485390b98b6ccaa31046245fc63bba4a47a6a592b6c7eedc65cc47126e60489f9cc1ce3ed7e
+  languageName: node
+  linkType: hard
+
+"semver@npm:^7.0.0":
+  version: 7.8.6
+  resolution: "semver@npm:7.8.6"
+  bin:
+    semver: bin/semver.js
+  checksum: 10/76fd62a781a9c58464e4d4b1b9c99c404063d8133fff8a0753e66b1bd826bfb720d843664e7ab1268c0fb7134d04df9f3b8788eb2f1000c509648e0eeac03921
   languageName: node
   linkType: hard
 

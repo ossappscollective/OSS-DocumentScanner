@@ -71,8 +71,8 @@
         "@nativescript-community/ui-canvas": "4.6.57",
         "@nativescript-community/ui-canvaslabel": "1.2.60",
         "@nativescript-community/ui-checkbox": "1.5.2",
-        "@nativescript-community/ui-collectionview": "6.0.36",
-        "@nativescript-community/ui-collectionview-swipemenu": "6.0.36",
+        "@nativescript-community/ui-collectionview": "6.0.38",
+        "@nativescript-community/ui-collectionview-swipemenu": "6.0.38",
         "@nativescript-community/ui-core": "1.5.2",
         "@nativescript-community/ui-datetimepicker": "1.5.2",
         "@nativescript-community/ui-dialogs": "1.5.2",
@@ -118,7 +118,6 @@
     "devDependencies": {
         "@akylas/nativescript-ios-runtime": "9.0.3",
         "@akylas/nativescript-webpack": "5.0.35",
-        "@nativescript/android": "9.1.1",
         "@nativescript/android-quickjs-ng": "9.0.0-alpha.5",
         "@nativescript/core": "9.0.20",
         "@nativescript/ios": "9.1.0",
