@@ -1105,6 +1105,8 @@
             <scrollview id="cardScroll">
                 <stacklayout paddingBottom={details.length ? 32 : 0}>
                     <gridlayout rows="auto,auto,auto,auto">
+                        <!-- before iOS 26 the bar has no subtitle: the date is under the large title -->
+                        <label color={colorOnBackground} fontSize={15} margin="0 16 8 16" text={dayjs(document.createdDate).format('LL')} visibility={__IOS__ && Utils.SDK_VERSION < 26 ? 'visible' : 'collapsed'} />
                         {#if __ANDROID__}
                             <gridlayout backgroundColor={accent.container} borderRadius="0 0 40 12" columns="*,auto" padding="0 20 {hasHero ? PLATE_OVERLAP + 20 : 24} 20" rows="auto">
                                 <stacklayout margin="8 0 0 0">
