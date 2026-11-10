@@ -1419,7 +1419,7 @@
             ? getSelectionBottomItems(getSelectionToolbarOptions())
             : __IOS__ && !isTrash && !onlyForImport
               ? primaryAction
-                  ? [{ search: true }, { text: primaryAction.text, icon: appIcon(primaryAction.icon), onTap: primaryAction.onTap }]
+                  ? [{ search: true }, { text: primaryAction.text, icon: appIcon(primaryAction.icon), prominent: true, color: folderAccent?.accent ?? colorPrimary, onTap: primaryAction.onTap }]
                   : [{ search: true }]
               : [];
     let iosMenu: MenuItem[];

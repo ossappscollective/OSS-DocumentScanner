@@ -38,3 +38,29 @@ export function recycleImages(...args) {
         }
     }
 }
+
+/** iOS: the average brightness (0-255) of the top of a photo, where the bars and the title are drawn over its blurred copy. null when it cannot be read */
+export async function getTopBrightness(imagePath: string, topRatio = 0.3): Promise<number | null> {
+    if (!__IOS__ || !imagePath) {
+        return null;
+    }
+    try {
+        const source = await loadImage(imagePath, { width: 32 });
+        const cgImage = source.ios?.CGImage;
+        if (!cgImage) {
+            return null;
+        }
+        const top = CGImageCreateWithImageInRect(cgImage, CGRectMake(0, 0, CGImageGetWidth(cgImage), Math.max(1, Math.round(CGImageGetHeight(cgImage) * topRatio))));
+        // the top strip scaled down to one pixel is its average color
+        const buffer = interop.alloc(4);
+        const context = CGBitmapContextCreate(buffer, 1, 1, 8, 4, CGColorSpaceCreateDeviceRGB(), CGImageAlphaInfo.kCGImageAlphaPremultipliedLast);
+        CGContextSetInterpolationQuality(context, CGInterpolationQuality.kCGInterpolationMedium);
+        CGContextDrawImage(context, CGRectMake(0, 0, 1, 1), top);
+        const pixel = new interop.Reference(interop.types.uint8, buffer);
+        // the image is opaque
+        return 0.299 * pixel[0] + 0.587 * pixel[1] + 0.114 * pixel[2];
+    } catch (error) {
+        console.error('getTopBrightness', error);
+        return null;
+    }
+}

@@ -13,7 +13,7 @@
     import { debounce, throttle } from '@nativescript/core/utils';
     import { create as createImagePicker } from '@nativescript/imagepicker';
     import { showError } from '@shared/utils/showError';
-    import { fade, goBack, navigate, showModal } from '@shared/utils/svelte/ui';
+    import { goBack, navigate, showModal } from '@shared/utils/svelte/ui';
     import dayjs from 'dayjs';
     import { QRCodeData, QRCodeSingleData, detectQRCodeFromFile } from 'plugin-nativeprocessor';
     import { onDestroy, onMount } from 'svelte';
@@ -50,7 +50,7 @@
     import { appIcon } from '~/utils/appIcons';
     import { optionsToMenuItems } from '~/utils/appMenu';
     import { getCardAccent, pickCardColor } from '~/utils/cardColors';
-    import { recycleImages } from '~/utils/images';
+    import { getTopBrightness, recycleImages } from '~/utils/images';
     import { documentHasPKPassData, getPKPassColors } from '~/utils/pkpass';
     import { getFormatedDateForFilename } from '~/utils/utils.common';
     import { detectOCR, getExportMenu, importAndScanImage, importImageFromCamera, onBackButton, pickColor, requestCameraPermission, showImagePopoverMenu, showSnack, transformPages } from '~/utils/ui';
@@ -65,8 +65,9 @@
     const PLATE_OVERLAP = 44;
     // Android: the 64 dp floating toolbar and its 16 dp margin (the app bar pads the bottom of the scroll view by this and the navigation bar)
     const FLOATING_TOOLBAR_OFFSET = 80;
-    // glass over the photo on iOS, tonal on Android
-    const photoEditVariant = __IOS__ ? 'clearGlass' : 'contained';
+    // glass over the photo on iOS 26 (it adapts to the photo), a dark disc before (no glass), tonal on Android
+    const legacyPhotoEdit = __IOS__ && Utils.SDK_VERSION < 26;
+    const photoEditVariant = __IOS__ ? (legacyPhotoEdit ? 'plain' : 'glass') : 'contained';
     const CODE_ZONE_HEIGHT = 270;
     const FILMSTRIP_HEIGHT = 60;
     const FILMSTRIP_COL_WIDTH = 48;
@@ -167,9 +168,27 @@
         return isEInk ? null : (photo.extra?.color ?? photo.colors?.[1] ?? colorBackground);
     }
     let backdropImage = document.pages.find((p) => p.imagePath)?.imagePath;
+    // iOS: the status bar, the bars and the title are drawn over the top of the blurred photo: they follow its brightness
+    let backdropBrightness: number = null;
+    async function updateBackdropBrightness(imagePath: string) {
+        const brightness = await getTopBrightness(imagePath);
+        // the photo changed meanwhile
+        if (imagePath === backdropImage) {
+            backdropBrightness = brightness;
+        }
+    }
+    $: backdropIsDark =
+        backdropBrightness === null ? isDarkTheme() : (isDarkTheme() ? 0.7 : 1) * backdropBrightness + (isDarkTheme() ? 0.3 : 0) * new Color(colorBackground).getBrightness() < 145;
+    $: backdropTextColor = __IOS__ && backdropImage && !isEInk ? (backdropIsDark ? '#FFFFFF' : '#000000') : colorOnBackground;
+    // iOS: the photo behind the page fades in, the bars change color at the pace of the status bar
+    const TRANSITION_DURATION = __IOS__ ? (typeof UINavigationControllerHideShowBarDuration === 'number' ? UINavigationControllerHideShowBarDuration : 0.35) * 1000 : 0;
     function updateBackdrop() {
         const photo = items.getItem(currentImageIndex)?.page?.imagePath ? items.getItem(currentImageIndex).page : document.pages.find((p) => p.imagePath);
         backdropImage = photo?.imagePath;
+        updateBackdropBrightness(backdropImage);
+    }
+    if (__IOS__) {
+        updateBackdropBrightness(backdropImage);
     }
     onThemeChanged(() => {
         DEV_LOG && console.log('onThemeChanged', $colors.colorOnBackground);
@@ -451,14 +470,11 @@
             showFullscreen(index);
         }
     }
-    // the thumbnail at full size is the one of the current photo: the cells are styled from `current` (see the classes of the template)
+    // the thumbnail at full size is the one of the current photo: the cells are styled from `current` (see the classes of the template).
+    // The items are changed in place: setItem would reload the pager, which then reports the first visible photo instead of the current one
     function setCurrentImage(index: number) {
-        items.forEach((item, position) => {
-            const current = position === index;
-            if (!!item.current !== current) {
-                items.setItem(position, { ...item, current });
-            }
-        });
+        items.forEach((item, position) => (item.current = position === index));
+        collectionView?.nativeElement?.refreshVisibleItems();
     }
     // the strip has half a screen of padding at both ends: the offset of a thumbnail from the start is the offset which centers it
     function centerStrip(strip: CollectionView, index: number) {
@@ -1044,12 +1060,13 @@
 <appPage
     bind:this={page}
     id="cardview"
-    {...{ keepScreenAwake: hasQRCodes, screenBrightness: hasQRCodes ? 1 : -1, ...(isPKPassDocument ? { statusBarStyle: passColors.isDark ? 'dark' : 'light' } : {}) }}>
+    {...{ keepScreenAwake: hasQRCodes, screenBrightness: hasQRCodes ? 1 : -1, ...(isPKPassDocument ? { statusBarStyle: passColors.isDark ? 'dark' : 'light' } : __IOS__ && backdropImage && !isEInk ? { statusBarStyle: backdropIsDark ? 'dark' : 'light' } : {}) }}>
     <appBar
         {bottomItems}
         android:backgroundColor={isPKPassDocument ? passColors.backgroundColor : accent.container}
         android:scrollBehavior="hide"
-        color={isPKPassDocument ? passColors.foregroundColor : colorOnBackground}
+        color={isPKPassDocument ? passColors.foregroundColor : backdropTextColor}
+        transitionDuration={TRANSITION_DURATION}
         iosIconRenderingMode="alwaysTemplate"
         ios:translucent={!isPKPassDocument}
         scrollBehavior="lift"
@@ -1078,18 +1095,16 @@
     </appBar>
     <gridlayout class="pageContent" backgroundColor={isPKPassDocument ? passColors.backgroundColor : __IOS__ && cardColor ? accent.container : colorBackground} backgroundImage={heroGradient}>
         {#if __IOS__ && backdropImage}
-            {#key backdropImage}
-                <image
-                    blurRadius={12}
-                    decodeWidth={160}
-                    {...{ iosOverflowSafeArea: true }}
-                    isUserInteractionEnabled={false}
-                    opacity={isDarkTheme() ? 0.7 : 1}
-                    src={backdropImage}
-                    stretch="aspectFill"
-                    in:fade={{ duration: 300 }}
-                    out:fade={{ duration: 300 }} />
-            {/key}
+            <image
+                alwaysFade={true}
+                blurRadius={12}
+                decodeWidth={160}
+                fadeDuration={TRANSITION_DURATION}
+                {...{ iosOverflowSafeArea: true }}
+                isUserInteractionEnabled={false}
+                opacity={isDarkTheme() ? 0.7 : 1}
+                src={backdropImage}
+                stretch="aspectFill" />
         {/if}
         {#if CARD_APP && isPKPassDocument}
             <!-- the app bar pads its scroll target for the bottom toolbar: this empty one keeps it off the pager, so the pages go under the toolbar -->
@@ -1106,7 +1121,7 @@
                 <stacklayout paddingBottom={details.length ? 32 : 0}>
                     <gridlayout rows="auto,auto,auto,auto">
                         <!-- before iOS 26 the bar has no subtitle: the date is under the large title -->
-                        <label color={colorOnBackground} fontSize={15} margin="0 16 8 16" text={dayjs(document.createdDate).format('LL')} visibility={__IOS__ && Utils.SDK_VERSION < 26 ? 'visible' : 'collapsed'} />
+                        <label color={backdropTextColor} fontSize={15} margin="0 16 8 16" text={dayjs(document.createdDate).format('LL')} visibility={__IOS__ && Utils.SDK_VERSION < 26 ? 'visible' : 'collapsed'} />
                         {#if __ANDROID__}
                             <gridlayout backgroundColor={accent.container} borderRadius="0 0 40 12" columns="*,auto" padding="0 20 {hasHero ? PLATE_OVERLAP + 20 : 24} 20" rows="auto">
                                 <stacklayout margin="8 0 0 0">
@@ -1222,9 +1237,9 @@
                                             accessibilityLabel={lc('adjust')}
                                             height={36}
                                             horizontalAlignment="right"
-                                            ios:color="white"
                                             margin="0 12 12 0"
                                             variant={photoEditVariant}
+                                            {...legacyPhotoEdit ? { backgroundColor: '#00000066', borderRadius: 18, color: '#FFFFFF' } : {}}
                                             verticalAlignment="bottom"
                                             width={36}
                                             {...{ src: appIcon('edit') }}
