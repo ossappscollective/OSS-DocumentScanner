@@ -181,7 +181,7 @@
         backdropBrightness === null ? isDarkTheme() : (isDarkTheme() ? 0.7 : 1) * backdropBrightness + (isDarkTheme() ? 0.3 : 0) * new Color(colorBackground).getBrightness() < 145;
     $: backdropTextColor = __IOS__ && backdropImage && !isEInk ? (backdropIsDark ? '#FFFFFF' : '#000000') : colorOnBackground;
     // iOS: the photo behind the page fades in, the bars change color at the pace of the status bar
-    const COLOR_TRANSITION_DURATION = __IOS__ ? (typeof UINavigationControllerHideShowBarDuration === 'number' ? UINavigationControllerHideShowBarDuration : 0.35) * 1000 : 0;
+    const TRANSITION_DURATION = __IOS__ ? (typeof UINavigationControllerHideShowBarDuration === 'number' ? UINavigationControllerHideShowBarDuration : 0.35) * 1000 : 0;
     function updateBackdrop() {
         const photo = items.getItem(currentImageIndex)?.page?.imagePath ? items.getItem(currentImageIndex).page : document.pages.find((p) => p.imagePath);
         backdropImage = photo?.imagePath;
@@ -1066,7 +1066,7 @@
         android:backgroundColor={isPKPassDocument ? passColors.backgroundColor : accent.container}
         android:scrollBehavior="hide"
         color={isPKPassDocument ? passColors.foregroundColor : backdropTextColor}
-        colorTransitionDuration={COLOR_TRANSITION_DURATION}
+        transitionDuration={TRANSITION_DURATION}
         iosIconRenderingMode="alwaysTemplate"
         ios:translucent={!isPKPassDocument}
         scrollBehavior="lift"
@@ -1099,7 +1099,7 @@
                 alwaysFade={true}
                 blurRadius={12}
                 decodeWidth={160}
-                fadeDuration={COLOR_TRANSITION_DURATION}
+                fadeDuration={TRANSITION_DURATION}
                 {...{ iosOverflowSafeArea: true }}
                 isUserInteractionEnabled={false}
                 opacity={isDarkTheme() ? 0.7 : 1}
