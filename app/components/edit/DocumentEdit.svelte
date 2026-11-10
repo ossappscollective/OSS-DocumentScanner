@@ -546,10 +546,10 @@
             }
         });
 
-    function getMoreMenu(hasOCRData: boolean): MenuItem[] {
-        return [...(hasOCRData ? [{ title: lc('ocr'), icon: appIcon('ocr'), onSelect: showCurrentOCRData }, { separator: true }] : []), { title: lc('delete_page'), icon: appIcon('delete'), destructive: true, onSelect: deleteCurrentPage }];
+    function getMoreMenu(): MenuItem[] {
+        return [{ title: lc('delete_page'), icon: appIcon('delete'), destructive: true, onSelect: deleteCurrentPage }];
     }
-    function getBottomItems(canCrop: boolean) {
+    function getBottomItems(canCrop: boolean, hasOCRData: boolean) {
         return [
             { spacer: true },
             ...(canCrop ? [{ text: lc('crop'), icon: appIcon('crop'), onTap: cropEdit }, { spacer: true }] : []),
@@ -557,17 +557,30 @@
             { text: lc('rotate_right'), icon: appIcon('rotate_right'), onTap: rotateImageRight },
             { spacer: true },
             { text: lc('adjust'), icon: appIcon('tune'), onTap: showAdjustments },
-            { text: lc('ocr_document'), icon: appIcon('ocr'), onTap: showOCRSettings },
-            ...(CARD_APP ? [{ text: lc('detect_qrcode'), icon: appIcon('qrcode'), onTap: detectQRCode }] : []),
+            // the text found in the page
+            ...(hasOCRData ? [{ text: lc('ocr'), icon: appIcon('ocr'), onTap: showCurrentOCRData }] : []),
+            // what to look for in the page
+            ...(CARD_APP
+                ? [
+                      {
+                          text: lc('detect'),
+                          icon: appIcon('search'),
+                          menu: [
+                              { title: lc('ocr_document'), icon: appIcon('ocr'), onSelect: showOCRSettings },
+                              { title: lc('detect_qrcode'), icon: appIcon('qrcode'), onSelect: detectQRCode }
+                          ]
+                      }
+                  ]
+                : [{ text: lc('ocr_document'), icon: appIcon('search'), onTap: showOCRSettings }]),
             { spacer: true }
         ];
     }
     // the current page only: no PDF
     $: exportMenu = getExportMenu({ document, pages: [{ page: currentItem, document }], pdf: false });
-    $: moreMenu = getMoreMenu(!!currentItemOCRData);
+    $: moreMenu = getMoreMenu();
     // the toolbar leaves its place to the sheet
     let toolbarHidden = false;
-    $: bottomItems = toolbarHidden ? [] : getBottomItems(!!currentItem?.sourceImagePath);
+    $: bottomItems = toolbarHidden ? [] : getBottomItems(!!currentItem?.sourceImagePath, !!currentItemOCRData);
 </script>
 
 <appPage bind:this={page} id="pdfEdit">
