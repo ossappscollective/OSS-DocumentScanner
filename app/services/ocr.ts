@@ -179,6 +179,31 @@ export class OCRService extends Observable {
         }
         return this.mDownloadedLanguages;
     }
+    getInstalledModels() {
+        const extension = '.traineddata';
+        return this.qualities.flatMap((dataType) =>
+            Folder.fromPath(path.join(this.baseDataPath, dataType))
+                .getEntitiesSync()
+                .filter((entity) => entity.name.endsWith(extension))
+                .map((entity) => ({ dataType, language: entity.name.slice(0, -extension.length), size: File.fromPath(entity.path).size, path: entity.path }))
+        );
+    }
+
+    deleteModel(dataType: string, language: string) {
+        const filePath = path.join(this.baseDataPath, dataType, language + '.traineddata');
+        if (File.exists(filePath)) {
+            File.fromPath(filePath).remove();
+        }
+        const key = `tesseract_data_${dataType}`;
+        const stored = ApplicationSettings.getString(key, null);
+        if (stored !== null) {
+            ApplicationSettings.setString(key, JSON.stringify((JSON.parse(stored) as string[]).filter((lang) => lang !== language)));
+        }
+        if (dataType === this.mDataType) {
+            this.mDownloadedLanguages = this.mDownloadedLanguages.filter((lang) => lang !== language);
+        }
+    }
+
     set dataType(value) {
         this.mDataType = value;
         ApplicationSettings.setString('tesseract_datatype', value);

@@ -166,6 +166,7 @@
                         description: lc('use_space_when__ocr_copy_text_desc'),
                         value: ApplicationSettings.getBoolean(SETTINGS_OCR_COPY_USE_SPACE, DEFAULT_OCR_COPY_USE_SPACE)
                     },
+                    { type: 'sectionheader', title: lc('quality') },
                     {
                         type: 'ocr_settings',
                         id: 'ocr_settings'
@@ -1503,6 +1504,6 @@
     </Template>
 
     <Template key="ocr_settings" let:item>
-        <OCRSettingsBottomSheet onlySettings={true} showDownloadButton={true} />
+        <OCRSettingsBottomSheet onlySettings={true} showDownloadButton={true} showQualityTitle={false} />
     </Template>
 </BaseSettingsPage>
