@@ -876,7 +876,7 @@
         if (selected > 0) {
             return getSelectionBottomItems(pkpass);
         }
-        const share = exportable ? { text: lc('export'), icon: appIcon('export'), menu: getDocumentExportMenu(doc) } : null;
+        const share = exportable ? { text: lc('export'), icon: appIcon('export'), color: accent.accent, menu: getDocumentExportMenu(doc) } : null;
         // iOS: the main action is a prominent button at the right of the toolbar. Android: no toolbar, the buttons at the right of the page
         return __IOS__ ? [...(share ? [share] : []), ...(!pkpass ? [{ spacer: true }, { text: lc('edit'), prominent: true, color: accent.accent, onTap: openEdit }] : [])] : [];
     }
@@ -1239,7 +1239,7 @@
                                             horizontalAlignment="right"
                                             margin="0 12 12 0"
                                             variant={photoEditVariant}
-                                            {...legacyPhotoEdit ? { backgroundColor: '#00000066', borderRadius: 18, color: '#FFFFFF' } : {}}
+                                            {...legacyPhotoEdit ? { backgroundColor: '#00000066', borderRadius: 18, color: '#FFFFFF' } : __ANDROID__ ? { backgroundColor: accent.container, color: accent.accent } : {}}
                                             verticalAlignment="bottom"
                                             width={36}
                                             {...{ src: appIcon('edit') }}
@@ -1360,7 +1360,7 @@
                         on:tap={showExportMenu} />
                 {:else}
                     {#if canBeExportedToPDF}
-                        <uibutton class="addFab" {...{ src: appIcon('export') }} variant="contained" on:tap={showExportMenu} />
+                        <uibutton class="addFab" backgroundColor={accent.container} color={accent.accent} {...{ src: appIcon('export') }} variant="contained" on:tap={showExportMenu} />
                     {/if}
                     <uifloatingactionbutton class="editFab" backgroundColor={accent.accent} color={accent.onAccent} src={appIcon('edit')} text={lc('edit')} on:tap={openEdit} />
                 {/if}
