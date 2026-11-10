@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { type FolderLike, collectFoldersToDelete, filterEmptyFolders, folderAncestorNames, isFolderDescendant, missingFolderAncestors } from './folderUtils';
+import { type FolderLike, collectFoldersToDelete, filterEmptyFolders, folderAncestorNames, isFolderDescendant, missingFolderAncestors, normalizeRemoteFolders } from './folderUtils';
 
 // Folders are tags whose hierarchy only exists in the name ("work/2024"), so
 // deleting a folder must take its descendants with it — and nothing else.
@@ -81,5 +81,30 @@ describe('missingFolderAncestors', () => {
 
     it('reports intermediate levels too, shallowest first', () => {
         expect(missingFolderAncestors([], ['work/2024/q1'])).toEqual(['work', 'work/2024']);
+    });
+});
+
+// Remote folders.json written by 1.14.x holds folders as JSON strings; a string
+// has no id, so it never matched a local folder and was passed to create().
+
+describe('normalizeRemoteFolders', () => {
+    const stored = { id: 1, name: 'work', modifiedDate: 10 };
+
+    it('keeps well formed entries untouched and reports no change', () => {
+        expect(normalizeRemoteFolders([stored])).toEqual({ folders: [stored], changed: false });
+    });
+
+    it('parses entries stored as JSON strings', () => {
+        expect(normalizeRemoteFolders([JSON.stringify(stored)])).toEqual({ folders: [stored], changed: true });
+    });
+
+    it('drops entries that are not a folder', () => {
+        expect(normalizeRemoteFolders(['not json', '{"name":"no id"}', null, { id: 2 }])).toEqual({ folders: [], changed: true });
+    });
+
+    it('keeps the newest entry when a string and an object share an id', () => {
+        const newer = { ...stored, name: 'work2', modifiedDate: 20 };
+        expect(normalizeRemoteFolders([JSON.stringify(stored), newer])).toEqual({ folders: [newer], changed: true });
+        expect(normalizeRemoteFolders([newer, JSON.stringify(stored)])).toEqual({ folders: [newer], changed: true });
     });
 });
