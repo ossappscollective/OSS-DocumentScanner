@@ -3,27 +3,31 @@
     import { closeBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { HorizontalPosition, VerticalPosition } from '@nativescript-community/ui-popover';
     import { showPopover } from '@nativescript-community/ui-popover/svelte';
+    import { confirm } from '@nativescript-community/ui-dialogs';
     import { SegmentedBar } from '@nativescript-community/ui-segmentedbar';
     import { EventData, View, verticalAlignmentProperty } from '@nativescript/core';
     import { showError } from '@shared/utils/showError';
+    import { filesize } from 'filesize';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import { lc } from '~/helpers/locale';
     import { OCRLanguages, ocrService } from '~/services/ocr';
-    import { colors, fonts } from '~/variables';
+    import { colors } from '~/variables';
     import { getRowCorners } from '~/utils/groupedRows';
     import SheetHeader from '../common/SheetHeader.svelte';
     import Chip from '../widgets/Chip.svelte';
     import { checkOrDownloadOCRLanguages, localizedLanguage } from '~/utils/ui';
 
     // technique for only specific properties to get updated on store change
-    $: ({ colorOnPrimary, colorOnSurface, colorOnSurfaceVariant, colorOutline, colorPrimary, colorSurfaceContainer, colorSurfaceContainerLow } = $colors);
+    $: ({ colorOnSurface, colorOnSurfaceVariant, colorSurfaceContainer, colorSurfaceContainerLow } = $colors);
     $: secondaryColor = colorOnSurfaceVariant;
 
     let collectionView: NativeViewElementNode<CollectionView>;
     let downloaded = ocrService.downloadedLanguages;
+    let installedModels = ocrService.getInstalledModels();
     export let languages = ocrService.languagesArray;
     export let onlySettings = false;
     export let showDownloadButton = false;
+    export let showQualityTitle = true;
     export let dataType: string = ocrService.dataType;
     async function addLanguages(event) {
         try {
@@ -68,6 +72,25 @@
         languages = languages;
     }
 
+    async function deleteModel({ dataType: modelDataType, language }: { dataType: string; language: string }) {
+        try {
+            const confirmed = await confirm({
+                cancelButtonText: lc('cancel'),
+                message: lc('confirm_delete_ocr_model', localizedLanguage(language, OCRLanguages)),
+                okButtonText: lc('delete'),
+                title: lc('delete_ocr_model')
+            });
+            if (!confirmed) {
+                return;
+            }
+            ocrService.deleteModel(modelDataType, language);
+            downloaded = ocrService.downloadedLanguages;
+            installedModels = ocrService.getInstalledModels();
+        } catch (error) {
+            showError(error);
+        }
+    }
+
     function onQualityChanged(event: EventData) {
         if (event.object instanceof SegmentedBar) {
             setDataType(qualities[event.object.selectedIndex]);
@@ -78,7 +101,13 @@
         closeBottomSheet(onlySettings ? { languages, dataType } : true);
     }
 
+    let downloading = false;
+    $: canDownload = !downloading && languages.some((language) => downloaded.indexOf(language) === -1);
     async function downloadLanguages() {
+        if (downloading) {
+            return;
+        }
+        downloading = true;
         try {
             await checkOrDownloadOCRLanguages({
                 dataType,
@@ -86,62 +115,65 @@
                 shouldConfirm: false
             });
             downloaded = ocrService.downloadedLanguages;
+            installedModels = ocrService.getInstalledModels();
         } catch (error) {
             showError(error);
+        } finally {
+            downloading = false;
         }
+    }
+
+    function getModelPosition(index: number, length: number) {
+        return length === 1 ? 'only' : index === 0 ? 'first' : index === length - 1 ? 'last' : 'middle';
     }
 </script>
 
 <gesturerootview id="ocrSettingsBottomSheet" rows="auto">
     {#if onlySettings}
-        <stacklayout backgroundColor={colorSurfaceContainerLow} margin="0 16 0 16" padding="14 16 14 16" {...getRowCorners('last', __IOS__)}>
-            <label color={colorOnSurface} fontSize={__IOS__ ? 17 : 16} text={lc('quality')} />
-            <wraplayout marginTop={8}>
-                {#each qualities as quality (quality)}
+        <stacklayout>
+            {#if showQualityTitle}
+                <label class="settingsSectionHeader" text={lc('quality')} />
+            {/if}
+            <stacklayout backgroundColor={colorSurfaceContainerLow} margin="0 16 0 16" padding="14 16 14 16" {...getRowCorners('only', __IOS__)}>
+                <segmentedbar selectedIndex={qualities.indexOf(dataType)} on:selectedIndexChanged={onQualityChanged}>
+                    {#each qualities as quality (quality)}
+                        <segmentedbaritem title={lc(quality)} variant="outline" />
+                    {/each}
+                </segmentedbar>
+            </stacklayout>
+
+            <gridlayout columns="*,auto">
+                <label class="settingsSectionHeader" text={lc('languages')} verticalAlignment="bottom" />
+                <uibutton class="icon-btn" col={1} marginRight={16} text="mdi-plus" variant="text" verticalAlignment="bottom" on:tap={addLanguages} />
+            </gridlayout>
+            <stacklayout backgroundColor={colorSurfaceContainerLow} margin="0 16 0 16" padding="14 16 14 16" {...getRowCorners('only', __IOS__)}>
+                <wraplayout>
+                    {#each languages as language (language)}
+                        <Chip rightIcon={downloaded.indexOf(language) !== -1 ? 'mdi-download' : null} text={localizedLanguage(language, OCRLanguages)} on:tap={() => removeLanguage(language)} />
+                    {/each}
+                </wraplayout>
+                {#if showDownloadButton}
+                    <uibutton horizontalAlignment="right" isEnabled={canDownload} marginTop={8} opacity={canDownload ? 1 : 0.4} text={lc('download')} on:tap={downloadLanguages} />
+                {/if}
+            </stacklayout>
+
+            {#if installedModels.length}
+                <label class="settingsSectionHeader" text={lc('downloaded_models')} />
+                {#each installedModels as model, index (model.dataType + model.language)}
                     <gridlayout
-                        backgroundColor={dataType === quality ? colorPrimary : undefined}
-                        borderColor={colorOutline}
-                        borderRadius={8}
-                        borderWidth={dataType === quality ? 0 : 1}
-                        columns="auto,auto"
-                        height={32}
-                        margin="0 8 8 0"
-                        paddingLeft={dataType === quality ? 8 : 12}
-                        paddingRight={12}
-                        rippleColor={colorPrimary}
-                        on:tap={() => setDataType(quality)}
+                        backgroundColor={colorSurfaceContainerLow}
+                        columns="*,auto"
+                        margin={`${index === 0 ? 0 : __IOS__ ? 1 : 2} 16 0 16`}
+                        padding="8 8 8 16"
+                        {...getRowCorners(getModelPosition(index, installedModels.length), __IOS__)}
                     >
-                        <label
-                            color={dataType === quality ? colorOnPrimary : colorOnSurface}
-                            fontFamily={$fonts.mdi}
-                            fontSize={16}
-                            marginRight={4}
-                            text="mdi-check"
-                            verticalAlignment="middle"
-                            visibility={dataType === quality ? 'visible' : 'collapse'}
-                        />
-                        <label
-                            col={1}
-                            color={dataType === quality ? colorOnPrimary : colorOnSurface}
-                            fontSize={14}
-                            fontWeight={dataType === quality ? 'bold' : 'normal'}
-                            text={lc(quality)}
-                            verticalAlignment="middle"
-                        />
+                        <label color={colorOnSurface} fontSize={14} verticalAlignment="middle">
+                            <span text={localizedLanguage(model.language, OCRLanguages)} />
+                            <span color={colorOnSurfaceVariant} text={`\n${lc(model.dataType)} · ${filesize(model.size, { output: 'string' })}`} />
+                        </label>
+                        <uibutton class="icon-btn" col={1} text="mdi-delete" variant="text" verticalAlignment="middle" on:tap={() => deleteModel(model)} />
                     </gridlayout>
                 {/each}
-            </wraplayout>
-            <gridlayout columns="*,auto" marginTop={8}>
-                <label color={colorOnSurface} fontSize={__IOS__ ? 17 : 16} text={lc('languages')} verticalAlignment="middle" />
-                <uibutton class="icon-btn" col={1} text="mdi-plus" variant="text" verticalAlignment="middle" on:tap={addLanguages} />
-            </gridlayout>
-            <wraplayout marginTop={4}>
-                {#each languages as language (language)}
-                    <Chip rightIcon={downloaded.indexOf(language) !== -1 ? 'mdi-download' : null} text={localizedLanguage(language, OCRLanguages)} on:tap={() => removeLanguage(language)} />
-                {/each}
-            </wraplayout>
-            {#if showDownloadButton}
-                <uibutton horizontalAlignment="right" marginTop={8} text={lc('download')} on:tap={downloadLanguages} />
             {/if}
         </stacklayout>
     {:else}

@@ -93,7 +93,10 @@ vi.mock('@nativescript/core', async () => ({
         fromPath: vi.fn((folderPath: string) => ({
             path: folderPath,
             getFolder: (name: string) => ({ path: `${folderPath}/${name}` }),
-            getEntitiesSync: () => []
+            getEntitiesSync: () =>
+                [...fileStore.keys()]
+                    .filter((filePath) => filePath.startsWith(`${folderPath}/`) && !filePath.slice(folderPath.length + 1).includes('/'))
+                    .map((filePath) => ({ name: filePath.slice(folderPath.length + 1), path: filePath }))
         }))
     },
     // Utilities exported directly from the core barrel
