@@ -407,6 +407,8 @@ module.exports = (env, params = {}) => {
                   }
                 : undefined
         },
+        // iOS: the color themes are externals like the locales: they are loaded from files
+        ...(isIOS ? [{ context, from: `themes/${appId}/*.json`, globOptions }] : []),
         {
             from: 'node_modules/@mdi/font/fonts/materialdesignicons-webfont.ttf',
             to: 'fonts',
