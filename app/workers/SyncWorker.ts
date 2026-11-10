@@ -3,7 +3,7 @@ import Queue from '@akylas/nativescript-app-utils/worker/queue';
 import { ApplicationSettings, File, Utils, knownFolders, path } from '@nativescript/core';
 import { prefs } from '@shared/services/preferences';
 import { cropDocumentFromFile } from 'plugin-nativeprocessor';
-import { DocFolder, OCRDocument, OCRPage, getDocumentsService, setDocumentsService } from '~/models/OCRDocument';
+import { OCRDocument, OCRPage, getDocumentsService, setDocumentsService } from '~/models/OCRDocument';
 import { DocumentEvents, DocumentsService } from '~/services/documents';
 import { getTransformedImage } from '~/services/pdf/PDFExportCanvas.common';
 import type { SyncStateEventData } from '~/services/sync';
@@ -44,6 +44,7 @@ import { recycleImages } from '~/utils/images';
 import { basename } from '~/utils/path';
 import { SyncNotificationManager } from '~/workers/SyncNotificationManager';
 import { doInBatch } from '@shared/utils/batch';
+import { normalizeRemoteFolders } from '~/services/folderUtils';
 import { mergeDeletedDocumentTombstones, mergeTombstones } from '~/services/sync/deletedDocuments';
 import { filterBySyncFolders, filterPagedBySyncFolders } from '~/services/sync/folderFilter';
 import { networkService } from '~/services/api';
@@ -177,6 +178,11 @@ export default class SyncWorker extends BaseWorker {
 
     uniqueDocumentIds(ids: string[] = []) {
         return Array.from(new Set(ids.filter(Boolean)));
+    }
+
+    async getRemoteFolders(service: BaseDataSyncService) {
+        const entries: Parameters<typeof normalizeRemoteFolders>[0] = (await service.fileExists(FOLDERS_DATA_FILENAME)) ? JSON.parse(await service.getFileFromRemote(FOLDERS_DATA_FILENAME)) : [];
+        return normalizeRemoteFolders(entries);
     }
 
     uniqueFolderIds(ids: number[] = []) {
@@ -341,7 +347,7 @@ export default class SyncWorker extends BaseWorker {
                         {
                             // first we sync folders
                             DEV_LOG && console.log('syncing folders both ways');
-                            const allRemoteFolders = ((await service.fileExists(FOLDERS_DATA_FILENAME)) ? JSON.parse(await service.getFileFromRemote(FOLDERS_DATA_FILENAME)) : []) as DocFolder[];
+                            const { changed: remoteFoldersRepaired, folders: allRemoteFolders } = await this.getRemoteFolders(service);
                             const [tombstoneFolders, tombstoneFoldersHasChanged]: [DeletedFolderEntry[], boolean] = mergeTombstones(await service.getDeletedFoldersManifest(), foldersToDeleteOnRemote);
                             const deletedFolderIds = new Set(tombstoneFolders.map((entry) => entry.id));
                             // a tombstoned folder must not be recreated on either side
@@ -354,7 +360,7 @@ export default class SyncWorker extends BaseWorker {
                                 await documentsService.deleteFolders(localFoldersToDelete);
                             }
                             const localFolders = allLocalFolders.filter((folder) => !deletedFolderIds.has(folder.id));
-                            let needsRemoteChange = remoteFolders.length !== allRemoteFolders.length;
+                            let needsRemoteChange = remoteFoldersRepaired || remoteFolders.length !== allRemoteFolders.length;
 
                             const { toBeAdded: missingLocalFolders, toBeDeleted: missingRemoteFolders, union: toBeSyncFolders } = findArrayDiffs(localFolders, remoteFolders, (a, b) => a.id === b.id);
                             for (let index = 0; index < missingRemoteFolders.length; index++) {
@@ -468,13 +474,13 @@ export default class SyncWorker extends BaseWorker {
                             (event && (event.eventName === EVENT_FOLDER_ADDED || event.eventName === EVENT_FOLDER_UPDATED || event.eventName === EVENT_FOLDER_DELETED))
                         ) {
                             await service.ensureRemoteFolder();
-                            const allRemoteFolders = ((await service.fileExists(FOLDERS_DATA_FILENAME)) ? JSON.parse(await service.getFileFromRemote(FOLDERS_DATA_FILENAME)) : []) as any[];
+                            const { changed: remoteFoldersRepaired, folders: allRemoteFolders } = await this.getRemoteFolders(service);
                             const [tombstoneFolders, tombstoneFoldersHasChanged]: [DeletedFolderEntry[], boolean] = mergeTombstones(await service.getDeletedFoldersManifest(), foldersToDeleteOnRemote);
                             const deletedFolderIds = new Set(tombstoneFolders.map((entry) => entry.id));
                             const remoteFolders = allRemoteFolders.filter((folder) => !deletedFolderIds.has(folder.id));
                             // we need to send folders not on remote
                             const localFolders = await getDocumentsService().folderRepository.search();
-                            let changed = remoteFolders.length !== allRemoteFolders.length;
+                            let changed = remoteFoldersRepaired || remoteFolders.length !== allRemoteFolders.length;
                             for (let index = 0; index < localFolders.length; index++) {
                                 const folder = localFolders[index];
                                 const remoteIndex = remoteFolders.findIndex((f) => folder.id === f.id);

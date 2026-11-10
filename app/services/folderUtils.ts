@@ -43,3 +43,46 @@ export function missingFolderAncestors(existingNames: string[], names: string[])
     });
     return missing;
 }
+
+export interface RemoteFolder {
+    id: number;
+    name: string;
+    color?: string;
+    modifiedDate?: number;
+}
+
+function isRemoteFolder(value: Partial<RemoteFolder> | null): value is RemoteFolder {
+    return typeof value?.id === 'number' && typeof value?.name === 'string';
+}
+
+// 1.14.x pushed folders to the remote as JSON strings: parse them back, drop what is not a folder and
+// keep the newest of duplicates. `changed` tells the remote file needs rewriting.
+export function normalizeRemoteFolders(entries: (Partial<RemoteFolder> | string | null)[]): { folders: RemoteFolder[]; changed: boolean } {
+    const byId = new Map<number, RemoteFolder>();
+    let changed = false;
+    entries.forEach((entry) => {
+        let folder: Partial<RemoteFolder> | null = null;
+        if (typeof entry === 'string') {
+            changed = true;
+            try {
+                folder = JSON.parse(entry);
+            } catch {
+                return;
+            }
+        } else {
+            folder = entry;
+        }
+        if (!isRemoteFolder(folder)) {
+            changed = true;
+            return;
+        }
+        const existing = byId.get(folder.id);
+        if (existing) {
+            changed = true;
+        }
+        if (!existing || (existing.modifiedDate ?? 0) < (folder.modifiedDate ?? 0)) {
+            byId.set(folder.id, folder);
+        }
+    });
+    return { folders: Array.from(byId.values()), changed };
+}
