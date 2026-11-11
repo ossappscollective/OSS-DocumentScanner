@@ -84,7 +84,6 @@
     let torchEnabled = false;
     let batchMode = !onlyForOCR && ApplicationSettings.getBoolean('batchMode', false);
     let canSaveDoc = false;
-    let editing = false;
     const imageExportSettings = getImageExportSettings();
     const compressQuality = imageExportSettings.imageQuality;
     $: ApplicationSettings.setBoolean('batchMode', batchMode);
@@ -112,7 +111,6 @@
                       currentResolution: cameraView.nativeView.getCurrentResolutionInfo()
                   }
                 : {};
-            // DEV_LOG && console.log('showCameraSettings', JSON.stringify(addedProps), JSON.stringify(get(cameraOptionsStore)));
             const view = (await import('~/components/widgets/ImageProcessingSettingsBottomSheet.svelte')).default;
             await showBottomSheet({
                 parent: page,
@@ -171,8 +169,6 @@
                 },
                 pagesToAdd
             });
-        } catch (err) {
-            throw err;
         } finally {
             if (imageSource) {
                 recycleImages(imageSource);
@@ -286,9 +282,6 @@
 
     onMount(async () => {
         $shouldListenForSensorOrientation = true;
-        // if (!check('camera')) {
-        //     stopPreview();
-        // }
 
         onNavigatedTo();
         if (__ANDROID__) {
@@ -299,7 +292,6 @@
     });
     onDestroy(() => {
         $shouldListenForSensorOrientation = false;
-        // clearImages();
         document = null;
         nbPages = 0;
         if (autoScanHandler) {
@@ -339,7 +331,6 @@
         if (torchEnabled) {
             forceTorchDisabled(true);
         }
-        // stopPreview();
         if (!startOnCam && document) {
             // we need to clear the current document which was not saved
             //especially memory images
@@ -369,9 +360,6 @@
         DEV_LOG && console.log('stopPreview', force, previewStarted, takingPicture);
         if (force || previewStarted) {
             previewStarted = false;
-            // if (takingPicture) {
-            //     return;
-            // }
             pauseAutoScan();
             cameraView?.nativeView.stopPreview();
             if (cropView?.nativeView) {
@@ -446,10 +434,7 @@
 
     const onAndroidBackButton = (data: AndroidActivityBackPressedEventData) =>
         onBackButton(page?.nativeView, () => {
-            if (editing) {
-                toggleEditing();
-                data.cancel = true;
-            } else if (!startOnCam && takingPicture) {
+            if (!startOnCam && takingPicture) {
                 data.cancel = true;
             } else if (pagesToAdd.length > 0) {
                 data.cancel = true;
@@ -645,19 +630,6 @@
         }
     }
 
-    // unused
-    function toggleEditing() {
-        editing = !editing;
-        if (torchEnabled) {
-            forceTorchDisabled(editing);
-        }
-        if (editing) {
-            stopPreview();
-        } else {
-            startPreview();
-        }
-    }
-
     // translucent glass on iOS, plain white icons over the preview on Android
     const overlayButtonVariant = __IOS__ ? 'clearGlass' : 'text';
     const activeButtonVariant = __IOS__ ? 'prominentGlass' : 'contained';
@@ -790,7 +762,6 @@
             <absoluteLayout bind:this={focusRing} borderColor="white" borderRadius={35} borderWidth={1.5} height={70} opacity={0} width={70} />
         </absolutelayout>
 
-        <!-- <canvasView bind:this={canvasView} rowSpan="2" on:draw={onCanvasDraw} on:tap={focusCamera} /> -->
         <gridlayout columns="auto,*,auto" marginLeft={12} marginRight={12} marginTop={8} android:marginTop={8 + $windowInset.top}>
             {#if !startOnCam}
                 <uibutton class="overlayIconButton" accessibilityLabel={lc('close')} color="white" height={44} variant={overlayButtonVariant} width={44} {...{ src: appIcon('close') }} on:tap={() => onGoBack()} />
@@ -927,14 +898,5 @@
                 {...{ src: appIcon('check') }}
                 on:tap={() => saveCurrentDocument()} />
         </gridlayout>
-
-        <!-- <image
-            bind:this={fullImageView}
-            colorMatrix={getColorMatrix(colorType)}
-            imageRotation={smallImageRotation}
-            rowSpan={4}
-            src={smallImage}
-            stretch="aspectFit"
-            visibility={showingFullScreenImage ? 'visible' : 'hidden'} /> -->
     </gridlayout>
 </page>

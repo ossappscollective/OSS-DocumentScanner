@@ -107,18 +107,6 @@
         return passCodeArray;
     }
 
-    function onTextChange(i: number, text: string) {
-        // console.log('onTextChange', i, text);
-        // if (text && text.length) {
-        //     passCodeArray[i] = text[0];
-        //     if ( i < 3) {
-        //         $refs['field' + (i + 1)].nativeView.requestFocus();
-        //     } else {
-        //         $refs['field' + (i)].nativeView.blur();
-        //     }
-        // }
-    }
-
     function updateMessage() {
         switch (state) {
             case State.CurrentPasswordQuery:

@@ -150,9 +150,6 @@
         sheet?.nativeView?.animateStepIndex(0);
     }
 
-    // const whitepaper = writable(transforms.indexOf('whitepaper') !== -1);
-    // const enhanced = writable(transforms.indexOf('enhance') !== -1);
-
     // the popovers still need a view to be anchored to
     function getAnchor() {
         return page?.nativeView;
@@ -216,26 +213,9 @@
         if (adjusting) {
             setTimeout(syncPageViews, 50);
         }
-        // DEV_LOG && console.log('onSelectedIndex', currentIndex, items.length, currentSelectedImagePath, currentSelectedImageRotation, currentItemQRCodeData);
 
         updateCurrentItem(items.getItem(currentIndex));
-        // $whitepaper = transforms.indexOf('whitepaper') !== -1;
-        // $enhanced = transforms.indexOf('enhance') !== -1;
     }
-    // function onFirstLayout(item, e) {
-    //     console.log('onFirstLayout');
-    //     if (item.rotation % 180 === 90) {
-    //         const currentWidth = layout.toDeviceIndependentPixels(e.object.getMeasuredWidth());
-    //         const currentHeight = layout.toDeviceIndependentPixels(e.object.getMeasuredHeight());
-    //         const delta = item.rotation % 180 === 0 ? 0 : (currentWidth - currentHeight) / 2;
-    //         Object.assign(e.object, {
-    //             translateX: delta,
-    //             translateY: -delta,
-    //             width: currentHeight,
-    //             height: currentWidth
-    //         });
-    //     }
-    // }
 
     async function onImageRotated(item, event) {
         try {
@@ -256,26 +236,10 @@
             }
 
             currentSelectedImageRotation = item.rotation;
-            // items.setItem(currentIndex, item);
         } catch (error) {
             showError(error);
         }
     }
-    // $: {
-    //     colorType = document.pages[currentIndex].colorType || 0;
-    // }
-    // async function setColorType(type: number) {
-    //     colorType = type;
-    //     try {
-    //         await document.updatePage(currentIndex, {
-    //             colorType: type
-    //             // colorMatrix: getColorMatrix(type)
-    //         });
-    //         // pages.setItem(currentIndex, current);
-    //     } catch (err) {
-    //         showError(err);
-    //     }
-    // }
 
     function getCurrentImageView() {
         return pager?.nativeView.getChildView(currentIndex)?.getViewById<Img>('imageView');

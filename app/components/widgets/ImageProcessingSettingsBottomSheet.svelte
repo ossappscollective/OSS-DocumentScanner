@@ -73,7 +73,6 @@
     export let colorType = ApplicationSettings.getString(SETTINGS_DEFAULT_COLORTYPE, DEFAULT_COLORTYPE) as MatricesTypes;
     export let contrast = ApplicationSettings.getNumber(SETTINGS_DEFAULT_CONTRAST, DEFAULT_CONTRAST);
     export let brightness = ApplicationSettings.getNumber(SETTINGS_DEFAULT_BRIGHTNESS, DEFAULT_BRIGHTNESS);
-    // export let colorMatrix = JSON.parse(ApplicationSettings.getString(SETTINGS_DEFAULT_COLORMATRIX, DEFAULT_COLORMATRIX));
 
     export let colorMatrix: Matrix;
     try {
@@ -91,8 +90,6 @@
     if (showCameraSettings) {
         DEV_LOG && console.log('CameraSettingsBottomSheet', JSON.stringify(currentResolution), JSON.stringify(resolutions));
     }
-
-    // $: ({ aspectRatio, stretch, viewsize, pictureSize } = $cameraOptionsStore);
 
     let listView: NativeViewElementNode<CollectionView>;
     let filtersView: CollectionView;

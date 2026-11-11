@@ -13,11 +13,6 @@
     let hasOverflow = false;
     $: ({ colorOnSurface, colorSurfaceContainer, colorSurfaceContainerHigh } = $colors);
 
-    // Split options into visible and overflow
-    // $: visibleOptions = options.slice(0, maxVisibleActions);
-    // $: overflowOptions = options.slice(maxVisibleActions);
-    // $: hasOverflow = overflowOptions.length > 0;
-
     async function handleAction(event, option: OptionType) {
         if (onAction) {
             await onAction(event, option);
@@ -25,7 +20,7 @@
     }
 
     async function showMoreOptions(event) {
-        const result = await showPopoverMenu({
+        await showPopoverMenu({
             anchor: event.object,
             options: new ObservableArray(overflowOptions),
             vertPos: VerticalPosition.ABOVE,

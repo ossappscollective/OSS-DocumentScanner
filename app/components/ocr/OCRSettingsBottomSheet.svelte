@@ -5,7 +5,7 @@
     import { showPopover } from '@nativescript-community/ui-popover/svelte';
     import { confirm } from '@nativescript-community/ui-dialogs';
     import { SegmentedBar } from '@nativescript-community/ui-segmentedbar';
-    import { EventData, View, verticalAlignmentProperty } from '@nativescript/core';
+    import { EventData, View } from '@nativescript/core';
     import { showError } from '@shared/utils/showError';
     import { filesize } from 'filesize';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
@@ -19,7 +19,6 @@
 
     // technique for only specific properties to get updated on store change
     $: ({ colorOnSurface, colorOnSurfaceVariant, colorSurfaceContainer, colorSurfaceContainerLow } = $colors);
-    $: secondaryColor = colorOnSurfaceVariant;
 
     let collectionView: NativeViewElementNode<CollectionView>;
     let downloaded = ocrService.downloadedLanguages;
@@ -180,14 +179,14 @@
         <stacklayout>
             <SheetHeader doneText={lc('start')} onCancel={() => closeBottomSheet(false)} onDone={startOrCloseOCR} title={lc('ocr')} />
             <stacklayout padding="0 16 24 16">
-                <label color={secondaryColor} fontSize={__IOS__ ? 13 : 14} margin="8 16 8 16" text={__IOS__ ? lc('quality').toUpperCase() : lc('quality')} />
+                <label color={colorOnSurfaceVariant} fontSize={__IOS__ ? 13 : 14} margin="8 16 8 16" text={__IOS__ ? lc('quality').toUpperCase() : lc('quality')} />
                 <segmentedbar marginBottom={8} selectedIndex={qualities.indexOf(dataType)} on:selectedIndexChanged={onQualityChanged}>
                     {#each qualities as quality (quality)}
                         <segmentedbaritem title={lc(quality)} variant="outline" />
                     {/each}
                 </segmentedbar>
                 <gridlayout columns="*,auto" margin="16 0 0 0">
-                    <label color={secondaryColor} fontSize={__IOS__ ? 13 : 14} margin="0 16 0 16" text={__IOS__ ? lc('languages').toUpperCase() : lc('languages')} verticalAlignment="middle" />
+                    <label color={colorOnSurfaceVariant} fontSize={__IOS__ ? 13 : 14} margin="0 16 0 16" text={__IOS__ ? lc('languages').toUpperCase() : lc('languages')} verticalAlignment="middle" />
                     <uibutton col={1} height={32} padding="0 12" text={`+ ${lc('add')}`} variant="outline" on:tap={addLanguages} />
                 </gridlayout>
                 <wraplayout marginTop={8}>
