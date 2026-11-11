@@ -10,7 +10,7 @@
     import { showMenu } from '@nativescript-community/ui-menu';
     import { prefs } from '@shared/services/preferences';
     import { showError } from '@shared/utils/showError';
-    import { onMount } from 'svelte';
+    import { onDestroy, onMount } from 'svelte';
     import { Writable, writable } from 'svelte/store';
     import PKPassCardCell from '~/components/pkpass/PKPassCardCell.svelte';
     import CardPhotoFace from '~/components/list/CardPhotoFace.svelte';
@@ -55,10 +55,12 @@
     let syncEnabled: boolean;
 
     export let alwaysShowNames = ApplicationSettings.getBoolean(SETTINGS_CARD_ALWAYS_SHOW_NAME, DEFAULT_CARD_ALWAYS_SHOW_NAME);
-    prefs.on(`key:${SETTINGS_CARD_ALWAYS_SHOW_NAME}`, () => {
+    const onAlwaysShowNamePreferenceChanged = () => {
         alwaysShowNames = ApplicationSettings.getBoolean(SETTINGS_CARD_ALWAYS_SHOW_NAME, DEFAULT_CARD_ALWAYS_SHOW_NAME);
         refreshCollectionView();
-    });
+    };
+    prefs.on(`key:${SETTINGS_CARD_ALWAYS_SHOW_NAME}`, onAlwaysShowNamePreferenceChanged);
+    onDestroy(() => prefs.off(`key:${SETTINGS_CARD_ALWAYS_SHOW_NAME}`, onAlwaysShowNamePreferenceChanged));
 
     export let folder: DocFolder;
     let getSyncColors: (item: Item) => string[];

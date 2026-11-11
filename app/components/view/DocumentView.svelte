@@ -99,8 +99,9 @@
     $: tileHeight = itemWidth * DOCUMENT_TILE_RATIO + 2 * rowMargin;
     $: tileRadius = getTileRadius(itemWidth, itemWidth * DOCUMENT_TILE_RATIO);
 
-    prefs.on(`key:${SETTINGS_NB_COLUMNS_VIEW}`, () => (nbColumns = updateColumns($isLandscape)));
-    prefs.on(`key:${SETTINGS_NB_COLUMNS_VIEW_LANDSCAPE}`, () => (nbColumns = updateColumns($isLandscape)));
+    const onNbColumnsPreferenceChanged = () => (nbColumns = updateColumns($isLandscape));
+    prefs.on(`key:${SETTINGS_NB_COLUMNS_VIEW}`, onNbColumnsPreferenceChanged);
+    prefs.on(`key:${SETTINGS_NB_COLUMNS_VIEW_LANDSCAPE}`, onNbColumnsPreferenceChanged);
 
     const pages = document.getObservablePages();
     let items = pages.map((page, index) => ({ selected: false, page, index })) as any as ObservableArray<Item>;
@@ -504,6 +505,8 @@
     });
     onDestroy(() => {
         items = null;
+        prefs.off(`key:${SETTINGS_NB_COLUMNS_VIEW}`, onNbColumnsPreferenceChanged);
+        prefs.off(`key:${SETTINGS_NB_COLUMNS_VIEW_LANDSCAPE}`, onNbColumnsPreferenceChanged);
         Application.off('snackMessageAnimation', onSnackMessageAnimation);
         if (__ANDROID__) {
             Application.android.off(Application.android.activityBackPressedEvent, onAndroidBackButton);

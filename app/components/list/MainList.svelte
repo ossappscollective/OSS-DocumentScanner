@@ -273,8 +273,9 @@
     // $: DEV_LOG && console.log('nbColumns', nbColumns);
     // $: DEV_LOG && console.log('colWidth', colWidth);
 
-    prefs.on(`key:${SETTINGS_NB_COLUMNS}`, () => updateColumns($isLandscape));
-    prefs.on(`key:${SETTINGS_NB_COLUMNS_LANDSCAPE}`, () => updateColumns($isLandscape));
+    const onNbColumnsPreferenceChanged = () => updateColumns($isLandscape);
+    prefs.on(`key:${SETTINGS_NB_COLUMNS}`, onNbColumnsPreferenceChanged);
+    prefs.on(`key:${SETTINGS_NB_COLUMNS_LANDSCAPE}`, onNbColumnsPreferenceChanged);
 
     // Animate FAB visibility when selection changes
     $: if (fabHolder?.nativeView) {
@@ -624,6 +625,9 @@
     });
     onDestroy(() => {
         DEV_LOG && console.log('MainList', 'onDestroy');
+        prefs.off(`key:${SETTINGS_NB_COLUMNS}`, onNbColumnsPreferenceChanged);
+        prefs.off(`key:${SETTINGS_NB_COLUMNS_LANDSCAPE}`, onNbColumnsPreferenceChanged);
+        unsubscribeSyncServices();
         if (__IOS__) {
             Application.off(windowCommandEvent, onWindowCommand);
         }
@@ -1137,7 +1141,7 @@
     });
     onFontScaleChanged(refreshVisibleItems);
     onFolderBackgroundColorChanged(refreshCollectionView);
-    syncServicesStore.subscribe(refreshVisibleItems);
+    const unsubscribeSyncServices = syncServicesStore.subscribe(refreshVisibleItems);
 
     let lottieDarkFColor;
     let lottieLightColor;
