@@ -241,7 +241,7 @@
             {#if secondaryFieldsCount > 0}
                 <gridlayout columns={Array.from('*'.repeat(secondaryFieldsCount)).join(',')} marginTop={16}>
                     {#each structure.secondaryFields as field, index}
-                        <label col={index} padding={index !== 0 && index !== auxiliaryFieldsCount - 1 ? '0 10 0 10' : 0} selectable={true} textAlignment={getFieldTextAlignment(field)}>
+                        <label col={index} padding={index !== 0 && index !== secondaryFieldsCount - 1 ? '0 10 0 10' : 0} selectable={true} textAlignment={getFieldTextAlignment(field)}>
                             {#if field.label}
                                 <cspan color={labelColor} fontSize={11 * $fontScale} fontWeight="500" lineHeight={FIELD_LINE_HEIGHT} text={renderFieldLabel(field)} />
                             {/if}

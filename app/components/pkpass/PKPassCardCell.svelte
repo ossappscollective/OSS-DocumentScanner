@@ -178,7 +178,7 @@
             <gridlayout columns={Array.from('*'.repeat(primaryFieldsCount)).join(',')} visibility={!withTransitionIcon && primaryFieldsCount > 0 ? 'visible' : 'collapsed'}>
                 {#each { length: 4 } as _, index (index)}
                     {@const field = primaryFields?.[index]}
-                    <label col={index} marginTop={4 * scaleFactor} maxLines={2} padding={index !== 0 && index !== auxiliaryFieldsCount - 1 ? '0 10 0 10' : 0}>
+                    <label col={index} marginTop={4 * scaleFactor} maxLines={2} padding={index !== 0 && index !== primaryFieldsCount - 1 ? '0 10 0 10' : 0}>
                         <cspan
                             color={labelColor}
                             fontSize={10 * scaleFactor}
