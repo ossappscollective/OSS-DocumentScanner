@@ -1,5 +1,5 @@
 // Generates the Android vector drawables of the icons of the Android map of app/utils/appIcons.ts.
-// usage: node scripts/generate-android-icons.mjs <path of @mdi/svg/svg>   (npm pack @mdi/svg@7.4.47)
+// usage: node scripts/generate-android-icons.mjs node_modules/@mdi/svg/svg
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';

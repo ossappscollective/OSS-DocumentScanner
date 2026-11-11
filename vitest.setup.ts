@@ -31,7 +31,9 @@ function createFile(filePath: string) {
             fileStore.set(filePath, content.length);
         },
         remove: () => fileStore.delete(filePath),
-        renameSync: (newPath: string) => {
+        // like the native one: a new name in the same folder, not a path
+        renameSync: (newName: string) => {
+            const newPath = `${filePath.slice(0, filePath.lastIndexOf('/'))}/${newName}`;
             fileStore.set(newPath, fileStore.get(filePath));
             fileStore.delete(filePath);
         }
@@ -88,6 +90,13 @@ vi.mock('@nativescript/core', async () => ({
         exists: vi.fn((filePath: string) => fileStore.has(filePath)),
         fromPath: vi.fn(createFile)
     },
+    getFileAccess: vi.fn(() => ({
+        // like the native one: full paths, and an error goes to `onError`
+        rename: (path: string, newPath: string) => {
+            fileStore.set(newPath, fileStore.get(path));
+            fileStore.delete(path);
+        }
+    })),
     Folder: {
         exists: vi.fn(() => false),
         fromPath: vi.fn((folderPath: string) => ({

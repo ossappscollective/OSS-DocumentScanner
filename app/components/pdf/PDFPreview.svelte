@@ -25,6 +25,7 @@
     import { PDF_OPTIONS } from '~/utils/localized_constant';
     import { getPageColorMatrix } from '~/utils/matrix';
     import { createPageSheetTranslation, getPageFit, setPageFit } from '~/utils/pageSheet';
+    import { getIOSBottomInset, getIOSViewBottomInset } from '~/utils/safeArea';
     import { askPDFExportOptions, hideLoading, requestStoragePermission, showLoading, showSettings, showSnack } from '~/utils/ui';
     import { colors, screenHeightDips, screenWidthDips, windowInset } from '~/variables';
 
@@ -224,9 +225,18 @@
 
     // the layout sheet is a persistent sheet of the page: the pager keeps its width, each page scales and moves with the sheet (the neighbors stay seen), and the pages stay interactive
     let sheet: NativeViewElementNode<PersistentBottomSheet>;
+    // iOS: the sheet stops at the safe area, and goes under it: it is taller and its list scrolls above the home indicator
+    let bottomInset = getIOSBottomInset();
     // the width of the sheet is the one of the page: a percentage in the layout of the sheet made it wider than the screen
     let sheetWidth: number;
+    // iOS: the bottom toolbar comes after the first layout of the sheet
+    function updateBottomInset() {
+        bottomInset = getIOSViewBottomInset(sheet?.nativeView) || bottomInset;
+    }
     function onSheetLayout() {
+        updateBottomInset();
+        // the toolbar is there some time after the first layout
+        [500, 1500].forEach((delay) => setTimeout(updateBottomInset, delay));
         const width = Utils.layout.toDeviceIndependentPixels(sheet?.nativeView?.getMeasuredWidth() ?? 0);
         if (width && Math.abs(width - (sheetWidth ?? 0)) > 1) {
             sheetWidth = width;
@@ -422,7 +432,7 @@
             {/if}
         {/if}
     </appBar>
-    <bottomsheet bind:this={sheet} scrollViewId="layoutScroll" stepIndex={1} steps={LAYOUT_SHEET_STEPS} {translationFunction} on:layoutChanged={onSheetLayout} on:stepIndexChange={onSheetStep}>
+    <bottomsheet bind:this={sheet} scrollViewId="layoutScroll" stepIndex={1} steps={LAYOUT_SHEET_STEPS} {translationFunction} on:animated={updateBottomInset} on:layoutChanged={onSheetLayout} on:stepIndexChange={onSheetStep}>
         <!-- an absolute layout measures its children by their content: the page body fills it -->
         <gridlayout bind:this={pageContent} height="100%" rows="*" width="100%" on:layoutChanged={onContentLayout}>
             {#if hasSheets}
@@ -509,8 +519,8 @@
             backgroundColor={__IOS__ ? colorBackground : colorSurfaceContainerLow}
             borderTopLeftRadius={__IOS__ ? 26 : 28}
             borderTopRightRadius={__IOS__ ? 26 : 28}
-            boxShadow={__IOS__ ? '0 -3 10 #00000072' : undefined}
-            height={LAYOUT_SHEET_HEIGHT}
+            boxShadow={__IOS__ && adjusting ? '0 -3 10 #00000072' : undefined}
+            height={LAYOUT_SHEET_HEIGHT + bottomInset}
             horizontalAlignment="left"
             rows="28,auto"
             width={sheetWidth}>
@@ -525,7 +535,7 @@
                 {optionsStore}
                 row={1}
                 scrollId="layoutScroll"
-                sheetHeight={LAYOUT_LIST_HEIGHT} />
+                sheetHeight={LAYOUT_LIST_HEIGHT + bottomInset} />
         </gridlayout>
     </bottomsheet>
     <appPageOverlay>
