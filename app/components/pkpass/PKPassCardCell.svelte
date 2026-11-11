@@ -14,8 +14,7 @@
     export let itemWidth: number;
     export let layout: Exclude<PKPassStatusLayout, 'list'> = 'full';
 
-    let { colorOnBackground, colorOnPrimary, colorSurface } = $colors;
-    $: ({ colorOnBackground, colorOnPrimary, colorSurface } = $colors);
+    $: ({ colorSurface } = $colors);
 
     let passData: PKPassData;
     let foregroundColor: string;
@@ -215,18 +214,6 @@
                 </label>
             {/each}
         </gridlayout>
-
-        <!-- Right: Auxiliary fields -->
-        <!-- {#if auxiliaryFieldsCount > 0}
-                <stacklayout col={1} horizontalAlignment="right" orientation="horizontal">
-                    {#each auxiliaryFields as field, idx}
-                        <stacklayout marginLeft={idx > 0 ? 8 * scaleFactor : 0}>
-                            <label color={labelColor} fontSize={9 * scaleFactor} text={getFieldLabel(field)} textAlignment="right" />
-                            <label color={foregroundColor} fontSize={11 * scaleFactor} fontWeight="600" text={getFieldValue(field)} textAlignment="right" />
-                        </stacklayout>
-                    {/each}
-                </stacklayout>
-            {/if} -->
     </gridlayout>
     <!-- like the other cards: at the top, an expired pass at the right over its data -->
     <CardStatusChips

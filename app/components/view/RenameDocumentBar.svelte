@@ -7,7 +7,6 @@
     import type { OCRDocument } from '~/models/OCRDocument';
     import { colors } from '~/variables';
 
-    let { colorBackground } = $colors;
     $: ({ colorBackground } = $colors);
 
     export let document: OCRDocument;

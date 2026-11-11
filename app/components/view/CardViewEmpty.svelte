@@ -10,7 +10,6 @@
     export let onAddCode: (anchor: View) => void;
     export let onAddPhoto: (anchor: View) => void;
     export let onAddDetail: () => void;
-    let { colorOnBackground, colorOnSurfaceVariant } = $colors;
     $: ({ colorOnBackground, colorOnSurfaceVariant } = $colors);
 </script>
 

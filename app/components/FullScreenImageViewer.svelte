@@ -34,69 +34,16 @@
     const overlayButtonVariant = __IOS__ ? (useSVG ? 'gray' : 'clearGlass') : 'text';
 
     let currentIndex = startPageIndex;
-    const firstItem = images[currentIndex];
-
-    // let currentImageSrc = firstItem.image;
-    // let currentImageRotation = firstItem.rotation;
-    // let currentImageColorMatrix = firstItem.colorMatrix || getColorMatrix(firstItem.colorType);
 
     function onSelectedIndex(event) {
         currentIndex = event.object.selectedIndex;
-        // const item = images[currentIndex];
-        // currentImageSrc = item.image;
-        // currentImageRotation = item.rotation;
-        // currentImageColorMatrix = item.colorMatrix || getColorMatrix(item.colorType);
     }
-    // function onFirstLayout(item, e) {
-    //     console.log('onFirstLayout');
-    //     if (item.rotation % 180 === 90) {
-    //         const currentWidth = layout.toDeviceIndependentPixels(e.object.getMeasuredWidth());
-    //         const currentHeight = layout.toDeviceIndependentPixels(e.object.getMeasuredHeight());
-    //         const delta = item.rotation % 180 === 0 ? 0 : (currentWidth - currentHeight) / 2;
-    //         Object.assign(e.object, {
-    //             translateX: delta,
-    //             translateY: -delta,
-    //             width: currentHeight,
-    //             height: currentWidth
-    //         });
-    //     }
-    // }
-
-    // $: {
-    //     colorType = document.pages[currentIndex].colorType || 0;
-    // }
-    // async function setColorType(type: number) {
-    //     colorType = type;
-    //     try {
-    //         await document.updatePage(currentIndex, {
-    //             colorType: type
-    //             // colorMatrix: getColorMatrix(type)
-    //         });
-    //         // pages.setItem(currentIndex, current);
-    //     } catch (err) {
-    //         showError(err);
-    //     }
-    // }
-
-    // function getCurrentImageView() {
-    //     return pager?.nativeView?.getChildView(currentIndex)?.getViewById<Img>('imageView');
-    // }
-
-    // async function shareItem(item: OCRPage) {
-    //     try {
-    //         await share({ file: item.imagePath });
-    //     } catch (error) {
-    //         showError(error);
-    //     }
-    // }
 
     function onOrientationChanged(event: OrientationChangedEventData) {
         imageFunctionArg = event.newValue;
-        // setTimeout(() => {
         if (refreshOnOrientationChange) {
             pager?.nativeElement.refresh();
         }
-        // }, 1000);
     }
 
     onMount(() => {
@@ -109,8 +56,6 @@
 
 <page id="fullscreenImage" actionBarHidden={true} {backgroundColor} {keepScreenAwake} {screenBrightness} screenOrientation="all" {statusBarStyle}>
     <gridlayout class="pageContent" rows="auto,*,auto" android:paddingBottom={$windowInset.bottom}>
-        <!-- <image blurRadius={20} colorMatrix={currentImageColorMatrix} fadeDuration={100} imageRotation={currentImageRotation} opacity={0.3} rowSpan={2} src={currentImageSrc} stretch="aspectFill" /> -->
-
         <pager
             bind:this={pager}
             id="fullscreenPager"

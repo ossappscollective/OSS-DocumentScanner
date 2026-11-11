@@ -10,9 +10,8 @@
     import { getBarcodeInputRule, sanitizeBarcodeInput } from '~/utils/barcodeInput';
     import { colors } from '~/variables';
 
-    export let code: { original: any; text: string; error?: string };
+    export let code: { original: any; text: string };
     export let onRemove: () => void;
-    let { colorError } = $colors;
     $: ({ colorError } = $colors);
 
     const format: string = code.original.format;
@@ -28,7 +27,6 @@
             svg = null;
             error = lc('unsupported_barcode_value');
         }
-        code.error = error;
     }
     function onTextChange(event: PropertyChangeData) {
         const value = event.value as string;

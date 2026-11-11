@@ -3,26 +3,23 @@
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { Img } from '@nativescript-community/ui-image';
-    import { SVGView } from '@nativescript-community/ui-svg';
     import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { confirm } from '@nativescript-community/ui-dialogs';
     import { Pager } from '@nativescript-community/ui-pager';
     import { MenuItem, setContextMenu, showMenu } from '@nativescript-community/ui-menu';
-    import { AnimationDefinition, Application, ApplicationSettings, Color, ContentView, EventData, ImageSource, ObservableArray, Page, Utils, View } from '@nativescript/core';
+    import { Application, ApplicationSettings, Color, EventData, ObservableArray, Page, Utils, View } from '@nativescript/core';
     import { AndroidActivityBackPressedEventData } from '@nativescript/core/application';
-    import { debounce, throttle } from '@nativescript/core/utils';
     import { create as createImagePicker } from '@nativescript/imagepicker';
     import { showError } from '@shared/utils/showError';
     import { goBack, navigate, showModal } from '@shared/utils/svelte/ui';
     import dayjs from 'dayjs';
     import { QRCodeData, QRCodeSingleData, detectQRCodeFromFile } from 'plugin-nativeprocessor';
     import { onDestroy, onMount } from 'svelte';
-    import PageIndicator from '~/components/common/PageIndicator.svelte';
     import RotableImageView from '~/components/common/RotableImageView.svelte';
     import PdfEdit from '~/components/edit/DocumentEdit.svelte';
     import { lc, lcp } from '~/helpers/locale';
-    import { colorTheme, isDarkTheme, isEInk, onThemeChanged } from '~/helpers/theme';
-    import { Document, ExtraFieldType, OCRDocument, OCRPage } from '~/models/OCRDocument';
+    import { isDarkTheme, isEInk, onThemeChanged } from '~/helpers/theme';
+    import { ExtraFieldType, OCRDocument, OCRPage } from '~/models/OCRDocument';
     import {
         DocumentDeletedEventData,
         DocumentPageDeletedEventData,
@@ -31,11 +28,10 @@
         DocumentUpdatedEventData,
         documentsService
     } from '~/services/documents';
-    import { getBarcodeFallbackString, qrcodeService } from '~/services/qrcode';
+    import { qrcodeService } from '~/services/qrcode';
     import { shortcutService } from '~/services/shortcuts';
     import {
         CARD_RATIO,
-        DEFAULT_FORCE_WHITE_BACKGROUND_QRCODE,
         DOCUMENT_NAME_FORMAT,
         EVENT_DOCUMENT_DELETED,
         EVENT_DOCUMENT_PAGES_ADDED,
@@ -44,20 +40,16 @@
         EVENT_DOCUMENT_UPDATED,
         QRCODE_RESIZE_THRESHOLD,
         SETTINGS_DOCUMENT_NAME_FORMAT,
-        SETTINGS_FORCE_WHITE_BACKGROUND_QRCODE,
         SHEET_PAN_SOFT_INPUT_MODE
     } from '~/utils/constants';
     import { appIcon } from '~/utils/appIcons';
     import { optionsToMenuItems } from '~/utils/appMenu';
     import { getCardAccent, pickCardColor } from '~/utils/cardColors';
-    import { getTopBrightness, recycleImages } from '~/utils/images';
+    import { getTopBrightness } from '~/utils/images';
     import { documentHasPKPassData, getPKPassColors } from '~/utils/pkpass';
     import { getFormatedDateForFilename } from '~/utils/utils.common';
-    import { detectOCR, getExportMenu, importAndScanImage, importImageFromCamera, onBackButton, pickColor, requestCameraPermission, showImagePopoverMenu, showOCRData, showSnack, transformPages } from '~/utils/ui';
-    import { colors, fontScale, fonts, hasCamera, isLandscape, onFontScaleChanged, screenWidthDips, windowInset } from '~/variables';
-    import EditNameActionBar from '~/components/common/EditNameActionBar.svelte';
-    import IconButton from '@shared/components/IconButton.svelte';
-    import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
+    import { detectOCR, getExportMenu, importAndScanImage, importImageFromCamera, onBackButton, requestCameraPermission, showImagePopoverMenu, showOCRData, showSnack, transformPages } from '~/utils/ui';
+    import { colors, fonts, hasCamera, onFontScaleChanged, screenWidthDips, windowInset } from '~/variables';
     import PKPassView from '~/components/pkpass/PKPassView.svelte';
 
     const PEEK_WIDTH = 44;
@@ -78,7 +70,6 @@
     interface Item {
         page: OCRPage;
         selected: boolean;
-        index: number;
         /** the photo shown by the pager: its thumbnail is the one at full size */
         current?: boolean;
     }
@@ -89,40 +80,9 @@
 
 <script lang="ts">
     import CardViewEmpty from '~/components/view/CardViewEmpty.svelte';
-    import { TextField } from '@nativescript-community/ui-textfield';
-    import { Label } from '@nativescript-community/ui-label';
     import { EXTRA_PAPERLESS_ID_KEY } from '~/services/sync/paperless/PaperlessNgxPDFSyncService';
 
-    let {
-        colorBackground,
-        colorError,
-        colorOnBackground,
-        colorOnSurface,
-        colorOnSurfaceVariant,
-        colorOutline,
-        colorOutlineVariant,
-        colorPrimary,
-        colorSurface,
-        colorSurfaceContainerHigh,
-        colorSurfaceContainerLow,
-        colorTertiary
-    } = $colors;
-    $: ({
-        colorBackground,
-        colorError,
-        colorOnBackground,
-        colorOnSurface,
-        colorOnSurfaceVariant,
-        colorOutline,
-        colorOutlineVariant,
-        colorPrimary,
-        colorSurface,
-        colorSurfaceContainerHigh,
-        colorSurfaceContainerLow,
-        colorTertiary
-    } = $colors);
-
-    const forceWhiteBackgroundForQRCode = ApplicationSettings.getBoolean(SETTINGS_FORCE_WHITE_BACKGROUND_QRCODE, DEFAULT_FORCE_WHITE_BACKGROUND_QRCODE);
+    $: ({ colorBackground, colorError, colorOnBackground, colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary, colorSurface, colorSurfaceContainerLow } = $colors);
 
     export let document: OCRDocument;
     export let transitionOnBack = true;
@@ -190,10 +150,6 @@
     if (__IOS__) {
         updateBackdropBrightness(backdropImage);
     }
-    onThemeChanged(() => {
-        DEV_LOG && console.log('onThemeChanged', $colors.colorOnBackground);
-        updateQRCodes();
-    });
 
     function getDetails(doc: OCRDocument) {
         const extra = doc.extra || {};
@@ -201,49 +157,12 @@
             .filter((key) => key !== 'color' && key !== 'pkpass' && key !== EXTRA_PAPERLESS_ID_KEY && typeof extra[key] === 'object')
             .map((key) => ({ name: key, extra: extra[key] as any }));
     }
-    // $: {
     const pages = document.getObservablePages();
-    let items = pages.map((page, index) => ({ selected: false, page, index, document, current: index === 0 })) as ObservableArray<Item>;
-    // pages.on('change', (event)=>{
-    //     switch(event.action) {
-    //         case ChangeType.Splice:
-    //         items.splice(event.index, event.removed.length, event.added)
-    //     }
-    // });
-    // }
-    // function onImageUpdated (event: any)  {
-    //         const index = event.data.index;
-    //         const current = document.pages.getItem(index)
-    //         current.config =
-    //         const data = {
-    //             image: document.images.getItem(index).page,
-    //             config: document.imagesConfig[index],
-    //         };
-    //         console.log('onImageUpdated', event.data.index, document, data);
-    //         document.pages.setItem(index, data);
-    //     }
-
-    let qrcodeImages: { [k: string]: ImageSource } = {};
-    function clearQRCodeImages(timeout = 0) {
-        const toClear = Object.values(qrcodeImages);
-        qrcodeImages = {};
-        setTimeout(() => {
-            recycleImages(toClear);
-        }, timeout);
-    }
-    let qrcodeColor;
-    let qrcodeBackgroundColor;
-
-    function updateQRCodeColors() {
-        qrcodeColor = 'black';
-        // qrcodeBackgroundColor = 'red';
-        qrcodeBackgroundColor = 'white';
-    }
+    let items = pages.map((page, index) => ({ selected: false, page, document, current: index === 0 })) as ObservableArray<Item>;
 
     async function updateQRCodes(updateList = true) {
         try {
-            updateQRCodeColors();
-            const color = qrcodeColor;
+            const color = 'black';
             const newQrCodes = [];
             for (let index = 0; index < document.pages.length; index++) {
                 const page = document.pages[index];
@@ -263,20 +182,13 @@
             }
             qrcodes = newQrCodes;
             hasQRCodes = qrcodes?.length > 0;
-            // qrcodes = document.pages.reduce((acc, page) => acc.concat(page.qrcode?.map((qr) => ({ ...qr, color, svg: await getQRCodeImage(qr, color) })) || []), []);
-            //we dont recycle images, it will be done in onDestroy
         } catch (error) {
             showError(error);
         }
     }
-    // updateQRCodes();
 
     async function getQRCodeImage(qrcode, color) {
-        try {
-            return qrcodeService.getQRCodeSVG(qrcode, screenWidthDips, color);
-        } catch (error) {
-            console.error(error);
-        }
+        return qrcodeService.getQRCodeSVG(qrcode, screenWidthDips, color);
     }
     function onSelectedIndex(event) {
         currentQRCodeIndex = event.object.selectedIndex;
@@ -607,8 +519,7 @@
         document = event.doc;
         try {
             if (items) {
-                const length = items.length;
-                items.push(...event.pages.map((page, index) => ({ page, selected: false, index: length })));
+                items.push(...event.pages.map((page) => ({ page, selected: false })));
             }
             updateQRCodes();
         } catch (error) {
@@ -622,11 +533,9 @@
         document = event.doc;
         const index = event.pageIndex;
         const current = items.getItem(index);
-        if (index === 0) {
-        }
         if (current) {
             const page = document.getObservablePages().getItem(index);
-            DEV_LOG && console.log('view onDocumentPageUpdated', index, event.imageUpdated, current.index);
+            DEV_LOG && console.log('view onDocumentPageUpdated', index, event.imageUpdated);
             items.setItem(index, { ...current, page });
             if (!!event.imageUpdated) {
                 updateBackdrop();
@@ -647,7 +556,6 @@
         document = event.doc;
         const index = event.pageIndex;
         items.splice(index, 1);
-        items.forEach((item, index) => (item.index = index + 1));
         updateQRCodes();
     }
     function onDocumentsDeleted(event: DocumentDeletedEventData) {
@@ -665,7 +573,7 @@
             if (event.changedProps?.has('pagesOrder')) {
                 // the pager goes back to its first page by itself with the new items: its events are ignored meanwhile
                 ignorePagerIndexUntil = Date.now() + 600;
-                items.splice(0, items.length, ...document.pages.map((photo, index) => ({ selected: false, page: photo, index, document, current: index === 0 })));
+                items.splice(0, items.length, ...document.pages.map((photo, index) => ({ selected: false, page: photo, document, current: index === 0 })));
                 setTimeout(() => {
                     pager?.nativeElement?.scrollToIndexAnimated(0, false);
                     currentImageIndex = 0;
@@ -680,14 +588,8 @@
         }
     }
 
-    // function onOrientationChanged(event: OrientationChangedEventData) {
-    //     orientation = event.newValue;
-    //     refreshCollectionView();
-    //     // }, 1000);
-    // }
     onMount(() => {
         updateQRCodes();
-        // Application.on('orientationChanged', onOrientationChanged);
         if (__ANDROID__) {
             Application.android.on(Application.android.activityBackPressedEvent, onAndroidBackButton);
         }
@@ -702,8 +604,6 @@
         // refresh();
     });
     onDestroy(() => {
-        clearQRCodeImages();
-        // Application.off('orientationChanged', onOrientationChanged);
         if (__ANDROID__) {
             Application.android.off(Application.android.activityBackPressedEvent, onAndroidBackButton);
         }
@@ -716,9 +616,6 @@
 
     function refreshCollectionView() {
         collectionView?.nativeView?.refresh();
-    }
-    function refreshQRCodePager() {
-        // pager?.nativeView.refresh();
     }
     onThemeChanged(refreshCollectionView);
     onFontScaleChanged(refreshCollectionView);
@@ -1055,9 +952,6 @@
     }
     function getItemBackgroundColor(item) {
         return isEInk ? null : (item.page?.extra?.color ?? item.page.colors?.[0] ?? document.extra?.color);
-    }
-    function getItemLabelColor(item) {
-        return isEInk ? null : new Color(item.page.colors?.[0] || document.extra?.color).getBrightness() < 145 ? 'white' : 'black';
     }
 </script>
 
