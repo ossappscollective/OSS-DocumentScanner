@@ -53,7 +53,7 @@
     import { getTopBrightness, recycleImages } from '~/utils/images';
     import { documentHasPKPassData, getPKPassColors } from '~/utils/pkpass';
     import { getFormatedDateForFilename } from '~/utils/utils.common';
-    import { detectOCR, getExportMenu, importAndScanImage, importImageFromCamera, onBackButton, pickColor, requestCameraPermission, showImagePopoverMenu, showSnack, transformPages } from '~/utils/ui';
+    import { detectOCR, getExportMenu, importAndScanImage, importImageFromCamera, onBackButton, pickColor, requestCameraPermission, showImagePopoverMenu, showOCRData, showSnack, transformPages } from '~/utils/ui';
     import { colors, fontScale, fonts, hasCamera, isLandscape, onFontScaleChanged, screenWidthDips, windowInset } from '~/variables';
     import EditNameActionBar from '~/components/common/EditNameActionBar.svelte';
     import IconButton from '@shared/components/IconButton.svelte';
@@ -749,6 +749,9 @@
                     await fullscreenSelectedPages();
                     unselectAll();
                     break;
+                case 'show_ocr':
+                    await showOCRData(document, getSelectedPagesWithData()[0]?.pageIndex);
+                    break;
                 case 'ocr':
                     result = await detectOCR({ pages: getSelectedPagesWithData() });
                     if (result) {
@@ -796,6 +799,9 @@
                 case 'select_all':
                     selectAll();
                     break;
+                case 'show_ocr':
+                    await showOCRData(document);
+                    break;
                 case 'ocr':
                     await detectOCR({ documents: [document] });
                     unselectAll();
@@ -832,7 +838,8 @@
                 { id: 'reorder', name: lc('reorder_pages') },
                 ...(nbPages > 1 ? [{ id: 'reverse_pages', name: lc('reverse_pages') }] : []),
                 { id: 'transform', name: lc('transform_images') },
-                { id: 'ocr', name: lc('ocr_document') }
+                { id: 'ocr', name: lc('ocr_document') },
+                { id: 'show_ocr', name: lc('show_ocr_text') }
             );
         }
         return [
@@ -846,7 +853,7 @@
         const withImages = !pkpass && getSelectedPagesWithData().some((p) => p.page.imagePath);
         const menuOptions: { id: string; name: string }[] = [{ id: 'fullscreen', name: lc('show_fullscreen_images') }];
         if (withImages) {
-            menuOptions.push({ id: 'transform', name: lc('transform_images') }, { id: 'ocr', name: lc('ocr_document') }, { id: 'qrcode', name: lc('detect_qrcode') });
+            menuOptions.push({ id: 'transform', name: lc('transform_images') }, { id: 'ocr', name: lc('ocr_document') }, { id: 'show_ocr', name: lc('show_ocr_text') }, { id: 'qrcode', name: lc('detect_qrcode') });
         }
         return optionsToMenuItems(menuOptions, (option) => runSelectionOption(option.id));
     }
@@ -1033,6 +1040,7 @@
                 })),
                 keepScreenAwake: true,
                 onEdit: (index: number) => editPage(document.pages[index]),
+                onOCR: (index: number) => showOCRData(document, index),
                 screenBrightness: 1,
                 startPageIndex
             }

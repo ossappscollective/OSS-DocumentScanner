@@ -20,11 +20,13 @@
     export let screenBrightness = -1;
     /** shows an edit button in the bar, called with the index of the current image */
     export let onEdit: (index: number) => void = null;
+    /** shows a button in the bar for the images which have text, called with the index of the current image */
+    export let onOCR: (index: number) => void = null;
     export let startPageIndex: number = 0;
     export let backgroundColor = isEInk ? 'white' : 'black';
     export let labelColor = isEInk ? 'black' : 'white';
     export let statusBarStyle: any = isEInk ? 'light' : 'dark';
-    export let images: { image?; subtitle?; sharedTransitionTag?; colorMatrix?; colorType?; margin?; rotation?; svg?; scale?; stretch? }[];
+    export let images: { image?; ocrData?; subtitle?; sharedTransitionTag?; colorMatrix?; colorType?; margin?; rotation?; svg?; scale?; stretch? }[];
     let pager: NativeViewElementNode<Pager>;
     let imageFunctionArg = Application.orientation();
 
@@ -212,13 +214,25 @@
             {/if}
         {/if}
 
-        <gridlayout columns="auto,*,auto" margin="8 12 0 12" android:marginTop={8 + $windowInset.top} verticalAlignment="top">
+        <gridlayout columns="auto,*,auto,auto" margin="8 12 0 12" android:marginTop={8 + $windowInset.top} verticalAlignment="top">
             <uibutton class="overlayIconButton" accessibilityLabel={lc('close')} color={labelColor} height={44} variant={overlayButtonVariant} width={44} {...{ src: appIcon('close') }} on:tap={() => goBack()} />
+            {#if onOCR && images[currentIndex]?.ocrData}
+                <uibutton
+                    class="overlayIconButton"
+                    accessibilityLabel={lc('show_ocr_text')}
+                    col={2}
+                    color={labelColor}
+                    height={44}
+                    variant={overlayButtonVariant}
+                    width={44}
+                    {...{ src: appIcon('ocr') }}
+                    on:tap={() => onOCR(currentIndex)} />
+            {/if}
             {#if onEdit}
                 <uibutton
                     class="overlayIconButton"
                     accessibilityLabel={lc('edit')}
-                    col={2}
+                    col={3}
                     color={labelColor}
                     height={44}
                     variant={overlayButtonVariant}

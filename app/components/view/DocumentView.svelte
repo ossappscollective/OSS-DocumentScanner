@@ -57,6 +57,7 @@
         onBackButton,
         showImagePopoverMenu,
         showLoading,
+        showOCRData,
         showPDFPopoverMenu,
         transformPages,
         tryCatchFunction
@@ -135,6 +136,7 @@
                 { id: 'reorder', name: lc('reorder_pages') },
                 { id: 'move_folder', name: lc('move_folder') },
                 { id: 'ocr', name: lc('ocr_document') },
+                { id: 'show_ocr', name: lc('show_ocr_text') },
                 { id: 'transform', name: lc('transform_images') },
                 ...(withOriginals ? [{ id: 'delete_originals', name: lc('delete_original_images') }] : []),
                 { id: 'delete', name: lc('delete') }
@@ -146,6 +148,7 @@
         return optionsToMenuItems(
             [
                 { id: 'select_all', name: lc('select_all') },
+                { id: 'show_ocr', name: lc('show_ocr_text') },
                 { id: 'transform', name: lc('transform_images') },
                 ...(withOriginals ? [{ id: 'delete_originals', name: lc('delete_original_images') }] : [])
             ],
@@ -572,6 +575,9 @@
                 case 'ocr':
                     await detectOCR({ documents: [document] });
                     break;
+                case 'show_ocr':
+                    await showOCRData(document);
+                    break;
                 case 'transform':
                     await transformPages({ documents: [document] });
                     break;
@@ -592,6 +598,9 @@
             switch (id) {
                 case 'select_all':
                     selectAll();
+                    break;
+                case 'show_ocr':
+                    await showOCRData(document, getSelectedPagesWithData()[0]?.pageIndex);
                     break;
                 case 'ocr':
                     result = await detectOCR({ pages: getSelectedPagesWithData() });

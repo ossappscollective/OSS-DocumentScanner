@@ -118,6 +118,7 @@
     "devDependencies": {
         "@akylas/nativescript-ios-runtime": "9.0.3",
         "@akylas/nativescript-webpack": "5.0.35",
+        "@mdi/svg": "7.4.47",
         "@nativescript/android-quickjs-ng": "9.0.0-alpha.5",
         "@nativescript/core": "9.0.20",
         "@nativescript/ios": "9.1.0",

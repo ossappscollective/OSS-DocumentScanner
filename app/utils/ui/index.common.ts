@@ -56,6 +56,7 @@ import { zip } from 'plugin-zip';
 import type { ComponentProps } from 'svelte';
 import { get } from 'svelte/store';
 import type OptionSelect__SvelteComponent_ from '@shared/components/OptionSelect.svelte';
+import ModalFrame from '~/components/common/ModalFrame.svelte';
 import type BottomSnack__SvelteComponent_ from '~/components/widgets/BottomSnack.svelte';
 import BottomSnack from '~/components/widgets/BottomSnack.svelte';
 import { getFileNameForDocument, getFormatedDateForFilename, getLocaleDisplayName, l, lang, lc, lcp, pluralKey } from '~/helpers/locale';
@@ -1457,6 +1458,17 @@ export async function detectOCROnPage(document: OCRDocument, index: number) {
         hideLoading();
         // recycleImages(ocrImage);
     }
+}
+
+// the pages of the document with text are a swipe away, `pageIndex` is the one to show first
+export async function showOCRData(document: OCRDocument, pageIndex = 0) {
+    if (!document.pages.some((page) => page.imagePath && page.ocrData)) {
+        showSnack({ message: lc('ocr_no_text') });
+        return;
+    }
+    const OCRDataView = (await import('~/components/ocr/OCRDataView.svelte')).default;
+    // the native app bar of the page needs a frame in a modal
+    await showModal({ page: ModalFrame, fullscreen: true, props: { page: OCRDataView, document, pageIndex } });
 }
 interface PageTransformData {
     page: OCRPage;

@@ -36,6 +36,7 @@
         onBackButton,
         getExportMenu,
         showLoading,
+        showOCRData,
         showSnack
     } from '~/utils/ui';
     import { colors, screenHeightDips, windowInset } from '~/variables';
@@ -71,9 +72,9 @@
     // the sheet goes down to the bottom of the screen, over the place of the toolbar: the list scrolls under the safe area
     $: sheetHeight = SHEET_GRABBER_HEIGHT + SHEET_HEADER_HEIGHT + ADJUST_LIST_HEIGHT;
     $: steps = [0, sheetHeight];
-    // the width of the sheet is the one of the page: a percentage in the layout of the sheet made it wider than the screen
     // iOS: the sheet stops at the safe area, and goes under it: it is taller and its list scrolls above the home indicator
     let bottomInset = getIOSBottomInset();
+    // the width of the sheet is the one of the page: a percentage in the layout of the sheet made it wider than the screen
     let sheetWidth: number;
     // iOS: the bottom toolbar comes and goes after the layout of the sheet
     // the toolbar is not there while the sheet is open: its room is kept
@@ -304,23 +305,7 @@
 
     async function showCurrentOCRData() {
         try {
-            const item = items.getItem(currentIndex);
-
-            const OCRDataBottomSheet = (await import('~/components/ocr/OCRDataView.svelte')).default;
-            await showModal({
-                page: OCRDataBottomSheet,
-                fullscreen: true,
-                props: {
-                    pageIndex: currentIndex,
-                    document,
-                    ocrData: items.getItem(currentIndex).ocrData,
-                    imagePath: item.imagePath,
-                    imageWidth: item.width,
-                    imageHeight: item.height,
-                    rotation: item.rotation
-                    // colorMatrix: getColorMatrix(item.colorType)
-                }
-            });
+            await showOCRData(document, currentIndex);
         } catch (error) {
             showError(error);
         }
