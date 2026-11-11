@@ -273,7 +273,7 @@
             return;
         }
         ApplicationSettings.setString(SETTINGS_DEFAULT_COLORTYPE, colorType);
-        if (contrast !== DEFAULT_BRIGHTNESS) {
+        if (contrast !== DEFAULT_CONTRAST) {
             ApplicationSettings.setNumber(SETTINGS_DEFAULT_CONTRAST, contrast);
         } else {
             ApplicationSettings.remove(SETTINGS_DEFAULT_CONTRAST);
