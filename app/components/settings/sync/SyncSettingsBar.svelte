@@ -6,7 +6,6 @@
 
     export let title: string;
     export let onSave: () => void;
-    let { colorOnBackground } = $colors;
     $: ({ colorOnBackground } = $colors);
     const close = () => closeModal(undefined);
 </script>

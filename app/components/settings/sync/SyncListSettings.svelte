@@ -93,8 +93,7 @@
 
 <script lang="ts">
     // technique for only specific properties to get updated on store change
-    let { colorError, colorOnBackground, colorOnError, colorOnPrimaryContainer, colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary, colorPrimaryContainer, colorSurfaceContainerHigh } = $colors;
-    $: ({ colorError, colorOnBackground, colorOnError, colorOnPrimaryContainer, colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary, colorPrimaryContainer, colorSurfaceContainerHigh } = $colors);
+    $: ({ colorError, colorOnBackground, colorOnError, colorOnPrimaryContainer, colorOnSurface, colorOnSurfaceVariant, colorPrimary, colorPrimaryContainer } = $colors);
 
     let collectionView: NativeViewElementNode<CollectionView>;
 
@@ -451,13 +450,6 @@
         return item.syncColor || SERVICES_SYNC_COLOR[item.type];
     }
 
-    function selectTemplate(item, index, items) {
-        // if (type === 'pdf') {
-        //     return 'rightIcon';
-        // }
-        return 'default';
-    }
-
     function drawerTranslationFunction(side, width, value, delta, progress) {
         const result = {
             mainContent: {
@@ -491,7 +483,7 @@
         <appBarItem icon={appIcon('add')} ios.position="right" menu={addMenu} text={lc('add')} />
     </appBar>
     <gridlayout class="pageContent">
-        <collectionview id="syncCollectionView" bind:this={collectionView} itemTemplateSelector={selectTemplate} {items} android:paddingBottom={$windowInset.bottom}>
+        <collectionview id="syncCollectionView" bind:this={collectionView} {items} android:paddingBottom={$windowInset.bottom}>
             <Template let:item>
                 <swipemenu
                     gestureHandlerOptions={{
