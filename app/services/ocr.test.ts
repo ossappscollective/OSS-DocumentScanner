@@ -1,5 +1,5 @@
 import { request } from '@nativescript-community/https';
-import { ApplicationSettings, File } from '@nativescript/core';
+import { ApplicationSettings, File, getFileAccess } from '@nativescript/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ocrService } from './ocr';
@@ -88,6 +88,18 @@ describe('OCRService.downloadLanguages', () => {
 
     it('rejects and keeps no file when the download is shorter than announced', async () => {
         mockResponse({ contentLength: 1000, writtenSize: 400 });
+        const { promise } = await download();
+        await expect(promise).rejects.toThrow();
+        expect(File.exists(DESTINATION)).toBe(false);
+        expect(File.exists(downloadPath)).toBe(false);
+        expect(ocrService.mDownloadedLanguages).not.toContain('jpn');
+    });
+
+    it('rejects and keeps no file when the file cannot be moved to its final path', async () => {
+        mockResponse({ contentLength: 1000 });
+        vi.mocked(getFileAccess).mockReturnValueOnce({ rename: (_path: string, _newPath: string, onError: (error: Error) => void) => onError(new Error('move failed')) } as unknown as ReturnType<
+            typeof getFileAccess
+        >);
         const { promise } = await download();
         await expect(promise).rejects.toThrow();
         expect(File.exists(DESTINATION)).toBe(false);

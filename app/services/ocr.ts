@@ -1,5 +1,5 @@
 import { HttpsRequestOptions, request } from '@nativescript-community/https';
-import { ApplicationSettings, File, Folder, Observable, Utils, knownFolders, path } from '@nativescript/core';
+import { ApplicationSettings, File, Folder, Observable, Utils, getFileAccess, knownFolders, path } from '@nativescript/core';
 import { NoNetworkError } from '@akylas/nativescript-app-utils/error';
 import { ocrDocumentFromFile } from 'plugin-nativeprocessor';
 import type { OCRDocument } from '~/models/OCRDocument';
@@ -391,7 +391,10 @@ export class OCRService extends Observable {
                 if (File.exists(destinationFile)) {
                     File.fromPath(destinationFile).remove();
                 }
-                File.fromPath(partialFile).renameSync(destinationFile);
+                // `File.renameSync` takes a name in the same folder and does nothing on iOS when it fails
+                getFileAccess().rename(partialFile, destinationFile, (renameError) => {
+                    throw renameError;
+                });
                 this.mDownloadedLanguages.push(lang);
                 ApplicationSettings.setString(`tesseract_data_${this.mDataType}`, JSON.stringify(this.mDownloadedLanguages));
             } catch (error) {
