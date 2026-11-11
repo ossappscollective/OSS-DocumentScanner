@@ -29,6 +29,7 @@
     import { DEFAULT_BRIGHTNESS, DEFAULT_COLORTYPE, DEFAULT_CONTRAST, EVENT_DOCUMENT_DELETED, EVENT_DOCUMENT_PAGE_UPDATED, EVENT_DOCUMENT_UPDATED, TRANSFORMS_SPLIT } from '~/utils/constants';
     import { hasOriginalImage } from '~/utils/originals';
     import { createPageSheetTranslation, getPageFit, setPageFit } from '~/utils/pageSheet';
+    import { getIOSBottomInset, getIOSViewBottomInset } from '~/utils/safeArea';
     import {
         detectOCROnPage,
         hideLoading,
@@ -71,8 +72,18 @@
     $: sheetHeight = SHEET_GRABBER_HEIGHT + SHEET_HEADER_HEIGHT + ADJUST_LIST_HEIGHT;
     $: steps = [0, sheetHeight];
     // the width of the sheet is the one of the page: a percentage in the layout of the sheet made it wider than the screen
+    // iOS: the sheet stops at the safe area, and goes under it: it is taller and its list scrolls above the home indicator
+    let bottomInset = getIOSBottomInset();
     let sheetWidth: number;
+    // iOS: the bottom toolbar comes and goes after the layout of the sheet
+    // the toolbar is not there while the sheet is open: its room is kept
+    function updateBottomInset() {
+        if (!adjusting && !toolbarHidden) {
+            bottomInset = getIOSViewBottomInset(sheet?.nativeView) || bottomInset;
+        }
+    }
     function onSheetLayout() {
+        updateBottomInset();
         const width = Utils.layout.toDeviceIndependentPixels(sheet?.nativeView?.getMeasuredWidth() ?? 0);
         if (width && Math.abs(width - (sheetWidth ?? 0)) > 1) {
             sheetWidth = width;
@@ -591,7 +602,7 @@
         <appBarItem icon={appIcon('export')} ios.position="right" menu={exportMenu} text={lc('export')} />
         <appBarItem icon={appIcon('more')} ios.position="right" menu={moreMenu} />
     </appBar>
-    <bottomsheet bind:this={sheet} {steps} scrollViewId="adjustList" {translationFunction} on:layoutChanged={onSheetLayout} on:stepIndexChange={onSheetStep}>
+    <bottomsheet bind:this={sheet} {steps} scrollViewId="adjustList" {translationFunction} on:animated={updateBottomInset} on:layoutChanged={onSheetLayout} on:stepIndexChange={onSheetStep}>
         <!-- an absolute layout measures its children by their content: the page fills it -->
         <gridlayout android:paddingBottom={FLOATING_TOOLBAR_OFFSET + $windowInset.bottom} height="100%" rows="*,auto" width="100%">
             <pager bind:this={pager} {items} rowSpan={2} selectedIndex={startPageIndex} transformers="zoomOut" on:loaded={allowSwipeBack} on:selectedIndexChange={onSelectedIndex}>
@@ -626,8 +637,8 @@
             backgroundColor={__IOS__ ? colorBackground : colorSurfaceContainerLow}
             borderTopLeftRadius={__IOS__ ? 26 : 28}
             borderTopRightRadius={__IOS__ ? 26 : 28}
-            boxShadow={__IOS__ ? '0 -3 10 #00000072' : undefined}
-            height={sheetHeight}
+            boxShadow={__IOS__ && adjusting ? '0 -3 10 #00000072' : undefined}
+            height={sheetHeight + bottomInset}
             horizontalAlignment="left"
             rows="28,auto,auto"
             width={sheetWidth}>
@@ -648,7 +659,8 @@
                 pageMode={true}
                 previewSrc={currentItem?.imagePath}
                 row={2}
-                sheetHeight={ADJUST_LIST_HEIGHT}
+                {bottomInset}
+                sheetHeight={ADJUST_LIST_HEIGHT + bottomInset}
                 showTransforms={hasOriginalImage(currentItem)}
                 transforms={[...(transforms ?? [])]} />
         </gridlayout>

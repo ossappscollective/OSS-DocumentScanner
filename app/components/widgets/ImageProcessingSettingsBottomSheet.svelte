@@ -59,6 +59,8 @@
     export let inline = false;
     /** the id of the list, for the persistent sheet to hand the scrolling over to it */
     export let listId: string = undefined;
+    /** iOS: the sheet goes under the safe area: the list scrolls above it */
+    export let bottomInset = 0;
     /** the image the filters are drawn on: the page being edited, else a sample */
     export let previewSrc: string = '~/assets/images/filter_color.png';
     export let onTransformChange: (id: string, value: boolean) => void = null;
@@ -371,7 +373,7 @@
     {#if applyMode}
         <SheetHeader actionIcon={appIcon('restore')} actionLabel={lc('reset')} doneText={lc('apply')} onAction={resetTransforms} onCancel={() => closeBottomSheet(undefined)} onDone={applyTransforms} title={lc('transform_images')} />
     {/if}
-    <collectionview bind:this={listView} id={listId} row={applyMode ? 1 : 0} paddingBottom={inline || __ANDROID__ ? $windowInset.bottom : 0} {itemTemplateSelector} items={listItems}>
+    <collectionview bind:this={listView} id={listId} row={applyMode ? 1 : 0} paddingBottom={inline || __ANDROID__ ? $windowInset.bottom + bottomInset : 0} {itemTemplateSelector} items={listItems}>
         <Template key="sectionheader" let:item>
             <label color={secondaryColor} text={__IOS__ ? item.title.toUpperCase() : item.title} {...(__IOS__ ? { fontSize: 13, margin: '20 32 6 32' } : { class: 'sectionHeader' })} />
         </Template>
