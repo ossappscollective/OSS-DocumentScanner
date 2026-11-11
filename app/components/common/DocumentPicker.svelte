@@ -114,8 +114,6 @@
     async function importSelectedDocuments() {
         closeModal(await getSelectedDocuments());
     }
-
-    function updateTitle(folder) {}
 </script>
 
 <MainList
@@ -125,7 +123,6 @@
     onlyForImport={true}
     showActionButton={true}
     {title}
-    {updateTitle}
     viewStyles={{
         condensed: { name: lc('condensed') }
     }}

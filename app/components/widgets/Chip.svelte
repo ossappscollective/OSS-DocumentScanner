@@ -2,7 +2,7 @@
     import { colors, fonts } from '~/variables';
 
     // technique for only specific properties to get updated on store change
-    $: ({ colorOnPrimary, colorOnSurface, colorOutline, colorPrimary, colorSurfaceContainer } = $colors);
+    $: ({ colorOnSurface, colorOutline } = $colors);
 
     export let text: string;
     export let rightIcon: string = null;

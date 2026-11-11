@@ -22,7 +22,6 @@
     export let pkPassCell: boolean = false;
     export let selectionMode: Readable<boolean>;
 
-    let { colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary, colorSecondaryContainer, colorSurfaceContainerLow } = $colors;
     $: ({ colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary, colorSecondaryContainer, colorSurfaceContainerLow } = $colors);
 
     // the content is pushed right by the leading marker while selecting

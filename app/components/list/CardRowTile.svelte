@@ -8,7 +8,6 @@
 
     export let item: Item;
 
-    let { colorPrimary } = $colors;
     $: ({ colorPrimary } = $colors);
     $: ({ label, cardColor, hasCode } = getCardDisplay(item));
     $: tile = getTileColors(cardColor, colorPrimary);

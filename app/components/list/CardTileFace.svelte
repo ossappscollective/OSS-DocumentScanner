@@ -11,7 +11,6 @@
     export let layout: string;
     export let stripHeight: number = undefined;
 
-    let { colorPrimary } = $colors;
     $: ({ colorPrimary } = $colors);
     $: stacked = layout === 'cardholder' || layout === 'full';
     $: ({ hasCode, hasStatus, label, cardColor } = getCardDisplay(item));
