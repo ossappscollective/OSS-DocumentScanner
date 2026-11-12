@@ -207,6 +207,8 @@
     let loading = false;
     export let nbSelected = 0;
     $: selecting = nbSelected > 0;
+    // Android: the selection bar is 8 shorter than the search bar it replaces, the list keeps its place
+    $: selectionBarGap = __ANDROID__ && selecting && !folder && !isTrash && !onlyForImport ? 8 : 0;
     // read by the cells, which are not children of this component: the list of the current page, not a global
     export let selectionMode: Writable<boolean> = writable(false);
     $: selectionMode.set(selecting);
@@ -1293,6 +1295,7 @@
             ios:autoReloadItemOnLayout={true}
             itemTemplateSelector={(item) => itemTemplateSelector(viewStyle, item)}
             items={documents}
+            android:marginTop={selectionBarGap}
             paddingBottom={__IOS__ ? 16 : Math.max($windowInset.bottom, BOTTOM_BUTTON_OFFSET)}
             paddingLeft={contentPadding}
             paddingRight={contentPadding}
