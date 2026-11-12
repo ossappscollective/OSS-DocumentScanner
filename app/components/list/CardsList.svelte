@@ -10,7 +10,7 @@
     import { prefs } from '@shared/services/preferences';
     import { showError } from '@shared/utils/showError';
     import { onDestroy, onMount } from 'svelte';
-    import { Writable, writable } from 'svelte/store';
+    import type { Writable } from 'svelte/store';
     import PKPassCardCell from '~/components/pkpass/PKPassCardCell.svelte';
     import CardPhotoFace from '~/components/list/CardPhotoFace.svelte';
     import CardRow from '~/components/list/CardRow.svelte';
@@ -40,6 +40,7 @@
     // 16 from the screen edge to a tile, 12 between two tiles
     const rowMargin = 6;
     const columnsPadding = 10;
+    const FULL_VISIBLE_RATIO = 0.29;
 </script>
 
 <script lang="ts">
@@ -67,22 +68,17 @@
     let importImages: () => Promise<void>;
     let refreshCollectionView: () => void;
 
-    const FULL_VISIBLE_RATIO = 0.29;
     const title = lc('cards');
-    let itemWidth = (($isLandscape ? screenHeightDips : screenWidthDips) - $windowInset.left - $windowInset.right - 2 * columnsPadding) / $nbColumns - 2 * rowMargin;
-    const itemHeight = writable(itemWidth * CARD_RATIO + 2 * rowMargin);
 
     let folderItems: ObservableArray<Item>;
     let documents: ObservableArray<Item>;
     $: contentPadding = viewStyle === 'columns' ? columnsPadding : 0;
     $: itemWidth = (($isLandscape ? screenHeightDips : screenWidthDips) - $windowInset.left - $windowInset.right - 2 * contentPadding) / $nbColumns - 2 * rowMargin;
-    $: {
-        $itemHeight = itemWidth * CARD_RATIO + 2 * rowMargin;
-        refreshCollectionView?.();
-    }
+    $: itemHeight = itemWidth * CARD_RATIO + 2 * rowMargin;
+    $: itemHeight, refreshCollectionView?.();
 
-    $: itemRowHeight = getItemRowHeight(viewStyle, $itemHeight, $isLandscape);
-    $: stripHeight = getStripHeight(viewStyle, $itemHeight, itemRowHeight);
+    $: itemRowHeight = getItemRowHeight(viewStyle, itemHeight, $isLandscape);
+    $: stripHeight = getStripHeight(viewStyle, itemHeight, itemRowHeight);
 
     async function createCard() {
         try {
@@ -184,17 +180,8 @@
         if (item?.type) {
             return item.type;
         }
-        const prefix = getCardVariant(item) ? getCardVariant(item) + '_' : '';
-        switch (viewStyle) {
-            case 'list':
-            case 'columns':
-                if ($isLandscape) {
-                    return prefix + 'columns';
-                }
-                return prefix + viewStyle;
-            default:
-                return prefix + viewStyle;
-        }
+        const variant = getCardVariant(item);
+        return (variant ? variant + '_' : '') + (viewStyle === 'list' && $isLandscape ? 'columns' : viewStyle);
     }
     function updateColumns(isLandscape, orientationChanged: boolean = false) {
         $nbColumns = isLandscape
@@ -220,7 +207,7 @@
     collectionViewOptions={{
         // spanSize: (item) => itemTemplateSpanSize(viewStyle, item),
         swipeMenuId: 'swipeMenu',
-        itemOverlap: getItemOverlap(viewStyle, $itemHeight)
+        itemOverlap: getItemOverlap(viewStyle, itemHeight)
     }}
     {contentPadding}
     folderViewStyles={{
@@ -256,7 +243,7 @@
     <Template key="cardholder" let:item>
         <absolutelayout height={itemRowHeight}>
             <CardTile
-                height={$itemHeight}
+                height={itemHeight}
                 {item}
                 layout="cardholder"
                 {nbColumns}
@@ -297,7 +284,7 @@
     <Template key="photo_cardholder" let:item>
         <absolutelayout height={itemRowHeight}>
             <CardTile
-                height={$itemHeight}
+                height={itemHeight}
                 {item}
                 layout="cardholder"
                 {nbColumns}
@@ -338,7 +325,7 @@
     <Template key="pkpass_cardholder" let:item>
         <absolutelayout height={itemRowHeight}>
             <CardTile
-                height={$itemHeight}
+                height={itemHeight}
                 {item}
                 layout="cardholder"
                 {nbColumns}
