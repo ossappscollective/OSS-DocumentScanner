@@ -47,12 +47,13 @@
     // what is typed, by page
     let texts = items.map((item) => item.ocrData.text);
 
-    // the header and a few lines of text
     // the grabber and the header: the whole image is seen
     const SHEET_MIN = 96;
+    // the header and a few lines of text
     const SHEET_START = 200;
     const steps = [SHEET_MIN, SHEET_START, Math.round(screenHeightDips * 0.5), Math.round(screenHeightDips * 0.85)];
     const START_STEP_INDEX = 1;
+    const EDIT_STEP_INDEX = 2;
     const FULL_STEP_INDEX = steps.length - 1;
     // iOS: the sheet stops at the safe area, and goes under it
     const bottomInset = getIOSBottomInset();
@@ -66,12 +67,11 @@
     let currentIndex = startIndex;
     const viewState = writable<OCRViewState>({ page: items[startIndex]?.pageIndex, block: -1, showText: false, version: 0 });
 
-    let text = texts[currentIndex];
+    $: text = texts[currentIndex];
     $: dirty = texts.some((value, index) => value !== items[index].ocrData.text);
 
     function onSelectedIndex(event: { object: Pager }) {
         currentIndex = event.object.selectedIndex;
-        text = texts[currentIndex];
         viewState.update((state) => ({ ...state, page: items[currentIndex].pageIndex, block: -1 }));
     }
 
@@ -120,8 +120,8 @@
         editing = !editing;
         await tick();
         if (editing) {
-            if (stepIndex < 2) {
-                sheet?.nativeView?.animateStepIndex(2);
+            if (stepIndex < EDIT_STEP_INDEX) {
+                sheet?.nativeView?.animateStepIndex(EDIT_STEP_INDEX);
             }
             textView?.nativeView?.focus();
         } else {
@@ -135,7 +135,6 @@
     }
 
     function onTextChange(value: string) {
-        text = value;
         texts[currentIndex] = value;
     }
 
