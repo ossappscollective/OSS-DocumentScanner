@@ -9,6 +9,7 @@
     import { showError } from '@shared/utils/showError';
     import { OCRDocument } from '~/models/OCRDocument';
     import { openLink } from '~/utils/ui';
+    import PKPassFieldLabel from '~/components/pkpass/PKPassFieldLabel.svelte';
 
     const FIELD_LINE_HEIGHT = 16;
     const stars = (count: number) => Array(count).fill('*').join(',');
@@ -166,12 +167,17 @@
                     <!-- Boarding pass with transit icon between two primary fields -->
                     <gridlayout columns="*,auto,*" marginBottom={16}>
                         <!-- Left primary field (departure) -->
-                        <label col={0} selectable={true} textAlignment="left">
-                            {#if structure.primaryFields[0].label}
-                                <cspan color={labelColor} fontSize={12 * $fontScale} fontWeight="500" lineHeight={FIELD_LINE_HEIGHT} text={renderFieldLabel(structure.primaryFields[0])} />
-                            {/if}
-                            <cspan color={foregroundColor} fontSize={32 * $fontScale} fontWeight="bold" text={renderFieldValue(structure.primaryFields[0])} />
-                        </label>
+                        <PKPassFieldLabel
+                            col={0}
+                            label={structure.primaryFields[0].label ? renderFieldLabel(structure.primaryFields[0]) : null}
+                            {labelColor}
+                            labelSize={12}
+                            textAlignment="left"
+                            value={renderFieldValue(structure.primaryFields[0])}
+                            valueColor={foregroundColor}
+                            valueSize={32}
+                            valueWeight="bold"
+                        />
 
                         <!-- Transit icon in center -->
                         <label
@@ -187,12 +193,17 @@
                         />
 
                         <!-- Right primary field (arrival) -->
-                        <label col={2} selectable={true} textAlignment="right">
-                            {#if structure.primaryFields[1].label}
-                                <cspan color={labelColor} fontSize={12 * $fontScale} fontWeight="500" lineHeight={FIELD_LINE_HEIGHT} text={renderFieldLabel(structure.primaryFields[1])} />
-                            {/if}
-                            <cspan color={foregroundColor} fontSize={32 * $fontScale} fontWeight="bold" text={renderFieldValue(structure.primaryFields[1])} />
-                        </label>
+                        <PKPassFieldLabel
+                            col={2}
+                            label={structure.primaryFields[1].label ? renderFieldLabel(structure.primaryFields[1]) : null}
+                            {labelColor}
+                            labelSize={12}
+                            textAlignment="right"
+                            value={renderFieldValue(structure.primaryFields[1])}
+                            valueColor={foregroundColor}
+                            valueSize={32}
+                            valueWeight="bold"
+                        />
                     </gridlayout>
                 {:else}
                     <!-- Default primary fields layout (no transit icon or different field count) -->
@@ -201,12 +212,18 @@
                             <image colSpan={primaryFieldsCount} noRatioEnforce={true} opacity={0.5} src={stripImage} stretch="aspectFill" width="100%" />
                         {/if}
                         {#each structure.primaryFields as field, index}
-                            <label col={index} marginBottom="16" selectable={true} textAlignment={getFieldTextAlignment(field)}>
-                                {#if field.label}
-                                    <cspan color={labelColor} fontSize={12 * $fontScale} fontWeight="500" lineHeight={FIELD_LINE_HEIGHT} text={renderFieldLabel(field)} />
-                                {/if}
-                                <cspan color={foregroundColor} fontSize={32 * $fontScale} fontWeight="bold" text={renderFieldValue(field)} />
-                            </label>
+                            <PKPassFieldLabel
+                                col={index}
+                                label={field.label ? renderFieldLabel(field) : null}
+                                {labelColor}
+                                labelSize={12}
+                                marginBottom="16"
+                                textAlignment={getFieldTextAlignment(field)}
+                                value={renderFieldValue(field)}
+                                valueColor={foregroundColor}
+                                valueSize={32}
+                                valueWeight="bold"
+                            />
                         {/each}
                     </gridlayout>
                 {/if}
@@ -216,12 +233,17 @@
             {#if secondaryFieldsCount > 0}
                 <gridlayout columns={stars(secondaryFieldsCount)} marginTop={16}>
                     {#each structure.secondaryFields as field, index}
-                        <label col={index} padding={index !== 0 && index !== secondaryFieldsCount - 1 ? '0 10 0 10' : 0} selectable={true} textAlignment={getFieldTextAlignment(field)}>
-                            {#if field.label}
-                                <cspan color={labelColor} fontSize={11 * $fontScale} fontWeight="500" lineHeight={FIELD_LINE_HEIGHT} text={renderFieldLabel(field)} />
-                            {/if}
-                            <cspan color={foregroundColor} fontSize={18 * $fontScale} text={renderFieldValue(field)} />
-                        </label>
+                        <PKPassFieldLabel
+                            col={index}
+                            label={field.label ? renderFieldLabel(field) : null}
+                            {labelColor}
+                            labelSize={11}
+                            padding={index !== 0 && index !== secondaryFieldsCount - 1 ? '0 10 0 10' : 0}
+                            textAlignment={getFieldTextAlignment(field)}
+                            value={renderFieldValue(field)}
+                            valueColor={foregroundColor}
+                            valueSize={18}
+                        />
                     {/each}
                 </gridlayout>
             {/if}
@@ -230,12 +252,17 @@
             {#if auxiliaryFieldsCount > 0}
                 <gridlayout columns={stars(auxiliaryFieldsCount)} marginTop={16}>
                     {#each structure.auxiliaryFields as field, index}
-                        <label col={index} padding={index !== 0 && index !== auxiliaryFieldsCount - 1 ? '0 10 0 10' : 0} selectable={true} textAlignment={getFieldTextAlignment(field)}>
-                            {#if field.label}
-                                <cspan color={labelColor} fontSize={10 * $fontScale} fontWeight="500" lineHeight={FIELD_LINE_HEIGHT} text={renderFieldLabel(field)} />
-                            {/if}
-                            <cspan color={foregroundColor} fontSize={14 * $fontScale} text={renderFieldValue(field)} />
-                        </label>
+                        <PKPassFieldLabel
+                            col={index}
+                            label={field.label ? renderFieldLabel(field) : null}
+                            {labelColor}
+                            labelSize={10}
+                            padding={index !== 0 && index !== auxiliaryFieldsCount - 1 ? '0 10 0 10' : 0}
+                            textAlignment={getFieldTextAlignment(field)}
+                            value={renderFieldValue(field)}
+                            valueColor={foregroundColor}
+                            valueSize={14}
+                        />
                     {/each}
                 </gridlayout>
             {/if}
