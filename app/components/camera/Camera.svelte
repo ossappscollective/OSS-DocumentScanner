@@ -6,7 +6,6 @@
     import { showMenu } from '@nativescript-community/ui-menu';
     import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { confirm } from '@nativescript-community/ui-dialogs';
-    import { Slider } from '@nativescript-community/ui-slider';
     import { AbsoluteLayout, AndroidActivityBackPressedEventData, Application, ApplicationSettings, EventData, Page, Utils, View, knownFolders, path } from '@nativescript/core';
     import { ImageSource } from '@nativescript/core/image-source';
     import { debounce, wrapNativeException } from '@nativescript/core/utils';
@@ -53,7 +52,6 @@
     let focusRing: NativeViewElementNode<AbsoluteLayout>;
     let takPictureBtnCanvas: NativeViewElementNode<CanvasView>;
     let cropView: NativeViewElementNode<CropView>;
-    let zoomSlider: NativeViewElementNode<Slider>;
 
     const cameraOptionsStore = writable<{ aspectRatio: string; stretch: string; viewsize: string; pictureSize: string }>(
         JSON.parse(ApplicationSettings.getString(SETTINGS_CAMERA_SETTINGS, '{"aspectRatio":"4:3", "stretch":"aspectFit","viewsize":"limited", "pictureSize":null}'))
@@ -73,17 +71,13 @@
     export let folder: DocFolder = null;
     export let onClose: Function = null;
 
-    let nbPages = 0;
     let takingPicture = false;
-    let smallImage: string = null;
-    let smallImageRotation: number = 0;
     const previewResizeThreshold = ApplicationSettings.getNumber('previewResizeThreshold', PREVIEW_RESIZE_THRESHOLD);
     let flashMode = ApplicationSettings.getNumber('defaultFlashMode', 0);
     let zoom = 1;
-    let _actualFlashMode = flashMode;
     let torchEnabled = false;
+    let torchSuspended = false;
     let batchMode = !onlyForOCR && ApplicationSettings.getBoolean('batchMode', false);
-    let canSaveDoc = false;
     const imageExportSettings = getImageExportSettings();
     const compressQuality = imageExportSettings.imageQuality;
     $: ApplicationSettings.setBoolean('batchMode', batchMode);
@@ -157,16 +151,8 @@
                 imagePath: tempImagePath,
                 fileName: `cropedBitmap_${pagesToAdd.length}.${IMG_FORMAT}`,
                 autoScan,
-                onBeforeModalImport: () => {
-                    if (torchEnabled) {
-                        forceTorchDisabled(true);
-                    }
-                },
-                onAfterModalImport: () => {
-                    if (torchEnabled) {
-                        forceTorchDisabled(false);
-                    }
-                },
+                onBeforeModalImport: () => (torchSuspended = true),
+                onAfterModalImport: () => (torchSuspended = false),
                 pagesToAdd
             });
         } finally {
@@ -210,7 +196,7 @@
             if (autoScanHandler) {
                 pauseAutoScan();
             }
-            DEV_LOG && console.log('takePicture', autoScan, _actualFlashMode, pictureSize);
+            DEV_LOG && console.log('takePicture', autoScan, actualFlashMode, pictureSize);
             const start = Date.now();
             await showLoading(lc('capturing'));
             // on Android we the capture will directly save the image to a temp directory
@@ -220,7 +206,7 @@
                 pictureSize: pictureSize as any,
                 storageLocation: 'file:' + knownFolders.temp().path,
                 fileName: `capture_${Date.now()}.${compressQuality}`,
-                flashMode: _actualFlashMode
+                flashMode: actualFlashMode
                 // maxWidth: 10500,
                 // maxHeight: 10500
             });
@@ -231,10 +217,8 @@
                     return closeModal(didAdd);
                 }
                 if (batchMode) {
-                    nbPages = pagesToAdd.length;
-                    const lastPage = pagesToAdd[pagesToAdd.length - 1];
-                    DEV_LOG && console.log('setCurrentImage', JSON.stringify(lastPage));
-                    setCurrentImage(lastPage.imagePath, lastPage.rotation, true);
+                    // processCameraImage pushed the page: notify
+                    pagesToAdd = pagesToAdd;
                 } else {
                     await saveCurrentDocument();
                 }
@@ -263,16 +247,7 @@
         }
     }
 
-    $: {
-        _actualFlashMode = torchEnabled ? 4 : (flashMode as any);
-    }
-    function forceTorchDisabled(value) {
-        if (value) {
-            _actualFlashMode = flashMode;
-        } else {
-            _actualFlashMode = torchEnabled ? 4 : (flashMode as any);
-        }
-    }
+    $: actualFlashMode = torchEnabled && !torchSuspended ? 4 : flashMode;
     function switchTorch() {
         torchEnabled = !torchEnabled;
     }
@@ -293,7 +268,6 @@
     onDestroy(() => {
         $shouldListenForSensorOrientation = false;
         document = null;
-        nbPages = 0;
         if (autoScanHandler) {
             setNativeProperty(autoScanHandler, 'enabled', false);
             autoScanHandler = null;
@@ -320,17 +294,13 @@
             } catch (error) {
                 console.error(error, error.stack);
             }
-            if (torchEnabled) {
-                forceTorchDisabled(false);
-            }
+            torchSuspended = false;
         })();
     }
     function onNavigatedFrom() {
         DEV_LOG && console.log('Camera', 'onNavigatedFrom');
         isVisible = false;
-        if (torchEnabled) {
-            forceTorchDisabled(true);
-        }
+        torchSuspended = true;
         if (!startOnCam && document) {
             // we need to clear the current document which was not saved
             //especially memory images
@@ -407,9 +377,6 @@
                     closeModal(theDocument);
                 } else {
                     // clear
-                    nbPages = 0;
-                    smallImage = null;
-                    smallImageRotation = 0;
                     pagesToAdd = [];
                     document = null;
                     saveCalled = false;
@@ -444,11 +411,8 @@
 
     export let pagesToAdd: PageData[] = [];
 
-    async function setCurrentImage(image: string, rotation = 0, needAnimateBack = false) {
-        smallImage = image;
-        smallImageRotation = rotation;
-    }
-    $: canSaveDoc = nbPages > 0;
+    $: nbPages = pagesToAdd.length;
+    $: lastPage = pagesToAdd[nbPages - 1];
     function animateFocusRing(x: number, y: number) {
         const view = focusRing?.nativeView;
         view._batchUpdate(() => {
@@ -485,7 +449,7 @@
             // the native pinch handler reports the uncoerced ratio
             zoom = clampZoom(event.zoom, minZoom, maxZoom, neutralZoom);
             ApplicationSettings.setNumber('defaultZoom', zoom);
-            updateFloatZoom(zoom);
+            floatZoom = zoom;
         },
         500,
         { leading: true }
@@ -498,25 +462,17 @@
         500,
         { leading: true }
     );
-    let zoomPercentDelta = 0;
     let floatZoom = zoom;
-
-    function updateFloatZoom(value) {
-        floatZoom = value;
-        const view = zoomSlider?.nativeView;
-        if (view) {
-            const zoomPercent = zoomToPercent(floatZoom, minZoom, maxZoom) / ZOOM_SLIDER_STEPS;
-            const parentWidth = Utils.layout.toDeviceIndependentPixels(view.getMeasuredWidth()) - 40;
-            zoomPercentDelta = parentWidth * zoomPercent;
-        }
-    }
+    // star columns are integers: the thumb lands at zoomThumbStars / ZOOM_THUMB_STEPS of the free width
+    const ZOOM_THUMB_STEPS = 1000;
+    $: zoomThumbStars = Math.round((zoomToPercent(floatZoom, minZoom, maxZoom) / ZOOM_SLIDER_STEPS) * ZOOM_THUMB_STEPS);
     function onZoomValue(e) {
         const value = percentToZoom(e.value, minZoom, maxZoom, neutralZoom);
         // the slider also notifies on programmatic value changes
         if (Math.abs(value - zoom) < 1e-3) {
             return;
         }
-        updateFloatZoom(value);
+        floatZoom = value;
         setZoomThrottled(value);
     }
 
@@ -701,7 +657,7 @@
             maxZoom = Math.min(cameraView.nativeView.maxZoom, 16);
             neutralZoom = clampZoom(cameraView.nativeView.neutralZoom, minZoom, maxZoom, minZoom);
             zoom = clampZoom(ApplicationSettings.getNumber('defaultZoom', neutralZoom), minZoom, maxZoom, neutralZoom);
-            updateFloatZoom(zoom);
+            floatZoom = zoom;
             DEV_LOG && console.log('onCameraOpen', minZoom, maxZoom, zoom);
             if (__ANDROID__) {
                 if (!usingUserDefinedCameraResolution) {
@@ -744,7 +700,7 @@
                 autoFocus={true}
                 captureMode={1}
                 enablePinchZoom={true}
-                flashMode={_actualFlashMode}
+                flashMode={actualFlashMode}
                 {frontMirrored}
                 height="100%"
                 jpegQuality={compressQuality}
@@ -759,7 +715,7 @@
                 on:tap={focusCamera}
             />
             <cropview bind:this={cropView} colors={[colorPrimary]} fillAlpha={120} height="100%" isUserInteractionEnabled={false} {stretch} strokeWidth={3} width="100%" />
-            <absoluteLayout bind:this={focusRing} borderColor="white" borderRadius={35} borderWidth={1.5} height={70} opacity={0} width={70} />
+            <absolutelayout bind:this={focusRing} borderColor="white" borderRadius={35} borderWidth={1.5} height={70} opacity={0} width={70} />
         </absolutelayout>
 
         <gridlayout columns="auto,*,auto" marginLeft={12} marginRight={12} marginTop={8} android:marginTop={8 + $windowInset.top}>
@@ -793,6 +749,7 @@
         </gridlayout>
 
         <gridlayout
+            columns="{zoomThumbStars}*,40,{ZOOM_THUMB_STEPS - zoomThumbStars}*"
             horizontalAlignment="center"
             marginBottom={5}
             row={1}
@@ -801,26 +758,23 @@
             width="70%"
         >
             <slider
-                bind:this={zoomSlider}
                 backgroundColor={colorBackground}
+                colSpan={3}
                 maxValue={ZOOM_SLIDER_STEPS}
                 minValue={0}
                 thumbColor="transparent"
                 value={zoomToPercent(zoom, minZoom, maxZoom)}
-                on:valueChange={onZoomValue}
-                on:layoutChanged={(e) => updateFloatZoom(zoom)}
-            />
+                on:valueChange={onZoomValue} />
             <label
                 backgroundColor={colorBackground}
                 borderColor={colorOutlineVariant}
                 borderRadius={20}
                 borderWidth={1}
+                col={1}
                 color={colorOnBackground}
                 fontSize={13}
                 height={40}
-                horizontalAlignment="left"
                 isUserInteractionEnabled={false}
-                marginLeft={zoomPercentDelta}
                 text={Math.round(floatZoom * 10) / 10 + 'x'}
                 textAlignment="center"
                 verticalTextAlignment="center"
@@ -845,21 +799,26 @@
         <gridlayout columns="*,auto,*" ios:paddingBottom={30} android:marginBottom={30 + $windowInset.bottom} paddingTop={10} row={2} visibility={QRCodeOnly ? 'collapsed' : 'visible'}>
             <stacklayout horizontalAlignment="left" marginLeft={16} orientation="horizontal" verticalAlignment="center">
                 {#if !onlyForOCR}
-                    {#if batchMode}
-                        <uibutton class="overlayIconButton" accessibilityLabel={lc('batch_mode')} color="white" height={44} margin={4} variant={activeButtonVariant} width={44} {...{ src: appIcon('batch') }} on:tap={toggleBatchMode} />
-                    {:else}
-                        <uibutton class="overlayIconButton" accessibilityLabel={lc('batch_mode')} color="white" height={44} margin={4} variant={overlayButtonVariant} width={44} {...{ src: appIcon('image') }} on:tap={toggleBatchMode} />
-                    {/if}
+                    <uibutton
+                        class="overlayIconButton"
+                        accessibilityLabel={lc('batch_mode')}
+                        color="white"
+                        height={44}
+                        margin={4}
+                        variant={batchMode ? activeButtonVariant : overlayButtonVariant}
+                        width={44}
+                        {...{ src: appIcon(batchMode ? 'batch' : 'image') }}
+                        on:tap={toggleBatchMode} />
                 {/if}
-                <gridlayout height={48} margin={4} visibility={smallImage ? 'visible' : 'collapsed'} width={48}>
+                <gridlayout height={48} margin={4} visibility={lastPage?.imagePath ? 'visible' : 'collapsed'} width={48}>
                     <image
                         borderColor="white"
                         borderRadius={8}
                         borderWidth={1.5}
                         ios:contextOptions={IMAGE_CONTEXT_OPTIONS}
                         decodeWidth={Utils.layout.toDevicePixels(48)}
-                        imageRotation={smallImageRotation}
-                        src={smallImage}
+                        imageRotation={lastPage?.rotation ?? 0}
+                        src={lastPage?.imagePath}
                         stretch="aspectFill"
                     />
                     <label
@@ -893,7 +852,7 @@
                 marginRight={16}
                 variant="prominentGlass"
                 verticalAlignment="center"
-                visibility={canSaveDoc ? 'visible' : 'hidden'}
+                visibility={nbPages > 0 ? 'visible' : 'hidden'}
                 width={56}
                 {...{ src: appIcon('check') }}
                 on:tap={() => saveCurrentDocument()} />

@@ -104,7 +104,7 @@
     let actualHeight = imageHeight;
     let needRotation = false;
     $: {
-        const theRotation = rotation || imageRotation || 0;
+        const theRotation = imageRotation || 0;
         needRotation = theRotation && theRotation % 180 !== 0;
         if (needRotation) {
             actualWidth = imageHeight;
@@ -118,7 +118,6 @@
     let currentQuads = quads;
     $: currentQuads = quads;
 
-    const rotation = 0;
     let zoomImage: ImageSource;
     let zoomImagePath: string;
     let zoomImageScale: number = 1;
@@ -215,6 +214,9 @@
     const sensitivityFactor = ApplicationSettings.getNumber(SETTINGS_MAGNIFIER_SENSITIVITY, MAGNIFIER_SENSITIVITY);
     let changeOnTouch = false;
     let lastUndo;
+    function snapshot() {
+        return { quads: JSON.stringify(currentQuads), mappedQuads: JSON.stringify(mappedQuads) };
+    }
     function onTouch(event: TouchGestureEventData) {
         if (quadTween.duration && quadTween.value !== quadTween.to) {
             return;
@@ -224,10 +226,7 @@
             const y = event.getY();
             switch (event.action) {
                 case 'down': {
-                    lastUndo = {
-                        quads: JSON.stringify(currentQuads),
-                        mappedQuads: JSON.stringify(mappedQuads)
-                    };
+                    lastUndo = snapshot();
                     changeOnTouch = false;
                     prevTouchPoint = [x, y];
                     touchStartedInGlassZone = x <= GLASS_CORNER_ZONE && y <= GLASS_CORNER_ZONE;
@@ -327,10 +326,7 @@
         try {
             if (undos.length) {
                 const lastUndo = undos.pop();
-                redos.push({
-                    quads: JSON.stringify(currentQuads),
-                    mappedQuads: JSON.stringify(mappedQuads)
-                });
+                redos.push(snapshot());
                 updateUndoRedo(lastUndo);
                 dispatch('undosChanged');
             }
@@ -343,10 +339,7 @@
         try {
             if (redos.length) {
                 const lastRedo = redos.pop();
-                undos.push({
-                    quads: JSON.stringify(currentQuads),
-                    mappedQuads: JSON.stringify(mappedQuads)
-                });
+                undos.push(snapshot());
                 updateUndoRedo(lastRedo);
                 dispatch('undosChanged');
             }
@@ -374,7 +367,7 @@
         if (!current || quad.every((point, index) => point[0] === current[index][0] && point[1] === current[index][1])) {
             return;
         }
-        undos.push({ quads: JSON.stringify(currentQuads), mappedQuads: JSON.stringify(mappedQuads) });
+        undos.push(snapshot());
         redos.splice(0, redos.length);
         quadFrom = current.map((point) => [...point] as QuadPoint);
         quadTo = quad;

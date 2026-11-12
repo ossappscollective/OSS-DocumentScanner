@@ -54,10 +54,9 @@
     });
 
     let currentIndex = 0;
-    let currentItem: ImportImageData = items[currentIndex];
+    $: currentItem = items[currentIndex];
     function onSelectedIndex(event) {
         currentIndex = event.object.selectedIndex;
-        currentItem = items[currentIndex];
     }
     function changePage(delta) {
         currentIndex += delta;
@@ -90,7 +89,7 @@
     }
     async function onUndosChanged() {
         //trigger update
-        currentItem = currentItem;
+        items = items;
     }
 </script>
 

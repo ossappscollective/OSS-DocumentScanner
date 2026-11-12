@@ -28,6 +28,8 @@
     // the zoom and pan of the image, from the zoom view
     let zoomMatrix: Affine = [1, 0, 0, 1, 0, 0];
     let touchStart: { x: number; y: number; time: number } = null;
+    let zoomImage: NativeViewElementNode<any>;
+    let polling = false;
 
     const drawMatrix = new Matrix();
     const boxPaint = new Paint();
@@ -48,7 +50,7 @@
             return null;
         }
         const { imageHeight, imageWidth } = item.ocrData;
-        return multiply(getFitMatrix({ imageWidth, imageHeight, rotation: item.rotation ?? 0, viewWidth: size.width, viewHeight: size.height }), zoomMatrix);
+        return multiply(getFitMatrix({ imageWidth, imageHeight, rotation: item.rotation, viewWidth: size.width, viewHeight: size.height }), zoomMatrix);
     }
 
     function onTransformChanged(event: { android?: android.graphics.Matrix; ios?: CGAffineTransform }) {
@@ -64,8 +66,6 @@
         canvasView?.nativeView?.invalidate();
     }
 
-    let zoomImage: NativeViewElementNode<any>;
-    let polling = false;
     // iOS: ui-zoomimage 4.6.20 does not send `transformChanged`: the transform is read at each frame while the view is on screen.
     // The layers which are on screen are read, not the views: an animated zoom (double tap) is already at its end in the views
     function getIOSTransform(): Affine {
@@ -176,7 +176,7 @@
         backgroundColor={visualState}
         decodeWidth={IMAGE_DECODE_HEIGHT}
         ios:contextOptions={IMAGE_CONTEXT_OPTIONS}
-        imageRotation={item.rotation ?? 0}
+        imageRotation={item.rotation}
         maxZoom={10}
         src={item.imagePath}
         stretch="aspectFit"

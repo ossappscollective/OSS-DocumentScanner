@@ -1361,43 +1361,41 @@
     </appBar>
 
     <Template key="header" let:item>
-        <gridlayout rows="auto,auto">
-            <gridlayout columns="*,auto,auto" margin="10 16 0 16">
-                <stacklayout
-                    backgroundColor="#ea4bae"
-                    borderRadius={10}
-                    horizontalAlignment="center"
-                    margin="10 16 0 16"
-                    orientation="horizontal"
-                    padding={10}
+        <gridlayout columns="*,auto,auto" padding="10 16 0 16" rows="auto,auto">
+            <stacklayout
+                backgroundColor="#ea4bae"
+                borderRadius={10}
+                horizontalAlignment="center"
+                margin="10 16 0 16"
+                orientation="horizontal"
+                padding={10}
+                rippleColor="white"
+                verticalAlignment="center"
+                on:tap={(event) => onTap({ id: 'sponsor' }, event)}>
+                <label color="white" fontFamily={$fonts.mdi} fontSize={26} marginRight={10} text="mdi-heart" verticalAlignment="center" />
+                <label color="white" fontSize={12 * $fontScale} text={item.title} textWrap={true} verticalAlignment="center" />
+            </stacklayout>
+            {#if __ANDROID__}
+                <image
+                    borderRadius={6}
+                    col={1}
+                    height={40}
+                    margin="0 10 0 10"
                     rippleColor="white"
+                    src="~/assets/images/librepay.png"
                     verticalAlignment="center"
-                    on:tap={(event) => onTap({ id: 'sponsor' }, event)}>
-                    <label color="white" fontFamily={$fonts.mdi} fontSize={26} marginRight={10} text="mdi-heart" verticalAlignment="center" />
-                    <label color="white" fontSize={12 * $fontScale} text={item.title} textWrap={true} verticalAlignment="center" />
-                </stacklayout>
-                {#if __ANDROID__}
-                    <image
-                        borderRadius={6}
-                        col={1}
-                        height={40}
-                        margin="0 10 0 10"
-                        rippleColor="white"
-                        src="~/assets/images/librepay.png"
-                        verticalAlignment="center"
-                        on:tap={(event) => onTap({ id: 'sponsor', type: 'librepay' }, event)} />
-                    <image
-                        borderRadius={6}
-                        col={2}
-                        height={40}
-                        rippleColor="#f96754"
-                        src="~/assets/images/patreon.png"
-                        verticalAlignment="center"
-                        on:tap={(event) => onTap({ id: 'sponsor', type: 'patreon' }, event)} />
-                {/if}
-            </gridlayout>
+                    on:tap={(event) => onTap({ id: 'sponsor', type: 'librepay' }, event)} />
+                <image
+                    borderRadius={6}
+                    col={2}
+                    height={40}
+                    rippleColor="#f96754"
+                    src="~/assets/images/patreon.png"
+                    verticalAlignment="center"
+                    on:tap={(event) => onTap({ id: 'sponsor', type: 'patreon' }, event)} />
+            {/if}
 
-            <stacklayout horizontalAlignment="center" marginBottom={0} marginTop={20} row={1} verticalAlignment="center">
+            <stacklayout col={0} colSpan={3} horizontalAlignment="center" marginBottom={0} marginTop={20} row={1} verticalAlignment="center">
                 <image borderRadius={25} height={50} horizontalAlignment="center" src="res://icon" width={50} />
                 <label fontSize={13 * $fontScale} marginTop={4} text={version} on:longPress={(event) => onLongPress('version', event)} />
             </stacklayout>

@@ -311,14 +311,9 @@
         closeLayout();
     }
     // the papers change of size with the layout and the pager makes new ones: they follow
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    function updatePaperViews(..._deps: unknown[]) {
-        if (adjusting) {
-            setTimeout(syncPaperViews, 50);
-        }
-    }
     $: if (adjusting) {
-        updatePaperViews(paper_size, orientation, items_per_page, currentPagerIndex, roomHeight, contentHeight);
+        void [paper_size, orientation, items_per_page, currentPagerIndex, roomHeight, contentHeight];
+        setTimeout(syncPaperViews, 50);
     }
 
     async function exportPDF() {

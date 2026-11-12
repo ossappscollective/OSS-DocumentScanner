@@ -14,8 +14,6 @@
     $: ({ colorPrimary } = $colors);
     $: stacked = layout === 'cardholder' || layout === 'full';
     $: ({ hasCode, hasStatus, label, cardColor } = getCardDisplay(item));
-    $: hasTopChips = hasStatus;
-    $: hasIcons = hasCode || item.doc.favorite === 1;
     $: tile = getTileColors(cardColor, colorPrimary);
 </script>
 
@@ -29,8 +27,7 @@
             fontWeight="bold"
             horizontalAlignment="left"
             lineBreak="end"
-            margin="8 8 0 16"
-            marginLeft={item.selected ? 44 : 16}
+            margin="8 8 0 {item.selected ? 44 : 16}"
             maxFontSize={28}
             maxLines={2}
             minFontSize={14}
@@ -64,12 +61,12 @@
             fontWeight="bold"
             horizontalAlignment="stretch"
             lineBreak="end"
-            margin="{hasTopChips ? 0 : 10} 16 {hasIcons && hasTopChips ? 28 : 10} 16"
+            margin="{hasStatus ? 0 : 10} 16 {(hasCode || item.doc.favorite === 1) && hasStatus ? 28 : 10} 16"
             maxFontSize={22}
             maxLines={3}
             minFontSize={12}
-            row={hasTopChips ? 1 : 0}
-            rowSpan={hasTopChips ? 1 : 2}
+            row={hasStatus ? 1 : 0}
+            rowSpan={hasStatus ? 1 : 2}
             text={label}
             textAlignment="center"
             verticalAlignment="center"

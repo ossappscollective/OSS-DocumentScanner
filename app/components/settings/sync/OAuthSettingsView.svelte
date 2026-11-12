@@ -19,12 +19,7 @@
     let authenticating = false;
     let testing = false;
     let testConnectionSuccess = 0;
-    let isAuthenticated = false;
-
-    $: {
-        // Check if we have tokens
-        isAuthenticated = !!$store.accessToken;
-    }
+    $: isAuthenticated = !!$store.accessToken;
 
     async function authenticate() {
         try {
@@ -35,8 +30,6 @@
                 $store.accessToken = tokens.accessToken;
                 $store.refreshToken = tokens.refreshToken;
                 $store.expiresAt = tokens.expiresAt;
-
-                isAuthenticated = true;
                 testConnectionSuccess = 1;
             }
         } catch (error) {

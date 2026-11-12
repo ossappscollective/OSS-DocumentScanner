@@ -70,8 +70,8 @@
     const ADJUST_LIST_HEIGHT = Math.round(screenHeightDips * 0.4);
     let sheet: NativeViewElementNode<PersistentBottomSheet>;
     // the sheet goes down to the bottom of the screen, over the place of the toolbar: the list scrolls under the safe area
-    $: sheetHeight = SHEET_GRABBER_HEIGHT + SHEET_HEADER_HEIGHT + ADJUST_LIST_HEIGHT;
-    $: steps = [0, sheetHeight];
+    const sheetHeight = SHEET_GRABBER_HEIGHT + SHEET_HEADER_HEIGHT + ADJUST_LIST_HEIGHT;
+    const steps = [0, sheetHeight];
     // iOS: the sheet stops at the safe area, and goes under it: it is taller and its list scrolls above the home indicator
     let bottomInset = getIOSBottomInset();
     // the width of the sheet is the one of the page: a percentage in the layout of the sheet made it wider than the screen
@@ -493,16 +493,13 @@
     }
     onThemeChanged(refreshPager);
 
-    function onGoBack() {
-        goBack();
-    }
     const onAndroidBackButton = (data: AndroidActivityBackPressedEventData) =>
         onBackButton(page?.nativeView, () => {
             data.cancel = true;
             if (adjusting) {
                 closeAdjustments();
             } else {
-                onGoBack();
+                goBack();
             }
         });
 
@@ -546,7 +543,7 @@
 <appPage bind:this={page} id="pdfEdit">
     <appBar {bottomItems} color={colorOnBackground} iosIconRenderingMode="alwaysTemplate" ios:translucent={true} size="small" subtitle={document.name} title={lc('edit')}>
         {#if __ANDROID__}
-            <navigationButton {...{ 'android.systemIcon': 'ic_menu_back' }} on:tap={onGoBack} />
+            <navigationButton {...{ 'android.systemIcon': 'ic_menu_back' }} on:tap={() => goBack()} />
         {/if}
         <appBarItem icon={appIcon('export')} ios.position="right" menu={exportMenu} text={lc('export')} />
         <appBarItem icon={appIcon('more')} ios.position="right" menu={moreMenu} />

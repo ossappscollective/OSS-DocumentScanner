@@ -6,7 +6,7 @@
     import { Img } from '@nativescript-community/ui-image';
     import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { type MenuItem, showMenu } from '@nativescript-community/ui-menu';
-    import { AnimationDefinition, Application, ApplicationSettings, EventData, ObservableArray, Page, PageTransition, SharedTransition, StackLayout, View } from '@nativescript/core';
+    import { AnimationDefinition, Application, ApplicationSettings, EventData, Page, PageTransition, SharedTransition, StackLayout, View } from '@nativescript/core';
     import { AndroidActivityBackPressedEventData } from '@nativescript/core/application';
     import { showError } from '@shared/utils/showError';
     import { goBack, navigate, showModal } from '@shared/utils/svelte/ui';
@@ -104,7 +104,7 @@
     prefs.on(`key:${SETTINGS_NB_COLUMNS_VIEW_LANDSCAPE}`, onNbColumnsPreferenceChanged);
 
     const pages = document.getObservablePages();
-    let items = pages.map((page, index) => ({ selected: false, page, index })) as any as ObservableArray<Item>;
+    let items = pages.map<Item>((page, index) => ({ selected: false, page, index }));
 
     $: favorite = document.favorite === 1;
     $: hasOriginals = document.pages.some((current) => current.sourceImagePath);
