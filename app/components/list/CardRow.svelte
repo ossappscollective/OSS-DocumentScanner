@@ -46,7 +46,7 @@
         on:tap
         on:longPress
     >
-        <gridlayout columns="auto,*,auto,auto" paddingLeft={markerWidth} use:selectionTransition={{ selectionMode }}>
+        <gridlayout columns="auto,*,auto" paddingLeft={markerWidth} use:selectionTransition={{ selectionMode }}>
             <gridlayout
                 backgroundColor={pkPassCell ? (page?.pkpass?.passData?.backgroundColor ?? tile.fill) : hasImage ? null : tile.fill}
                 borderRadius={11}

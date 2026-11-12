@@ -47,7 +47,7 @@
         verticalAlignment="bottom"
         on:tap
         on:longPress>
-        <gridlayout columns="auto,*,auto,auto" paddingLeft={markerWidth} use:selectionTransition={{ selectionMode }}>
+        <gridlayout columns="auto,*,auto" paddingLeft={markerWidth} use:selectionTransition={{ selectionMode }}>
             <RotableImageView
                 id="imageView"
                 borderRadius={9}

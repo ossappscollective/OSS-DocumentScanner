@@ -201,15 +201,17 @@
 
     let lastRefreshFilter = null;
     let showSearch = false;
+    $: searching = !!lastRefreshFilter && showSearch;
     let loading = false;
     export let nbSelected = 0;
+    $: selecting = nbSelected > 0;
     // read by the cells, which are not children of this component: the list of the current page, not a global
     export let selectionMode: Writable<boolean> = writable(false);
-    $: selectionMode.set(nbSelected > 0);
+    $: selectionMode.set(selecting);
     // iOS cells do not lay out again when their content changes: the visible ones are bound again to leave or enter selection mode
     let wasSelecting = false;
-    $: if (__IOS__ && wasSelecting !== nbSelected > 0) {
-        wasSelecting = nbSelected > 0;
+    $: if (__IOS__ && wasSelecting !== selecting) {
+        wasSelecting = selecting;
         setTimeout(() => refreshVisibleItems());
     }
     let editingTitle = false;
@@ -229,7 +231,7 @@
     // Animate FAB visibility when selection changes
     $: if (fabHolder?.nativeView) {
         fabHolder.nativeView.animate({
-            opacity: nbSelected > 0 ? 0 : 1,
+            opacity: selecting ? 0 : 1,
             duration: 200
         });
     }
@@ -756,7 +758,7 @@
     };
     export const onItemTapFast = async function (item: Item) {
         try {
-            if (nbSelected > 0) {
+            if (selecting) {
                 onItemLongPress(item);
             } else if (item.doc) {
                 await handleDocumentTap(item.doc);
@@ -770,7 +772,7 @@
     export const onItemTapThrottled = throttle(onItemTapFast, 500);
 
     export const onItemTap = async function (item: Item) {
-        if (nbSelected > 0) {
+        if (selecting) {
             return onItemTapFast(item);
         }
         return onItemTapThrottled(item);
@@ -798,7 +800,7 @@
     const onAndroidBackButton = (data: AndroidActivityBackPressedEventData) =>
         onBackButton(page?.nativeView, () => {
             DEV_LOG && console.log('onBackButton');
-            if (nbSelected > 0) {
+            if (selecting) {
                 data.cancel = true;
                 unselectAll();
             } else {
@@ -1053,18 +1055,11 @@
     onFolderBackgroundColorChanged(refreshCollectionView);
     const unsubscribeSyncServices = syncServicesStore.subscribe(refreshVisibleItems);
 
-    let lottieDarkFColor;
-    let lottieLightColor;
-    $: {
-        if (colorPrimaryContainer) {
-            lottieDarkFColor = new Color(colorPrimaryContainer);
-            const realTheme = getRealTheme();
-            if (realTheme === 'light') {
-                lottieLightColor = new Color(colorPrimaryContainer).darken(10);
-            } else {
-                lottieLightColor = new Color(colorPrimaryContainer).lighten(10);
-            }
-        }
+    let lottieColors: { [keyPath: string]: Color };
+    $: if (colorPrimaryContainer) {
+        const darkColor = new Color(colorPrimaryContainer);
+        const lightColor = getRealTheme() === 'light' ? darkColor.darken(10) : darkColor.lighten(10);
+        lottieColors = { 'background|**': darkColor, 'full|**': lightColor, 'lines|**': darkColor, 'scanner|**': lightColor };
     }
 
     const contextMenuItems = new WeakMap<View, Item>();
@@ -1353,6 +1348,43 @@
         showSearch = false;
         refresh(false, undefined);
     }
+    const iosRight = { 'ios.position': 'right' };
+    // the items at the right of the bar, in order: `onTap` is the tap listener, `key` is only for the {#each}
+    let appBarItems: { key: string; icon?: string; text?: string; menu?: MenuItem[]; prominent?: boolean; onTap?: (event) => void; 'ios.position'?: string }[] = [];
+    $: if (selecting) {
+        appBarItems = __IOS__
+            ? [{ key: 'cancel', ...iosRight, prominent: true, text: lc('cancel'), onTap: unselectAll }]
+            : [
+                  ...selectionOptions.main.map((option) => ({ key: option.id, icon: appIcon(option.id), text: option.name, onTap: () => onSelectionAction(option) })),
+                  ...(selectionMoreMenu.length ? [{ key: 'selection_more', icon: appIcon('more'), menu: selectionMoreMenu }] : [])
+              ];
+    } else if (isTrash) {
+        appBarItems = [{ key: 'empty_trash', icon: appIcon('empty_trash'), ...iosRight, text: lc('empty_trash'), onTap: emptyTrash }];
+    } else if (onlyForImport) {
+        appBarItems = [];
+    } else if (folder) {
+        appBarItems = [
+            ...(__IOS__ && plusMenu.length > 1 ? [{ key: 'add', icon: appIcon('add'), ...iosRight, menu: plusMenu, text: lc('add') }] : []),
+            { key: 'color', icon: appIcon('color'), ...iosRight, text: lc('color'), onTap: setFolderColor }
+        ];
+    } else if (__IOS__) {
+        appBarItems = [
+            ...(syncEnabled ? [{ key: 'sync', icon: appIcon('sync'), ...iosRight, text: lc('sync'), onTap: syncDocuments }] : []),
+            ...(plusMenu.length > 1
+                ? [{ key: 'add', icon: appIcon('add'), ...iosRight, menu: plusMenu, text: lc('add') }]
+                : plusMenu.length === 1
+                  ? [{ key: 'add', icon: appIcon('add'), ...iosRight, text: lc('add'), onTap: secondaryActions[0].onTap }]
+                  : []),
+            { key: 'preferences', icon: appIcon('settings'), ...iosRight, text: lc('preferences'), onTap: openPreferences },
+            { key: 'more', icon: appIcon('more'), ...iosRight, menu: iosMenu }
+        ];
+    } else {
+        appBarItems = [
+            ...(syncEnabled ? [{ key: 'sync', icon: appIcon('sync'), ...iosRight, text: lc('sync'), onTap: syncDocuments }] : []),
+            { key: 'view_style', icon: appIcon('view_style'), ...iosRight, menu: viewOptionsMenu, text: lc('view_style') },
+            { key: 'more', icon: appIcon('more'), ...iosRight, menu: optionsMenu }
+        ];
+    }
     let canGoBack = false;
     onMount(() => {
         canGoBack = !!folder || isTrash || !!Frame.topmost()?.canGoBack();
@@ -1375,8 +1407,8 @@
 <appPage bind:this={page} id="documentList" on:navigatedTo={onNavigatedTo}>
     <appBar
         bind:this={appBar}
-        android:backgroundColor={nbSelected > 0 ? colorPrimaryContainer : folderAccent?.container}
-        ios:backgroundColor={nbSelected > 0 ? undefined : folderAccent?.accent}
+        android:backgroundColor={selecting ? colorPrimaryContainer : folderAccent?.container}
+        ios:backgroundColor={selecting ? undefined : folderAccent?.accent}
         color={colorOnBackground}
         iosIconRenderingMode="alwaysTemplate"
         scrollBehavior="lift"
@@ -1386,59 +1418,29 @@
         searchMode={folder && __ANDROID__ ? 'collapsible' : 'inline'}
         searchPlacement="integrated"
         {bottomItems}
-        formattedTitle={nbSelected > 0 || __IOS__ ? null : folderTitle}
+        formattedTitle={selecting || __IOS__ ? null : folderTitle}
         size={folder && __IOS__ ? 'large' : 'small'}
         subtitle={folder && nbSelected === 0 ? lcp('documents_count', folder.count) : null}
         titleAlignment="leading"
         ios:translucent={true}
         class="listAppBar"
-        title={nbSelected > 0 ? lp('selected', nbSelected) : (__IOS__ && !folder) || isTrash ? title : folder?.name}
+        title={selecting ? lp('selected', nbSelected) : (__IOS__ && !folder) || isTrash ? title : folder?.name}
         on:searchChange={onSearchChange}
         on:searchCancel={onSearchCancel}
     >
         {#if __ANDROID__}
             <appBarSearchField><textfield backgroundColor="transparent" floating={false} fontSize={16} hint={lc('search')} returnKeyType="search" variant="none" /></appBarSearchField>
         {/if}
-        {#if (__ANDROID__ && nbSelected > 0) || modal || (__ANDROID__ && canGoBack)}
-            <navigationButton {...{ 'android.systemIcon': nbSelected > 0 ? 'ic_menu_close_clear_cancel' : 'ic_menu_back' }} on:tap={nbSelected > 0 ? unselectAll : actionBarOnGoBack} />
+        {#if (__ANDROID__ && selecting) || modal || (__ANDROID__ && canGoBack)}
+            <navigationButton {...{ 'android.systemIcon': selecting ? 'ic_menu_close_clear_cancel' : 'ic_menu_back' }} on:tap={selecting ? unselectAll : actionBarOnGoBack} />
         {/if}
-        {#if nbSelected === 0}
-            {#if isTrash}
-                <appBarItem icon={appIcon('empty_trash')} ios.position="right" text={lc('empty_trash')} on:tap={emptyTrash} />
-            {:else if !onlyForImport}
-                {#if folder}
-                    {#if __IOS__ && plusMenu.length > 1}
-                        <appBarItem icon={appIcon('add')} ios.position="right" menu={plusMenu} text={lc('add')} />
-                    {/if}
-                    <appBarItem icon={appIcon('color')} ios.position="right" text={lc('color')} on:tap={setFolderColor} />
-                {:else}
-                    {#if syncEnabled}
-                        <appBarItem icon={appIcon('sync')} ios.position="right" text={lc('sync')} on:tap={syncDocuments} />
-                    {/if}
-                    {#if __IOS__}
-                        {#if plusMenu.length > 1}
-                            <appBarItem icon={appIcon('add')} ios.position="right" menu={plusMenu} text={lc('add')} />
-                        {:else if plusMenu.length === 1}
-                            <appBarItem icon={appIcon('add')} ios.position="right" text={lc('add')} on:tap={secondaryActions[0].onTap} />
-                        {/if}
-                        <appBarItem icon={appIcon('settings')} ios.position="right" text={lc('preferences')} on:tap={openPreferences} />
-                        <appBarItem icon={appIcon('more')} ios.position="right" menu={iosMenu} />
-                    {:else}
-                        <appBarItem icon={appIcon('view_style')} ios.position="right" menu={viewOptionsMenu} text={lc('view_style')} />
-                        <appBarItem icon={appIcon('more')} ios.position="right" menu={optionsMenu} />
-                    {/if}
-                {/if}
+        {#each appBarItems as { key, onTap, ...props } (key)}
+            {#if onTap}
+                <appBarItem {...props} on:tap={onTap} />
+            {:else}
+                <appBarItem {...props} />
             {/if}
-        {:else if __IOS__}
-            <appBarItem ios.position="right" prominent={true} text={lc('cancel')} on:tap={unselectAll} />
-        {:else}
-            {#each selectionOptions.main as option (option.id)}
-                <appBarItem icon={appIcon(option.id)} text={option.name} on:tap={() => onSelectionAction(option)} />
-            {/each}
-            {#if selectionMoreMenu.length}
-                <appBarItem icon={appIcon('more')} menu={selectionMoreMenu} />
-            {/if}
-        {/if}
+        {/each}
     </appBar>
     <gridlayout class="pageContent" rows="auto,auto,*">
         <slot name="abovecollectionview" />
@@ -1497,7 +1499,7 @@
             <slot />
         </collectionView>
         <progress backgroundColor="transparent" busy={true} indeterminate={true} row={2} verticalAlignment="top" visibility={loading ? 'visible' : 'hidden'} />
-        {#if showNoDocument && !isTrash && !(lastRefreshFilter && showSearch)}
+        {#if showNoDocument && !isTrash && !searching}
             <CardsEmpty
                 actionText={CARD_APP ? lc('scan_card') : lc('scan_document')}
                 help={CARD_APP ? lc('no_card_yet_help') : lc('no_document_yet_help')}
@@ -1523,12 +1525,7 @@
                     async={true}
                     autoPlay={PRODUCTION}
                     flexShrink={2}
-                    keyPathColors={{
-                        'background|**': lottieDarkFColor,
-                        'full|**': lottieLightColor,
-                        'lines|**': lottieDarkFColor,
-                        'scanner|**': lottieLightColor
-                    }}
+                    keyPathColors={lottieColors}
                     loop={true}
                     src="~/assets/lottie/scanning.lottie"
                     visibility={isTrash ? 'collapsed' : 'visible'}
@@ -1537,7 +1534,7 @@
                     color={colorOnSurfaceVariant}
                     flexShrink={0}
                     fontSize={19}
-                    text={lastRefreshFilter && showSearch ? lc('no_document_found') : isTrash ? lc('no_trashed_document') : lc('no_document_yet')}
+                    text={searching ? lc('no_document_found') : isTrash ? lc('no_trashed_document') : lc('no_document_yet')}
                     textAlignment="center"
                     textWrap={true}
                 />
