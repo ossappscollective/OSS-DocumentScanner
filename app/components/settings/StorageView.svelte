@@ -1,7 +1,5 @@
 <script context="module" lang="ts">
     import { Template } from '@nativescript-community/svelte-native/components';
-    import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-    import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { ObservableArray } from '@nativescript/core';
     import { goBack } from '@shared/utils/svelte/ui';
     import { showError } from '@shared/utils/showError';
@@ -35,7 +33,6 @@
     let { colorError, colorOnBackground, colorPrimaryContainer } = $colors;
     $: ({ colorError, colorOnBackground, colorPrimaryContainer } = $colors);
 
-    let collectionView: NativeViewElementNode<CollectionView>;
     let items: ObservableArray<StorageItem> = new ObservableArray([]);
     let totals: StorageSizes = { size: 0, sourceSize: 0, total: 0 };
     let nbDocuments = 0;
@@ -190,7 +187,6 @@
     <gridlayout class="pageContent">
         <collectionview
             id="storageCollectionView"
-            bind:this={collectionView}
             ios:animateItemUpdate={false}
             ios:autoReloadItemOnLayout={true}
             itemTemplateSelector={templateSelector}
