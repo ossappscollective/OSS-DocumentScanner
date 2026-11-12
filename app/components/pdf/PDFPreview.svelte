@@ -15,6 +15,8 @@
     import { writable } from 'svelte/store';
     import { getFileNameForDocument, lc, lcp } from '~/helpers/locale';
     import { isDarkTheme } from '~/helpers/theme';
+    import PageCounter, { COUNTER_HEIGHT } from '~/components/common/PageCounter.svelte';
+    import PersistentSheetFrame, { SHEET_GRABBER_HEIGHT } from '~/components/common/PersistentSheetFrame.svelte';
     import PDFLayoutSheet from '~/components/pdf/PDFLayoutSheet.svelte';
     import { OCRDocument, OCRPage } from '~/models/OCRDocument';
     import PDFCanvas, { PDFCanvasItem, PDFExportBaseOptions } from '~/services/pdf/PDFCanvas';
@@ -25,7 +27,7 @@
     import { PDF_OPTIONS } from '~/utils/localized_constant';
     import { getPageColorMatrix } from '~/utils/matrix';
     import { createPageSheetTranslation, getPageFit, setPageFit } from '~/utils/pageSheet';
-    import { getIOSBottomInset, getIOSViewBottomInset } from '~/utils/safeArea';
+    import { getIOSBottomInset, getIOSViewBottomInset, measureWidth } from '~/utils/safeArea';
     import { askPDFExportOptions, hideLoading, requestStoragePermission, showLoading, showSettings, showSnack } from '~/utils/ui';
     import { colors, screenHeightDips, screenWidthDips, windowInset } from '~/variables';
 
@@ -37,7 +39,6 @@
     const SHEET_TOP_MARGIN = 16;
     // iOS: the bars are around the content. Android: the content goes under the navigation bar and the FABs float over it
     const CONTROL_HEIGHT = 56;
-    const COUNTER_HEIGHT = 28;
     const COUNTER_GAP = 12;
     // the paper in points: the margins are points too
     const PAPERS = {
@@ -48,7 +49,6 @@
     };
     const DEFAULT_PAGE_RATIO = PAPERS.a4.width / PAPERS.a4.height;
     // the layout sheet: a grabber and the list of the options
-    const SHEET_GRABBER_HEIGHT = 28;
     const LAYOUT_LIST_HEIGHT = Math.round(screenHeightDips * 0.4);
     const LAYOUT_SHEET_HEIGHT = SHEET_GRABBER_HEIGHT + LAYOUT_LIST_HEIGHT;
     const LAYOUT_SHEET_STEPS = [0, LAYOUT_SHEET_HEIGHT];
@@ -57,7 +57,7 @@
 </script>
 
 <script lang="ts">
-    $: ({ colorBackground, colorError, colorOnBackground, colorOnPrimary, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary, colorSecondaryContainer, colorSurfaceContainerLow } = $colors);
+    $: ({ colorBackground, colorError, colorOnBackground, colorOnPrimary, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary, colorSecondaryContainer } = $colors);
 
     export let pages: { page: OCRPage; document: OCRDocument }[];
     export let document: OCRDocument = null;
@@ -237,10 +237,7 @@
         updateBottomInset();
         // the toolbar is there some time after the first layout
         [500, 1500].forEach((delay) => setTimeout(updateBottomInset, delay));
-        const width = Utils.layout.toDeviceIndependentPixels(sheet?.nativeView?.getMeasuredWidth() ?? 0);
-        if (width && Math.abs(width - (sheetWidth ?? 0)) > 1) {
-            sheetWidth = width;
-        }
+        sheetWidth = measureWidth(sheet?.nativeView, sheetWidth);
     }
     // how a page fits above the sheet: from the sizes of the layout, not from the views. The paper is centered in the room of the pages
     function getFitFor(item: PDFCanvasItem) {
@@ -494,32 +491,10 @@
                 </stacklayout>
             {/if}
             {#if hasSheets && items.length > 1 && !adjusting && !snackVisible}
-                <label
-                    backgroundColor={__IOS__ ? '#7676801F' : colorSecondaryContainer}
-                    borderRadius={14}
-                    color={colorOnBackground}
-                    fontSize={13}
-                    height={COUNTER_HEIGHT}
-                    horizontalAlignment="center"
-                    isUserInteractionEnabled={false}
-                    marginBottom={counterBottom}
-                    padding="0 12"
-                    text={`${currentPagerIndex + 1} / ${items.length}`}
-                    verticalAlignment="bottom"
-                    verticalTextAlignment="center" />
+                <PageCounter marginBottom={counterBottom} text={`${currentPagerIndex + 1} / ${items.length}`} />
             {/if}
         </gridlayout>
-        <gridlayout
-            prop:bottomSheet
-            backgroundColor={__IOS__ ? colorBackground : colorSurfaceContainerLow}
-            borderTopLeftRadius={__IOS__ ? 26 : 28}
-            borderTopRightRadius={__IOS__ ? 26 : 28}
-            boxShadow={__IOS__ && adjusting ? '0 -3 10 #00000072' : undefined}
-            height={LAYOUT_SHEET_HEIGHT + bottomInset}
-            horizontalAlignment="left"
-            rows="28,auto"
-            width={sheetWidth}>
-            <absolutelayout backgroundColor={colorOutlineVariant} borderRadius={2.5} height={5} horizontalAlignment="center" marginTop={10} width={36} />
+        <PersistentSheetFrame height={LAYOUT_SHEET_HEIGHT + bottomInset} rows="auto" shadow={adjusting} width={sheetWidth}>
             <PDFLayoutSheet
                 hasOCRText={hasOCRText}
                 inline={true}
@@ -531,7 +506,7 @@
                 row={1}
                 scrollId="layoutScroll"
                 sheetHeight={LAYOUT_LIST_HEIGHT + bottomInset} />
-        </gridlayout>
+        </PersistentSheetFrame>
     </bottomsheet>
     <appPageOverlay>
         {#if __ANDROID__ && hasSheets}

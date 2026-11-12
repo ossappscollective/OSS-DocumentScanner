@@ -8,6 +8,7 @@
     import { OCRData } from 'plugin-nativeprocessor';
     import { tick } from 'svelte';
     import { writable } from 'svelte/store';
+    import PersistentSheetFrame from '~/components/common/PersistentSheetFrame.svelte';
     import SheetHeader from '~/components/common/SheetHeader.svelte';
     import OCRPageView from '~/components/ocr/OCRPageView.svelte';
     import { OCRViewState, getBlockRanges } from '~/components/ocr/OCROverlay';
@@ -21,9 +22,9 @@
     import { copyOCRToClipboard } from '~/utils/ui';
     import { colors, screenHeightDips } from '~/variables';
 
-    let { colorBackground, colorOnBackground, colorPrimary, colorSurfaceContainerLow, colorOutlineVariant } = $colors;
+    let { colorBackground, colorOnBackground, colorPrimary } = $colors;
     // technique for only specific properties to get updated on store change
-    $: ({ colorBackground, colorOnBackground, colorPrimary, colorSurfaceContainerLow, colorOutlineVariant } = $colors);
+    $: ({ colorBackground, colorOnBackground, colorPrimary } = $colors);
     const visualState = isEInk ? colorBackground : 'black';
     const textColor = isEInk ? colorOnBackground : 'white';
 
@@ -202,20 +203,9 @@
                 </Template>
             </pager>
         </gridlayout>
-        <gridlayout
-            prop:bottomSheet
-            backgroundColor={__IOS__ ? colorBackground : colorSurfaceContainerLow}
-            borderTopLeftRadius={__IOS__ ? 26 : 28}
-            borderTopRightRadius={__IOS__ ? 26 : 28}
-            boxShadow={__IOS__ ? '0 -3 10 #00000072' : undefined}
-            height={sheetHeight}
-            horizontalAlignment="left"
-            rows="28,auto,*"
-            width="100%"
-        >
-            <absolutelayout backgroundColor={colorOutlineVariant} borderRadius={2.5} height={5} horizontalAlignment="center" marginTop={10} width={36} />
+        <PersistentSheetFrame height={sheetHeight} rows="auto,*" width="100%">
             <!-- the title and the button say if the text is read or edited -->
-            <SheetHeader doneText={editing ? lc('done') : lc('edit')} onCancel={close} onDone={toggleEditing} row={1} showCancel={false} title={editing ? lc('ocr_text_editing') : lc('ocr_text')} />
+            <SheetHeader doneText={editing ? lc('done') : lc('edit')} onDone={toggleEditing} row={1} showCancel={false} title={editing ? lc('ocr_text_editing') : lc('ocr_text')} />
             <textview
                 id="ocrText"
                 bind:this={textView}
@@ -231,6 +221,6 @@
                 on:loaded={onTextViewLoaded}
                 on:textChange={(e) => onTextChange(e.value)}
             />
-        </gridlayout>
+        </PersistentSheetFrame>
     </bottomsheet>
 </appPage>

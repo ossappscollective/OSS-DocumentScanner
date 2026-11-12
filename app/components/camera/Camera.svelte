@@ -171,16 +171,10 @@
             target[name] = value;
         }
     }
-    function pauseAutoScan() {
-        DEV_LOG && console.log('pauseAutoScan', autoScanHandler, autoScanHandler?.enabled);
+    function setAutoScanEnabled(enabled: boolean) {
+        DEV_LOG && console.log('setAutoScanEnabled', enabled, autoScanHandler, autoScanHandler?.enabled);
         if (autoScanHandler) {
-            setNativeProperty(autoScanHandler, 'enabled', false);
-        }
-    }
-    function resumeAutoScan() {
-        DEV_LOG && console.log('resumeAutoScan', autoScanHandler, autoScanHandler?.enabled);
-        if (autoScanHandler) {
-            setNativeProperty(autoScanHandler, 'enabled', true);
+            setNativeProperty(autoScanHandler, 'enabled', enabled);
         }
     }
     async function takePicture(autoScan = false) {
@@ -194,7 +188,7 @@
             }
             takingPicture = true;
             if (autoScanHandler) {
-                pauseAutoScan();
+                setAutoScanEnabled(false);
             }
             DEV_LOG && console.log('takePicture', autoScan, actualFlashMode, pictureSize);
             const start = Date.now();
@@ -238,7 +232,7 @@
         } finally {
             takingPicture = false;
             if (autoScanHandler) {
-                resumeAutoScan();
+                setAutoScanEnabled(true);
             }
             if (!previewStarted) {
                 stopPreview(true);
@@ -320,7 +314,7 @@
                     cameraView.nativeView.readyToStartPreview = true;
                     cameraView.nativeView.startPreview();
                 }
-                resumeAutoScan();
+                setAutoScanEnabled(true);
             }
         } catch (error) {
             showError(error);
@@ -330,7 +324,7 @@
         DEV_LOG && console.log('stopPreview', force, previewStarted, takingPicture);
         if (force || previewStarted) {
             previewStarted = false;
-            pauseAutoScan();
+            setAutoScanEnabled(false);
             cameraView?.nativeView.stopPreview();
             if (cropView?.nativeView) {
                 cropView.nativeView.quads = null;
@@ -541,33 +535,15 @@
                     ApplicationSettings.setBoolean('showAutoScanWarning', false);
                 }
             }
+            const qrCodeCallback = createQRCodeCallback(QRCodeOnly ? (str) => closeModal(JSON.parse(str)) : null);
             if (__ANDROID__) {
                 const context = Utils.android.getApplicationContext();
-                processor = new com.akylas.documentscanner.CustomImageAnalysisCallback(
-                    context,
-                    nCropView,
-                    createQRCodeCallback(
-                        QRCodeOnly
-                            ? (str) => {
-                                  closeModal(JSON.parse(str));
-                              }
-                            : null
-                    )
-                );
+                processor = new com.akylas.documentscanner.CustomImageAnalysisCallback(context, nCropView, qrCodeCallback);
                 (processor as com.akylas.documentscanner.CustomImageAnalysisCallback).setDetectQRCode(QRCodeOnly);
                 (processor as com.akylas.documentscanner.CustomImageAnalysisCallback).setDetectDocuments(!QRCodeOnly);
                 nCameraView.processor = processor;
             } else {
-                processor = OpencvDocumentProcessDelegate.alloc().initWithCropViewOnQRCode(
-                    nCropView,
-                    createQRCodeCallback(
-                        QRCodeOnly
-                            ? (str) => {
-                                  closeModal(JSON.parse(str));
-                              }
-                            : null
-                    )
-                );
+                processor = OpencvDocumentProcessDelegate.alloc().initWithCropViewOnQRCode(nCropView, qrCodeCallback);
                 nCameraView.processor = processor;
                 (processor as OpencvDocumentProcessDelegate).detectQRCode = QRCodeOnly;
                 (processor as OpencvDocumentProcessDelegate).detectDocuments = !QRCodeOnly;
@@ -660,24 +636,14 @@
             floatZoom = zoom;
             DEV_LOG && console.log('onCameraOpen', minZoom, maxZoom, zoom);
             if (__ANDROID__) {
-                if (!usingUserDefinedCameraResolution) {
-                    // choose the highest resolution
-                    const resolutions = cameraView.nativeView.getAllAvailablePictureSizes();
-                    const resolution = resolutions[0];
+                // the user defined one, else the highest resolution
+                const resolution = usingUserDefinedCameraResolution ? cameraView.nativeView.getCurrentResolutionInfo() : cameraView.nativeView.getAllAvailablePictureSizes()[0];
+                if (resolution) {
                     cameraOptionsStore.update((state) => {
                         state['aspectRatio'] = resolution.aspectRatio;
                         state['pictureSize'] = resolution.pictureSize;
                         return state;
                     });
-                } else {
-                    const currentResolution = cameraView.nativeView.getCurrentResolutionInfo();
-                    if (currentResolution) {
-                        cameraOptionsStore.update((state) => {
-                            state['aspectRatio'] = currentResolution.aspectRatio;
-                            state['pictureSize'] = currentResolution.pictureSize;
-                            return state;
-                        });
-                    }
                 }
             }
             cameraOpened = true;

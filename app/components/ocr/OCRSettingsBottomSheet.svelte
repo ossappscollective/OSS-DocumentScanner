@@ -64,11 +64,10 @@
     }
     const qualities = ocrService.qualities;
 
-    async function setDataType(value) {
+    function setDataType(value) {
         dataType = value;
         ocrService.dataType = dataType as any;
         downloaded = ocrService.downloadedLanguages;
-        languages = languages;
     }
 
     async function deleteModel({ dataType: modelDataType, language }: { dataType: string; language: string }) {
