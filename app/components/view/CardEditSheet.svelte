@@ -3,6 +3,10 @@
     import { Template } from '@nativescript-community/svelte-native/components';
     import SheetHeader from '~/components/common/SheetHeader.svelte';
     import { showError } from '@shared/utils/showError';
+    import type { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
+    import type { CollectionView } from '@nativescript-community/ui-collectionview';
+    import type { TextField } from '@nativescript-community/ui-textfield';
+    import { onMount } from 'svelte';
     import { OCRDocument } from '~/models/OCRDocument';
     import { shortcutService } from '~/services/shortcuts';
     import { appIcon } from '~/utils/appIcons';
@@ -31,7 +35,10 @@
     $: ({ colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary } = $colors);
 
     export let document: OCRDocument;
+    /** the keyboard opens on the name once the sheet is shown (rename) */
+    export let focusName = false;
     let rootView;
+    let collectionView: NativeViewElementNode<CollectionView>;
 
     let name = document.name;
     let color: string = typeof document.extra?.color === 'string' ? document.extra.color : null;
@@ -60,6 +67,12 @@
     }
     rebuild();
     const itemTemplateSelector = (item) => item.type;
+
+    onMount(() => {
+        if (focusName) {
+            rootView.nativeView.once('shownInBottomSheet', () => collectionView?.nativeView?.getViewForItemAtIndex(0)?.getViewById<TextField>('nameField')?.requestFocus());
+        }
+    });
 
     function close(result?: boolean) {
         rootView.nativeView.bindingContext.closeCallback(result);
@@ -157,9 +170,9 @@
         onDone={save}
         title={lc('edit')}
     />
-    <collectionview row={1} {itemTemplateSelector} items={listItems} paddingBottom={24} visibility={fieldForm ? 'collapse' : 'visible'}>
+    <collectionview bind:this={collectionView} row={1} {itemTemplateSelector} items={listItems} paddingBottom={24} visibility={fieldForm ? 'collapse' : 'visible'}>
         <Template key="name" let:item>
-            <FormTextField label={lc('name')} margin="0 16 8 16" bind:text={name} />
+            <FormTextField id="nameField" label={lc('name')} margin="0 16 8 16" bind:text={name} />
         </Template>
 
         <Template key="color" let:item>
