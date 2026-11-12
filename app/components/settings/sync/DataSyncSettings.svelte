@@ -1,20 +1,11 @@
-<script context="module" lang="ts">
-    import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-    import { Template } from '@nativescript-community/svelte-native/components';
-    import { Color, ObservableArray, Page } from '@nativescript/core';
-    import { closeModal } from '@shared/utils/svelte/ui';
-    import { get, writable } from 'svelte/store';
-    import SyncSettingsBar from '~/components/settings/sync/SyncSettingsBar.svelte';
-    import SyncFoldersSettingsView from '~/components/settings/sync/SyncFoldersSettingsView.svelte';
-    import SyncSettingsCollectionView from '~/components/settings/sync/SyncSettingsCollectionView.svelte';
+<script lang="ts">
+    import { Color, ObservableArray } from '@nativescript/core';
+    import { writable } from 'svelte/store';
+    import SyncSettingsPage from '~/components/settings/sync/SyncSettingsPage.svelte';
+    import { getColorEnabledAutoSyncItems } from '~/components/settings/sync/syncSettingsItems';
     import { lc } from '~/helpers/locale';
     import { BasePDFSyncServiceOptions } from '~/services/sync/BasePDFSyncService';
     import { SERVICES_SYNC_COLOR, SYNC_TYPES } from '~/services/sync/types';
-    import { checkOrDownloadOCRLanguages, requestNotificationPermission, showSnack } from '~/utils/ui';
-</script>
-
-<script lang="ts">
-    let page: NativeViewElementNode<Page>;
 
     export let data: BasePDFSyncServiceOptions = {} as any;
     export let serviceType: SYNC_TYPES;
@@ -30,52 +21,11 @@
         )
     );
 
-    export let validateSave: () => Promise<boolean> = async () => true;
-    export let onSaveError: Function = () =>
-        showSnack({
-            message: lc('need_fill_fields'),
-            view: page.nativeView
-        });
-
-    async function save() {
-        const result = get(store);
-        DEV_LOG && console.log('save', JSON.stringify(result));
-        if (await validateSave()) {
-            if (__ANDROID__) {
-                await requestNotificationPermission();
-            }
-            if (result.OCREnabled && result.OCRLanguages.length) {
-                await checkOrDownloadOCRLanguages({
-                    dataType: result.OCRDataType,
-                    languages: result.OCRLanguages,
-                    shouldConfirm: false
-                });
-            }
-            closeModal(result);
-        } else {
-            onSaveError();
-        }
-    }
     export let topItems = [];
     export let updateItem;
 
     const items = new ObservableArray([
-        {
-            type: 'color'
-        },
-        {
-            type: 'switch',
-            id: 'enabled',
-            title: lc('enabled'),
-            value: $store.enabled
-        },
-        {
-            type: 'switch',
-            id: 'autoSync',
-            title: lc('auto_sync'),
-            description: lc('local_auto_sync_desc'),
-            value: $store.autoSync
-        },
+        ...getColorEnabledAutoSyncItems(store),
         ...topItems,
         {
             type: 'syncfolders'
@@ -83,14 +33,6 @@
     ]);
 </script>
 
-<appPage bind:this={page} {...$$restProps}>
-    <SyncSettingsBar title={lc('data_sync_settings')} onSave={save} />
-    <gridlayout class="pageContent">
-        <SyncSettingsCollectionView id="syncSettingsCollectionView" {items} bind:store bind:updateItem>
-            <slot />
-            <Template key="syncfolders" let:item>
-                <SyncFoldersSettingsView position={item.position} {store} />
-            </Template>
-        </SyncSettingsCollectionView>
-    </gridlayout>
-</appPage>
+<SyncSettingsPage title={lc('data_sync_settings')} {items} {store} bind:updateItem {...$$restProps}>
+    <slot />
+</SyncSettingsPage>

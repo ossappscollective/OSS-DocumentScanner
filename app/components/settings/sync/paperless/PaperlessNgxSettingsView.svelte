@@ -3,12 +3,10 @@
     import { showError } from '@shared/utils/showError';
     import { Writable, get } from 'svelte/store';
     import FormTextField from '~/components/common/FormTextField.svelte';
+    import TestConnectionButton from '~/components/settings/sync/TestConnectionButton.svelte';
     import { lc } from '~/helpers/locale';
     import { acquireToken, testPaperlessConnection } from '~/services/sync/paperless/PaperlessNgx';
     import type { PaperlessNgxSyncOptions } from '~/services/sync/paperless/PaperlessNgx';
-    import { colors } from '~/variables';
-
-    $: ({ colorError, colorOnError, colorSecondary } = $colors);
 
     export let store: Writable<PaperlessNgxSyncOptions & { token?: string }>;
     let testing = false;
@@ -114,15 +112,5 @@
             testConnectionSuccess = 0;
         }} />
 
-    <gridlayout columns="auto" horizontalAlignment="right" margin="8 16 8 16" rows="auto" verticalAlignment="middle">
-        <uibutton
-            backgroundColor={testConnectionSuccess < 0 ? colorError : testConnectionSuccess > 0 ? 'lightgreen' : colorSecondary}
-            color={colorOnError}
-            text={testConnectionSuccess < 0 ? lc('failed') : testConnectionSuccess > 0 ? lc('successful') : lc('test')}
-            verticalAlignment="middle"
-            visibility={testing ? 'hidden' : 'visible'}
-            on:tap={testConnection}
-        />
-        <activityindicator busy={testing} height={20} horizontalAlignment="center" verticalAlignment="middle" visibility={testing ? 'visible' : 'hidden'} />
-    </gridlayout>
+    <TestConnectionButton success={testConnectionSuccess} {testing} on:tap={testConnection} />
 </stacklayout>

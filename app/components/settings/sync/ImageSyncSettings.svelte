@@ -1,33 +1,17 @@
-<script context="module" lang="ts">
-    import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-    import { Template } from '@nativescript-community/svelte-native/components';
-    import { TextFieldProperties } from '@nativescript-community/ui-textfield';
-    import { ApplicationSettings, Color, ObservableArray, Page } from '@nativescript/core';
-    import { closeModal } from '@shared/utils/svelte/ui';
-    import { Writable, get, writable } from 'svelte/store';
-    import SyncSettingsBar from '~/components/settings/sync/SyncSettingsBar.svelte';
-    import SyncFoldersSettingsView from '~/components/settings/sync/SyncFoldersSettingsView.svelte';
-    import SyncSettingsCollectionView from '~/components/settings/sync/SyncSettingsCollectionView.svelte';
+<script lang="ts">
+    import { ApplicationSettings, Color, ObservableArray } from '@nativescript/core';
+    import { Writable, writable } from 'svelte/store';
+    import SyncSettingsPage from '~/components/settings/sync/SyncSettingsPage.svelte';
+    import { getColorEnabledAutoSyncItems, getDeleteAfterSyncItem, getFileNameFormatItem, getUseFoldersStructureItem } from '~/components/settings/sync/syncSettingsItems';
     import { lc } from '~/helpers/locale';
     import { BaseImageSyncServiceOptions } from '~/services/sync/BaseImageSyncService';
     import { SERVICES_SYNC_COLOR, SYNC_TYPES } from '~/services/sync/types';
     import { FILENAME_DATE_FORMAT, SETTINGS_FILE_NAME_FORMAT, getImageExportSettings } from '~/utils/constants';
-    import { getNameFormatHTMLArgs, openLink, requestNotificationPermission, showSnack } from '~/utils/ui';
-</script>
-
-<script lang="ts">
-    let page: NativeViewElementNode<Page>;
 
     const imageExportSettings = getImageExportSettings();
     export let data: BaseImageSyncServiceOptions = {} as any;
 
     export let serviceType: SYNC_TYPES;
-    export let validateSave: () => Promise<boolean> = async () => true;
-    export let onSaveError: Function = () =>
-        showSnack({
-            message: lc('need_fill_fields'),
-            view: page.nativeView
-        });
     export let store = writable<BaseImageSyncServiceOptions>(
         Object.assign(
             {
@@ -43,71 +27,15 @@
         )
     );
 
-    async function save() {
-        const result = get(store);
-
-        if (await validateSave()) {
-            if (__ANDROID__) {
-                await requestNotificationPermission();
-            }
-            closeModal(result);
-        } else {
-            onSaveError();
-        }
-    }
     export let topItems: any[] | ((store: Writable<BaseImageSyncServiceOptions>) => any[]) = [];
     export let updateItem;
 
     const items = new ObservableArray([
-        {
-            type: 'color'
-        },
-        {
-            type: 'switch',
-            id: 'enabled',
-            title: lc('enabled'),
-            value: $store.enabled
-        },
-        {
-            type: 'switch',
-            id: 'autoSync',
-            title: lc('auto_sync'),
-            description: lc('local_auto_sync_desc'),
-            value: $store.autoSync
-        },
-        {
-            type: 'switch',
-            id: 'deleteAfterSync',
-            title: lc('delete_after_sync'),
-            description: lc('delete_after_sync_desc'),
-            value: $store.deleteAfterSync
-        },
+        ...getColorEnabledAutoSyncItems(store),
+        getDeleteAfterSyncItem(store),
         ...(typeof topItems === 'function' ? topItems(store) : topItems),
-        {
-            id: 'setting',
-            key: 'fileNameFormat',
-            useHTML: true,
-            title: lc('filename_date_format'),
-            description: lc('filename_date_format_desc'),
-            full_description: lc('filename_date_format_fulldesc', ...getNameFormatHTMLArgs()),
-            onLinkTap: ({ link }) => {
-                openLink(link);
-            },
-            valueType: 'string',
-            textFieldProperties: {
-                autocapitalizationType: 'none',
-                autocorrect: false
-            } as TextFieldProperties,
-            rightValue: () => $store.fileNameFormat,
-            type: 'prompt'
-        },
-        {
-            type: 'switch',
-            id: 'useFoldersStructure',
-            title: lc('use_folder_structure'),
-            description: lc('use_folder_structure_desc'),
-            value: $store.useFoldersStructure
-        },
+        getFileNameFormatItem(store),
+        getUseFoldersStructureItem(store),
         {
             id: 'setting',
             key: 'imageFormat',
@@ -140,14 +68,6 @@
     ]);
 </script>
 
-<appPage bind:this={page} {...$$restProps}>
-    <SyncSettingsBar title={lc('image_sync_settings')} onSave={save} />
-    <gridlayout class="pageContent">
-        <SyncSettingsCollectionView id="syncSettingsCollectionView" {items} bind:store bind:updateItem>
-            <slot />
-            <Template key="syncfolders" let:item>
-                <SyncFoldersSettingsView position={item.position} {store} />
-            </Template>
-        </SyncSettingsCollectionView>
-    </gridlayout>
-</appPage>
+<SyncSettingsPage title={lc('image_sync_settings')} {items} {store} bind:updateItem {...$$restProps}>
+    <slot />
+</SyncSettingsPage>

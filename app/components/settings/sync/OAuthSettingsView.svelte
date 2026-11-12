@@ -2,11 +2,10 @@
     import { SilentError } from '@akylas/nativescript-app-utils/error';
     import { showError } from '@shared/utils/showError';
     import { Writable } from 'svelte/store';
-    import FormTextField from '~/components/common/FormTextField.svelte';
+    import RemoteFolderField from '~/components/settings/sync/RemoteFolderField.svelte';
     import { lc } from '~/helpers/locale';
     import { OAuthProvider, OAuthTokens } from '~/services/sync/OAuthHelper';
     import { performOAuthFlow } from '~/services/sync/OAuthHelperUI';
-    import { appIcon } from '~/utils/appIcons';
     import { getRowCorners } from '~/utils/groupedRows';
     import { colors } from '~/variables';
 
@@ -95,16 +94,5 @@
             <uibutton col={2} horizontalAlignment="right" text={lc('test_connection')} variant="outline" on:tap={testConnectionAction} />
         </gridlayout>
     </stacklayout>
-    <label class="settingsSectionHeader" text={lc('remote_folder')} />
-    <FormTextField
-        autocapitalizationType="none"
-        autocorrect={false}
-        hint={lc('remote_folder_desc')}
-        label={lc('remote_folder')}
-        margin="4 16 16 16"
-        returnKeyType="done"
-        showLabel={false}
-        text={$store.remoteFolder}
-        trailingIcon={appIcon('folder')}
-        onChange={(event) => ($store.remoteFolder = event.value)} />
+    <RemoteFolderField {store} />
 </stacklayout>
