@@ -7,7 +7,7 @@
     import { confirm } from '@nativescript-community/ui-dialogs';
     import { Pager } from '@nativescript-community/ui-pager';
     import { MenuItem, setContextMenu, showMenu } from '@nativescript-community/ui-menu';
-    import { Application, ApplicationSettings, Color, EventData, Page, Utils, View } from '@nativescript/core';
+    import { Application, ApplicationSettings, Color, EventData, Page, ScrollEventData, Utils, View } from '@nativescript/core';
     import { AndroidActivityBackPressedEventData } from '@nativescript/core/application';
     import { create as createImagePicker } from '@nativescript/imagepicker';
     import { showError } from '@shared/utils/showError';
@@ -31,6 +31,7 @@
     import { qrcodeService } from '~/services/qrcode';
     import { shortcutService } from '~/services/shortcuts';
     import {
+        BOTTOM_BUTTON_OFFSET,
         CARD_RATIO,
         DOCUMENT_NAME_FORMAT,
         QRCODE_RESIZE_THRESHOLD,
@@ -54,6 +55,8 @@
     const PLATE_OVERLAP = 44;
     // Android: the 64 dp floating toolbar and its 16 dp margin (the app bar pads the bottom of the scroll view by this and the navigation bar)
     const FLOATING_TOOLBAR_OFFSET = 80;
+    // Android: the name is in the page under the bar, the bar shows it once it has scrolled away
+    const TITLE_SCROLL_OFFSET = 80;
     // glass over the photo on iOS 26 (it adapts to the photo), a dark disc before (no glass), tonal on Android
     const legacyPhotoEdit = __IOS__ && Utils.SDK_VERSION < 26;
     const photoEditVariant = __IOS__ ? (legacyPhotoEdit ? 'plain' : 'glass') : 'contained';
@@ -84,6 +87,10 @@
 
     export let document: OCRDocument;
     export let transitionOnBack = true;
+    let titleScrolled = false;
+    function onCardScroll(event: ScrollEventData) {
+        titleScrolled = event.scrollY > TITLE_SCROLL_OFFSET;
+    }
     let qrcodes: QRCodeItem[];
     let currentQRCodeIndex = 0;
     let currentImageIndex = 0;
@@ -629,7 +636,7 @@
         try {
             switch (id) {
                 case 'rename':
-                    await openEdit();
+                    await openEdit(true);
                     break;
                 case 'select_all':
                     selectAll();
@@ -730,7 +737,8 @@
             showError(error);
         }
     }
-    async function openEdit() {
+    // also a tap handler: only a true argument focuses the name
+    async function openEdit(focusName: unknown = false) {
         try {
             const CardEditSheet = (await import('~/components/view/CardEditSheet.svelte')).default;
             const saved = await showBottomSheet({
@@ -739,7 +747,7 @@
                 windowSoftInputMode: SHEET_PAN_SOFT_INPUT_MODE,
                 detents: [{ fraction: 0.65 }, 'large'],
                 grabber: true,
-                props: { document }
+                props: { document, focusName: focusName === true }
             });
             if (saved) {
                 await updateQRCodes();
@@ -887,7 +895,6 @@
     <appBar
         {bottomItems}
         android:backgroundColor={isPKPassDocument ? passColors.backgroundColor : accent.container}
-        android:scrollBehavior="hide"
         color={isPKPassDocument ? passColors.foregroundColor : backdropTextColor}
         transitionDuration={TRANSITION_DURATION}
         iosIconRenderingMode="alwaysTemplate"
@@ -896,7 +903,7 @@
         scrollTargetId="cardScroll"
         size={__IOS__ && !isPKPassDocument ? 'large' : 'small'}
         subtitle={__IOS__ && !isPKPassDocument && nbSelected === 0 ? dayjs(document.createdDate).format('LL') : null}
-        title={nbSelected > 0 ? lcp('selected', nbSelected) : __IOS__ && !isPKPassDocument ? document.name : ''}>
+        title={nbSelected > 0 ? lcp('selected', nbSelected) : (__IOS__ && !isPKPassDocument) || (__ANDROID__ && titleScrolled) ? document.name : ''}>
         {#if __ANDROID__}
             <navigationButton {...{ 'android.systemIcon': nbSelected > 0 ? 'ic_menu_close_clear_cancel' : 'ic_menu_back' }} on:tap={nbSelected > 0 ? unselectAll : onGoBack} />
         {/if}
@@ -940,8 +947,8 @@
                 </Template>
             </pager>
         {:else}
-            <scrollview id="cardScroll">
-                <gridlayout paddingBottom={details.length ? 32 : 0} rows="auto,auto,auto,auto,auto">
+            <scrollview id="cardScroll" on:scroll={onCardScroll}>
+                <gridlayout paddingBottom={__ANDROID__ ? Math.max($windowInset.bottom, BOTTOM_BUTTON_OFFSET) : details.length ? 32 : 0} rows="auto,auto,auto,auto,auto">
                     <label color={backdropTextColor} fontSize={15} margin="0 16 8 16" text={dayjs(document.createdDate).format('LL')} visibility={showDateUnderTitle ? 'visible' : 'collapsed'} />
                     {#if __ANDROID__}
                         <gridlayout backgroundColor={accent.container} borderRadius="0 0 40 12" columns="*,auto" padding="0 20 {hasHero ? PLATE_OVERLAP + 20 : 24} 20" rows="auto">

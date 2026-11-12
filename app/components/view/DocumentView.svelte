@@ -15,7 +15,6 @@
     import { onDestroy, onMount } from 'svelte';
     import PdfEdit from '~/components/edit/DocumentEdit.svelte';
     import DocumentPageTile from '~/components/view/DocumentPageTile.svelte';
-    import RenameDocumentBar from '~/components/view/RenameDocumentBar.svelte';
     import { lc, lcp } from '~/helpers/locale';
     import { onThemeChanged } from '~/helpers/theme';
     import { OCRDocument, OCRPage } from '~/models/OCRDocument';
@@ -47,14 +46,13 @@
         deleteOriginalImages,
         detectOCR,
         formatStorageSizes,
+        getExportMenu,
         hideLoading,
         importAndScanImage,
         importImageFromCamera,
         onBackButton,
-        showImagePopoverMenu,
         showLoading,
         showOCRData,
-        showPDFPopoverMenu,
         transformPages,
         tryCatchFunction
     } from '~/utils/ui';
@@ -80,7 +78,6 @@
     let fabHolder: NativeViewElementNode<StackLayout>;
     let page: NativeViewElementNode<Page>;
     let nbSelected = 0;
-    let editingTitle = false;
 
     let nbColumns = updateColumns($isLandscape);
 
@@ -114,16 +111,10 @@
         return SERVICES_SYNC_TITLES[type] + ' · ' + type.split('_')[1].toUpperCase();
     }
 
-    // the pdf and the image export are one menu of the export button
-    function getExportMenu(): MenuItem[] {
-        return [
-            { title: 'PDF', icon: appIcon('pdf'), onSelect: () => showPDFPopover() },
-            {
-                title: lc('share_images'),
-                icon: appIcon('image'),
-                onSelect: () => showImageExportPopover(nbSelected > 0 ? getSelectedPages(items, document) : document.pages.map((current) => ({ page: current, document })))
-            }
-        ];
+    // the export of the selected pages, or of the whole document
+    function getDocumentExportMenu(selected: number, current: OCRDocument): MenuItem[] {
+        const exported = selected > 0 ? getSelectedPages(items, current) : current.pages.map((currentPage) => ({ page: currentPage, document: current }));
+        return getExportMenu({ document: current, documents: [current], pages: exported });
     }
     function getDocumentMenu(withOriginals: boolean): MenuItem[] {
         return optionsToMenuItems(
@@ -162,14 +153,14 @@
         ].map((item) => ({ ...item, onSelect: () => runAddOption(item.id) }));
     }
     // iOS: the bottom toolbar, the main action at its trailing end. Android has the FABs, and the bar of the selection
-    function getBottomItems(selected: number, withOriginals: boolean, camera: boolean) {
+    function getBottomItems(selected: number, withOriginals: boolean, camera: boolean, exportItems: MenuItem[]) {
         if (!__IOS__) {
             return [];
         }
         if (selected > 0) {
             return [
                 { spacer: true },
-                { text: lc('share'), icon: appIcon('share'), menu: getExportMenu() },
+                { text: lc('share'), icon: appIcon('share'), menu: exportItems },
                 { spacer: true },
                 { text: lc('ocr_document'), icon: appIcon('ocr'), onTap: () => runSelectionOption('ocr') },
                 { spacer: true },
@@ -180,7 +171,7 @@
             ];
         }
         return [
-            { text: lc('export'), icon: appIcon('export'), menu: getExportMenu() },
+            { text: lc('export'), icon: appIcon('export'), menu: exportItems },
             { spacer: true },
             ...(camera
                 ? [{ text: lc('add'), icon: appIcon('camera'), prominent: true, onTap: () => addPages() }]
@@ -190,24 +181,12 @@
     $: documentMenu = getDocumentMenu(hasOriginals);
     $: selectionMenu = getSelectionMenu(hasOriginals);
     $: addMenu = getAddMenu($hasCamera);
-    $: bottomItems = getBottomItems(nbSelected, hasOriginals, $hasCamera);
+    $: exportMenu = getDocumentExportMenu(nbSelected, document);
+    $: bottomItems = getBottomItems(nbSelected, hasOriginals, $hasCamera, exportMenu);
 
-    async function showPDFPopover() {
-        try {
-            const selected = nbSelected > 0 ? getSelectedPages(items, document) : document.pages.map((current) => ({ page: current, document }));
-            await showPDFPopoverMenu({ pages: selected, document, anchor: page?.nativeView, documents: [document] });
-        } catch (err) {
-            showError(err);
-        }
+    function showExportMenu(event: EventData) {
+        showMenu({ anchor: event.object instanceof View ? event.object : null, items: exportMenu });
     }
-    async function showImageExportPopover(selected: { page: OCRPage; document: OCRDocument }[]) {
-        try {
-            await showImagePopoverMenu(selected, page?.nativeView);
-        } catch (err) {
-            showError(err);
-        }
-    }
-
     async function showMenuAbove(event: EventData, items: MenuItem[]) {
         try {
             if (event.object instanceof View) {
@@ -313,17 +292,13 @@
         }
     }
     function onGoBack() {
-        if (editingTitle) {
-            editingTitle = false;
-        } else {
-            goBack(
-                transitionOnBack
-                    ? undefined
-                    : {
-                          transition: null
-                      }
-            );
-        }
+        goBack(
+            transitionOnBack
+                ? undefined
+                : {
+                      transition: null
+                  }
+        );
     }
 
     const onAndroidBackButton = (data: AndroidActivityBackPressedEventData) =>
@@ -484,6 +459,20 @@
             showError(error);
         }
     }
+    async function renameDocument() {
+        try {
+            const RenameDocumentSheet = (await import('~/components/view/RenameDocumentSheet.svelte')).default;
+            await showBottomSheet({
+                parent: page,
+                view: RenameDocumentSheet,
+                windowSoftInputMode: SHEET_PAN_SOFT_INPUT_MODE,
+                ignoreTopSafeArea: true,
+                props: { document }
+            });
+        } catch (error) {
+            showError(error);
+        }
+    }
     async function moveToFolder() {
         try {
             const MoveToFolderSheet = (await import('~/components/common/MoveToFolderSheet.svelte')).default;
@@ -508,7 +497,7 @@
         try {
             switch (id) {
                 case 'rename':
-                    editingTitle = true;
+                    await renameDocument();
                     break;
                 case 'select':
                     selectAll();
@@ -627,7 +616,7 @@
             {#if __IOS__}
                 <appBarItem ios.position="right" prominent={true} text={lc('cancel')} on:tap={unselectAll} />
             {:else}
-                <appBarItem icon={appIcon('export')} menu={getExportMenu()} text={lc('share')} />
+                <appBarItem icon={appIcon('export')} menu={exportMenu} text={lc('share')} />
                 <appBarItem icon={appIcon('delete')} text={lc('delete')} on:tap={() => runSelectionOption('delete')} />
                 <appBarItem icon={appIcon('more')} menu={selectionMenu} />
             {/if}
@@ -679,7 +668,7 @@
         </collectionview>
         {#if __ANDROID__ && nbSelected === 0}
             <stacklayout bind:this={fabHolder} class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal" row={2}>
-                <uibutton class="addFab" {...{ src: appIcon('export') }} variant="contained" verticalAlignment="center" on:tap={(event) => showMenuAbove(event, getExportMenu())} />
+                <uibutton class="addFab" {...{ src: appIcon('export') }} variant="contained" verticalAlignment="center" on:tap={showExportMenu} />
                 <uifloatingactionbutton
                     class="scanFab"
                     backgroundColor={colorPrimaryContainer}
@@ -690,9 +679,6 @@
                     on:tap={(event) => ($hasCamera ? addPages() : showMenuAbove(event, addMenu))}
                     on:longPress={() => addPages(true)} />
             </stacklayout>
-        {/if}
-        {#if editingTitle}
-            <RenameDocumentBar {document} onClose={() => (editingTitle = false)} rowSpan={3} />
         {/if}
     </gridlayout>
 </appPage>

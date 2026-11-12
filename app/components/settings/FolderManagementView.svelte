@@ -3,24 +3,23 @@
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { confirm } from '@nativescript-community/ui-dialogs';
-    import { VerticalPosition } from '@nativescript-community/ui-popover';
     import { ApplicationSettings, ObservableArray } from '@nativescript/core';
     import { readable } from 'svelte/store';
+    import type { MenuItem } from '@nativescript-community/ui-menu';
     import { OptionType } from '@shared/components/OptionSelect.svelte';
     import { showError } from '@shared/utils/showError';
     import { showSnack } from '@shared/utils/ui';
-    import CActionBar from '@shared/components/CActionBar.svelte';
+    import { goBack } from '@shared/utils/svelte/ui';
     import FolderCell from '~/components/list/FolderCell.svelte';
     import type { Item } from '~/components/list/MainList.svelte';
-    import SelectionToolbar from '~/components/common/SelectionToolbar.svelte';
     import { lc, lcp } from '~/helpers/locale';
     import { onThemeChanged } from '~/helpers/theme';
     import { DocFolder } from '~/models/OCRDocument';
     import { documentsService } from '~/services/documents';
     import { collectFoldersToDelete, filterEmptyFolders } from '~/services/folderUtils';
+    import { appIcon } from '~/utils/appIcons';
     import { DEFAULT_TRASH_ENABLED, SETTINGS_TRASH_ENABLED } from '~/utils/constants';
     import { updateRowPositions } from '~/utils/groupedRows';
-    import { showPopoverMenu } from '~/utils/ui';
     import { colors, windowInset } from '~/variables';
 
     // every row shows its marker: a tap selects
@@ -28,7 +27,7 @@
 </script>
 
 <script lang="ts">
-    $: ({ colorError } = $colors);
+    $: ({ colorError, colorOnBackground, colorPrimaryContainer } = $colors);
 
     let collectionView: NativeViewElementNode<CollectionView>;
     let items: ObservableArray<Item> = new ObservableArray([]);
@@ -139,11 +138,11 @@
 
     function getSelectionToolbarOptions(): OptionType[] {
         return [
-            { id: 'select_all', name: lc('select_all'), icon: 'mdi-select-all' },
-            { id: 'delete', name: lc('delete'), icon: 'mdi-delete', color: colorError }
+            { id: 'select_all', name: lc('select_all') },
+            { id: 'delete', name: lc('delete'), color: colorError }
         ];
     }
-    async function handleSelectionAction(event, option: OptionType) {
+    async function handleSelectionAction(option: OptionType) {
         try {
             switch (option.id) {
                 case 'select_all':
@@ -162,32 +161,22 @@
         }
     }
 
-    async function showOptions(event) {
+    async function deleteEmptyFolders() {
         try {
-            const options = new ObservableArray([{ id: 'delete_empty_folders', name: lc('delete_empty_folders'), icon: 'mdi-folder-remove' }] as any);
-            await showPopoverMenu({
-                options,
-                anchor: event.object,
-                vertPos: VerticalPosition.BELOW,
-                onClose: async (option) => {
-                    try {
-                        if (option.id === 'delete_empty_folders') {
-                            const emptyFolders = filterEmptyFolders(getAllFolders());
-                            if (!emptyFolders.length) {
-                                showSnack({ message: lc('no_empty_folder') });
-                                return;
-                            }
-                            await deleteFolders(emptyFolders);
-                        }
-                    } catch (error) {
-                        showError(error);
-                    }
-                }
-            });
+            const emptyFolders = filterEmptyFolders(getAllFolders());
+            if (!emptyFolders.length) {
+                showSnack({ message: lc('no_empty_folder') });
+                return;
+            }
+            await deleteFolders(emptyFolders);
         } catch (error) {
             showError(error);
         }
     }
+    const optionsMenu: MenuItem[] = [{ title: lc('delete_empty_folders'), icon: appIcon('delete'), onSelect: deleteEmptyFolders }];
+    // Android: the actions are in the top bar while selecting, iOS: in the bottom toolbar
+    $: selectionOptions = nbSelected > 0 ? getSelectionToolbarOptions() : [];
+    $: bottomItems = __IOS__ ? selectionOptions.flatMap((option) => [{ spacer: true }, { text: option.name, icon: appIcon(option.id), color: option.color, onTap: () => handleSelectionAction(option) }]) : [];
 
     function refreshCollectionView() {
         collectionView?.nativeView?.refresh();
@@ -197,19 +186,37 @@
     refresh();
 </script>
 
-<page id="folderManagementView" actionBarHidden={true}>
-    <gridlayout class="pageContent" rows="auto,*">
-        <collectionview bind:this={collectionView} {items} row={1} android:paddingBottom={$windowInset.bottom}>
+<appPage id="folderManagementView">
+    <appBar
+        android:backgroundColor={nbSelected > 0 ? colorPrimaryContainer : undefined}
+        {bottomItems}
+        color={colorOnBackground}
+        iosIconRenderingMode="alwaysTemplate"
+        scrollBehavior="lift"
+        scrollTargetId="folderCollectionView"
+        size="small"
+        title={nbSelected > 0 ? lcp('selected', nbSelected) : lc('manage_folders')}
+        titleAlignment="leading"
+        ios:translucent={true}>
+        {#if __ANDROID__}
+            <navigationButton {...{ 'android.systemIcon': nbSelected > 0 ? 'ic_menu_close_clear_cancel' : 'ic_menu_back' }} on:tap={nbSelected > 0 ? unselectAll : () => goBack()} />
+        {/if}
+        {#if nbSelected === 0}
+            <appBarItem icon={appIcon('more')} ios.position="right" menu={optionsMenu} />
+        {:else if __IOS__}
+            <appBarItem ios.position="right" prominent={true} text={lc('cancel')} on:tap={unselectAll} />
+        {:else}
+            {#each selectionOptions as option (option.id)}
+                <appBarItem icon={appIcon(option.id)} text={option.name} on:tap={() => handleSelectionAction(option)} />
+            {/each}
+        {/if}
+    </appBar>
+    <gridlayout class="pageContent" rows="*">
+        <collectionview id="folderCollectionView" bind:this={collectionView} {items} android:paddingBottom={$windowInset.bottom}>
             <Template let:item>
                 <FolderCell {selectionMode} {item} marginLeft={16} marginRight={16} name={item.folder.name} tile={false} on:tap={() => onItemTap(item)} />
             </Template>
         </collectionview>
-        <label horizontalAlignment="center" row={1} text={lc('no_folder')} verticalAlignment="middle" visibility={items.length ? 'collapse' : 'visible'} />
-        {#if nbSelected > 0}
-            <SelectionToolbar onAction={handleSelectionAction} options={getSelectionToolbarOptions()} row={1} />
-        {/if}
-        <CActionBar canGoBack onGoBack={nbSelected ? unselectAll : null} title={nbSelected ? lcp('selected', nbSelected) : lc('manage_folders')}>
-            <uibutton class="actionBarButton" text="mdi-dots-vertical" variant="text" on:tap={showOptions} />
-        </CActionBar>
+        <label horizontalAlignment="center" text={lc('no_folder')} verticalAlignment="middle" visibility={items.length ? 'collapse' : 'visible'} />
     </gridlayout>
-</page>
+</appPage>
