@@ -262,7 +262,8 @@ class CustomActivityCallbacksImplementation implements AndroidActivityCallbacks 
                     DEV_LOG && console.log('onDone', result);
                     if (result) {
                         const resultIntent = new android.content.Intent();
-                        resultIntent.setData(android.net.Uri.parse(result));
+                        resultIntent.setData(androidx.core.content.FileProvider.getUriForFile(activity, __APP_ID__ + '.provider', new java.io.File(result)));
+                        resultIntent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
                         activity.setResult(android.app.Activity.RESULT_OK, resultIntent);
                     } else {
                         activity.setResult(android.app.Activity.RESULT_CANCELED);

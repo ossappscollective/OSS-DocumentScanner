@@ -149,7 +149,7 @@
             return await processCameraImage({
                 onlyForOCR,
                 imagePath: tempImagePath,
-                fileName: `cropedBitmap_${pagesToAdd.length}.${IMG_FORMAT}`,
+                fileName: `cropedBitmap_${Date.now()}_${pagesToAdd.length}.${IMG_FORMAT}`,
                 autoScan,
                 onBeforeModalImport: () => (torchSuspended = true),
                 onAfterModalImport: () => (torchSuspended = false),
