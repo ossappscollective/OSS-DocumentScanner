@@ -114,17 +114,15 @@
             testConnectionSuccess = 0;
         }} />
 
-    <gridlayout columns="*,*" margin="8 16 8 16" rows="auto">
-        <gridlayout col={1} columns="auto" horizontalAlignment="right" rows="auto" verticalAlignment="middle">
-            <uibutton
-                backgroundColor={testConnectionSuccess < 0 ? colorError : testConnectionSuccess > 0 ? 'lightgreen' : colorSecondary}
-                color={colorOnError}
-                text={testConnectionSuccess < 0 ? lc('failed') : testConnectionSuccess > 0 ? lc('successful') : lc('test')}
-                verticalAlignment="middle"
-                visibility={testing ? 'hidden' : 'visible'}
-                on:tap={testConnection}
-            />
-            <activityindicator busy={testing} height={20} horizontalAlignment="center" verticalAlignment="middle" visibility={testing ? 'visible' : 'hidden'} />
-        </gridlayout>
+    <gridlayout columns="auto" horizontalAlignment="right" margin="8 16 8 16" rows="auto" verticalAlignment="middle">
+        <uibutton
+            backgroundColor={testConnectionSuccess < 0 ? colorError : testConnectionSuccess > 0 ? 'lightgreen' : colorSecondary}
+            color={colorOnError}
+            text={testConnectionSuccess < 0 ? lc('failed') : testConnectionSuccess > 0 ? lc('successful') : lc('test')}
+            verticalAlignment="middle"
+            visibility={testing ? 'hidden' : 'visible'}
+            on:tap={testConnection}
+        />
+        <activityindicator busy={testing} height={20} horizontalAlignment="center" verticalAlignment="middle" visibility={testing ? 'visible' : 'hidden'} />
     </gridlayout>
 </stacklayout>

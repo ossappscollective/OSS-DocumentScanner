@@ -37,23 +37,21 @@
     }
 </script>
 
-<gesturerootview rows="auto">
-    <stacklayout>
-        <SheetHeader doneEnabled={!showFilename || filename?.length > 0} doneText={lc('export')} onCancel={() => closeBottomSheet(undefined)} onDone={done} title={lc('export_settings')} />
-        <stacklayout padding="0 16 24 16">
-            <!-- the folder is a value which opens the picker, like a select field -->
-            <gridlayout class="formRow" columns="*,auto" on:tap={selectFolder}>
-                <stacklayout margin="0 4" verticalAlignment="center">
-                    <label color={colorOnSurfaceVariant} fontSize={13} text={lc('folder')} />
-                    <label color={colorOnSurface} fontSize={17} lineBreak="middle" maxLines={1} text={folder ? getDirectoryName(folder) : lc('please_choose_export_folder')} />
-                </stacklayout>
-                <uibutton col={1} color={colorOnSurfaceVariant} height={44} variant="text" verticalAlignment="center" width={44} {...{ src: appIcon('folder') }} on:tap={selectFolder} />
-            </gridlayout>
-            {#if showFilename}
-                <FormTextField autocapitalizationType="none" autocorrect={false} label={lc('filename')} returnKeyType="next" bind:text={filename} />
-            {/if}
-            <SettingsSlider margin="8 4" max={100} min={0} onChange={(value) => (jpegQuality = value)} step={1} title={lc('jpeg_quality')} value={jpegQuality} />
-            <FormTextField autocapitalizationType="none" autocorrect={false} label={lc('optional_pdf_password')} onChange={onPasswordChange} returnKeyType="done" secure={true} text={password} />
-        </stacklayout>
+<gesturerootview rows="auto,auto">
+    <SheetHeader doneEnabled={!showFilename || filename?.length > 0} doneText={lc('export')} onCancel={() => closeBottomSheet(undefined)} onDone={done} title={lc('export_settings')} />
+    <stacklayout padding="0 16 24 16" row={1}>
+        <!-- the folder is a value which opens the picker, like a select field -->
+        <gridlayout class="formRow" columns="*,auto" on:tap={selectFolder}>
+            <stacklayout margin="0 4" verticalAlignment="center">
+                <label color={colorOnSurfaceVariant} fontSize={13} text={lc('folder')} />
+                <label color={colorOnSurface} fontSize={17} lineBreak="middle" maxLines={1} text={folder ? getDirectoryName(folder) : lc('please_choose_export_folder')} />
+            </stacklayout>
+            <uibutton col={1} color={colorOnSurfaceVariant} height={44} variant="text" verticalAlignment="center" width={44} {...{ src: appIcon('folder') }} on:tap={selectFolder} />
+        </gridlayout>
+        {#if showFilename}
+            <FormTextField autocapitalizationType="none" autocorrect={false} label={lc('filename')} returnKeyType="next" bind:text={filename} />
+        {/if}
+        <SettingsSlider margin="8 4" max={100} min={0} onChange={(value) => (jpegQuality = value)} step={1} title={lc('jpeg_quality')} value={jpegQuality} />
+        <FormTextField autocapitalizationType="none" autocorrect={false} label={lc('optional_pdf_password')} onChange={onPasswordChange} returnKeyType="done" secure={true} text={password} />
     </stacklayout>
 </gesturerootview>
