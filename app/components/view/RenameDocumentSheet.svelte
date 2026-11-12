@@ -2,49 +2,54 @@
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import type { TextField } from '@nativescript-community/ui-textfield';
     import { showError } from '@shared/utils/showError';
+    import { onMount } from 'svelte';
     import SheetHeader from '~/components/common/SheetHeader.svelte';
     import { lc } from '~/helpers/locale';
     import type { OCRDocument } from '~/models/OCRDocument';
-    import { colors } from '~/variables';
-
-    $: ({ colorBackground } = $colors);
+    import { windowInset } from '~/variables';
 
     export let document: OCRDocument;
-    export let onClose: () => void;
+
+    let rootView;
     let textfield: NativeViewElementNode<TextField>;
     let name = document.name;
 
     $: valid = name.trim().length > 0;
 
+    function close(saved = false) {
+        rootView.nativeView.bindingContext.closeCallback(saved);
+    }
     async function save() {
+        if (!valid) {
+            return;
+        }
         try {
-            textfield?.nativeView?.clearFocus();
             await document.save({ name: name.trim() }, true, true);
-            onClose();
+            close(true);
         } catch (error) {
             showError(error);
         }
     }
-    // the bar is not shown yet
-    const focus = () =>
-        setTimeout(() => {
+    // the keyboard opens once the sheet is shown, not while it comes in
+    onMount(() =>
+        rootView.nativeView.once('shownInBottomSheet', () => {
             const field = textfield?.nativeView;
             field?.setSelection(field.text.length);
             field?.requestFocus();
-        }, 300);
+        })
+    );
 </script>
 
-<!-- the name field takes the place of the title, the page stays under it -->
-<stacklayout backgroundColor={colorBackground} verticalAlignment="top" {...$$restProps}>
-    <SheetHeader doneEnabled={valid} doneText={lc('save')} onCancel={onClose} onDone={save} title="" />
+<gesturerootview bind:this={rootView} padding="0 0 {$windowInset.bottom + 16} 0" rows="auto,auto">
+    <SheetHeader doneEnabled={valid} doneText={lc('save')} onCancel={() => close()} onDone={save} title={lc('rename')} />
     <textfield
         bind:this={textfield}
         hint={lc('name')}
-        margin="0 16 8 16"
+        margin="0 16"
         returnKeyType="done"
+        row={1}
         text={name}
         variant="outline"
-        on:loaded={focus}
         on:returnPress={save}
         on:textChange={(event) => (name = event['value'])} />
-</stacklayout>
+</gesturerootview>
