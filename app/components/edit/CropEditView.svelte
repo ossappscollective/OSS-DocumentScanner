@@ -98,11 +98,11 @@
                 <appBarItem {...{ isEnabled: cropItem?.undos.length > 0 }} icon={appIcon('undo')} ios.position="right" text={lc('undo')} on:tap={onUndo} />
                 <appBarItem {...{ isEnabled: cropItem?.redos.length > 0 }} icon={appIcon('redo')} ios.position="right" text={lc('redo')} on:tap={onRedo} />
             {:else}
-<appBarItem text={lc('save')} on:tap={onRecropTapFinish} />
+                <appBarItem text={lc('save')} on:tap={onRecropTapFinish} />
             {/if}
         </appBar>
         <gridlayout class="pageContent" backgroundColor={screenColor} paddingTop={8} rows="*,auto" android:paddingBottom={$windowInset.bottom + 96}>
-            <CropView bind:this={cropView} {...cropItem ? cropItem : null} bind:quadChanged bind:quads on:dragging={onDragging} on:undosChanged={onUndosChanged} />
+            <CropView bind:this={cropView} {...cropItem ? cropItem : null} {quads} bind:quadChanged on:dragging={onDragging} on:undosChanged={onUndosChanged} />
             <label bind:this={hint} color={hintColor} fontSize={__IOS__ ? 15 : 14} height={40} marginBottom={__IOS__ ? 8 : 0} marginTop={8} row={1} text={lc('crop_edit_doc')} textAlignment="center" textWrap={true} verticalTextAlignment="center" />
         </gridlayout>
     </appPage>

@@ -29,6 +29,7 @@
         TRANSFORMS_SPLIT
     } from '~/utils/constants';
     import { TRANSFORMS } from '~/utils/localized_constant';
+    import { createSwitchRowTap } from '~/utils/switchRow';
     import { showError } from '@shared/utils/showError';
     import { ColorMatricesTypes, getColorMatrix, showMatrixLevelPopover } from '~/utils/ui';
     import { colors, windowInset } from '~/variables';
@@ -59,6 +60,8 @@
     export let inline = false;
     /** the id of the list, for the persistent sheet to hand the scrolling over to it */
     export let listId: string = undefined;
+    /** iOS: the sheet goes under the safe area: the list scrolls above it */
+    export let bottomInset = 0;
     /** the image the filters are drawn on: the page being edited, else a sample */
     export let previewSrc: string = '~/assets/images/filter_color.png';
     export let onTransformChange: (id: string, value: boolean) => void = null;
@@ -71,7 +74,6 @@
     export let colorType = ApplicationSettings.getString(SETTINGS_DEFAULT_COLORTYPE, DEFAULT_COLORTYPE) as MatricesTypes;
     export let contrast = ApplicationSettings.getNumber(SETTINGS_DEFAULT_CONTRAST, DEFAULT_CONTRAST);
     export let brightness = ApplicationSettings.getNumber(SETTINGS_DEFAULT_BRIGHTNESS, DEFAULT_BRIGHTNESS);
-    // export let colorMatrix = JSON.parse(ApplicationSettings.getString(SETTINGS_DEFAULT_COLORMATRIX, DEFAULT_COLORMATRIX));
 
     export let colorMatrix: Matrix;
     try {
@@ -89,8 +91,6 @@
     if (showCameraSettings) {
         DEV_LOG && console.log('CameraSettingsBottomSheet', JSON.stringify(currentResolution), JSON.stringify(resolutions));
     }
-
-    // $: ({ aspectRatio, stretch, viewsize, pictureSize } = $cameraOptionsStore);
 
     let listView: NativeViewElementNode<CollectionView>;
     let filtersView: CollectionView;
@@ -122,12 +122,6 @@
         filtersView?.refreshVisibleItems();
     }
 
-    function setColorType(type) {
-        colorType = type;
-        colorMatrix = getColorMatrix(type);
-        refreshCollectionView();
-        onColorChange?.(colorType, colorMatrix);
-    }
     function onColorMatrixChange(type, value, refreshCV = false) {
         colorType = type;
         colorMatrix = getColorMatrix(colorType, value);
@@ -196,38 +190,34 @@
                       full: { name: lc('full') },
                       limited: { name: lc('limited') }
                   }
-              }
+              },
+              ...(__ANDROID__
+                  ? [
+                        {
+                            id: 'aspectRatio',
+                            title: lc('aspect_ratio'),
+                            default: '4:3',
+                            options: {
+                                '4:3': { name: '4:3' },
+                                '16:9': { name: '16:9' }
+                            }
+                        }
+                    ]
+                  : []),
+              ...(__ANDROID__ && currentResolution && resolutions
+                  ? [
+                        {
+                            id: 'pictureSize',
+                            title: lc('picture_size'),
+                            default: currentResolution.pictureSize,
+                            options: resolutions.reduce((acc, current) => {
+                                acc[current.pictureSize] = { ...current, name: `${current.pictureSize} (${current.aspectRatio})` };
+                                return acc;
+                            }, {})
+                        }
+                    ]
+                  : [])
           ]
-              .concat(
-                  __ANDROID__
-                      ? [
-                            {
-                                id: 'aspectRatio',
-                                title: lc('aspect_ratio'),
-                                default: '4:3',
-                                options: {
-                                    '4:3': { name: '4:3' },
-                                    '16:9': { name: '16:9' }
-                                }
-                            }
-                        ]
-                      : ([] as any)
-              )
-              .concat(
-                  __ANDROID__ && currentResolution && resolutions
-                      ? [
-                            {
-                                id: 'pictureSize',
-                                title: lc('picture_size'),
-                                default: currentResolution.pictureSize,
-                                options: resolutions.reduce((acc, current) => {
-                                    acc[current.pictureSize] = { ...current, name: `${current.pictureSize} (${current.aspectRatio})` };
-                                    return acc;
-                                }, {})
-                            }
-                        ]
-                      : ([] as any)
-              )
         : [];
 
     function selectOption(item, event) {
@@ -247,23 +237,16 @@
         });
     }
 
-    let checkboxTapTimer;
-    function clearCheckboxTimer() {
-        if (checkboxTapTimer) {
-            clearTimeout(checkboxTapTimer);
-            checkboxTapTimer = null;
-        }
-    }
+    const switchRowTap = createSwitchRowTap();
     function onCheckedChanged(item, event) {
-        clearCheckboxTimer();
+        switchRowTap.cancel();
         addOrRemoveTransform(item.id);
     }
     function onTransformTap(item, event) {
         const checkboxView: CheckBox | Switch = (event.object as View).getViewById('checkbox');
-        clearCheckboxTimer();
-        checkboxTapTimer = setTimeout(() => {
+        switchRowTap.onRowTap(() => {
             checkboxView.checked = !checkboxView.checked;
-        }, 10);
+        });
     }
 
     function onCloseBottomSheet() {
@@ -271,7 +254,7 @@
             return;
         }
         ApplicationSettings.setString(SETTINGS_DEFAULT_COLORTYPE, colorType);
-        if (contrast !== DEFAULT_BRIGHTNESS) {
+        if (contrast !== DEFAULT_CONTRAST) {
             ApplicationSettings.setNumber(SETTINGS_DEFAULT_CONTRAST, contrast);
         } else {
             ApplicationSettings.remove(SETTINGS_DEFAULT_CONTRAST);
@@ -371,7 +354,7 @@
     {#if applyMode}
         <SheetHeader actionIcon={appIcon('restore')} actionLabel={lc('reset')} doneText={lc('apply')} onAction={resetTransforms} onCancel={() => closeBottomSheet(undefined)} onDone={applyTransforms} title={lc('transform_images')} />
     {/if}
-    <collectionview bind:this={listView} id={listId} row={applyMode ? 1 : 0} paddingBottom={inline || __ANDROID__ ? $windowInset.bottom : 0} {itemTemplateSelector} items={listItems}>
+    <collectionview bind:this={listView} id={listId} row={applyMode ? 1 : 0} paddingBottom={inline || __ANDROID__ ? $windowInset.bottom + bottomInset : 0} {itemTemplateSelector} items={listItems}>
         <Template key="sectionheader" let:item>
             <label color={secondaryColor} text={__IOS__ ? item.title.toUpperCase() : item.title} {...(__IOS__ ? { fontSize: 13, margin: '20 32 6 32' } : { class: 'sectionHeader' })} />
         </Template>
@@ -423,7 +406,7 @@
             <!-- the filters drawn on the image itself: a 64 tile with the radius of the tiles, the selected one has a 2.5 ring, its name is under it -->
             <collectionview colWidth={80} height={104} items={filters} orientation="horizontal" paddingLeft={12} paddingRight={12} on:loaded={onFiltersLoaded}>
                 <Template let:item>
-                    <gridlayout padding="4 8" rows="auto,auto" on:tap={() => setColorType(item.colorType)} on:longPress={(event) => setColorMatrixLevels(item, event)}>
+                    <gridlayout padding="4 8" rows="auto,auto" on:tap={() => onColorMatrixChange(item.colorType, undefined, true)} on:longPress={(event) => setColorMatrixLevels(item, event)}>
                         <image
                             borderColor={colorPrimary}
                             borderRadius={12}

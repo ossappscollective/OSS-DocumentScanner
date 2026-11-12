@@ -5,15 +5,12 @@
     import { onMount } from 'svelte';
     import FormTextField from '~/components/common/FormTextField.svelte';
     import SvgView from '~/components/common/SVGView.svelte';
+    import CardEditDeleteButton from '~/components/view/CardEditDeleteButton.svelte';
     import { qrcodeService } from '~/services/qrcode';
-    import { appIcon } from '~/utils/appIcons';
     import { getBarcodeInputRule, sanitizeBarcodeInput } from '~/utils/barcodeInput';
-    import { colors } from '~/variables';
 
-    export let code: { original: any; text: string; error?: string };
+    export let code: { original: any; text: string };
     export let onRemove: () => void;
-    let { colorError } = $colors;
-    $: ({ colorError } = $colors);
 
     const format: string = code.original.format;
     const rule = getBarcodeInputRule(format);
@@ -28,7 +25,6 @@
             svg = null;
             error = lc('unsupported_barcode_value');
         }
-        code.error = error;
     }
     function onTextChange(event: PropertyChangeData) {
         const value = event.value as string;
@@ -46,17 +42,5 @@
 <gridlayout columns="auto,*,auto" margin="0 16" {...$$restProps}>
     <SvgView backgroundColor="white" borderRadius={11} height={56} item={{ svg }} margin="{__IOS__ ? 12 : 4} 12 0 0" padding="4" stretch="aspectFit" verticalAlignment="top" width={88} />
     <FormTextField col={1} {error} keyboardType={__IOS__ && rule.numeric ? 'number' : undefined} label={format} margin="0 0 8 0" text={code.text} onChange={onTextChange} />
-    <uibutton
-        accessibilityLabel={lc('delete')}
-        col={2}
-        color={colorError}
-        height={44}
-        marginTop={__IOS__ ? 18 : 6}
-        padding="0"
-        verticalAlignment="top"
-        variant="text"
-        width={44}
-        {...{ src: appIcon('delete') }}
-        on:tap={onRemove}
-    />
+    <CardEditDeleteButton col={2} on:tap={onRemove} />
 </gridlayout>

@@ -3,26 +3,23 @@
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { Img } from '@nativescript-community/ui-image';
-    import { SVGView } from '@nativescript-community/ui-svg';
     import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { confirm } from '@nativescript-community/ui-dialogs';
     import { Pager } from '@nativescript-community/ui-pager';
     import { MenuItem, setContextMenu, showMenu } from '@nativescript-community/ui-menu';
-    import { AnimationDefinition, Application, ApplicationSettings, Color, ContentView, EventData, ImageSource, ObservableArray, Page, Utils, View } from '@nativescript/core';
+    import { Application, ApplicationSettings, Color, EventData, Page, Utils, View } from '@nativescript/core';
     import { AndroidActivityBackPressedEventData } from '@nativescript/core/application';
-    import { debounce, throttle } from '@nativescript/core/utils';
     import { create as createImagePicker } from '@nativescript/imagepicker';
     import { showError } from '@shared/utils/showError';
     import { goBack, navigate, showModal } from '@shared/utils/svelte/ui';
     import dayjs from 'dayjs';
     import { QRCodeData, QRCodeSingleData, detectQRCodeFromFile } from 'plugin-nativeprocessor';
     import { onDestroy, onMount } from 'svelte';
-    import PageIndicator from '~/components/common/PageIndicator.svelte';
     import RotableImageView from '~/components/common/RotableImageView.svelte';
     import PdfEdit from '~/components/edit/DocumentEdit.svelte';
     import { lc, lcp } from '~/helpers/locale';
-    import { colorTheme, isDarkTheme, isEInk, onThemeChanged } from '~/helpers/theme';
-    import { Document, ExtraFieldType, OCRDocument, OCRPage } from '~/models/OCRDocument';
+    import { isDarkTheme, isEInk, onThemeChanged } from '~/helpers/theme';
+    import { OCRDocument, OCRPage } from '~/models/OCRDocument';
     import {
         DocumentDeletedEventData,
         DocumentPageDeletedEventData,
@@ -31,33 +28,25 @@
         DocumentUpdatedEventData,
         documentsService
     } from '~/services/documents';
-    import { getBarcodeFallbackString, qrcodeService } from '~/services/qrcode';
+    import { qrcodeService } from '~/services/qrcode';
     import { shortcutService } from '~/services/shortcuts';
     import {
         CARD_RATIO,
-        DEFAULT_FORCE_WHITE_BACKGROUND_QRCODE,
         DOCUMENT_NAME_FORMAT,
-        EVENT_DOCUMENT_DELETED,
-        EVENT_DOCUMENT_PAGES_ADDED,
-        EVENT_DOCUMENT_PAGE_DELETED,
-        EVENT_DOCUMENT_PAGE_UPDATED,
-        EVENT_DOCUMENT_UPDATED,
         QRCODE_RESIZE_THRESHOLD,
         SETTINGS_DOCUMENT_NAME_FORMAT,
-        SETTINGS_FORCE_WHITE_BACKGROUND_QRCODE,
         SHEET_PAN_SOFT_INPUT_MODE
     } from '~/utils/constants';
     import { appIcon } from '~/utils/appIcons';
     import { optionsToMenuItems } from '~/utils/appMenu';
     import { getCardAccent, pickCardColor } from '~/utils/cardColors';
-    import { getTopBrightness, recycleImages } from '~/utils/images';
+    import { getSelectedPages, subscribeDocumentEvents } from '~/utils/documentView';
+    import { formatExtraValue, getExtraFields } from '~/utils/extraFields';
+    import { getTopBrightness } from '~/utils/images';
     import { documentHasPKPassData, getPKPassColors } from '~/utils/pkpass';
     import { getFormatedDateForFilename } from '~/utils/utils.common';
-    import { detectOCR, getExportMenu, importAndScanImage, importImageFromCamera, onBackButton, pickColor, requestCameraPermission, showImagePopoverMenu, showSnack, transformPages } from '~/utils/ui';
-    import { colors, fontScale, fonts, hasCamera, isLandscape, onFontScaleChanged, screenWidthDips, windowInset } from '~/variables';
-    import EditNameActionBar from '~/components/common/EditNameActionBar.svelte';
-    import IconButton from '@shared/components/IconButton.svelte';
-    import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
+    import { detectOCR, getExportMenu, importAndScanImage, importImageFromCamera, onBackButton, requestCameraPermission, showImagePopoverMenu, showOCRData, showSnack, transformPages } from '~/utils/ui';
+    import { colors, fonts, hasCamera, onFontScaleChanged, screenWidthDips, windowInset } from '~/variables';
     import PKPassView from '~/components/pkpass/PKPassView.svelte';
 
     const PEEK_WIDTH = 44;
@@ -68,6 +57,8 @@
     // glass over the photo on iOS 26 (it adapts to the photo), a dark disc before (no glass), tonal on Android
     const legacyPhotoEdit = __IOS__ && Utils.SDK_VERSION < 26;
     const photoEditVariant = __IOS__ ? (legacyPhotoEdit ? 'plain' : 'glass') : 'contained';
+    // before iOS 26 the bar has no subtitle: the date is under the large title
+    const showDateUnderTitle = __IOS__ && Utils.SDK_VERSION < 26;
     const CODE_ZONE_HEIGHT = 270;
     const FILMSTRIP_HEIGHT = 60;
     const FILMSTRIP_COL_WIDTH = 48;
@@ -78,7 +69,6 @@
     interface Item {
         page: OCRPage;
         selected: boolean;
-        index: number;
         /** the photo shown by the pager: its thumbnail is the one at full size */
         current?: boolean;
     }
@@ -89,40 +79,8 @@
 
 <script lang="ts">
     import CardViewEmpty from '~/components/view/CardViewEmpty.svelte';
-    import { TextField } from '@nativescript-community/ui-textfield';
-    import { Label } from '@nativescript-community/ui-label';
-    import { EXTRA_PAPERLESS_ID_KEY } from '~/services/sync/paperless/PaperlessNgxPDFSyncService';
 
-    let {
-        colorBackground,
-        colorError,
-        colorOnBackground,
-        colorOnSurface,
-        colorOnSurfaceVariant,
-        colorOutline,
-        colorOutlineVariant,
-        colorPrimary,
-        colorSurface,
-        colorSurfaceContainerHigh,
-        colorSurfaceContainerLow,
-        colorTertiary
-    } = $colors;
-    $: ({
-        colorBackground,
-        colorError,
-        colorOnBackground,
-        colorOnSurface,
-        colorOnSurfaceVariant,
-        colorOutline,
-        colorOutlineVariant,
-        colorPrimary,
-        colorSurface,
-        colorSurfaceContainerHigh,
-        colorSurfaceContainerLow,
-        colorTertiary
-    } = $colors);
-
-    const forceWhiteBackgroundForQRCode = ApplicationSettings.getBoolean(SETTINGS_FORCE_WHITE_BACKGROUND_QRCODE, DEFAULT_FORCE_WHITE_BACKGROUND_QRCODE);
+    $: ({ colorBackground, colorError, colorOnBackground, colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary, colorSurface, colorSurfaceContainerLow } = $colors);
 
     export let document: OCRDocument;
     export let transitionOnBack = true;
@@ -147,12 +105,19 @@
     $: firstPhoto = document.pages.find((p) => p.imagePath);
     $: cardColor = isEInk ? null : pickCardColor(document.extra?.color, [firstPhoto?.extra?.color, ...(firstPhoto?.colors ?? [])]);
     $: accent = getCardAccent(cardColor, isDarkTheme(), colorPrimary);
+    $: photoEditProps = legacyPhotoEdit ? { backgroundColor: '#00000066', borderRadius: 18, color: '#FFFFFF' } : __ANDROID__ ? { backgroundColor: accent.container, color: accent.accent } : {};
     $: hasCustomName = document.name !== getFormatedDateForFilename(document.createdDate, ApplicationSettings.getString(SETTINGS_DOCUMENT_NAME_FORMAT, DOCUMENT_NAME_FORMAT), false);
-    $: details = getDetails(document);
+    $: details = getExtraFields(document.extra);
     $: nbImages = document.pages.filter((p) => p.imagePath).length;
+    $: multiplePhotos = nbImages > 1;
+    $: multipleQR = qrcodes?.length > 1;
+    $: qrSideMargin = __ANDROID__ && qrcodes?.length <= 1 ? 16 : 0;
+    $: qrZoneMargin = `${__ANDROID__ ? -PLATE_OVERLAP : 8} ${qrSideMargin} 8 ${qrSideMargin}`;
+    $: qrCardMargin = multipleQR ? '4 4 8 4' : __ANDROID__ ? '4 0 8 0' : '4 16 8 16';
+    $: photosMargin = `${__ANDROID__ && !hasQRCodes ? -PLATE_OVERLAP : 8} ${multiplePhotos ? 0 : 16} 0 ${multiplePhotos ? 0 : 16}`;
     // the strip is as wide as the screen and its ends can reach the center, like the thumbnails of the iOS Photos viewer
     // the pager is as tall as the photo (constant card ratio): the strip is always just under it
-    $: photoPagerHeight = Math.round((screenWidthDips - (nbImages > 1 ? PHOTO_INSET : 32)) * CARD_RATIO) + PHOTO_SHADOW_ROOM;
+    $: photoPagerHeight = Math.round((screenWidthDips - (multiplePhotos ? PHOTO_INSET : 32)) * CARD_RATIO) + PHOTO_SHADOW_ROOM;
     $: filmstripPadding = Math.max(0, (screenWidthDips - FILMSTRIP_COL_WIDTH) / 2);
     $: hasHero = hasQRCodes || hasImages;
     $: isEmptyCard = !hasHero && !details.length && !isPKPassDocument;
@@ -180,6 +145,8 @@
     $: backdropIsDark =
         backdropBrightness === null ? isDarkTheme() : (isDarkTheme() ? 0.7 : 1) * backdropBrightness + (isDarkTheme() ? 0.3 : 0) * new Color(colorBackground).getBrightness() < 145;
     $: backdropTextColor = __IOS__ && backdropImage && !isEInk ? (backdropIsDark ? '#FFFFFF' : '#000000') : colorOnBackground;
+    $: statusBarStyle = isPKPassDocument ? (passColors.isDark ? 'dark' : 'light') : __IOS__ && backdropImage && !isEInk ? (backdropIsDark ? 'dark' : 'light') : null;
+    $: pageProps = { keepScreenAwake: hasQRCodes, screenBrightness: hasQRCodes ? 1 : -1, ...(statusBarStyle ? { statusBarStyle } : {}) };
     // iOS: the photo behind the page fades in, the bars change color at the pace of the status bar
     const TRANSITION_DURATION = __IOS__ ? (typeof UINavigationControllerHideShowBarDuration === 'number' ? UINavigationControllerHideShowBarDuration : 0.35) * 1000 : 0;
     function updateBackdrop() {
@@ -190,60 +157,23 @@
     if (__IOS__) {
         updateBackdropBrightness(backdropImage);
     }
-    onThemeChanged(() => {
-        DEV_LOG && console.log('onThemeChanged', $colors.colorOnBackground);
-        updateQRCodes();
-    });
 
-    function getDetails(doc: OCRDocument) {
-        const extra = doc.extra || {};
-        return Object.keys(extra)
-            .filter((key) => key !== 'color' && key !== 'pkpass' && key !== EXTRA_PAPERLESS_ID_KEY && typeof extra[key] === 'object')
-            .map((key) => ({ name: key, extra: extra[key] as any }));
-    }
-    // $: {
     const pages = document.getObservablePages();
-    let items = pages.map((page, index) => ({ selected: false, page, index, document, current: index === 0 })) as ObservableArray<Item>;
-    // pages.on('change', (event)=>{
-    //     switch(event.action) {
-    //         case ChangeType.Splice:
-    //         items.splice(event.index, event.removed.length, event.added)
-    //     }
-    // });
-    // }
-    // function onImageUpdated (event: any)  {
-    //         const index = event.data.index;
-    //         const current = document.pages.getItem(index)
-    //         current.config =
-    //         const data = {
-    //             image: document.images.getItem(index).page,
-    //             config: document.imagesConfig[index],
-    //         };
-    //         console.log('onImageUpdated', event.data.index, document, data);
-    //         document.pages.setItem(index, data);
-    //     }
-
-    let qrcodeImages: { [k: string]: ImageSource } = {};
-    function clearQRCodeImages(timeout = 0) {
-        const toClear = Object.values(qrcodeImages);
-        qrcodeImages = {};
-        setTimeout(() => {
-            recycleImages(toClear);
-        }, timeout);
-    }
-    let qrcodeColor;
-    let qrcodeBackgroundColor;
-
-    function updateQRCodeColors() {
-        qrcodeColor = 'black';
-        // qrcodeBackgroundColor = 'red';
-        qrcodeBackgroundColor = 'white';
-    }
+    let items = pages.map<Item>((page, index) => ({ selected: false, page, document, current: index === 0 }));
+    $: detailsContainerProps = __ANDROID__ ? {} : { backgroundColor: colorSurface, borderRadius: 16 };
+    $: getDetailRowProps = (index: number, count: number) =>
+        __ANDROID__
+            ? {
+                  backgroundColor: colorSurfaceContainerLow,
+                  borderRadius: count === 1 ? 28 : index === 0 ? '28 28 6 6' : index === count - 1 ? '6 6 28 28' : 6,
+                  marginTop: index > 0 ? 2 : 0,
+                  padding: '12 20 12 20'
+              }
+            : { borderTopColor: colorOutlineVariant, borderTopWidth: index > 0 ? 0.5 : 0, padding: '10 16 10 16' };
 
     async function updateQRCodes(updateList = true) {
         try {
-            updateQRCodeColors();
-            const color = qrcodeColor;
+            const color = 'black';
             const newQrCodes = [];
             for (let index = 0; index < document.pages.length; index++) {
                 const page = document.pages[index];
@@ -263,41 +193,16 @@
             }
             qrcodes = newQrCodes;
             hasQRCodes = qrcodes?.length > 0;
-            // qrcodes = document.pages.reduce((acc, page) => acc.concat(page.qrcode?.map((qr) => ({ ...qr, color, svg: await getQRCodeImage(qr, color) })) || []), []);
-            //we dont recycle images, it will be done in onDestroy
         } catch (error) {
             showError(error);
         }
     }
-    // updateQRCodes();
 
     async function getQRCodeImage(qrcode, color) {
-        try {
-            return qrcodeService.getQRCodeSVG(qrcode, screenWidthDips, color);
-        } catch (error) {
-            console.error(error);
-        }
+        return qrcodeService.getQRCodeSVG(qrcode, screenWidthDips, color);
     }
     function onSelectedIndex(event) {
         currentQRCodeIndex = event.object.selectedIndex;
-    }
-    function getSelectedPages() {
-        const selected: { page: OCRPage; document: OCRDocument }[] = [];
-        items.forEach((d, index) => {
-            if (d.selected) {
-                selected.push({ page: d.page, document });
-            }
-        });
-        return selected;
-    }
-    function getSelectedPagesWithData() {
-        const selected: { page: OCRPage; pageIndex: number; document: OCRDocument }[] = [];
-        items.forEach((d, index) => {
-            if (d.selected) {
-                selected.push({ page: d.page, document, pageIndex: index });
-            }
-        });
-        return selected;
     }
     // the popovers still need a view to be anchored to
     function getAnchor() {
@@ -338,26 +243,13 @@
     let nbSelected = 0;
     // updating an item reloads the pager, which reports its selected index again as if it was swiped
     let ignorePagerIndexUntil = 0;
-    function selectItem(item: Item) {
-        if (!item.selected) {
+    function setSelected(item: Item, selected: boolean) {
+        if (item.selected !== selected) {
             ignorePagerIndexUntil = Date.now() + 300;
             items.some((d, index) => {
                 if (d === item) {
-                    nbSelected++;
-                    d.selected = true;
-                    items.setItem(index, d);
-                    return true;
-                }
-            });
-        }
-    }
-    function unselectItem(item: Item) {
-        if (item.selected) {
-            ignorePagerIndexUntil = Date.now() + 300;
-            items.some((d, index) => {
-                if (d === item) {
-                    nbSelected--;
-                    d.selected = false;
+                    nbSelected += selected ? 1 : -1;
+                    d.selected = selected;
                     items.setItem(index, d);
                     return true;
                 }
@@ -380,14 +272,7 @@
         }
     }
     function toggleSelection(item: Item) {
-        if (item.selected) {
-            unselectItem(item);
-        } else {
-            selectItem(item);
-        }
-    }
-    function onItemLongPress(item: Item) {
-        toggleSelection(item);
+        setSelected(item, !item.selected);
     }
     async function onItemTap(item: Item) {
         try {
@@ -419,20 +304,35 @@
             showError(error);
         }
     }
-    // a modal bottom sheet is the Material pattern for the actions of an item (the iOS context menu is registered above)
+    // the actions of a photo: the context menu on iOS, a modal bottom sheet (the Material pattern) on Android
+    function getPhotoActions(item: Item) {
+        const index = items.findIndex((i) => i.page === item.page);
+        const select = () => setSelected(items.getItem(index), true);
+        return [
+            { id: 'fullscreen', title: lc('show_fullscreen_images'), icon: 'fullscreen', mdiIcon: 'mdi-fullscreen', run: () => showFullscreen(index) },
+            { id: 'edit', title: lc('edit'), icon: 'tune', mdiIcon: 'mdi-tune', run: () => editPage(item.page) },
+            { id: 'select', title: lc('select'), icon: 'select', mdiIcon: 'mdi-check-circle-outline', run: select },
+            {
+                id: 'delete',
+                title: lc('delete'),
+                icon: 'delete',
+                mdiIcon: 'mdi-delete',
+                destructive: true,
+                run: async () => {
+                    select();
+                    await runSelectionOption('delete');
+                }
+            }
+        ];
+    }
     async function onImageLongPress(item: Item) {
         if (!__ANDROID__) {
             return;
         }
         try {
             const OptionSelect = (await import('@shared/components/OptionSelect.svelte')).default;
-            const index = items.findIndex((i) => i.page === item.page);
-            const options = [
-                { id: 'fullscreen', name: lc('show_fullscreen_images'), icon: 'mdi-fullscreen' },
-                { id: 'edit', name: lc('edit'), icon: 'mdi-tune' },
-                { id: 'select', name: lc('select'), icon: 'mdi-check-circle-outline' },
-                { id: 'delete', name: lc('delete'), icon: 'mdi-delete', color: colorError }
-            ];
+            const actions = getPhotoActions(item);
+            const options = actions.map((action) => ({ id: action.id, name: action.title, icon: action.mdiIcon, ...(action.destructive ? { color: colorError } : {}) }));
             const rowHeight = 58;
             const height = rowHeight * options.length;
             const option = await showBottomSheet({
@@ -442,21 +342,7 @@
                 ignoreTopSafeArea: true,
                 props: { rowHeight, height, options }
             });
-            switch (option?.id) {
-                case 'fullscreen':
-                    showFullscreen(index);
-                    break;
-                case 'edit':
-                    editPage(item.page);
-                    break;
-                case 'select':
-                    selectItem(items.getItem(index));
-                    break;
-                case 'delete':
-                    selectItem(items.getItem(index));
-                    await runSelectionOption('delete');
-                    break;
-            }
+            await actions.find((action) => action.id === option?.id)?.run();
         } catch (error) {
             showError(error);
         }
@@ -509,24 +395,11 @@
         imageMenuRemovers.set(
             view,
             setContextMenu(view, {
-                items: () => {
-                    const index = items.findIndex((i) => i.page === item.page);
-                    return [
-                        { title: lc('show_fullscreen_images'), icon: appIcon('fullscreen'), onSelect: () => showFullscreen(index) },
-                        { title: lc('edit'), icon: appIcon('tune'), onSelect: () => editPage(item.page) },
-                        { separator: true },
-                        { title: lc('select'), icon: appIcon('select'), onSelect: () => selectItem(items.getItem(index)) },
-                        {
-                            title: lc('delete'),
-                            icon: appIcon('delete'),
-                            destructive: true,
-                            onSelect: async () => {
-                                selectItem(items.getItem(index));
-                                await runSelectionOption('delete');
-                            }
-                        }
-                    ];
-                }
+                items: () =>
+                    getPhotoActions(item).flatMap((action) => [
+                        { title: action.title, icon: appIcon(action.icon), ...(action.destructive ? { destructive: true } : {}), onSelect: action.run },
+                        ...(action.id === 'edit' ? [{ separator: true }] : [])
+                    ])
             })
         );
     }
@@ -548,23 +421,16 @@
                 onGoBack();
             }
         });
-    async function fullscreenSelectedPages() {
+    async function openFullscreen(images: { image: string }[], props: Record<string, unknown> = {}) {
         const component = (await import('~/components/FullScreenImageViewer.svelte')).default;
-        navigate({
-            page: component,
-            // transition: __ANDROID__ ? SharedTransition.custom(new PageTransition(300, undefined, 10), {}) : undefined,
-            props: {
-                images: getSelectedPages()
-                    .filter((p) => p.page.imagePath)
-                    .map((p) => ({
-                        // sharedTransitionTag: `document_${doc.id}_${page.id}`,
-                        name: document.name,
-                        image: p.page.imagePath,
-                        ...p
-                    })),
-                startPageIndex: 0
-            }
-        });
+        navigate({ page: component, props: { images, startPageIndex: 0, ...props } });
+    }
+    function fullscreenSelectedPages() {
+        return openFullscreen(
+            getSelectedPages(items, document)
+                .filter((p) => p.page.imagePath)
+                .map((p) => ({ name: document.name, image: p.page.imagePath, ...p }))
+        );
     }
     async function deleteSelectedPages() {
         if (nbSelected > 0) {
@@ -582,13 +448,9 @@
                             indexes.push(index);
                         }
                     });
-                    let minDeleteIndex = Number.MAX_SAFE_INTEGER;
-                    for (let index = 0; index < indexes.length; index++) {
-                        const toRemoveIndex = indexes[index];
-                        minDeleteIndex = Math.min(minDeleteIndex, toRemoveIndex);
-                        await document.deletePage(toRemoveIndex);
-
-                        items.splice(toRemoveIndex, 1);
+                    // from the end: deleting a page shifts the following indexes. `items` is updated by onDocumentPageDeleted
+                    for (let index = indexes.length - 1; index >= 0; index--) {
+                        await document.deletePage(indexes[index]);
                     }
                     refreshCollectionView();
                     nbSelected = 0;
@@ -611,8 +473,7 @@
         document = event.doc;
         try {
             if (items) {
-                const length = items.length;
-                items.push(...event.pages.map((page, index) => ({ page, selected: false, index: length })));
+                items.push(...event.pages.map((page) => ({ page, selected: false })));
             }
             updateQRCodes();
         } catch (error) {
@@ -626,11 +487,9 @@
         document = event.doc;
         const index = event.pageIndex;
         const current = items.getItem(index);
-        if (index === 0) {
-        }
         if (current) {
             const page = document.getObservablePages().getItem(index);
-            DEV_LOG && console.log('view onDocumentPageUpdated', index, event.imageUpdated, current.index);
+            DEV_LOG && console.log('view onDocumentPageUpdated', index, event.imageUpdated);
             items.setItem(index, { ...current, page });
             if (!!event.imageUpdated) {
                 updateBackdrop();
@@ -651,7 +510,6 @@
         document = event.doc;
         const index = event.pageIndex;
         items.splice(index, 1);
-        items.forEach((item, index) => (item.index = index + 1));
         updateQRCodes();
     }
     function onDocumentsDeleted(event: DocumentDeletedEventData) {
@@ -669,7 +527,7 @@
             if (event.changedProps?.has('pagesOrder')) {
                 // the pager goes back to its first page by itself with the new items: its events are ignored meanwhile
                 ignorePagerIndexUntil = Date.now() + 600;
-                items.splice(0, items.length, ...document.pages.map((photo, index) => ({ selected: false, page: photo, index, document, current: index === 0 })));
+                items.splice(0, items.length, ...document.pages.map((photo, index) => ({ selected: false, page: photo, document, current: index === 0 })));
                 setTimeout(() => {
                     pager?.nativeElement?.scrollToIndexAnimated(0, false);
                     currentImageIndex = 0;
@@ -684,45 +542,31 @@
         }
     }
 
-    // function onOrientationChanged(event: OrientationChangedEventData) {
-    //     orientation = event.newValue;
-    //     refreshCollectionView();
-    //     // }, 1000);
-    // }
     onMount(() => {
         updateQRCodes();
-        // Application.on('orientationChanged', onOrientationChanged);
         if (__ANDROID__) {
             Application.android.on(Application.android.activityBackPressedEvent, onAndroidBackButton);
         }
-        documentsService.on(EVENT_DOCUMENT_UPDATED, onDocumentUpdated);
-        documentsService.on(EVENT_DOCUMENT_DELETED, onDocumentsDeleted);
-        documentsService.on(EVENT_DOCUMENT_PAGE_DELETED, onDocumentPageDeleted);
-        documentsService.on(EVENT_DOCUMENT_PAGE_UPDATED, onDocumentPageUpdated);
-        documentsService.on(EVENT_DOCUMENT_PAGES_ADDED, onPagesAdded);
 
         shortcutService.updateShortcuts(document);
         documentsService.documentRepository.incrementUsage(document).catch(() => {});
         // refresh();
+        return subscribeDocumentEvents({
+            updated: onDocumentUpdated,
+            deleted: onDocumentsDeleted,
+            pageDeleted: onDocumentPageDeleted,
+            pageUpdated: onDocumentPageUpdated,
+            pagesAdded: onPagesAdded
+        });
     });
     onDestroy(() => {
-        clearQRCodeImages();
-        // Application.off('orientationChanged', onOrientationChanged);
         if (__ANDROID__) {
             Application.android.off(Application.android.activityBackPressedEvent, onAndroidBackButton);
         }
-        documentsService.off(EVENT_DOCUMENT_UPDATED, onDocumentUpdated);
-        documentsService.off(EVENT_DOCUMENT_DELETED, onDocumentsDeleted);
-        documentsService.off(EVENT_DOCUMENT_PAGE_DELETED, onDocumentPageDeleted);
-        documentsService.off(EVENT_DOCUMENT_PAGE_UPDATED, onDocumentPageUpdated);
-        documentsService.off(EVENT_DOCUMENT_PAGES_ADDED, onPagesAdded);
     });
 
     function refreshCollectionView() {
         collectionView?.nativeView?.refresh();
-    }
-    function refreshQRCodePager() {
-        // pager?.nativeView.refresh();
     }
     onThemeChanged(refreshCollectionView);
     onFontScaleChanged(refreshCollectionView);
@@ -740,25 +584,22 @@
             DEV_LOG && console.log('runSelectionOption', id);
             switch (id) {
                 case 'share':
-                    result = await showImagePopoverMenu(getSelectedPages(), getAnchor());
-                    if (result) {
-                        unselectAll();
-                    }
+                    result = await showImagePopoverMenu(getSelectedPages(items, document), getAnchor());
                     break;
                 case 'fullscreen':
                     await fullscreenSelectedPages();
-                    unselectAll();
+                    result = true;
+                    break;
+                case 'show_ocr':
+                    await showOCRData(document, getSelectedPages(items, document)[0]?.pageIndex);
                     break;
                 case 'ocr':
-                    result = await detectOCR({ pages: getSelectedPagesWithData() });
-                    if (result) {
-                        unselectAll();
-                    }
+                    result = await detectOCR({ pages: getSelectedPages(items, document) });
                     break;
                 case 'qrcode': {
                     let found = false;
                     await Promise.all(
-                        getSelectedPagesWithData().map((page) =>
+                        getSelectedPages(items, document).map((page) =>
                             qrcodeService.detectQRcode(document, page.pageIndex).then((r) => {
                                 found = found || r?.length > 0;
                             })
@@ -767,21 +608,18 @@
                     if (!found) {
                         showSnack({ message: lc('no_qrcode_found') });
                     }
-                    unselectAll();
+                    result = true;
                     break;
                 }
                 case 'delete':
                     result = await deleteSelectedPages();
-                    if (result) {
-                        unselectAll();
-                    }
                     break;
                 case 'transform':
-                    result = await transformPages({ pages: getSelectedPagesWithData() });
-                    if (result) {
-                        unselectAll();
-                    }
+                    result = await transformPages({ pages: getSelectedPages(items, document) });
                     break;
+            }
+            if (result) {
+                unselectAll();
             }
         } catch (error) {
             showError(error);
@@ -795,6 +633,9 @@
                     break;
                 case 'select_all':
                     selectAll();
+                    break;
+                case 'show_ocr':
+                    await showOCRData(document);
                     break;
                 case 'ocr':
                     await detectOCR({ documents: [document] });
@@ -832,7 +673,8 @@
                 { id: 'reorder', name: lc('reorder_pages') },
                 ...(nbPages > 1 ? [{ id: 'reverse_pages', name: lc('reverse_pages') }] : []),
                 { id: 'transform', name: lc('transform_images') },
-                { id: 'ocr', name: lc('ocr_document') }
+                { id: 'ocr', name: lc('ocr_document') },
+                { id: 'show_ocr', name: lc('show_ocr_text') }
             );
         }
         return [
@@ -843,10 +685,10 @@
         ];
     }
     function getSelectionMenu(pkpass: boolean): MenuItem[] {
-        const withImages = !pkpass && getSelectedPagesWithData().some((p) => p.page.imagePath);
+        const withImages = !pkpass && getSelectedPages(items, document).some((p) => p.page.imagePath);
         const menuOptions: { id: string; name: string }[] = [{ id: 'fullscreen', name: lc('show_fullscreen_images') }];
         if (withImages) {
-            menuOptions.push({ id: 'transform', name: lc('transform_images') }, { id: 'ocr', name: lc('ocr_document') }, { id: 'qrcode', name: lc('detect_qrcode') });
+            menuOptions.push({ id: 'transform', name: lc('transform_images') }, { id: 'ocr', name: lc('ocr_document') }, { id: 'show_ocr', name: lc('show_ocr_text') }, { id: 'qrcode', name: lc('detect_qrcode') });
         }
         return optionsToMenuItems(menuOptions, (option) => runSelectionOption(option.id));
     }
@@ -931,76 +773,74 @@
     async function runAddOption(id: string) {
         try {
             let found = false;
-            if (id) {
-                switch (id) {
-                    case 'camera':
-                        await importImageFromCamera({ document, inverseUseSystemCamera: false });
-                        break;
-                    case 'import':
-                        await importDocument();
-                        break;
-                    case 'import_image':
-                        await importAndScanImage({ canGoToView: false, forceGalleryPick: true, document, importPDFs: false });
-                        break;
-                    case 'add_qrcode_camera':
-                        await requestCameraPermission();
-                        const Camera = (await import('~/components/camera/Camera.svelte')).default;
-                        const qrcodes: QRCodeData = await showModal({
-                            page: Camera,
-                            fullscreen: true,
-                            props: {
-                                QRCodeOnly: true
-                            }
-                        });
-                        if (qrcodes?.length) {
+            switch (id) {
+                case 'camera':
+                    await importImageFromCamera({ document, inverseUseSystemCamera: false });
+                    break;
+                case 'import':
+                    await importDocument();
+                    break;
+                case 'import_image':
+                    await importAndScanImage({ canGoToView: false, forceGalleryPick: true, document, importPDFs: false });
+                    break;
+                case 'add_qrcode_camera':
+                    await requestCameraPermission();
+                    const Camera = (await import('~/components/camera/Camera.svelte')).default;
+                    const scanned: QRCodeData = await showModal({
+                        page: Camera,
+                        fullscreen: true,
+                        props: {
+                            QRCodeOnly: true
+                        }
+                    });
+                    if (scanned?.length) {
+                        //we add the qrcode to the first page (less risk of it being removed with the page)
+                        await addQRCodes(scanned);
+                        found = true;
+                    } else {
+                        showSnack({ message: lc('no_qrcode_found') });
+                    }
+                    DEV_LOG && console.log('qrcodes', scanned);
+                    break;
+                case 'add_qrcode_file':
+                    try {
+                        const data = await createImagePicker({
+                            mediaType: 1,
+                            mode: 'multiple'
+                        }).present();
+                        const detected = (
+                            await Promise.all(
+                                data.map((d) =>
+                                    detectQRCodeFromFile(d.path, {
+                                        resizeThreshold: QRCODE_RESIZE_THRESHOLD
+                                    })
+                                )
+                            )
+                        ).filter((q) => !!q);
+                        if (detected?.length) {
                             //we add the qrcode to the first page (less risk of it being removed with the page)
-                            await addQRCodes(qrcodes);
+                            await addQRCodes(detected.flat());
                             found = true;
                         } else {
                             showSnack({ message: lc('no_qrcode_found') });
                         }
-                        DEV_LOG && console.log('qrcodes', qrcodes);
-                        break;
-                    case 'add_qrcode_file':
-                        try {
-                            const data = await createImagePicker({
-                                mediaType: 1,
-                                mode: 'multiple'
-                            }).present();
-                            const qrcodes = (
-                                await Promise.all(
-                                    data.map((d) =>
-                                        detectQRCodeFromFile(d.path, {
-                                            resizeThreshold: QRCODE_RESIZE_THRESHOLD
-                                        })
-                                    )
-                                )
-                            ).filter((q) => !!q);
-                            if (qrcodes?.length) {
-                                //we add the qrcode to the first page (less risk of it being removed with the page)
-                                await addQRCodes(qrcodes.flat());
-                                found = true;
-                            } else {
-                                showSnack({ message: lc('no_qrcode_found') });
-                            }
-                        } catch (error) {
-                            //cancel will throw, we want to ignore it!
-                        }
-                        break;
-                    case 'add_qrcode_manual': {
-                        const result = await qrcodeService.createQRCode();
-                        if (result?.text?.length) {
-                            await addQRCodes([result]);
-                        }
-                        break;
+                    } catch (error) {
+                        //cancel will throw, we want to ignore it!
                     }
+                    break;
+                case 'add_qrcode_manual': {
+                    const result = await qrcodeService.createQRCode();
+                    if (result?.text?.length) {
+                        await addQRCodes([result]);
+                    }
+                    break;
                 }
-                await updateQRCodes();
-                if (found) {
-                    setTimeout(() => {
-                        qrPager?.nativeElement?.scrollToIndexAnimated(qrcodes?.length - 1, true);
-                    }, 10);
-                }
+            }
+            await updateQRCodes();
+            if (found) {
+                setTimeout(() => {
+                    qrPager?.nativeElement?.scrollToIndexAnimated(qrcodes?.length - 1, true);
+                }, 10);
             }
         } catch (error) {
             showError(error);
@@ -1020,47 +860,30 @@
         });
     }
 
-    async function showFullscreen(startPageIndex = 0) {
-        const component = (await import('~/components/FullScreenImageViewer.svelte')).default;
-        navigate({
-            page: component,
-            props: {
-                images: document.pages.map((page, index) => ({
-                    sharedTransitionTag: `document_${document.id}_${page.id}`,
-                    name: document.name,
-                    image: page.imagePath,
-                    ...page
-                })),
+    function showFullscreen(startPageIndex = 0) {
+        return openFullscreen(
+            document.pages.map((page) => ({
+                sharedTransitionTag: `document_${document.id}_${page.id}`,
+                name: document.name,
+                image: page.imagePath,
+                ...page
+            })),
+            {
                 keepScreenAwake: true,
                 onEdit: (index: number) => editPage(document.pages[index]),
+                onOCR: (index: number) => showOCRData(document, index),
                 screenBrightness: 1,
                 startPageIndex
             }
-        });
+        );
     }
 
-    function formatItemValue(item) {
-        if (item.extra) {
-            switch (item.extra.type) {
-                case ExtraFieldType.Date:
-                    return dayjs(item.extra.value).format(item.extra.format || 'LL');
-                default:
-                    return item.extra.value;
-            }
-        }
-    }
     function getItemBackgroundColor(item) {
         return isEInk ? null : (item.page?.extra?.color ?? item.page.colors?.[0] ?? document.extra?.color);
     }
-    function getItemLabelColor(item) {
-        return isEInk ? null : new Color(item.page.colors?.[0] || document.extra?.color).getBrightness() < 145 ? 'white' : 'black';
-    }
 </script>
 
-<appPage
-    bind:this={page}
-    id="cardview"
-    {...{ keepScreenAwake: hasQRCodes, screenBrightness: hasQRCodes ? 1 : -1, ...(isPKPassDocument ? { statusBarStyle: passColors.isDark ? 'dark' : 'light' } : __IOS__ && backdropImage && !isEInk ? { statusBarStyle: backdropIsDark ? 'dark' : 'light' } : {}) }}>
+<appPage bind:this={page} id="cardview" {...pageProps}>
     <appBar
         {bottomItems}
         android:backgroundColor={isPKPassDocument ? passColors.backgroundColor : accent.container}
@@ -1118,229 +941,175 @@
             </pager>
         {:else}
             <scrollview id="cardScroll">
-                <stacklayout paddingBottom={details.length ? 32 : 0}>
-                    <gridlayout rows="auto,auto,auto,auto">
-                        <!-- before iOS 26 the bar has no subtitle: the date is under the large title -->
-                        <label color={backdropTextColor} fontSize={15} margin="0 16 8 16" text={dayjs(document.createdDate).format('LL')} visibility={__IOS__ && Utils.SDK_VERSION < 26 ? 'visible' : 'collapsed'} />
-                        {#if __ANDROID__}
-                            <gridlayout backgroundColor={accent.container} borderRadius="0 0 40 12" columns="*,auto" padding="0 20 {hasHero ? PLATE_OVERLAP + 20 : 24} 20" rows="auto">
-                                <stacklayout margin="8 0 0 0">
-                                    <label color={colorOnBackground} fontSize={34} fontWeight="bold" maxLines={3} text={document.name} textWrap={true} />
-                                    <label color={colorOnSurfaceVariant} fontSize={15} text={dayjs(document.createdDate).format('LL')} />
-                                </stacklayout>
-                                <label
-                                    backgroundColor={accent.accent}
-                                    borderRadius={24}
-                                    col={1}
-                                    color={accent.onAccent}
-                                    fontSize={22}
-                                    fontWeight="bold"
-                                    height={48}
-                                    margin="8 0 0 12"
-                                    text={(document.name || '?').charAt(0).toUpperCase()}
-                                    textAlignment="center"
-                                    verticalAlignment="top"
-                                    verticalTextAlignment="center"
-                                    visibility={hasCustomName ? 'visible' : 'collapsed'}
-                                    width={48} />
-                            </gridlayout>
-                        {/if}
-                        {#if hasQRCodes}
-                            <gridlayout
-                                {...{ iosOverflowSafeArea: false }}
-                                height={CODE_ZONE_HEIGHT + (qrcodes?.length > 1 ? 32 : 0)}
-                                margin="{__ANDROID__ ? -PLATE_OVERLAP : 8} {__ANDROID__ && qrcodes?.length <= 1 ? 16 : 0} 8 {__ANDROID__ && qrcodes?.length <= 1 ? 16 : 0}"
-                                row={1}
-                                rows="*,auto">
-                                <pager
-                                    bind:this={qrPager}
-                                    id="qrPager"
-                                    items={qrcodes}
-                                    peaking={qrcodes?.length > 1 ? PEEK_WIDTH : 0}
-                                    selectedIndex={currentQRCodeIndex}
-                                    spacing={12}
-                                    on:selectedIndexChange={onSelectedIndex}>
-                                    <Template let:item>
-                                        <gridlayout
-                                            backgroundColor="white"
-                                            borderRadius={28}
-                                            elevation={isEInk || __ANDROID__ ? 0 : 6}
-                                            margin={qrcodes?.length > 1 ? '4 4 8 4' : __ANDROID__ ? '4 0 8 0' : '4 16 8 16'}
-                                            padding="20"
-                                            rows="*,auto"
-                                            on:tap={onQRCodeTap}>
-                                            <svgview src={item.svg} stretch="aspectFit" />
-                                            <label
-                                                color="black"
-                                                fontSize={17}
-                                                fontWeight="bold"
-                                                linkColor="black"
-                                                {...{ linkUnderline: false }}
-                                                lineBreak="end"
-                                                marginTop={8}
-                                                maxLines={2}
-                                                row={1}
-                                                selectable={true}
-                                                text={item.text}
-                                                textAlignment="center"
-                                                textWrap={true} />
-                                        </gridlayout>
-                                    </Template>
-                                </pager>
-                                {#if qrcodes?.length > 1}
-                                    <pagerindicator
-                                        color="rgba(128, 128, 128, 0.4)"
-                                        height={16}
-                                        horizontalAlignment="center"
-                                        marginBottom={8}
-                                        pagerViewId="qrPager"
-                                        row={1}
-                                        selectedColor={colorOnSurface}
-                                        type="worm" />
-                                {/if}
-                            </gridlayout>
-                        {/if}
-                        {#if hasImages}
+                <gridlayout paddingBottom={details.length ? 32 : 0} rows="auto,auto,auto,auto,auto">
+                    <label color={backdropTextColor} fontSize={15} margin="0 16 8 16" text={dayjs(document.createdDate).format('LL')} visibility={showDateUnderTitle ? 'visible' : 'collapsed'} />
+                    {#if __ANDROID__}
+                        <gridlayout backgroundColor={accent.container} borderRadius="0 0 40 12" columns="*,auto" padding="0 20 {hasHero ? PLATE_OVERLAP + 20 : 24} 20" rows="auto">
+                            <label margin="8 0 0 0" maxLines={4} textWrap={true}>
+                                <span color={colorOnBackground} fontSize={34} fontWeight="bold" text={document.name} />
+                                <span color={colorOnSurfaceVariant} fontSize={15} text={'\n' + dayjs(document.createdDate).format('LL')} />
+                            </label>
+                            <label
+                                backgroundColor={accent.accent}
+                                borderRadius={24}
+                                col={1}
+                                color={accent.onAccent}
+                                fontSize={22}
+                                fontWeight="bold"
+                                height={48}
+                                margin="8 0 0 12"
+                                text={(document.name || '?').charAt(0).toUpperCase()}
+                                textAlignment="center"
+                                verticalAlignment="top"
+                                verticalTextAlignment="center"
+                                visibility={hasCustomName ? 'visible' : 'collapsed'}
+                                width={48} />
+                        </gridlayout>
+                    {/if}
+                    {#if hasQRCodes}
+                        <gridlayout {...{ iosOverflowSafeArea: false }} height={CODE_ZONE_HEIGHT + (multipleQR ? 32 : 0)} margin={qrZoneMargin} row={1} rows="*,auto">
                             <pager
-                                bind:this={pager}
-                                id="imagesPager"
-                                height={photoPagerHeight}
-                                {items}
-                                margin="{__ANDROID__ && !hasQRCodes ? -PLATE_OVERLAP : 8} {nbImages > 1 ? 0 : 16} 0 {nbImages > 1 ? 0 : 16}"
-                                peaking={nbImages > 1 ? PEEK_WIDTH : 0}
-                                preserveIndexOnItemsChange={true}
-                                row={2}
+                                bind:this={qrPager}
+                                id="qrPager"
+                                items={qrcodes}
+                                peaking={multipleQR ? PEEK_WIDTH : 0}
+                                selectedIndex={currentQRCodeIndex}
                                 spacing={12}
-                                on:selectedIndexChange={onImagesPagerIndex}>
+                                on:selectedIndexChange={onSelectedIndex}>
                                 <Template let:item>
                                     <gridlayout
-                                        backgroundColor={getPhotoBackground(item.page)}
-                                        borderRadius={20}
-                                        boxShadow={__IOS__ ? '0 4 12 #00000040' : undefined}
-                                        verticalAlignment="top"
-                                        visibility={item.page.imagePath ? 'visible' : 'collapsed'}
-                                        on:loaded={(e) => registerImageMenu(e, item)}
-                                        on:longPress={() => onImageLongPress(item)}
-                                        on:tap={() => onPhotoTap(item)}>
-                                        <RotableImageView
-                                            id="imageView"
-                                            aspectRatio={1 / CARD_RATIO}
-                                            borderRadius={20}
-                                            decodeWidth={screenWidthDips}
-                                            item={item.page}
-                                            sharedTransitionTag={`document_${document.id}_${item.page.id}`}
-                                            stretch="aspectFill" />
-                                        <!-- the light edge of a card, at the top only -->
-                                        <gridlayout backgroundColor="#FFFFFF66" height={1} isUserInteractionEnabled={false} margin="0 14" verticalAlignment="top" />
-                                        <uibutton
-                                            class="photoEditButton"
-                                            accessibilityLabel={lc('adjust')}
-                                            height={36}
-                                            horizontalAlignment="right"
-                                            margin="0 12 12 0"
-                                            variant={photoEditVariant}
-                                            {...legacyPhotoEdit ? { backgroundColor: '#00000066', borderRadius: 18, color: '#FFFFFF' } : __ANDROID__ ? { backgroundColor: accent.container, color: accent.accent } : {}}
-                                            verticalAlignment="bottom"
-                                            width={36}
-                                            {...{ src: appIcon('edit') }}
-                                            on:tap={() => editPage(item.page)} />
+                                        backgroundColor="white"
+                                        borderRadius={28}
+                                        elevation={isEInk || __ANDROID__ ? 0 : 6}
+                                        margin={qrCardMargin}
+                                        padding="20"
+                                        rows="*,auto"
+                                        on:tap={onQRCodeTap}>
+                                        <svgview src={item.svg} stretch="aspectFit" />
+                                        <label
+                                            color="black"
+                                            fontSize={17}
+                                            fontWeight="bold"
+                                            linkColor="black"
+                                            {...{ linkUnderline: false }}
+                                            lineBreak="end"
+                                            marginTop={8}
+                                            maxLines={2}
+                                            row={1}
+                                            selectable={true}
+                                            text={item.text}
+                                            textAlignment="center"
+                                            textWrap={true} />
                                     </gridlayout>
                                 </Template>
                             </pager>
-                            <collectionview
-                                bind:this={collectionView}
-                                id="view"
-                                ios:autoReloadItemOnLayout={true}
-                                colWidth={FILMSTRIP_COL_WIDTH}
-                                height={FILMSTRIP_HEIGHT}
-                                {items}
-                                margin="8 0 8 0"
-                                orientation="horizontal"
-                                paddingLeft={filmstripPadding}
-                                paddingRight={filmstripPadding}
-                                row={3}
-                                rowHeight={FILMSTRIP_HEIGHT}
-                                visibility={nbImages > 1 ? 'visible' : 'collapsed'}>
-                                <Template let:index let:item>
-                                    <gridlayout
-                                        class="cardItemTemplate"
-                                        elevation={0}
-                                        margin={4}
-                                        rippleColor={colorSurface}
-                                        on:tap={() => onItemTap(item)}
-                                        on:longPress={() => onItemLongPress(item)}>
-                                        <!-- the content is what is scaled: the cell itself keeps its size and its touch handlers -->
-                                        <gridlayout class={item.current ? 'thumbnailCurrent' : 'thumbnail'} backgroundColor={getItemBackgroundColor(item)} borderRadius={6}>
-                                            <RotableImageView id="imageView" borderRadius={6} decodeWidth={FILMSTRIP_COL_WIDTH} item={item.page} stretch="aspectFill" width="100%" />
-                                            <gridlayout class="thumbnailScrim" backgroundColor="#00000066" borderRadius={6} isUserInteractionEnabled={false} />
-                                            <gridlayout
-                                                backgroundColor="rgba(0, 0, 0, 0.3)"
-                                                borderRadius={6}
-                                                isUserInteractionEnabled={false}
-                                                visibility={item.selected ? 'visible' : 'hidden'}>
-                                                <label
-                                                    backgroundColor={colorPrimary}
-                                                    borderColor="white"
-                                                    borderRadius={10}
-                                                    borderWidth={1.5}
-                                                    color="white"
-                                                    fontFamily={$fonts.mdi}
-                                                    fontSize={13}
-                                                    height={20}
-                                                    horizontalAlignment="right"
-                                                    margin={3}
-                                                    text="mdi-check"
-                                                    textAlignment="center"
-                                                    verticalAlignment="bottom"
-                                                    verticalTextAlignment="center"
-                                                    width={20} />
-                                            </gridlayout>
+                            {#if multipleQR}
+                                <pagerindicator color="#80808066" height={16} horizontalAlignment="center" marginBottom={8} pagerViewId="qrPager" row={1} selectedColor={colorOnSurface} type="worm" />
+                            {/if}
+                        </gridlayout>
+                    {/if}
+                    {#if hasImages}
+                        <pager
+                            bind:this={pager}
+                            id="imagesPager"
+                            height={photoPagerHeight}
+                            {items}
+                            margin={photosMargin}
+                            peaking={multiplePhotos ? PEEK_WIDTH : 0}
+                            preserveIndexOnItemsChange={true}
+                            row={2}
+                            spacing={12}
+                            on:selectedIndexChange={onImagesPagerIndex}>
+                            <Template let:item>
+                                <gridlayout
+                                    backgroundColor={getPhotoBackground(item.page)}
+                                    borderRadius={20}
+                                    boxShadow={__IOS__ ? '0 4 12 #00000040' : undefined}
+                                    verticalAlignment="top"
+                                    visibility={item.page.imagePath ? 'visible' : 'collapsed'}
+                                    on:loaded={(e) => registerImageMenu(e, item)}
+                                    on:longPress={() => onImageLongPress(item)}
+                                    on:tap={() => onPhotoTap(item)}>
+                                    <RotableImageView
+                                        id="imageView"
+                                        aspectRatio={1 / CARD_RATIO}
+                                        borderRadius={20}
+                                        decodeWidth={screenWidthDips}
+                                        item={item.page}
+                                        sharedTransitionTag={`document_${document.id}_${item.page.id}`}
+                                        stretch="aspectFill" />
+                                    <!-- the light edge of a card, at the top only -->
+                                    <gridlayout backgroundColor="#FFFFFF66" height={1} isUserInteractionEnabled={false} margin="0 14" verticalAlignment="top" />
+                                    <uibutton
+                                        class="photoEditButton"
+                                        accessibilityLabel={lc('adjust')}
+                                        height={36}
+                                        horizontalAlignment="right"
+                                        margin="0 12 12 0"
+                                        variant={photoEditVariant}
+                                        {...photoEditProps}
+                                        verticalAlignment="bottom"
+                                        width={36}
+                                        {...{ src: appIcon('edit') }}
+                                        on:tap={() => editPage(item.page)} />
+                                </gridlayout>
+                            </Template>
+                        </pager>
+                        <collectionview
+                            bind:this={collectionView}
+                            id="view"
+                            ios:autoReloadItemOnLayout={true}
+                            colWidth={FILMSTRIP_COL_WIDTH}
+                            height={FILMSTRIP_HEIGHT}
+                            {items}
+                            margin="8 0 8 0"
+                            orientation="horizontal"
+                            paddingLeft={filmstripPadding}
+                            paddingRight={filmstripPadding}
+                            row={3}
+                            rowHeight={FILMSTRIP_HEIGHT}
+                            visibility={multiplePhotos ? 'visible' : 'collapsed'}>
+                            <Template let:index let:item>
+                                <gridlayout class="cardItemTemplate" elevation={0} margin={4} rippleColor={colorSurface} on:tap={() => onItemTap(item)} on:longPress={() => toggleSelection(item)}>
+                                    <!-- the content is what is scaled: the cell itself keeps its size and its touch handlers -->
+                                    <gridlayout class={item.current ? 'thumbnailCurrent' : 'thumbnail'} backgroundColor={getItemBackgroundColor(item)} borderRadius={6}>
+                                        <RotableImageView id="imageView" borderRadius={6} decodeWidth={FILMSTRIP_COL_WIDTH} item={item.page} stretch="aspectFill" width="100%" />
+                                        <gridlayout class="thumbnailScrim" backgroundColor="#00000066" borderRadius={6} isUserInteractionEnabled={false} />
+                                        <gridlayout backgroundColor="#0000004D" borderRadius={6} isUserInteractionEnabled={false} visibility={item.selected ? 'visible' : 'hidden'}>
+                                            <label
+                                                backgroundColor={colorPrimary}
+                                                borderColor="white"
+                                                borderRadius={10}
+                                                borderWidth={1.5}
+                                                color="white"
+                                                fontFamily={$fonts.mdi}
+                                                fontSize={13}
+                                                height={20}
+                                                horizontalAlignment="right"
+                                                margin={3}
+                                                text="mdi-check"
+                                                textAlignment="center"
+                                                verticalAlignment="bottom"
+                                                verticalTextAlignment="center"
+                                                width={20} />
                                         </gridlayout>
                                     </gridlayout>
-                                </Template>
-                            </collectionview>
-                        {/if}
-                    </gridlayout>
-                    {#if details.length}
-                        {#if __ANDROID__}
-                            <stacklayout margin="16 16 0 16">
-                                {#each details as detail, index (detail.name)}
-                                    <stacklayout
-                                        backgroundColor={colorSurfaceContainerLow}
-                                        borderRadius={details.length === 1 ? 28 : index === 0 ? '28 28 6 6' : index === details.length - 1 ? '6 6 28 28' : 6}
-                                        marginTop={index > 0 ? 2 : 0}
-                                        padding="12 20 12 20">
-                                        <label color={colorOnSurfaceVariant} fontSize={13} text={detail.name} />
-                                        <label
-                                            color={colorOnSurface}
-                                            fontSize={17}
-                                            linkColor={colorOnSurface}
-                                            {...{ linkUnderline: false }}
-                                            selectable={true}
-                                            text={formatItemValue(detail)}
-                                            textWrap={true} />
-                                    </stacklayout>
-                                {/each}
-                            </stacklayout>
-                        {:else}
-                            <stacklayout backgroundColor={colorSurface} borderRadius={16} margin="16 16 0 16">
-                                {#each details as detail, index (detail.name)}
-                                    <stacklayout borderTopColor={colorOutlineVariant} borderTopWidth={index > 0 ? 0.5 : 0} padding="10 16 10 16">
-                                        <label color={colorOnSurfaceVariant} fontSize={13} text={detail.name} />
-                                        <label
-                                            color={colorOnSurface}
-                                            fontSize={17}
-                                            linkColor={colorOnSurface}
-                                            {...{ linkUnderline: false }}
-                                            selectable={true}
-                                            text={formatItemValue(detail)}
-                                            textWrap={true} />
-                                    </stacklayout>
-                                {/each}
-                            </stacklayout>
-                        {/if}
+                                </gridlayout>
+                            </Template>
+                        </collectionview>
                     {/if}
-                </stacklayout>
+
+                    {#if details.length}
+                        <stacklayout margin="16 16 0 16" row={4} {...detailsContainerProps}>
+                            {#each details as detail, index (detail.name)}
+                                <label linkColor={colorOnSurface} {...{ linkUnderline: false }} selectable={true} textWrap={true} {...getDetailRowProps(index, details.length)}>
+                                    <span color={colorOnSurfaceVariant} fontSize={13} text={detail.name} />
+                                    <span color={colorOnSurface} fontSize={17} text={'\n' + formatExtraValue(detail.extra)} />
+                                </label>
+                            {/each}
+                        </stacklayout>
+                    {/if}
+                </gridlayout>
             </scrollview>
             {#if isEmptyCard}
                 <CardViewEmpty {accent} onAddCode={(anchor) => showAddMenu('code', anchor)} onAddDetail={openEdit} onAddPhoto={(anchor) => showAddMenu('photo', anchor)} verticalAlignment="center" />

@@ -1,74 +1,39 @@
 <script lang="ts">
     import CardStatusChips from '~/components/common/CardStatusChips.svelte';
     import { lang } from '~/helpers/locale';
-    import { PKPass, PKPassData, PKPassField, PKPassStructure, PKPassStyle, PKPassTransitType, PKPassType } from '~/models/PKPass';
+    import { PKPass, PKPassStyle, PKPassType } from '~/models/PKPass';
     import { getFieldTextAlignment, getPKPassColors, getPKPassStatus, getTransitIcon, type PKPassStatusLayout } from '~/utils/pkpass';
     import { colors } from '~/variables';
     import { Item } from '~/components/list/MainList.svelte';
-    import type { CardStatus } from '~/utils/cardStatus';
 
     const FIELD_LINE_HEIGHT = 15;
+    const stars = (count: number) => Array(count).fill('*').join(',');
 
     export let item: Item = null;
     export let pkpass: PKPass;
     export let itemWidth: number;
     export let layout: Exclude<PKPassStatusLayout, 'list'> = 'full';
 
-    let { colorOnBackground, colorOnPrimary, colorSurface } = $colors;
-    $: ({ colorOnBackground, colorOnPrimary, colorSurface } = $colors);
+    $: ({ colorSurface } = $colors);
 
-    let passData: PKPassData;
-    let foregroundColor: string;
-    let labelColor: string;
-    let backgroundColor: string;
-    let logoImage: string;
-    let iconImage: string;
-    let thumbnailImage: string;
-    let stripImage: string;
-    let structure: PKPassStructure;
-    let primaryFields: PKPassField[];
-    let headerFields: PKPassField[];
-    let secondaryFields: PKPassField[];
-    let auxiliaryFields: PKPassField[];
-    let secondaryFieldsCount: number;
-    let primaryFieldsCount: number;
-    let headerFieldsCount: number;
-    let auxiliaryFieldsCount: number;
-    let transitType: PKPassTransitType;
-    let transitIcon: string;
-    let status: CardStatus[];
-    let withTransitionIcon: boolean;
+    $: passData = pkpass?.passData;
+    $: ({ backgroundColor, foregroundColor, labelColor } = getPKPassColors(passData, colorSurface));
+    // Apple PKPass image specifications - prefer @2x for quality
+    $: logoImage = pkpass?.images?.logo2x || pkpass?.images?.logo; // Max 160x50 points
+    $: iconImage = pkpass?.images?.icon2x || pkpass?.images?.icon; // 29x29 points
+    $: thumbnailImage = pkpass?.images?.thumbnail2x || pkpass?.images?.thumbnail; // 90x90 points
+    $: stripImage = pkpass?.images?.strip2x || pkpass?.images?.strip; // Variable dimensions
+    $: structure = pkpass.getPassStructure();
+    $: primaryFields = structure?.primaryFields || [];
+    $: headerFields = structure?.headerFields || [];
+    $: secondaryFields = structure?.secondaryFields || [];
+    $: auxiliaryFields = structure?.auxiliaryFields || [];
+    $: status = getPKPassStatus(pkpass, lang, layout);
+    $: transitIcon = getTransitIcon(structure?.transitType);
+    $: withTransitionIcon = transitIcon && primaryFields.length === 2;
 
     // Get organization name
     $: orgName = passData?.organizationName || getLocalizedText(passData?.logoText) || item?.doc?.name || '';
-
-    $: updatePkPass(pkpass);
-
-    function updatePkPass(pkpass: PKPass) {
-        passData = pkpass?.passData;
-        ({ backgroundColor, foregroundColor, labelColor } = getPKPassColors(passData, colorSurface));
-        // Apple PKPass image specifications - prefer @2x for quality
-        logoImage = pkpass?.images?.logo2x || pkpass?.images?.logo; // Max 160x50 points
-        iconImage = pkpass?.images?.icon2x || pkpass?.images?.icon; // 29x29 points
-        thumbnailImage = pkpass?.images?.thumbnail2x || pkpass?.images?.thumbnail; // 90x90 points
-        stripImage = pkpass?.images?.strip2x || pkpass?.images?.strip; // Variable dimensions
-        structure = pkpass.getPassStructure();
-        primaryFields = structure?.primaryFields || [];
-        headerFields = structure?.headerFields || [];
-        secondaryFields = structure?.secondaryFields || [];
-        auxiliaryFields = structure?.auxiliaryFields || [];
-        secondaryFieldsCount = secondaryFields.length;
-        primaryFieldsCount = primaryFields.length;
-        headerFieldsCount = headerFields.length;
-        auxiliaryFieldsCount = auxiliaryFields.length;
-        status = getPKPassStatus(pkpass, lang, layout);
-        transitType = structure?.transitType;
-        transitIcon = getTransitIcon(transitType);
-        withTransitionIcon = transitIcon && primaryFieldsCount === 2;
-
-        // Get organization name
-        orgName = passData?.organizationName || getLocalizedText(passData?.logoText) || item?.doc?.name || '';
-    }
 
     // Calculate scale factor based on card width (credit card aspect ratio ~1.586:1)
     $: scaleFactor = itemWidth / 320; // Base width 320px
@@ -129,7 +94,7 @@
             </stacklayout>
 
             <!-- Right: Important data (header fields like gate, seat, date) -->
-            <gridlayout col={2} columns={Array.from('*'.repeat(headerFieldsCount)).join(',')} marginBottom={10 * scaleFactor} visibility={headerFieldsCount > 0 ? 'visible' : 'collapsed'}>
+            <gridlayout col={2} columns={stars(headerFields.length)} marginBottom={10 * scaleFactor} visibility={headerFields.length > 0 ? 'visible' : 'collapsed'}>
                 {#each { length: 4 } as _, index (index)}
                     {@const field = structure?.headerFields?.[index]}
                     <label col={index} maxLines={2} paddingLeft={index !== 0 ? 12 * scaleFactor : 0} textAlignment={getFieldTextAlignment(field, 'right')} visibility={field ? 'visible' : 'collapsed'}>
@@ -175,10 +140,10 @@
                 <cspan color={foregroundColor} fontSize={28 * scaleFactor} fontWeight="bold" text={getFieldValue(primaryFields[1])} />
             </label>
             <!-- Standard layout for primary fields -->
-            <gridlayout columns={Array.from('*'.repeat(primaryFieldsCount)).join(',')} visibility={!withTransitionIcon && primaryFieldsCount > 0 ? 'visible' : 'collapsed'}>
+            <gridlayout columns={stars(primaryFields.length)} visibility={!withTransitionIcon && primaryFields.length > 0 ? 'visible' : 'collapsed'}>
                 {#each { length: 4 } as _, index (index)}
                     {@const field = primaryFields?.[index]}
-                    <label col={index} marginTop={4 * scaleFactor} maxLines={2} padding={index !== 0 && index !== auxiliaryFieldsCount - 1 ? '0 10 0 10' : 0}>
+                    <label col={index} marginTop={4 * scaleFactor} maxLines={2} padding={index !== 0 && index !== primaryFields.length - 1 ? '0 10 0 10' : 0}>
                         <cspan
                             color={labelColor}
                             fontSize={10 * scaleFactor}
@@ -194,39 +159,17 @@
         </gridlayout>
 
         <!-- Bottom row: Secondary and auxiliary fields -->
-        <!-- Left: Secondary fields -->
-        <gridlayout colSpan={3} columns={Array.from('*'.repeat(secondaryFieldsCount)).join(',')} row={2} visibility={secondaryFieldsCount > 0 ? 'visible' : 'collapsed'}>
-            {#each { length: 4 } as _, index (index)}
-                {@const field = secondaryFields[index]}
-                <label col={index} maxLines={2} padding={index !== 0 && index !== secondaryFieldsCount - 1 ? '0 10 0 10' : 0}>
-                    <cspan color={labelColor} fontSize={9 * scaleFactor} lineHeight={FIELD_LINE_HEIGHT * scaleFactor} text={getFieldLabel(field)} />
-                    <cspan color={foregroundColor} fontSize={11 * scaleFactor} fontWeight="600" text={getFieldValue(field)} />
-                </label>
-            {/each}
-        </gridlayout>
-
-        <!-- Left: Auxiliary fields -->
-        <gridlayout colSpan={3} columns={Array.from('*'.repeat(auxiliaryFieldsCount)).join(',')} row={3} visibility={auxiliaryFieldsCount > 0 ? 'visible' : 'collapsed'}>
-            {#each { length: 4 } as _, index (index)}
-                {@const field = auxiliaryFields[index]}
-                <label col={index} maxLines={2} padding={index !== 0 && index !== auxiliaryFieldsCount - 1 ? '0 10 0 10' : 0}>
-                    <cspan color={labelColor} fontSize={9 * scaleFactor} lineHeight={FIELD_LINE_HEIGHT * scaleFactor} text={getFieldLabel(field)} />
-                    <cspan color={foregroundColor} fontSize={11 * scaleFactor} fontWeight="600" text={getFieldValue(field)} />
-                </label>
-            {/each}
-        </gridlayout>
-
-        <!-- Right: Auxiliary fields -->
-        <!-- {#if auxiliaryFieldsCount > 0}
-                <stacklayout col={1} horizontalAlignment="right" orientation="horizontal">
-                    {#each auxiliaryFields as field, idx}
-                        <stacklayout marginLeft={idx > 0 ? 8 * scaleFactor : 0}>
-                            <label color={labelColor} fontSize={9 * scaleFactor} text={getFieldLabel(field)} textAlignment="right" />
-                            <label color={foregroundColor} fontSize={11 * scaleFactor} fontWeight="600" text={getFieldValue(field)} textAlignment="right" />
-                        </stacklayout>
-                    {/each}
-                </stacklayout>
-            {/if} -->
+        {#each [secondaryFields, auxiliaryFields] as fields, offset}
+            <gridlayout colSpan={3} columns={stars(fields.length)} row={2 + offset} visibility={fields.length > 0 ? 'visible' : 'collapsed'}>
+                {#each { length: 4 } as _, index (index)}
+                    {@const field = fields[index]}
+                    <label col={index} maxLines={2} padding={index !== 0 && index !== fields.length - 1 ? '0 10 0 10' : 0}>
+                        <cspan color={labelColor} fontSize={9 * scaleFactor} lineHeight={FIELD_LINE_HEIGHT * scaleFactor} text={getFieldLabel(field)} />
+                        <cspan color={foregroundColor} fontSize={11 * scaleFactor} fontWeight="600" text={getFieldValue(field)} />
+                    </label>
+                {/each}
+            </gridlayout>
+        {/each}
     </gridlayout>
     <!-- like the other cards: at the top, an expired pass at the right over its data -->
     <CardStatusChips

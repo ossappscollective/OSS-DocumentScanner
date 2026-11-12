@@ -12,7 +12,6 @@
     import { appIcon } from '~/utils/appIcons';
     import { colors, windowInset } from '~/variables';
 
-    let { colorOnSurface, colorOnSurfaceVariant, colorSurfaceContainerLow } = $colors;
     $: ({ colorOnSurface, colorOnSurfaceVariant, colorSurfaceContainerLow } = $colors);
 
     export let pages: OCRPage[];

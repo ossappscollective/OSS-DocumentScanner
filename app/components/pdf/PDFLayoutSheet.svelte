@@ -10,6 +10,7 @@
     import { appIcon } from '~/utils/appIcons';
     import { DEFAULT_PDF_OPTIONS, PDF_LAYOUT_KEYS } from '~/utils/constants';
     import { PDF_OPTIONS } from '~/utils/localized_constant';
+    import { createSwitchRowTap } from '~/utils/switchRow';
     import { colors, windowInset } from '~/variables';
     import SheetHeader from '../common/SheetHeader.svelte';
     import SheetRoot from '../common/SheetRoot.svelte';
@@ -79,29 +80,30 @@
         }
         onOpenSettings();
     }
-    // the switch does not toggle on a tap: the row does it for it, unless the switch was tapped itself
-    let switchTapTimer: ReturnType<typeof setTimeout> = null;
-    function clearSwitchTapTimer() {
-        clearTimeout(switchTapTimer);
-        switchTapTimer = null;
-    }
+    const switchRowTap = createSwitchRowTap();
     function onSwitchRowTap(key: string, value: string | boolean) {
-        clearSwitchTapTimer();
-        switchTapTimer = setTimeout(() => setOption(key, value), 10);
+        switchRowTap.onRowTap(() => setOption(key, value));
     }
     function onSwitchChanged(key: string, value: string | boolean) {
-        clearSwitchTapTimer();
+        switchRowTap.cancel();
         setOption(key, value);
     }
     function addItems(delta: number) {
         setOption('items_per_page', Math.max(ITEMS_MIN, Math.min(ITEMS_MAX, items_per_page + delta)));
     }
+    // iOS 26: UIKit hides what scrolls under the toolbar behind a blur and a line: the list is seen scrolling behind the buttons
+    function hideScrollEdgeEffect(event: { object: View }) {
+        const scrollView = __IOS__ ? event.object.nativeViewProtected : null;
+        if (scrollView?.bottomEdgeEffect) {
+            scrollView.bottomEdgeEffect.hidden = true;
+        }
+    }
 </script>
 
 <!-- Android: the grabber of the modal sheet pushes the content down by 28 inside the detent -->
 <SheetRoot height={__ANDROID__ && !inline ? sheetHeight - 28 : sheetHeight} {inline} rows="auto,*" {...__IOS__ && !inline ? { backgroundColor: glass ? 'transparent' : colorBackground } : {}} {...$$restProps}>
-    <SheetHeader actionEnabled={modified} actionText={lc('reset')} doneText={inline ? lc('done') : undefined} onAction={onReset} onCancel={() => undefined} onDone={onClose} showCancel={false} title={lc('page_layout')} />
-    <collectionview id={scrollId} items={contentItems} row={1}>
+    <SheetHeader actionEnabled={modified} actionText={lc('reset')} doneText={inline ? lc('done') : undefined} onAction={onReset} onDone={onClose} showCancel={false} title={lc('page_layout')} />
+    <collectionview id={scrollId} items={contentItems} row={1} on:loaded={hideScrollEdgeEffect}>
         <Template let:item>
             {@const { color, draw_ocr_text, fullSize, items_per_page, orientation, page_padding, paper_size } = item}
             <stacklayout android:paddingBottom={$windowInset.bottom} ios:paddingBottom={$windowInset.bottom + 16}>

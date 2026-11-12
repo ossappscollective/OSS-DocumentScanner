@@ -6,7 +6,7 @@
     import { Img } from '@nativescript-community/ui-image';
     import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { type MenuItem, showMenu } from '@nativescript-community/ui-menu';
-    import { AnimationDefinition, Application, ApplicationSettings, EventData, ObservableArray, Page, PageTransition, SharedTransition, StackLayout, View } from '@nativescript/core';
+    import { AnimationDefinition, Application, ApplicationSettings, EventData, Page, PageTransition, SharedTransition, StackLayout, View } from '@nativescript/core';
     import { AndroidActivityBackPressedEventData } from '@nativescript/core/application';
     import { showError } from '@shared/utils/showError';
     import { goBack, navigate, showModal } from '@shared/utils/svelte/ui';
@@ -36,16 +36,12 @@
         DEFAULT_NB_COLUMNS_VIEW,
         DEFAULT_NB_COLUMNS_VIEW_LANDSCAPE,
         DOCUMENT_TILE_RATIO,
-        EVENT_DOCUMENT_DELETED,
-        EVENT_DOCUMENT_PAGES_ADDED,
-        EVENT_DOCUMENT_PAGE_DELETED,
-        EVENT_DOCUMENT_PAGE_UPDATED,
-        EVENT_DOCUMENT_UPDATED,
         SETTINGS_NB_COLUMNS_VIEW,
         SETTINGS_NB_COLUMNS_VIEW_LANDSCAPE,
         SHEET_PAN_SOFT_INPUT_MODE
     } from '~/utils/constants';
     import { getSyncedServices, getTileRadius, isAutoName } from '~/utils/documentCell';
+    import { getSelectedPages, subscribeDocumentEvents } from '~/utils/documentView';
     import { computeStorageSizes } from '~/utils/originals';
     import {
         deleteOriginalImages,
@@ -57,6 +53,7 @@
         onBackButton,
         showImagePopoverMenu,
         showLoading,
+        showOCRData,
         showPDFPopoverMenu,
         transformPages,
         tryCatchFunction
@@ -98,11 +95,12 @@
     $: tileHeight = itemWidth * DOCUMENT_TILE_RATIO + 2 * rowMargin;
     $: tileRadius = getTileRadius(itemWidth, itemWidth * DOCUMENT_TILE_RATIO);
 
-    prefs.on(`key:${SETTINGS_NB_COLUMNS_VIEW}`, () => (nbColumns = updateColumns($isLandscape)));
-    prefs.on(`key:${SETTINGS_NB_COLUMNS_VIEW_LANDSCAPE}`, () => (nbColumns = updateColumns($isLandscape)));
+    const onNbColumnsPreferenceChanged = () => (nbColumns = updateColumns($isLandscape));
+    prefs.on(`key:${SETTINGS_NB_COLUMNS_VIEW}`, onNbColumnsPreferenceChanged);
+    prefs.on(`key:${SETTINGS_NB_COLUMNS_VIEW_LANDSCAPE}`, onNbColumnsPreferenceChanged);
 
     const pages = document.getObservablePages();
-    let items = pages.map((page, index) => ({ selected: false, page, index })) as any as ObservableArray<Item>;
+    let items = pages.map<Item>((page, index) => ({ selected: false, page, index }));
 
     $: favorite = document.favorite === 1;
     $: hasOriginals = document.pages.some((current) => current.sourceImagePath);
@@ -123,7 +121,7 @@
             {
                 title: lc('share_images'),
                 icon: appIcon('image'),
-                onSelect: () => showImageExportPopover(nbSelected > 0 ? getSelectedPages() : document.pages.map((current) => ({ page: current, document })))
+                onSelect: () => showImageExportPopover(nbSelected > 0 ? getSelectedPages(items, document) : document.pages.map((current) => ({ page: current, document })))
             }
         ];
     }
@@ -135,6 +133,7 @@
                 { id: 'reorder', name: lc('reorder_pages') },
                 { id: 'move_folder', name: lc('move_folder') },
                 { id: 'ocr', name: lc('ocr_document') },
+                { id: 'show_ocr', name: lc('show_ocr_text') },
                 { id: 'transform', name: lc('transform_images') },
                 ...(withOriginals ? [{ id: 'delete_originals', name: lc('delete_original_images') }] : []),
                 { id: 'delete', name: lc('delete') }
@@ -146,6 +145,7 @@
         return optionsToMenuItems(
             [
                 { id: 'select_all', name: lc('select_all') },
+                { id: 'show_ocr', name: lc('show_ocr_text') },
                 { id: 'transform', name: lc('transform_images') },
                 ...(withOriginals ? [{ id: 'delete_originals', name: lc('delete_original_images') }] : [])
             ],
@@ -194,7 +194,7 @@
 
     async function showPDFPopover() {
         try {
-            const selected = nbSelected > 0 ? getSelectedPages() : document.pages.map((current) => ({ page: current, document }));
+            const selected = nbSelected > 0 ? getSelectedPages(items, document) : document.pages.map((current) => ({ page: current, document }));
             await showPDFPopoverMenu({ pages: selected, document, anchor: page?.nativeView, documents: [document] });
         } catch (err) {
             showError(err);
@@ -257,24 +257,12 @@
         }
     }
 
-    function selectItem(item: Item) {
-        if (!item.selected) {
+    function setSelected(item: Item, selected: boolean) {
+        if (item.selected !== selected) {
             items.some((d, index) => {
                 if (d === item) {
-                    nbSelected++;
-                    d.selected = true;
-                    items.setItem(index, d);
-                    return true;
-                }
-            });
-        }
-    }
-    function unselectItem(item: Item) {
-        if (item.selected) {
-            items.some((d, index) => {
-                if (d === item) {
-                    nbSelected--;
-                    d.selected = false;
+                    nbSelected += selected ? 1 : -1;
+                    d.selected = selected;
                     items.setItem(index, d);
                     return true;
                 }
@@ -293,45 +281,8 @@
             nbSelected = items.length;
         }
     }
-    // the first selection starts from a long press, the next ones from a tap
-    function startSelection(item: Item) {
-        if (nbSelected === 0) {
-            selectItem(item);
-        }
-    }
-
-    function getSelectedPages() {
-        const selected: { page: OCRPage; document: OCRDocument }[] = [];
-        items.forEach((d) => {
-            if (d.selected) {
-                selected.push({ page: d.page, document });
-            }
-        });
-        return selected;
-    }
-    function getSelectedPagesWithData() {
-        const selected: { page: OCRPage; pageIndex: number; document: OCRDocument }[] = [];
-        items.forEach((d, index) => {
-            if (d.selected) {
-                selected.push({ page: d.page, document, pageIndex: index });
-            }
-        });
-        return selected;
-    }
-
     function toggleSelection(item: Item) {
-        if (item.selected) {
-            unselectItem(item);
-        } else {
-            selectItem(item);
-        }
-    }
-    function onItemLongPress(item: Item) {
-        if (nbSelected > 0) {
-            toggleSelection(item);
-        } else {
-            startSelection(item);
-        }
+        setSelected(item, !item.selected);
     }
     async function onItemTap(item: Item) {
         try {
@@ -423,7 +374,7 @@
         try {
             if (items) {
                 const length = items.length;
-                items.push(...event.pages.map((page, index) => ({ page, selected: false, index: length })));
+                items.push(...event.pages.map((page, index) => ({ page, selected: false, index: length + index })));
             }
         } catch (error) {
             showError(error, { silent: true });
@@ -492,24 +443,23 @@
         if (__ANDROID__) {
             Application.android.on(Application.android.activityBackPressedEvent, onAndroidBackButton);
         }
-        documentsService.on(EVENT_DOCUMENT_UPDATED, onDocumentUpdated);
-        documentsService.on(EVENT_DOCUMENT_DELETED, onDocumentsDeleted);
-        documentsService.on(EVENT_DOCUMENT_PAGE_DELETED, onDocumentPageDeleted);
-        documentsService.on(EVENT_DOCUMENT_PAGE_UPDATED, onDocumentPageUpdated);
-        documentsService.on(EVENT_DOCUMENT_PAGES_ADDED, onPagesAdded);
         documentsService.documentRepository.incrementUsage(document).catch(() => {});
+        return subscribeDocumentEvents({
+            updated: onDocumentUpdated,
+            deleted: onDocumentsDeleted,
+            pageDeleted: onDocumentPageDeleted,
+            pageUpdated: onDocumentPageUpdated,
+            pagesAdded: onPagesAdded
+        });
     });
     onDestroy(() => {
         items = null;
+        prefs.off(`key:${SETTINGS_NB_COLUMNS_VIEW}`, onNbColumnsPreferenceChanged);
+        prefs.off(`key:${SETTINGS_NB_COLUMNS_VIEW_LANDSCAPE}`, onNbColumnsPreferenceChanged);
         Application.off('snackMessageAnimation', onSnackMessageAnimation);
         if (__ANDROID__) {
             Application.android.off(Application.android.activityBackPressedEvent, onAndroidBackButton);
         }
-        documentsService.off(EVENT_DOCUMENT_UPDATED, onDocumentUpdated);
-        documentsService.off(EVENT_DOCUMENT_DELETED, onDocumentsDeleted);
-        documentsService.off(EVENT_DOCUMENT_PAGE_DELETED, onDocumentPageDeleted);
-        documentsService.off(EVENT_DOCUMENT_PAGE_UPDATED, onDocumentPageUpdated);
-        documentsService.off(EVENT_DOCUMENT_PAGES_ADDED, onPagesAdded);
     });
 
     function refreshCollectionView() {
@@ -572,6 +522,9 @@
                 case 'ocr':
                     await detectOCR({ documents: [document] });
                     break;
+                case 'show_ocr':
+                    await showOCRData(document);
+                    break;
                 case 'transform':
                     await transformPages({ documents: [document] });
                     break;
@@ -593,14 +546,17 @@
                 case 'select_all':
                     selectAll();
                     break;
+                case 'show_ocr':
+                    await showOCRData(document, getSelectedPages(items, document)[0]?.pageIndex);
+                    break;
                 case 'ocr':
-                    result = await detectOCR({ pages: getSelectedPagesWithData() });
+                    result = await detectOCR({ pages: getSelectedPages(items, document) });
                     break;
                 case 'transform':
-                    result = await transformPages({ pages: getSelectedPagesWithData() });
+                    result = await transformPages({ pages: getSelectedPages(items, document) });
                     break;
                 case 'delete_originals':
-                    result = await deleteOriginalImages({ pages: getSelectedPagesWithData() });
+                    result = await deleteOriginalImages({ pages: getSelectedPages(items, document) });
                     break;
                 case 'delete':
                     result = await deleteSelectedPages();
@@ -718,7 +674,7 @@
                     selected={item.selected}
                     width={itemWidth}
                     on:tap={() => onItemTap(item)}
-                    on:longPress={() => onItemLongPress(item)} />
+                    on:longPress={() => toggleSelection(item)} />
             </Template>
         </collectionview>
         {#if __ANDROID__ && nbSelected === 0}

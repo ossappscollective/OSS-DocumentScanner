@@ -6,7 +6,7 @@
     export let title: string;
     export let doneText: string = undefined;
     export let doneEnabled = true;
-    export let onCancel: () => void;
+    export let onCancel: () => void = undefined;
     export let onDone: () => void = undefined;
     /** an icon action next to the done action (add a field...) */
     export let actionIcon: string = undefined;

@@ -24,9 +24,6 @@
     const textColor = isEInk ? colorOnBackground : 'white';
 
     export let items: ImportImageData[] = [];
-    // export let editingImage;
-    // export let quads;
-    // export let qrcode: QRCodeData = null;
     function onTapFinish() {
         closeModal(items);
     }
@@ -57,11 +54,9 @@
     });
 
     let currentIndex = 0;
-    let currentItem: ImportImageData = items[currentIndex];
+    $: currentItem = items[currentIndex];
     function onSelectedIndex(event) {
         currentIndex = event.object.selectedIndex;
-        currentItem = items[currentIndex];
-        // DEV_LOG && console.log('onSelectedIndex', currentIndex, items.length);
     }
     function changePage(delta) {
         currentIndex += delta;
@@ -73,12 +68,11 @@
         const imageWidth = shouldInverse ? item.imageHeight : item.imageWidth;
         const imageHeight = shouldInverse ? item.imageWidth : item.imageHeight;
         DEV_LOG && console.log('resetCrop', item);
-        // const editingImage = item.editingImage;
         item.quads = item.quads.map((quad) => [
             [0, 0],
-            [imageWidth - 0, 0],
-            [imageWidth - 0, imageHeight - 0],
-            [0, imageHeight - 0]
+            [imageWidth, 0],
+            [imageWidth, imageHeight],
+            [0, imageHeight]
         ]);
         pager.nativeView.refreshVisibleItems();
     }
@@ -95,7 +89,7 @@
     }
     async function onUndosChanged() {
         //trigger update
-        currentItem = currentItem;
+        items = items;
     }
 </script>
 

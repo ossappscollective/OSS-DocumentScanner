@@ -15,6 +15,8 @@
     import { OCRData, QRCodeData, Quad, getImageSize } from 'plugin-nativeprocessor';
     import { onDestroy, onMount } from 'svelte';
     import { Writable } from 'svelte/store';
+    import PageCounter from '~/components/common/PageCounter.svelte';
+    import PersistentSheetFrame, { SHEET_GRABBER_HEIGHT } from '~/components/common/PersistentSheetFrame.svelte';
     import RotableImageView from '~/components/common/RotableImageView.svelte';
     import SheetHeader from '~/components/common/SheetHeader.svelte';
     import AdjustSheet from '~/components/widgets/ImageProcessingSettingsBottomSheet.svelte';
@@ -29,18 +31,20 @@
     import { DEFAULT_BRIGHTNESS, DEFAULT_COLORTYPE, DEFAULT_CONTRAST, EVENT_DOCUMENT_DELETED, EVENT_DOCUMENT_PAGE_UPDATED, EVENT_DOCUMENT_UPDATED, TRANSFORMS_SPLIT } from '~/utils/constants';
     import { hasOriginalImage } from '~/utils/originals';
     import { createPageSheetTranslation, getPageFit, setPageFit } from '~/utils/pageSheet';
+    import { getIOSBottomInset, getIOSViewBottomInset, measureWidth } from '~/utils/safeArea';
     import {
         detectOCROnPage,
         hideLoading,
         onBackButton,
         getExportMenu,
         showLoading,
+        showOCRData,
         showSnack
     } from '~/utils/ui';
     import { colors, screenHeightDips, windowInset } from '~/variables';
 
     // technique for only specific properties to get updated on store change
-    $: ({ colorBackground, colorOnBackground, colorOutlineVariant, colorSecondaryContainer, colorSurfaceContainerLow } = $colors);
+    $: ({ colorOnBackground } = $colors);
 
     export let startPageIndex: number = 0;
     DEV_LOG && console.log('startPageIndex', startPageIndex);
@@ -63,20 +67,26 @@
     let adjusting = false;
     // the adjust sheet is a persistent sheet of the page: a grabber, a header, the list of the adjustments, and the room of the bottom toolbar under them.
     // The pager keeps its width: each page scales and moves with the sheet (so the neighbors stay seen), and the pages stay interactive
-    const SHEET_GRABBER_HEIGHT = 28;
     const SHEET_HEADER_HEIGHT = 64;
     const ADJUST_LIST_HEIGHT = Math.round(screenHeightDips * 0.4);
     let sheet: NativeViewElementNode<PersistentBottomSheet>;
     // the sheet goes down to the bottom of the screen, over the place of the toolbar: the list scrolls under the safe area
-    $: sheetHeight = SHEET_GRABBER_HEIGHT + SHEET_HEADER_HEIGHT + ADJUST_LIST_HEIGHT;
-    $: steps = [0, sheetHeight];
+    const sheetHeight = SHEET_GRABBER_HEIGHT + SHEET_HEADER_HEIGHT + ADJUST_LIST_HEIGHT;
+    const steps = [0, sheetHeight];
+    // iOS: the sheet stops at the safe area, and goes under it: it is taller and its list scrolls above the home indicator
+    let bottomInset = getIOSBottomInset();
     // the width of the sheet is the one of the page: a percentage in the layout of the sheet made it wider than the screen
     let sheetWidth: number;
-    function onSheetLayout() {
-        const width = Utils.layout.toDeviceIndependentPixels(sheet?.nativeView?.getMeasuredWidth() ?? 0);
-        if (width && Math.abs(width - (sheetWidth ?? 0)) > 1) {
-            sheetWidth = width;
+    // iOS: the bottom toolbar comes and goes after the layout of the sheet
+    // the toolbar is not there while the sheet is open: its room is kept
+    function updateBottomInset() {
+        if (!adjusting && !toolbarHidden) {
+            bottomInset = getIOSViewBottomInset(sheet?.nativeView) || bottomInset;
         }
+    }
+    function onSheetLayout() {
+        updateBottomInset();
+        sheetWidth = measureWidth(sheet?.nativeView, sheetWidth);
     }
     // the sizes of the views do not change with the transformations: they are measured when the sheet opens
     let pageArea: { containerHeight: number; areaHeight: number; areaWidth: number };
@@ -137,9 +147,6 @@
     function closeAdjustments() {
         sheet?.nativeView?.animateStepIndex(0);
     }
-
-    // const whitepaper = writable(transforms.indexOf('whitepaper') !== -1);
-    // const enhanced = writable(transforms.indexOf('enhance') !== -1);
 
     // the popovers still need a view to be anchored to
     function getAnchor() {
@@ -204,26 +211,9 @@
         if (adjusting) {
             setTimeout(syncPageViews, 50);
         }
-        // DEV_LOG && console.log('onSelectedIndex', currentIndex, items.length, currentSelectedImagePath, currentSelectedImageRotation, currentItemQRCodeData);
 
         updateCurrentItem(items.getItem(currentIndex));
-        // $whitepaper = transforms.indexOf('whitepaper') !== -1;
-        // $enhanced = transforms.indexOf('enhance') !== -1;
     }
-    // function onFirstLayout(item, e) {
-    //     console.log('onFirstLayout');
-    //     if (item.rotation % 180 === 90) {
-    //         const currentWidth = layout.toDeviceIndependentPixels(e.object.getMeasuredWidth());
-    //         const currentHeight = layout.toDeviceIndependentPixels(e.object.getMeasuredHeight());
-    //         const delta = item.rotation % 180 === 0 ? 0 : (currentWidth - currentHeight) / 2;
-    //         Object.assign(e.object, {
-    //             translateX: delta,
-    //             translateY: -delta,
-    //             width: currentHeight,
-    //             height: currentWidth
-    //         });
-    //     }
-    // }
 
     async function onImageRotated(item, event) {
         try {
@@ -244,26 +234,10 @@
             }
 
             currentSelectedImageRotation = item.rotation;
-            // items.setItem(currentIndex, item);
         } catch (error) {
             showError(error);
         }
     }
-    // $: {
-    //     colorType = document.pages[currentIndex].colorType || 0;
-    // }
-    // async function setColorType(type: number) {
-    //     colorType = type;
-    //     try {
-    //         await document.updatePage(currentIndex, {
-    //             colorType: type
-    //             // colorMatrix: getColorMatrix(type)
-    //         });
-    //         // pages.setItem(currentIndex, current);
-    //     } catch (err) {
-    //         showError(err);
-    //     }
-    // }
 
     function getCurrentImageView() {
         return pager?.nativeView.getChildView(currentIndex)?.getViewById<Img>('imageView');
@@ -293,23 +267,7 @@
 
     async function showCurrentOCRData() {
         try {
-            const item = items.getItem(currentIndex);
-
-            const OCRDataBottomSheet = (await import('~/components/ocr/OCRDataView.svelte')).default;
-            await showModal({
-                page: OCRDataBottomSheet,
-                fullscreen: true,
-                props: {
-                    pageIndex: currentIndex,
-                    document,
-                    ocrData: items.getItem(currentIndex).ocrData,
-                    imagePath: item.imagePath,
-                    imageWidth: item.width,
-                    imageHeight: item.height,
-                    rotation: item.rotation
-                    // colorMatrix: getColorMatrix(item.colorType)
-                }
-            });
+            await showOCRData(document, currentIndex);
         } catch (error) {
             showError(error);
         }
@@ -533,16 +491,13 @@
     }
     onThemeChanged(refreshPager);
 
-    function onGoBack() {
-        goBack();
-    }
     const onAndroidBackButton = (data: AndroidActivityBackPressedEventData) =>
         onBackButton(page?.nativeView, () => {
             data.cancel = true;
             if (adjusting) {
                 closeAdjustments();
             } else {
-                onGoBack();
+                goBack();
             }
         });
 
@@ -586,12 +541,12 @@
 <appPage bind:this={page} id="pdfEdit">
     <appBar {bottomItems} color={colorOnBackground} iosIconRenderingMode="alwaysTemplate" ios:translucent={true} size="small" subtitle={document.name} title={lc('edit')}>
         {#if __ANDROID__}
-            <navigationButton {...{ 'android.systemIcon': 'ic_menu_back' }} on:tap={onGoBack} />
+            <navigationButton {...{ 'android.systemIcon': 'ic_menu_back' }} on:tap={() => goBack()} />
         {/if}
         <appBarItem icon={appIcon('export')} ios.position="right" menu={exportMenu} text={lc('export')} />
         <appBarItem icon={appIcon('more')} ios.position="right" menu={moreMenu} />
     </appBar>
-    <bottomsheet bind:this={sheet} {steps} scrollViewId="adjustList" {translationFunction} on:layoutChanged={onSheetLayout} on:stepIndexChange={onSheetStep}>
+    <bottomsheet bind:this={sheet} {steps} scrollViewId="adjustList" {translationFunction} on:animated={updateBottomInset} on:layoutChanged={onSheetLayout} on:stepIndexChange={onSheetStep}>
         <!-- an absolute layout measures its children by their content: the page fills it -->
         <gridlayout android:paddingBottom={FLOATING_TOOLBAR_OFFSET + $windowInset.bottom} height="100%" rows="*,auto" width="100%">
             <pager bind:this={pager} {items} rowSpan={2} selectedIndex={startPageIndex} transformers="zoomOut" on:loaded={allowSwipeBack} on:selectedIndexChange={onSelectedIndex}>
@@ -605,35 +560,12 @@
                 </Template>
             </pager>
             {#if items.length > 1 && !adjusting}
-                <label
-                    backgroundColor={__IOS__ ? '#7676801F' : colorSecondaryContainer}
-                    borderRadius={14}
-                    color={colorOnBackground}
-                    fontSize={13}
-                    height={28}
-                    horizontalAlignment="center"
-                    isUserInteractionEnabled={false}
-                    marginBottom={12}
-                    padding="0 12"
-                    row={1}
-                    text={`${currentIndex + 1} / ${items.length}`}
-                    verticalAlignment="bottom"
-                    verticalTextAlignment="center" />
+                <PageCounter marginBottom={12} row={1} text={`${currentIndex + 1} / ${items.length}`} />
             {/if}
         </gridlayout>
-        <gridlayout
-            prop:bottomSheet
-            backgroundColor={__IOS__ ? colorBackground : colorSurfaceContainerLow}
-            borderTopLeftRadius={__IOS__ ? 26 : 28}
-            borderTopRightRadius={__IOS__ ? 26 : 28}
-            boxShadow={__IOS__ ? '0 -3 10 #00000072' : undefined}
-            height={sheetHeight}
-            horizontalAlignment="left"
-            rows="28,auto,auto"
-            width={sheetWidth}>
-            <absolutelayout backgroundColor={colorOutlineVariant} borderRadius={2.5} height={5} horizontalAlignment="center" marginTop={10} width={36} />
+        <PersistentSheetFrame height={sheetHeight + bottomInset} rows="auto,auto" shadow={adjusting} width={sheetWidth}>
             <!-- the quick way to close it: the sheet is not modal, the page stays in use -->
-            <SheetHeader doneText={lc('done')} onCancel={closeAdjustments} onDone={closeAdjustments} row={1} showCancel={false} title={lc('adjust')} />
+            <SheetHeader doneText={lc('done')} onDone={closeAdjustments} row={1} showCancel={false} title={lc('adjust')} />
             <AdjustSheet
                 brightness={typeof currentItem?.brightness === 'number' ? currentItem.brightness : DEFAULT_BRIGHTNESS}
                 cameraOptionsStore={null}
@@ -648,9 +580,10 @@
                 pageMode={true}
                 previewSrc={currentItem?.imagePath}
                 row={2}
-                sheetHeight={ADJUST_LIST_HEIGHT}
+                {bottomInset}
+                sheetHeight={ADJUST_LIST_HEIGHT + bottomInset}
                 showTransforms={hasOriginalImage(currentItem)}
                 transforms={[...(transforms ?? [])]} />
-        </gridlayout>
+        </PersistentSheetFrame>
     </bottomsheet>
 </appPage>

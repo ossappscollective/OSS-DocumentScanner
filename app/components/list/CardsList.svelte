@@ -2,7 +2,6 @@
     import { lc } from '@nativescript-community/l';
     import { Template } from '@nativescript-community/svelte-native/components';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-    import { Paint } from '@nativescript-community/ui-canvas';
     import { CollectionViewWithSwipeMenu } from '@nativescript-community/ui-collectionview-swipemenu';
     import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { ApplicationSettings, ObservableArray, StackLayout, View } from '@nativescript/core';
@@ -10,8 +9,8 @@
     import { showMenu } from '@nativescript-community/ui-menu';
     import { prefs } from '@shared/services/preferences';
     import { showError } from '@shared/utils/showError';
-    import { onMount } from 'svelte';
-    import { Writable, writable } from 'svelte/store';
+    import { onDestroy, onMount } from 'svelte';
+    import type { Writable } from 'svelte/store';
     import PKPassCardCell from '~/components/pkpass/PKPassCardCell.svelte';
     import CardPhotoFace from '~/components/list/CardPhotoFace.svelte';
     import CardRow from '~/components/list/CardRow.svelte';
@@ -35,18 +34,17 @@
     import { appIcon } from '~/utils/appIcons';
     import { getCardVariant } from '~/utils/cardCell';
     import { goToDocumentAfterScan, importImageFromCamera } from '~/utils/ui';
-    import { colors, fontScale, hasCamera, isLandscape, screenHeightDips, screenWidthDips, windowInset } from '~/variables';
+    import { colors, hasCamera, isLandscape, screenHeightDips, screenWidthDips, windowInset } from '~/variables';
     import MainList, { Item } from './MainList.svelte';
 
-    const textPaint = new Paint();
     // 16 from the screen edge to a tile, 12 between two tiles
     const rowMargin = 6;
     const columnsPadding = 10;
+    const FULL_VISIBLE_RATIO = 0.29;
 </script>
 
 <script lang="ts">
-    let { colorOnBackground, colorOnPrimary, colorOnPrimaryContainer, colorOnSurfaceVariant, colorPrimaryContainer, colorSurface } = $colors;
-    $: ({ colorOnBackground, colorOnPrimary, colorOnPrimaryContainer, colorOnSurfaceVariant, colorPrimaryContainer, colorSurface } = $colors);
+    $: ({ colorOnPrimaryContainer, colorPrimaryContainer } = $colors);
     let fabHolder: NativeViewElementNode<StackLayout>;
     let collectionView: NativeViewElementNode<CollectionViewWithSwipeMenu>;
     let viewStyle: string;
@@ -55,10 +53,12 @@
     let syncEnabled: boolean;
 
     export let alwaysShowNames = ApplicationSettings.getBoolean(SETTINGS_CARD_ALWAYS_SHOW_NAME, DEFAULT_CARD_ALWAYS_SHOW_NAME);
-    prefs.on(`key:${SETTINGS_CARD_ALWAYS_SHOW_NAME}`, () => {
+    const onAlwaysShowNamePreferenceChanged = () => {
         alwaysShowNames = ApplicationSettings.getBoolean(SETTINGS_CARD_ALWAYS_SHOW_NAME, DEFAULT_CARD_ALWAYS_SHOW_NAME);
         refreshCollectionView();
-    });
+    };
+    prefs.on(`key:${SETTINGS_CARD_ALWAYS_SHOW_NAME}`, onAlwaysShowNamePreferenceChanged);
+    onDestroy(() => prefs.off(`key:${SETTINGS_CARD_ALWAYS_SHOW_NAME}`, onAlwaysShowNamePreferenceChanged));
 
     export let folder: DocFolder;
     let getSyncColors: (item: Item) => string[];
@@ -68,26 +68,17 @@
     let importImages: () => Promise<void>;
     let refreshCollectionView: () => void;
 
-    $: condensed = viewStyle === 'condensed';
-
-    const FULL_VISIBLE_RATIO = 0.29;
     const title = lc('cards');
-    let itemWidth = (($isLandscape ? screenHeightDips : screenWidthDips) - $windowInset.left - $windowInset.right - 2 * columnsPadding) / $nbColumns - 2 * rowMargin;
-    const itemHeight = writable(itemWidth * CARD_RATIO + 2 * rowMargin);
 
     let folderItems: ObservableArray<Item>;
     let documents: ObservableArray<Item>;
     $: contentPadding = viewStyle === 'columns' ? columnsPadding : 0;
     $: itemWidth = (($isLandscape ? screenHeightDips : screenWidthDips) - $windowInset.left - $windowInset.right - 2 * contentPadding) / $nbColumns - 2 * rowMargin;
-    $: {
-        $itemHeight = itemWidth * CARD_RATIO + 2 * rowMargin;
-        refreshCollectionView?.();
-    }
+    $: itemHeight = itemWidth * CARD_RATIO + 2 * rowMargin;
+    $: itemHeight, refreshCollectionView?.();
 
-    $: textPaint.color = colorOnBackground || 'black';
-    $: textPaint.textSize = (condensed ? 11 : 14) * $fontScale;
-    $: itemRowHeight = getItemRowHeight(viewStyle, $itemHeight, $nbColumns, $isLandscape);
-    $: stripHeight = getStripHeight(viewStyle, $itemHeight, itemRowHeight, $nbColumns);
+    $: itemRowHeight = getItemRowHeight(viewStyle, itemHeight, $isLandscape);
+    $: stripHeight = getStripHeight(viewStyle, itemHeight, itemRowHeight);
 
     async function createCard() {
         try {
@@ -161,19 +152,12 @@
                     }
                     return [-(1 - FULL_VISIBLE_RATIO) * itemHeight, 0, 0, 0];
                 };
-            // case 'cardholder':
-            //     return (item, position) => {
-            //         if (position < $nbColumns + (folderItems.length ? 1 : 0)) {
-            //             return [0, 0, 0, 0];
-            //         }
-            //         return [-0.11 * itemHeight, 0, 0, 0];
-            //     };
             default:
                 return null;
         }
     }
     // the part of a card which is seen above the next one: the title on top, the chips at the bottom
-    function getStripHeight(viewStyle, itemHeight, rowHeight, nbColumns) {
+    function getStripHeight(viewStyle, itemHeight, rowHeight) {
         switch (viewStyle) {
             case 'full':
                 return itemHeight * FULL_VISIBLE_RATIO;
@@ -182,7 +166,7 @@
                 return rowHeight - CARDHOLDER_GAP;
         }
     }
-    function getItemRowHeight(viewStyle, itemHeight, nbColumns, isLandscape) {
+    function getItemRowHeight(viewStyle, itemHeight, isLandscape) {
         switch (viewStyle) {
             case 'cardholder':
                 return itemHeight * (isLandscape ? 0.6 : 0.3);
@@ -196,48 +180,8 @@
         if (item?.type) {
             return item.type;
         }
-        const prefix = getCardVariant(item) ? getCardVariant(item) + '_' : '';
-        switch (viewStyle) {
-            case 'list':
-            case 'columns':
-                if ($isLandscape) {
-                    return prefix + 'columns';
-                }
-                return prefix + viewStyle;
-            default:
-                return prefix + viewStyle;
-        }
-    }
-    function handleTouchAction(index, event) {
-        // console.info('handleTouchAction', index, event.action);
-        // switch (event.action) {
-        //     case 'move':
-        //         return;
-        //     case 'down':
-        //         if (menuShowingIndex !== -1) {
-        //             // there is going to be a close event from the opened menu let s ignore it
-        //             ignoreNextClose = true;
-        //         }
-        //         if (menuShowingIndex === -1) {
-        //             translateCards(index);
-        //         } else if (menuShowingIndex < index) {
-        //             hideCards(menuShowingIndex, index - 1);
-        //             translateCards(index);
-        //         } else if (menuShowingIndex > index) {
-        //             translateCards(index, menuShowingIndex);
-        //         }
-        //         menuShowingIndex = index;
-        //         break;
-        //     case 'up':
-        //     case 'cancel':
-        //         if (ignoreNextClose) {
-        //             ignoreNextClose = false;
-        //             return;
-        //         }
-        //         hideCards(index);
-        //         menuShowingIndex = -1;
-        //         break;
-        // }
+        const variant = getCardVariant(item);
+        return (variant ? variant + '_' : '') + (viewStyle === 'list' && $isLandscape ? 'columns' : viewStyle);
     }
     function updateColumns(isLandscape, orientationChanged: boolean = false) {
         $nbColumns = isLandscape
@@ -251,20 +195,6 @@
         // DEV_LOG && console.log('CardsList', 'onMount', viewStyle);
         updateColumns($isLandscape);
     });
-
-    // let canvastest: NativeViewElementNode<CanvasView>;
-    // let pkPassTestImage;
-    // $: pkpass = documents?.getItem(0)?.doc?.pages?.[0]?.pkpass;
-    // $: if (pkpass) {
-    //     pkpassToImage(pkpass, {
-    //         lang: getActualLanguage(),
-    //         width: screenWidthDips,
-    //         layout: 'full',
-    //         includeBackFields: true
-    //     })
-    //         .then((img) => (pkPassTestImage = img))
-    //         .catch((err) => console.error(err, err.stack));
-    // }
 </script>
 
 <MainList
@@ -277,8 +207,7 @@
     collectionViewOptions={{
         // spanSize: (item) => itemTemplateSpanSize(viewStyle, item),
         swipeMenuId: 'swipeMenu',
-        itemOverlap: getItemOverlap(viewStyle, $itemHeight),
-        'on:swipeMenuClose': (e) => handleTouchAction(e.index, { action: 'up' })
+        itemOverlap: getItemOverlap(viewStyle, itemHeight)
     }}
     {contentPadding}
     folderViewStyles={{
@@ -314,7 +243,7 @@
     <Template key="cardholder" let:item>
         <absolutelayout height={itemRowHeight}>
             <CardTile
-                height={$itemHeight}
+                height={itemHeight}
                 {item}
                 layout="cardholder"
                 {nbColumns}
@@ -355,7 +284,7 @@
     <Template key="photo_cardholder" let:item>
         <absolutelayout height={itemRowHeight}>
             <CardTile
-                height={$itemHeight}
+                height={itemHeight}
                 {item}
                 layout="cardholder"
                 {nbColumns}
@@ -396,7 +325,7 @@
     <Template key="pkpass_cardholder" let:item>
         <absolutelayout height={itemRowHeight}>
             <CardTile
-                height={$itemHeight}
+                height={itemHeight}
                 {item}
                 layout="cardholder"
                 {nbColumns}
@@ -450,16 +379,4 @@
             />
         {/if}
     </stacklayout>
-
-    <!-- <canvasview bind:this={canvastest} slot="test" row={2} on:draw={onDrawCanvasTest} on:tap={() => (canvastest.nativeView.visibility = 'hidden')}> </canvasview> -->
-    <!-- <image
-        bind:this={canvastest}
-        slot="test"
-        backgroundColor="red"
-        margin={40}
-        row={2}
-        src={pkPassTestImage}
-        stretch="aspectFit"
-        verticalAlignment="top"
-        on:tap={() => (canvastest.nativeView.visibility = 'hidden')} /> -->
 </MainList>

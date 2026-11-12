@@ -2,16 +2,14 @@
     import { SilentError } from '@akylas/nativescript-app-utils/error';
     import { showError } from '@shared/utils/showError';
     import { Writable } from 'svelte/store';
-    import FormTextField from '~/components/common/FormTextField.svelte';
+    import RemoteFolderField from '~/components/settings/sync/RemoteFolderField.svelte';
     import { lc } from '~/helpers/locale';
-    import { OAuthProvider, OAuthTokens, refreshAccessToken } from '~/services/sync/OAuthHelper';
+    import { OAuthProvider, OAuthTokens } from '~/services/sync/OAuthHelper';
     import { performOAuthFlow } from '~/services/sync/OAuthHelperUI';
-    import { ONEDRIVE_PROVIDER } from '~/services/sync/onedrive/OneDrive';
-    import { appIcon } from '~/utils/appIcons';
     import { getRowCorners } from '~/utils/groupedRows';
     import { colors } from '~/variables';
 
-    $: ({ colorError, colorOnError, colorOnSurface, colorOnSurfaceVariant, colorSecondary, colorSurfaceContainerLow } = $colors);
+    $: ({ colorError, colorOnSurface, colorSurfaceContainerLow } = $colors);
 
     export let store: Writable<any>;
     export let provider: OAuthProvider;
@@ -20,12 +18,7 @@
     let authenticating = false;
     let testing = false;
     let testConnectionSuccess = 0;
-    let isAuthenticated = false;
-
-    $: {
-        // Check if we have tokens
-        isAuthenticated = !!$store.accessToken;
-    }
+    $: isAuthenticated = !!$store.accessToken;
 
     async function authenticate() {
         try {
@@ -36,8 +29,6 @@
                 $store.accessToken = tokens.accessToken;
                 $store.refreshToken = tokens.refreshToken;
                 $store.expiresAt = tokens.expiresAt;
-
-                isAuthenticated = true;
                 testConnectionSuccess = 1;
             }
         } catch (error) {
@@ -53,7 +44,6 @@
             if (!$store.accessToken) {
                 throw new SilentError(lc('not_authenticated'));
             }
-            // const tokens = await refreshAccessToken(ONEDRIVE_PROVIDER, $store.refreshToken);
 
             testing = true;
             const tokens: OAuthTokens = {
@@ -104,16 +94,5 @@
             <uibutton col={2} horizontalAlignment="right" text={lc('test_connection')} variant="outline" on:tap={testConnectionAction} />
         </gridlayout>
     </stacklayout>
-    <label class="settingsSectionHeader" text={lc('remote_folder')} />
-    <FormTextField
-        autocapitalizationType="none"
-        autocorrect={false}
-        hint={lc('remote_folder_desc')}
-        label={lc('remote_folder')}
-        margin="4 16 16 16"
-        returnKeyType="done"
-        showLabel={false}
-        text={$store.remoteFolder}
-        trailingIcon={appIcon('folder')}
-        onChange={(event) => ($store.remoteFolder = event.value)} />
+    <RemoteFolderField {store} />
 </stacklayout>

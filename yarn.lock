@@ -1300,6 +1300,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mdi/svg@npm:7.4.47":
+  version: 7.4.47
+  resolution: "@mdi/svg@npm:7.4.47"
+  checksum: 10/e5a6b80bb82cc7b7c98e9a018883aee1eaa0e98edfb62192e7ec5798fa573f30b9226629361d747de6e0a81fe6657fb37e9bc2fd89c68e9b094a07e863be4fba
+  languageName: node
+  linkType: hard
+
 "@nativescript-community/arraybuffers@npm:1.1.5, @nativescript-community/arraybuffers@npm:^1.1.5":
   version: 1.1.5
   resolution: "@nativescript-community/arraybuffers@npm:1.1.5"
@@ -10728,6 +10735,7 @@ __metadata:
     "@akylas/nativescript-webpack": "npm:5.0.35"
     "@akylas/panzoom": "npm:4.6.0"
     "@mdi/font": "npm:7.4.47"
+    "@mdi/svg": "npm:7.4.47"
     "@nativescript-community/arraybuffers": "npm:1.1.5"
     "@nativescript-community/css-theme": "npm:1.2.14"
     "@nativescript-community/extendedinfo": "npm:1.3.1"

@@ -11,7 +11,6 @@
     import { appIcon } from '~/utils/appIcons';
     import { colors, windowInset } from '~/variables';
 
-    let { colorBackground, colorOnBackground, colorOnSurface, colorOnSurfaceVariant, colorSecondaryContainer, colorSurface } = $colors;
     $: ({ colorBackground, colorOnBackground, colorOnSurface, colorOnSurfaceVariant, colorSecondaryContainer, colorSurface } = $colors);
 
     export let document: OCRDocument;

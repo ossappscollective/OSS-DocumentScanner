@@ -1,11 +1,10 @@
 <script lang="ts">
     import { Utils } from '@akylas/nativescript';
     import CardChip from '~/components/common/CardChip.svelte';
-    import CardIcon from '~/components/common/CardIcon.svelte';
     import CardStatusChips from '~/components/common/CardStatusChips.svelte';
     import RotableImageView from '~/components/common/RotableImageView.svelte';
+    import CardBadges from '~/components/list/CardBadges.svelte';
     import { Item } from '~/components/list/MainList.svelte';
-    import { appIcon } from '~/utils/appIcons';
     import { getCardDisplay } from '~/utils/cardCell';
     import { getTileColors } from '~/utils/cardColors';
     import { CARD_RATIO } from '~/utils/constants';
@@ -17,7 +16,6 @@
     export let alwaysShowNames: boolean;
     export let stripHeight: number = undefined;
 
-    let { colorBackground } = $colors;
     $: ({ colorBackground } = $colors);
 
     $: stacked = layout === 'cardholder' || layout === 'full';
@@ -59,8 +57,5 @@
         visibility={showLabel ? 'visible' : 'collapsed'}
     />
     <CardStatusChips col={1} extra={item.doc.extra} margin={8} row={stacked ? 1 : 0} verticalAlignment={stacked ? 'bottom' : 'top'} />
-    <stacklayout col={2} margin="8 12 6 0" orientation="horizontal" row={1} verticalAlignment="bottom">
-        <CardIcon color={iconColor} marginRight={hasCode ? 6 : 0} size={18} src={appIcon('favorite_on')} visibility={item.doc.favorite === 1 ? 'visible' : 'collapsed'} />
-        <CardIcon color={iconColor} size={18} src={appIcon('qrcode')} visibility={hasCode ? 'visible' : 'collapsed'} />
-    </stacklayout>
+    <CardBadges code={hasCode} col={2} color={iconColor} favorite={item.doc.favorite === 1} margin="8 12 6 0" row={1} verticalAlignment="bottom" />
 </gridlayout>

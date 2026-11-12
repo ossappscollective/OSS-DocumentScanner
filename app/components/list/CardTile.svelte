@@ -21,7 +21,6 @@
     export let syncColors: string[];
     export let stripHeight: number = undefined;
 
-    let { colorBackground, colorPrimary } = $colors;
     $: ({ colorBackground, colorPrimary } = $colors);
 
     $: ({ page, hasImage, cardColor } = getCardDisplay(item));

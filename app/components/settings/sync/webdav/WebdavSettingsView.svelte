@@ -7,13 +7,13 @@
     import { SilentError } from '@akylas/nativescript-app-utils/error';
     import ListItemAutoSize from '@shared/components/ListItemAutoSize.svelte';
     import FormTextField from '~/components/common/FormTextField.svelte';
+    import RemoteFolderField from '~/components/settings/sync/RemoteFolderField.svelte';
+    import TestConnectionButton from '~/components/settings/sync/TestConnectionButton.svelte';
     import { getSettingsRowProps } from '~/utils/settingsRows';
-    import { appIcon } from '~/utils/appIcons';
     import { showPopoverMenu } from '~/utils/ui';
     import { colors } from '~/variables';
     import { AuthType } from '~/webdav';
 
-    $: ({ colorError, colorOnError, colorOnSurfaceVariant, colorSecondary } = $colors);
     $: ({ authType } = $store);
     $: authRowProps = getSettingsRowProps({ position: 'only' }, $colors, __IOS__);
     const fieldMargin = '4 16 4 16';
@@ -120,30 +120,6 @@
             text={$store.password}
             onChange={(event) => ($store.password = event.value)} />
     {/if}
-    <gridlayout columns="*,*" margin="8 16 8 16" rows="auto">
-        <gridlayout col={1} columns="auto" horizontalAlignment="right" rows="auto" verticalAlignment="middle">
-            <uibutton
-                backgroundColor={testConnectionSuccess < 0 ? colorError : testConnectionSuccess > 0 ? 'lightgreen' : colorSecondary}
-                color={colorOnError}
-                text={testConnectionSuccess < 0 ? lc('failed') : testConnectionSuccess > 0 ? lc('successful') : lc('test')}
-                verticalAlignment="middle"
-                visibility={testing ? 'hidden' : 'visible'}
-                on:tap={testConnection}
-            />
-            <activityindicator busy={testing} height={20} horizontalAlignment="center" verticalAlignment="middle" visibility={testing ? 'visible' : 'hidden'} />
-        </gridlayout>
-    </gridlayout>
-    <label class="settingsSectionHeader" text={lc('remote_folder')} />
-    <FormTextField
-        autocapitalizationType="none"
-        autocorrect={false}
-        hint={lc('remote_folder_desc')}
-        label={lc('remote_folder')}
-        margin="4 16 16 16"
-        returnKeyType="done"
-        showLabel={false}
-        text={$store.remoteFolder}
-        trailingIcon={appIcon('folder')}
-        onChange={(event) => ($store.remoteFolder = event.value)}
-        on:returnPress={testConnection} />
+    <TestConnectionButton success={testConnectionSuccess} {testing} on:tap={testConnection} />
+    <RemoteFolderField {store} on:returnPress={testConnection} />
 </stacklayout>

@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { Color, GridLayout, path } from '@nativescript/core';
-    import { PKBarcodeFormat, PKPass, PKPassBarcode, PKPassField, PKPassStructure, PKPassStyle, PKPassTransitType, PKPassType } from '~/models/PKPass';
+    import { Color } from '@nativescript/core';
+    import { PKPass, PKPassField, PKPassStyle, PKPassType } from '~/models/PKPass';
     import { colors, fontScale, windowInset } from '~/variables';
     import { qrcodeService } from '~/services/qrcode';
     import { getBarcodeSVG, getFieldTextAlignment, getPKPassColors, getTransitIcon } from '~/utils/pkpass';
@@ -8,25 +8,22 @@
     import { isEInk } from '@shared/helpers/theme';
     import { showError } from '@shared/utils/showError';
     import { OCRDocument } from '~/models/OCRDocument';
-    import { conditionalEvent, createEventDispatcher } from '@shared/utils/svelte/ui';
-    import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import { openLink } from '~/utils/ui';
+    import PKPassFieldLabel from '~/components/pkpass/PKPassFieldLabel.svelte';
 
     const FIELD_LINE_HEIGHT = 16;
+    const stars = (count: number) => Array(count).fill('*').join(',');
 
     export let pkpass: PKPass;
     export let document: OCRDocument;
     export let includeBackFields = true;
-    export let forImageRendering = false;
     /** fills the page instead of being a card over it */
     export let fullscreen = false;
     /** room for the toolbar over the bottom of the page */
     export let bottomPadding = 0;
     export let barcodeSvg: string = null;
-    let mainGrid: NativeViewElementNode<GridLayout>;
 
-    let { colorOnBackground, colorOnSurface, colorSurface, colorSurfaceContainerHigh } = $colors;
-    $: ({ colorOnBackground, colorOnSurface, colorSurface, colorSurfaceContainerHigh } = $colors);
+    $: ({ colorOnSurface, colorSurface, colorSurfaceContainerHigh } = $colors);
 
     const passData = pkpass.passData;
     const passStyle = pkpass.getPassStyle();
@@ -46,21 +43,12 @@
     const iconImage = pkpass?.images?.icon2x || pkpass?.images?.icon; // 29x29 points
     const stripImage = pkpass?.images?.strip2x || pkpass?.images?.strip; // Variable by device/type
     const backgroundImage = pkpass?.images?.background2x || pkpass?.images?.background; // 180x220 points
-    const thumbnailImage = pkpass?.images?.thumbnail2x || pkpass?.images?.thumbnail; // 90x90 points
     const footerImage = pkpass?.images?.footer2x || pkpass?.images?.footer; // 286x15 points
     const orgName = passData?.organizationName || getLocalizedText(passData?.logoText) || '';
 
-    let waitCounter = 0;
     $: {
         if (primaryBarcode && foregroundColor) {
             updateBarcode();
-        }
-    }
-
-    function onLoadingStep() {
-        waitCounter -= 1;
-        if (waitCounter === 0) {
-            mainGrid.nativeView.notify({ eventName: 'layoutDone' });
         }
     }
 
@@ -90,26 +78,19 @@
             showError(error);
         }
     }
-    function onLayoutChanged() {
-        if (waitCounter <= 0) {
-            mainGrid.nativeView.notify({ eventName: 'layoutDone' });
-        }
-    }
     function onLinkTap({ link }) {
         openLink(link);
     }
 </script>
 
 <gridlayout
-    bind:this={mainGrid}
     {backgroundColor}
     borderRadius={fullscreen ? 0 : 8}
-    elevation={forImageRendering || fullscreen || isEInk ? 0 : 2}
-    margin={forImageRendering || fullscreen ? 0 : 16}
-    marginBottom={forImageRendering || fullscreen ? 0 : $windowInset.bottom + 16}
-    rows={`auto,auto,${forImageRendering ? 'auto' : '*'},auto`}
+    elevation={fullscreen || isEInk ? 0 : 2}
+    margin={fullscreen ? 0 : 16}
+    marginBottom={fullscreen ? 0 : $windowInset.bottom + 16}
+    rows="auto,auto,*,auto"
     {...$$restProps}
-    use:conditionalEvent={{ condition: forImageRendering, event: 'layoutChanged', callback: onLayoutChanged }}
 >
     {#if backgroundImage && passStyle === PKPassStyle.EventTicket}
         <image height="100%" opacity="0.3" rowSpan={4} src={backgroundImage} stretch="aspectFill" />
@@ -119,11 +100,6 @@
     {/if}
     <stacklayout padding="16" row={0}>
         <gridlayout columns="auto,*,auto,auto">
-            <!-- Icon on the left (29x29 points per Apple spec) -->
-            <!-- {#if iconImage}
-                <image col={0} height={29} marginRight={6} src={iconImage} stretch="aspectFit" verticalAlignment="center" width={29} />
-            {/if} -->
-
             <!-- Logo (max 160x50 points per Apple spec) -->
             {#if logoImage}
                 <image col={0} height={50} src={logoImage} stretch="aspectFit" verticalAlignment="top" />
@@ -150,7 +126,7 @@
 
             <!-- Header fields -->
             {#if headerFieldsCount > 0}
-                <gridlayout col={2} columns={Array.from('*'.repeat(headerFieldsCount)).join(',')} marginBottom={16}>
+                <gridlayout col={2} columns={stars(headerFieldsCount)} marginBottom={16}>
                     {#each structure.headerFields as field, index}
                         <label col={index} paddingLeft={index !== 0 ? 10 : 0} selectable={true} textAlignment={getFieldTextAlignment(field, 'right')}>
                             <cspan
@@ -191,12 +167,17 @@
                     <!-- Boarding pass with transit icon between two primary fields -->
                     <gridlayout columns="*,auto,*" marginBottom={16}>
                         <!-- Left primary field (departure) -->
-                        <label col={0} selectable={true} textAlignment="left">
-                            {#if structure.primaryFields[0].label}
-                                <cspan color={labelColor} fontSize={12 * $fontScale} fontWeight="500" lineHeight={FIELD_LINE_HEIGHT} text={renderFieldLabel(structure.primaryFields[0])} />
-                            {/if}
-                            <cspan color={foregroundColor} fontSize={32 * $fontScale} fontWeight="bold" text={renderFieldValue(structure.primaryFields[0])} />
-                        </label>
+                        <PKPassFieldLabel
+                            col={0}
+                            label={structure.primaryFields[0].label ? renderFieldLabel(structure.primaryFields[0]) : null}
+                            {labelColor}
+                            labelSize={12}
+                            textAlignment="left"
+                            value={renderFieldValue(structure.primaryFields[0])}
+                            valueColor={foregroundColor}
+                            valueSize={32}
+                            valueWeight="bold"
+                        />
 
                         <!-- Transit icon in center -->
                         <label
@@ -212,26 +193,37 @@
                         />
 
                         <!-- Right primary field (arrival) -->
-                        <label col={2} selectable={true} textAlignment="right">
-                            {#if structure.primaryFields[1].label}
-                                <cspan color={labelColor} fontSize={12 * $fontScale} fontWeight="500" lineHeight={FIELD_LINE_HEIGHT} text={renderFieldLabel(structure.primaryFields[1])} />
-                            {/if}
-                            <cspan color={foregroundColor} fontSize={32 * $fontScale} fontWeight="bold" text={renderFieldValue(structure.primaryFields[1])} />
-                        </label>
+                        <PKPassFieldLabel
+                            col={2}
+                            label={structure.primaryFields[1].label ? renderFieldLabel(structure.primaryFields[1]) : null}
+                            {labelColor}
+                            labelSize={12}
+                            textAlignment="right"
+                            value={renderFieldValue(structure.primaryFields[1])}
+                            valueColor={foregroundColor}
+                            valueSize={32}
+                            valueWeight="bold"
+                        />
                     </gridlayout>
                 {:else}
                     <!-- Default primary fields layout (no transit icon or different field count) -->
-                    <gridlayout columns={Array.from('*'.repeat(primaryFieldsCount)).join(',')} marginBottom={16}>
+                    <gridlayout columns={stars(primaryFieldsCount)} marginBottom={16}>
                         {#if stripImage && passType === PKPassType.PKPass}
                             <image colSpan={primaryFieldsCount} noRatioEnforce={true} opacity={0.5} src={stripImage} stretch="aspectFill" width="100%" />
                         {/if}
                         {#each structure.primaryFields as field, index}
-                            <label col={index} marginBottom="16" selectable={true} textAlignment={getFieldTextAlignment(field)}>
-                                {#if field.label}
-                                    <cspan color={labelColor} fontSize={12 * $fontScale} fontWeight="500" lineHeight={FIELD_LINE_HEIGHT} text={renderFieldLabel(field)} />
-                                {/if}
-                                <cspan color={foregroundColor} fontSize={32 * $fontScale} fontWeight="bold" text={renderFieldValue(field)} />
-                            </label>
+                            <PKPassFieldLabel
+                                col={index}
+                                label={field.label ? renderFieldLabel(field) : null}
+                                {labelColor}
+                                labelSize={12}
+                                marginBottom="16"
+                                textAlignment={getFieldTextAlignment(field)}
+                                value={renderFieldValue(field)}
+                                valueColor={foregroundColor}
+                                valueSize={32}
+                                valueWeight="bold"
+                            />
                         {/each}
                     </gridlayout>
                 {/if}
@@ -239,28 +231,38 @@
 
             <!-- Secondary fields -->
             {#if secondaryFieldsCount > 0}
-                <gridlayout columns={Array.from('*'.repeat(secondaryFieldsCount)).join(',')} marginTop={16}>
+                <gridlayout columns={stars(secondaryFieldsCount)} marginTop={16}>
                     {#each structure.secondaryFields as field, index}
-                        <label col={index} padding={index !== 0 && index !== auxiliaryFieldsCount - 1 ? '0 10 0 10' : 0} selectable={true} textAlignment={getFieldTextAlignment(field)}>
-                            {#if field.label}
-                                <cspan color={labelColor} fontSize={11 * $fontScale} fontWeight="500" lineHeight={FIELD_LINE_HEIGHT} text={renderFieldLabel(field)} />
-                            {/if}
-                            <cspan color={foregroundColor} fontSize={18 * $fontScale} text={renderFieldValue(field)} />
-                        </label>
+                        <PKPassFieldLabel
+                            col={index}
+                            label={field.label ? renderFieldLabel(field) : null}
+                            {labelColor}
+                            labelSize={11}
+                            padding={index !== 0 && index !== secondaryFieldsCount - 1 ? '0 10 0 10' : 0}
+                            textAlignment={getFieldTextAlignment(field)}
+                            value={renderFieldValue(field)}
+                            valueColor={foregroundColor}
+                            valueSize={18}
+                        />
                     {/each}
                 </gridlayout>
             {/if}
 
             <!-- Auxiliary fields -->
             {#if auxiliaryFieldsCount > 0}
-                <gridlayout columns={Array.from('*'.repeat(auxiliaryFieldsCount)).join(',')} marginTop={16}>
+                <gridlayout columns={stars(auxiliaryFieldsCount)} marginTop={16}>
                     {#each structure.auxiliaryFields as field, index}
-                        <label col={index} padding={index !== 0 && index !== auxiliaryFieldsCount - 1 ? '0 10 0 10' : 0} selectable={true} textAlignment={getFieldTextAlignment(field)}>
-                            {#if field.label}
-                                <cspan color={labelColor} fontSize={10 * $fontScale} fontWeight="500" lineHeight={FIELD_LINE_HEIGHT} text={renderFieldLabel(field)} />
-                            {/if}
-                            <cspan color={foregroundColor} fontSize={14 * $fontScale} text={renderFieldValue(field)} />
-                        </label>
+                        <PKPassFieldLabel
+                            col={index}
+                            label={field.label ? renderFieldLabel(field) : null}
+                            {labelColor}
+                            labelSize={10}
+                            padding={index !== 0 && index !== auxiliaryFieldsCount - 1 ? '0 10 0 10' : 0}
+                            textAlignment={getFieldTextAlignment(field)}
+                            value={renderFieldValue(field)}
+                            valueColor={foregroundColor}
+                            valueSize={14}
+                        />
                     {/each}
                 </gridlayout>
             {/if}
@@ -279,7 +281,6 @@
                     marginTop={24}
                     padding={8}
                     on:tap={onQRCodeTap}
-                    use:conditionalEvent={{ condition: forImageRendering, event: 'layoutChanged', callback: onLoadingStep }}
                 >
                     <svgview src={barcodeSvg} stretch="aspectFit" width="50%" />
                     {#if primaryBarcode?.altText}

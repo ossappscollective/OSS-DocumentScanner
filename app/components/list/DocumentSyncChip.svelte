@@ -10,17 +10,10 @@
 
 <!-- the structure of a cell is fixed: only the visibility and the colors change -->
 <uisurface class="cardChip" visibility={shown.length ? 'visible' : 'collapsed'} {...$$restProps}>
-    <stacklayout orientation="horizontal" padding="0 8" verticalAlignment="center">
+    <label padding="0 8" verticalAlignment="center">
         {#each [0, 1, 2, 3, 4, 5] as index (index)}
-            <gridlayout
-                backgroundColor={shown[index] ?? 'transparent'}
-                borderRadius={4.5}
-                height={9}
-                marginLeft={index ? 4 : 0}
-                verticalAlignment="center"
-                visibility={index < shown.length ? 'visible' : 'collapsed'}
-                width={9} />
+            <span color={shown[index]} fontSize={12} text={index < shown.length ? (index ? ' ' : '') + '●' : ''} />
         {/each}
-        <label fontSize={10} fontWeight="600" marginLeft={4} text={'+' + more} verticalAlignment="center" visibility={more ? 'visible' : 'collapsed'} />
-    </stacklayout>
+        <span fontSize={10} fontWeight="600" text={more ? ' +' + more : ''} />
+    </label>
 </uisurface>

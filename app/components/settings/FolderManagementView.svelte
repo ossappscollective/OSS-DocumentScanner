@@ -28,7 +28,6 @@
 </script>
 
 <script lang="ts">
-    let { colorError } = $colors;
     $: ({ colorError } = $colors);
 
     let collectionView: NativeViewElementNode<CollectionView>;

@@ -5,7 +5,6 @@
     import { CollectionView } from '@nativescript-community/ui-collectionview';
     import { Label } from '@nativescript-community/ui-label';
     import { prompt } from '@nativescript-community/ui-dialogs';
-    import { TextField } from '@nativescript-community/ui-textfield';
     import { ObservableArray, View } from '@nativescript/core';
     import { updateRowPositions } from '@shared/utils/groupedRows';
     import { showError } from '@shared/utils/showError';
@@ -34,12 +33,11 @@
     }
     export let store: Writable<any>;
     // let folderPathName = data.folderPathName;
-    const variant = 'outline';
 
     export let items: ObservableArray<any>;
 
     // the section titles and the forms (fields) are not rows of a group
-    const NOT_ROWS = ['sectionHeader', 'sectionheader', 'textfield', 'webdav', 'oauth', 'paperless', 'selectFolder', 'pdfoptions'];
+    const NOT_ROWS = ['sectionHeader', 'sectionheader', 'webdav', 'oauth', 'paperless', 'selectFolder', 'pdfoptions'];
     updateRowPositions(
         (index) => items.getItem(index),
         items.length,
@@ -67,21 +65,17 @@
             checkboxTapTimer = null;
         }
     }
-    let ignoreNextOnCheckBoxChange = false;
-    async function onCheckBox(item, event) {
-        if (ignoreNextOnCheckBoxChange || item.value === event.value) {
+    function onCheckBox(item, event) {
+        if (item.value === event.value) {
             return;
         }
         const value = event.value;
         item.value = value;
         clearCheckboxTimer();
         try {
-            ignoreNextOnCheckBoxChange = true;
             $store[item.key || item.id] = value;
         } catch (error) {
             showError(error);
-        } finally {
-            ignoreNextOnCheckBoxChange = false;
         }
     }
     async function onTap(item, event) {
@@ -218,16 +212,6 @@
             showError(error);
         }
     }
-    function onTextChange(e) {
-        if (e.object.text) {
-            (e.object as TextField).setSelection(e.object.text.length);
-        }
-    }
-
-    // async function onFolderSelect(item, event) {
-    //     item.text = $store.localFolderPath = event.text;
-    //     updateItem(item);
-    // }
 </script>
 
 <collectionview bind:this={collectionView} itemTemplateSelector={selectTemplate} {items} android:paddingBottom={$windowInset.bottom} {...$$restProps} on:layoutChanged={onLayoutChanged}>
@@ -242,21 +226,6 @@
         >
             <absolutelayout backgroundColor={$store.color} borderColor={colorOutline} borderRadius="50%" borderWidth={2} col={1} height={40} marginLeft={10} width={40} />
         </ListItemAutoSize>
-    </Template>
-    <Template key="textfield" let:item>
-        <gridlayout columns="*" margin="4 16 4 16" row={3} rows="auto" on:tap={(e) => item.onTap(item, e)}>
-            <textfield isUserInteractionEnabled={false} text={item.text} {variant} {...item.textFieldProperties} on:loaded={onTextChange} />
-            <uibutton
-                class="icon-btn"
-                color={colorOnSurfaceVariant}
-                horizontalAlignment="right"
-                isUserInteractionEnabled={false}
-                text={item.icon}
-                variant="text"
-                verticalAlignment="middle"
-                visibility={item.icon ? 'visible' : 'hidden'}
-            />
-        </gridlayout>
     </Template>
     <Template key="switch" let:item>
         <ListItemAutoSize item={{ ...item, title: getTitle(item), subtitle: getDescription(item) }} {...getRowProps(item)} on:tap={(event) => onTap(item, event)}>
