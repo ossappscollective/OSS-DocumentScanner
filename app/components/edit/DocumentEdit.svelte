@@ -140,8 +140,18 @@
     // the sheet follows its steps: the gesture too, so this is where it opens and closes
     function onSheetStep(event: { value: number }) {
         adjusting = event.value > 0;
-        if (!adjusting) {
+        if (adjusting) {
+            sheetShown = true;
+        } else {
             toolbarHidden = false;
+        }
+    }
+    // the closed sheet is hidden: on iOS its top (the Done button) shows under the bottom toolbar. It stays until the closing animation ends
+    let sheetShown = false;
+    function onSheetAnimated() {
+        updateBottomInset();
+        if (!adjusting) {
+            sheetShown = false;
         }
     }
     function closeAdjustments() {
@@ -546,7 +556,7 @@
         <appBarItem icon={appIcon('export')} ios.position="right" menu={exportMenu} text={lc('export')} />
         <appBarItem icon={appIcon('more')} ios.position="right" menu={moreMenu} />
     </appBar>
-    <bottomsheet bind:this={sheet} {steps} scrollViewId="adjustList" {translationFunction} on:animated={updateBottomInset} on:layoutChanged={onSheetLayout} on:stepIndexChange={onSheetStep}>
+    <bottomsheet bind:this={sheet} {steps} scrollViewId="adjustList" {translationFunction} on:animated={onSheetAnimated} on:layoutChanged={onSheetLayout} on:stepIndexChange={onSheetStep}>
         <!-- an absolute layout measures its children by their content: the page fills it -->
         <gridlayout android:paddingBottom={FLOATING_TOOLBAR_OFFSET + $windowInset.bottom} height="100%" rows="*,auto" width="100%">
             <pager bind:this={pager} {items} rowSpan={2} selectedIndex={startPageIndex} transformers="zoomOut" on:loaded={allowSwipeBack} on:selectedIndexChange={onSelectedIndex}>
@@ -563,7 +573,7 @@
                 <PageCounter marginBottom={12} row={1} text={`${currentIndex + 1} / ${items.length}`} />
             {/if}
         </gridlayout>
-        <PersistentSheetFrame height={sheetHeight + bottomInset} rows="auto,auto" shadow={adjusting} width={sheetWidth}>
+        <PersistentSheetFrame height={sheetHeight + bottomInset} opacity={sheetShown ? 1 : 0} rows="auto,auto" shadow={adjusting} width={sheetWidth}>
             <!-- the quick way to close it: the sheet is not modal, the page stays in use -->
             <SheetHeader doneText={lc('done')} onDone={closeAdjustments} row={1} showCancel={false} title={lc('adjust')} />
             <AdjustSheet

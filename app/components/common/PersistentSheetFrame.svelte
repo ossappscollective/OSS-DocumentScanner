@@ -12,6 +12,7 @@
     /** the rows under the grabber */
     export let rows: string;
     export let shadow = true;
+    export let opacity = 1;
 </script>
 
 <!-- the root is the bottom sheet of the persistent sheet it is put in -->
@@ -22,6 +23,7 @@
     borderTopRightRadius={__IOS__ ? 26 : 28}
     boxShadow={__IOS__ && shadow ? '0 -3 10 #00000072' : undefined}
     {height}
+    {opacity}
     horizontalAlignment="left"
     rows={`${SHEET_GRABBER_HEIGHT},${rows}`}
     {width}>
