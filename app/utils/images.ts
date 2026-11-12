@@ -1,4 +1,4 @@
-import { ImageSource, Utils } from '@nativescript/core';
+import { ImageSource, Screen, Utils } from '@nativescript/core';
 
 export async function loadImage(imagePath, loadOptions: { width?; height?; resizeThreshold?; sourceWidth?; sourceHeight?; jpegQuality? } = {}) {
     loadOptions.resizeThreshold = loadOptions.resizeThreshold || 4500;
@@ -39,7 +39,7 @@ export function recycleImages(...args) {
     }
 }
 
-/** iOS: the average brightness (0-255) of the top of a photo, where the bars and the title are drawn over its blurred copy. null when it cannot be read */
+/** iOS: the average brightness (0-255) of the visible top of a photo, where the bars and the title are drawn over its blurred copy. null when it cannot be read */
 export async function getTopBrightness(imagePath: string, topRatio = 0.3): Promise<number | null> {
     if (!__IOS__ || !imagePath) {
         return null;
@@ -50,7 +50,11 @@ export async function getTopBrightness(imagePath: string, topRatio = 0.3): Promi
         if (!cgImage) {
             return null;
         }
-        const top = CGImageCreateWithImageInRect(cgImage, CGRectMake(0, 0, CGImageGetWidth(cgImage), Math.max(1, Math.round(CGImageGetHeight(cgImage) * topRatio))));
+        const width = CGImageGetWidth(cgImage);
+        const height = CGImageGetHeight(cgImage);
+        // the photo fills the screen (aspectFill): only its central part is visible
+        const visibleWidth = Math.min(width, Math.round(height * (Screen.mainScreen.widthDIPs / Screen.mainScreen.heightDIPs)));
+        const top = CGImageCreateWithImageInRect(cgImage, CGRectMake(Math.round((width - visibleWidth) / 2), 0, visibleWidth, Math.max(1, Math.round(height * topRatio))));
         // the top strip scaled down to one pixel is its average color
         const buffer = interop.alloc(4);
         const context = CGBitmapContextCreate(buffer, 1, 1, 8, 4, CGColorSpaceCreateDeviceRGB(), CGImageAlphaInfo.kCGImageAlphaPremultipliedLast);
