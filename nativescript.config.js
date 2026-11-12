@@ -23,7 +23,7 @@ module.exports = {
         defaultLanguage: 'en'
     },
     ios: {
-        runtimePackageName: catalystBuild ? '@nativescript/ios' : '@akylas/nativescript-ios-runtime'
+        // runtimePackageName: catalystBuild ? '@nativescript/ios' : '@akylas/nativescript-ios-runtime'
     },
     android: {
         ignoredNativeDependencies: ['@akylas/nativescript-inapp-purchase'],
