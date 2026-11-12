@@ -54,7 +54,7 @@
         {#if !tile}
             <label col={2} color={colorOnSurfaceVariant} fontSize={12} text={item.folder.count + ''} verticalAlignment="center" />
             <CardIcon
-                col={4}
+                col={3}
                 color={colorOnSurfaceVariant}
                 marginLeft={6}
                 size={16}

@@ -582,13 +582,9 @@
                             indexes.push(index);
                         }
                     });
-                    let minDeleteIndex = Number.MAX_SAFE_INTEGER;
-                    for (let index = 0; index < indexes.length; index++) {
-                        const toRemoveIndex = indexes[index];
-                        minDeleteIndex = Math.min(minDeleteIndex, toRemoveIndex);
-                        await document.deletePage(toRemoveIndex);
-
-                        items.splice(toRemoveIndex, 1);
+                    // from the end: deleting a page shifts the following indexes. `items` is updated by onDocumentPageDeleted
+                    for (let index = indexes.length - 1; index >= 0; index--) {
+                        await document.deletePage(indexes[index]);
                     }
                     refreshCollectionView();
                     nbSelected = 0;
