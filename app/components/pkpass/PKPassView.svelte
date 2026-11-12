@@ -11,6 +11,7 @@
     import { openLink } from '~/utils/ui';
 
     const FIELD_LINE_HEIGHT = 16;
+    const stars = (count: number) => Array(count).fill('*').join(',');
 
     export let pkpass: PKPass;
     export let document: OCRDocument;
@@ -124,7 +125,7 @@
 
             <!-- Header fields -->
             {#if headerFieldsCount > 0}
-                <gridlayout col={2} columns={Array.from('*'.repeat(headerFieldsCount)).join(',')} marginBottom={16}>
+                <gridlayout col={2} columns={stars(headerFieldsCount)} marginBottom={16}>
                     {#each structure.headerFields as field, index}
                         <label col={index} paddingLeft={index !== 0 ? 10 : 0} selectable={true} textAlignment={getFieldTextAlignment(field, 'right')}>
                             <cspan
@@ -195,7 +196,7 @@
                     </gridlayout>
                 {:else}
                     <!-- Default primary fields layout (no transit icon or different field count) -->
-                    <gridlayout columns={Array.from('*'.repeat(primaryFieldsCount)).join(',')} marginBottom={16}>
+                    <gridlayout columns={stars(primaryFieldsCount)} marginBottom={16}>
                         {#if stripImage && passType === PKPassType.PKPass}
                             <image colSpan={primaryFieldsCount} noRatioEnforce={true} opacity={0.5} src={stripImage} stretch="aspectFill" width="100%" />
                         {/if}
@@ -213,7 +214,7 @@
 
             <!-- Secondary fields -->
             {#if secondaryFieldsCount > 0}
-                <gridlayout columns={Array.from('*'.repeat(secondaryFieldsCount)).join(',')} marginTop={16}>
+                <gridlayout columns={stars(secondaryFieldsCount)} marginTop={16}>
                     {#each structure.secondaryFields as field, index}
                         <label col={index} padding={index !== 0 && index !== secondaryFieldsCount - 1 ? '0 10 0 10' : 0} selectable={true} textAlignment={getFieldTextAlignment(field)}>
                             {#if field.label}
@@ -227,7 +228,7 @@
 
             <!-- Auxiliary fields -->
             {#if auxiliaryFieldsCount > 0}
-                <gridlayout columns={Array.from('*'.repeat(auxiliaryFieldsCount)).join(',')} marginTop={16}>
+                <gridlayout columns={stars(auxiliaryFieldsCount)} marginTop={16}>
                     {#each structure.auxiliaryFields as field, index}
                         <label col={index} padding={index !== 0 && index !== auxiliaryFieldsCount - 1 ? '0 10 0 10' : 0} selectable={true} textAlignment={getFieldTextAlignment(field)}>
                             {#if field.label}
