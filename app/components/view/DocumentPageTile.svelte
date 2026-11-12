@@ -17,7 +17,6 @@
     export let width: number;
     export let radius: number;
 
-    let { colorOutlineVariant } = $colors;
     $: ({ colorOutlineVariant } = $colors);
 </script>
 

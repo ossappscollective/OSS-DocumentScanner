@@ -13,12 +13,10 @@
     import CardEditCodeRow from '~/components/view/CardEditCodeRow.svelte';
 
     interface CodeRow {
-        id: number;
         pageIndex: number;
         original: any;
         text: string;
         scale: number;
-        error?: string;
         removed: boolean;
     }
     interface FieldRow {
@@ -30,8 +28,7 @@
 </script>
 
 <script lang="ts">
-    let { colorBackground, colorError, colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary, colorSurface } = $colors;
-    $: ({ colorBackground, colorError, colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary, colorSurface } = $colors);
+    $: ({ colorError, colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary } = $colors);
 
     export let document: OCRDocument;
     let rootView;
@@ -41,7 +38,7 @@
     let codes: CodeRow[] = [];
     document.pages.forEach((page, pageIndex) => {
         (page.qrcode || []).forEach((qrcode) => {
-            codes.push({ id: codes.length, pageIndex, original: qrcode, text: qrcode.text, scale: qrcode.scale ?? 1, removed: false });
+            codes.push({ pageIndex, original: qrcode, text: qrcode.text, scale: qrcode.scale ?? 1, removed: false });
         });
     });
     let fields: FieldRow[] = Object.keys(document.extra || {})

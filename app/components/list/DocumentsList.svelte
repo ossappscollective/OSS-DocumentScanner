@@ -27,7 +27,6 @@
 </script>
 
 <script lang="ts">
-    let { colorOnPrimaryContainer, colorPrimaryContainer } = $colors;
     $: ({ colorOnPrimaryContainer, colorPrimaryContainer } = $colors);
     export let title = lc('documents');
     export let folder: DocFolder;

@@ -8,7 +8,7 @@ import { GestureRootView } from '@nativescript-community/gesturehandler';
 import { CheckBox } from '@nativescript-community/ui-checkbox';
 import { Label } from '@nativescript-community/ui-label';
 import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
-import { MDCAlertControlerOptions, PromptOptions, alert, confirm, prompt } from '@nativescript-community/ui-dialogs';
+import { MDCAlertControlerOptions, PromptOptions, confirm, prompt } from '@nativescript-community/ui-dialogs';
 import { HorizontalPosition, PopoverOptions, VerticalPosition } from '@nativescript-community/ui-popover';
 import { closePopover, showPopover } from '@nativescript-community/ui-popover/svelte';
 import {
@@ -30,7 +30,7 @@ import {
     path
 } from '@nativescript/core';
 import { ConfirmOptions } from '@nativescript/core/ui/dialogs/dialogs-common';
-import { SDK_VERSION, copyToClipboard, debounce, openFile } from '@nativescript/core/utils';
+import { SDK_VERSION, copyToClipboard, openFile } from '@nativescript/core/utils';
 import { create as createImagePicker } from '@nativescript/imagepicker';
 import { doInBatch } from '@shared/utils/batch';
 import type { MenuItem } from '@nativescript-community/ui-menu';
@@ -59,7 +59,7 @@ import type OptionSelect__SvelteComponent_ from '@shared/components/OptionSelect
 import ModalFrame from '~/components/common/ModalFrame.svelte';
 import type BottomSnack__SvelteComponent_ from '~/components/widgets/BottomSnack.svelte';
 import BottomSnack from '~/components/widgets/BottomSnack.svelte';
-import { getFileNameForDocument, getFormatedDateForFilename, getLocaleDisplayName, l, lang, lc, lcp, pluralKey } from '~/helpers/locale';
+import { getFileNameForDocument, getLocaleDisplayName, l, lang, lc, lcp, pluralKey } from '~/helpers/locale';
 import { DocFolder, ImportImageData, OCRDocument, OCRPage, PageData, getDocumentsService } from '~/models/OCRDocument';
 import { PKPassType } from '~/models/PKPass';
 import { OCRLanguages, ocrService } from '~/services/ocr';
@@ -114,7 +114,7 @@ import { StorageSizes, filterPagesWithOriginal } from '~/utils/originals';
 import { buildPassArchive, getStoredPassFormat } from '~/utils/pkpass';
 import { importPKPassFiles } from '~/utils/pkpass-import';
 import { showToast } from '~/utils/ui';
-import { colors, fontScale, screenHeightDips, screenWidthDips } from '~/variables';
+import { colors, fontScale, screenHeightDips } from '~/variables';
 import { MatricesTypes, Matrix } from '../color_matrix';
 import { cleanFilename, saveImage } from '../utils';
 import { buildExportImageNames } from '../exportUtils';
@@ -2228,20 +2228,6 @@ export function promptForText(options: PromptOptions & MDCAlertControlerOptions)
     });
 }
 
-export async function showCustomAlert<T>(component, options, props = {}): Promise<any> {
-    const componentInstanceInfo = resolveComponentElement(component, props);
-    const modalView: View = componentInstanceInfo.element.nativeView;
-    const result = await alert({
-        view: modalView,
-        ...options
-    });
-    try {
-        modalView._tearDownUI();
-        componentInstanceInfo.viewInstance.$destroy(); // don't let an exception in destroy kill the promise callback
-    } catch (error) {}
-    return result;
-}
-
 export async function importPKPassFromUris({ canGoToView = true, uris }: { uris: string[]; canGoToView?: boolean }) {
     if (CARD_APP) {
         try {
@@ -2306,9 +2292,6 @@ export async function requestStoragePermission() {
 
 export async function requestPhotoPermission() {
     return requestPermission('photo', lc('media_library_permission_needed'));
-}
-export async function requestGalleryPermission() {
-    return requestPermission('mediaLibrary', lc('media_library_permission_needed'));
 }
 export async function requestNotificationPermission() {
     return requestPermission('notification', lc('notification_permission_needed'));

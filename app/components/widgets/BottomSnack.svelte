@@ -10,7 +10,7 @@
 
     export let translateY = 100;
     // technique for only specific properties to get updated on store change
-    $: ({ colorOnSurface, colorOnSurfaceInverse, colorOnSurfaceVariant, colorPrimary, colorSurfaceInverse } = $colors);
+    $: ({ colorOnSurfaceInverse, colorSurfaceInverse } = $colors);
 </script>
 
 <gridlayout

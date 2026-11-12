@@ -6,9 +6,7 @@
     import { onMount } from 'svelte';
     import CActionBar from '@shared/components/CActionBar.svelte';
     import { lc } from '~/helpers/locale';
-    import { colors, windowInset } from '~/variables';
-
-    $: ({ colorOnSurfaceVariant } = $colors);
+    import { windowInset } from '~/variables';
 
     export let url: string;
     export let redirectUri: string;

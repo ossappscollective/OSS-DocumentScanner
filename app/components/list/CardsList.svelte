@@ -2,7 +2,6 @@
     import { lc } from '@nativescript-community/l';
     import { Template } from '@nativescript-community/svelte-native/components';
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-    import { Paint } from '@nativescript-community/ui-canvas';
     import { CollectionViewWithSwipeMenu } from '@nativescript-community/ui-collectionview-swipemenu';
     import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { ApplicationSettings, ObservableArray, StackLayout, View } from '@nativescript/core';
@@ -35,18 +34,16 @@
     import { appIcon } from '~/utils/appIcons';
     import { getCardVariant } from '~/utils/cardCell';
     import { goToDocumentAfterScan, importImageFromCamera } from '~/utils/ui';
-    import { colors, fontScale, hasCamera, isLandscape, screenHeightDips, screenWidthDips, windowInset } from '~/variables';
+    import { colors, hasCamera, isLandscape, screenHeightDips, screenWidthDips, windowInset } from '~/variables';
     import MainList, { Item } from './MainList.svelte';
 
-    const textPaint = new Paint();
     // 16 from the screen edge to a tile, 12 between two tiles
     const rowMargin = 6;
     const columnsPadding = 10;
 </script>
 
 <script lang="ts">
-    let { colorOnBackground, colorOnPrimary, colorOnPrimaryContainer, colorOnSurfaceVariant, colorPrimaryContainer, colorSurface } = $colors;
-    $: ({ colorOnBackground, colorOnPrimary, colorOnPrimaryContainer, colorOnSurfaceVariant, colorPrimaryContainer, colorSurface } = $colors);
+    $: ({ colorOnPrimaryContainer, colorPrimaryContainer } = $colors);
     let fabHolder: NativeViewElementNode<StackLayout>;
     let collectionView: NativeViewElementNode<CollectionViewWithSwipeMenu>;
     let viewStyle: string;
@@ -70,8 +67,6 @@
     let importImages: () => Promise<void>;
     let refreshCollectionView: () => void;
 
-    $: condensed = viewStyle === 'condensed';
-
     const FULL_VISIBLE_RATIO = 0.29;
     const title = lc('cards');
     let itemWidth = (($isLandscape ? screenHeightDips : screenWidthDips) - $windowInset.left - $windowInset.right - 2 * columnsPadding) / $nbColumns - 2 * rowMargin;
@@ -86,10 +81,8 @@
         refreshCollectionView?.();
     }
 
-    $: textPaint.color = colorOnBackground || 'black';
-    $: textPaint.textSize = (condensed ? 11 : 14) * $fontScale;
-    $: itemRowHeight = getItemRowHeight(viewStyle, $itemHeight, $nbColumns, $isLandscape);
-    $: stripHeight = getStripHeight(viewStyle, $itemHeight, itemRowHeight, $nbColumns);
+    $: itemRowHeight = getItemRowHeight(viewStyle, $itemHeight, $isLandscape);
+    $: stripHeight = getStripHeight(viewStyle, $itemHeight, itemRowHeight);
 
     async function createCard() {
         try {
@@ -163,19 +156,12 @@
                     }
                     return [-(1 - FULL_VISIBLE_RATIO) * itemHeight, 0, 0, 0];
                 };
-            // case 'cardholder':
-            //     return (item, position) => {
-            //         if (position < $nbColumns + (folderItems.length ? 1 : 0)) {
-            //             return [0, 0, 0, 0];
-            //         }
-            //         return [-0.11 * itemHeight, 0, 0, 0];
-            //     };
             default:
                 return null;
         }
     }
     // the part of a card which is seen above the next one: the title on top, the chips at the bottom
-    function getStripHeight(viewStyle, itemHeight, rowHeight, nbColumns) {
+    function getStripHeight(viewStyle, itemHeight, rowHeight) {
         switch (viewStyle) {
             case 'full':
                 return itemHeight * FULL_VISIBLE_RATIO;
@@ -184,7 +170,7 @@
                 return rowHeight - CARDHOLDER_GAP;
         }
     }
-    function getItemRowHeight(viewStyle, itemHeight, nbColumns, isLandscape) {
+    function getItemRowHeight(viewStyle, itemHeight, isLandscape) {
         switch (viewStyle) {
             case 'cardholder':
                 return itemHeight * (isLandscape ? 0.6 : 0.3);
@@ -210,37 +196,6 @@
                 return prefix + viewStyle;
         }
     }
-    function handleTouchAction(index, event) {
-        // console.info('handleTouchAction', index, event.action);
-        // switch (event.action) {
-        //     case 'move':
-        //         return;
-        //     case 'down':
-        //         if (menuShowingIndex !== -1) {
-        //             // there is going to be a close event from the opened menu let s ignore it
-        //             ignoreNextClose = true;
-        //         }
-        //         if (menuShowingIndex === -1) {
-        //             translateCards(index);
-        //         } else if (menuShowingIndex < index) {
-        //             hideCards(menuShowingIndex, index - 1);
-        //             translateCards(index);
-        //         } else if (menuShowingIndex > index) {
-        //             translateCards(index, menuShowingIndex);
-        //         }
-        //         menuShowingIndex = index;
-        //         break;
-        //     case 'up':
-        //     case 'cancel':
-        //         if (ignoreNextClose) {
-        //             ignoreNextClose = false;
-        //             return;
-        //         }
-        //         hideCards(index);
-        //         menuShowingIndex = -1;
-        //         break;
-        // }
-    }
     function updateColumns(isLandscape, orientationChanged: boolean = false) {
         $nbColumns = isLandscape
             ? ApplicationSettings.getNumber(SETTINGS_NB_COLUMNS_LANDSCAPE, DEFAULT_NB_COLUMNS_LANDSCAPE)
@@ -253,20 +208,6 @@
         // DEV_LOG && console.log('CardsList', 'onMount', viewStyle);
         updateColumns($isLandscape);
     });
-
-    // let canvastest: NativeViewElementNode<CanvasView>;
-    // let pkPassTestImage;
-    // $: pkpass = documents?.getItem(0)?.doc?.pages?.[0]?.pkpass;
-    // $: if (pkpass) {
-    //     pkpassToImage(pkpass, {
-    //         lang: getActualLanguage(),
-    //         width: screenWidthDips,
-    //         layout: 'full',
-    //         includeBackFields: true
-    //     })
-    //         .then((img) => (pkPassTestImage = img))
-    //         .catch((err) => console.error(err, err.stack));
-    // }
 </script>
 
 <MainList
@@ -279,8 +220,7 @@
     collectionViewOptions={{
         // spanSize: (item) => itemTemplateSpanSize(viewStyle, item),
         swipeMenuId: 'swipeMenu',
-        itemOverlap: getItemOverlap(viewStyle, $itemHeight),
-        'on:swipeMenuClose': (e) => handleTouchAction(e.index, { action: 'up' })
+        itemOverlap: getItemOverlap(viewStyle, $itemHeight)
     }}
     {contentPadding}
     folderViewStyles={{
@@ -452,16 +392,4 @@
             />
         {/if}
     </stacklayout>
-
-    <!-- <canvasview bind:this={canvastest} slot="test" row={2} on:draw={onDrawCanvasTest} on:tap={() => (canvastest.nativeView.visibility = 'hidden')}> </canvasview> -->
-    <!-- <image
-        bind:this={canvastest}
-        slot="test"
-        backgroundColor="red"
-        margin={40}
-        row={2}
-        src={pkPassTestImage}
-        stretch="aspectFit"
-        verticalAlignment="top"
-        on:tap={() => (canvastest.nativeView.visibility = 'hidden')} /> -->
 </MainList>

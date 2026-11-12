@@ -19,7 +19,6 @@
     export let syncEnabled: boolean;
     export let syncColors: string[];
 
-    let { colorOnPrimaryContainer, colorOnSurface, colorOutlineVariant, colorSurfaceContainerHigh } = $colors;
     $: ({ colorOnPrimaryContainer, colorOnSurface, colorOutlineVariant, colorSurfaceContainerHigh } = $colors);
 
     $: color = __IOS__ ? colorOnSurface : colorOnPrimaryContainer;

@@ -4,14 +4,13 @@
     import { Writable } from 'svelte/store';
     import FormTextField from '~/components/common/FormTextField.svelte';
     import { lc } from '~/helpers/locale';
-    import { OAuthProvider, OAuthTokens, refreshAccessToken } from '~/services/sync/OAuthHelper';
+    import { OAuthProvider, OAuthTokens } from '~/services/sync/OAuthHelper';
     import { performOAuthFlow } from '~/services/sync/OAuthHelperUI';
-    import { ONEDRIVE_PROVIDER } from '~/services/sync/onedrive/OneDrive';
     import { appIcon } from '~/utils/appIcons';
     import { getRowCorners } from '~/utils/groupedRows';
     import { colors } from '~/variables';
 
-    $: ({ colorError, colorOnError, colorOnSurface, colorOnSurfaceVariant, colorSecondary, colorSurfaceContainerLow } = $colors);
+    $: ({ colorError, colorOnSurface, colorSurfaceContainerLow } = $colors);
 
     export let store: Writable<any>;
     export let provider: OAuthProvider;
@@ -53,7 +52,6 @@
             if (!$store.accessToken) {
                 throw new SilentError(lc('not_authenticated'));
             }
-            // const tokens = await refreshAccessToken(ONEDRIVE_PROVIDER, $store.refreshToken);
 
             testing = true;
             const tokens: OAuthTokens = {

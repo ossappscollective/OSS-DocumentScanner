@@ -5,7 +5,6 @@
     import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import { lc } from '~/helpers/locale';
     import { colors, fonts } from '~/variables';
-    // import SearchCollectionView from './SearchCollectionView.svelte';
     import { Template } from '@nativescript-community/svelte-native/components';
     import { OCRLanguages, ocrService } from '~/services/ocr';
     import { showError } from '@shared/utils/showError';
@@ -16,8 +15,6 @@
     $: ({ colorPrimary, colorSurfaceContainer } = $colors);
 
     let textField: NativeViewElementNode<TextField>;
-    // let collectionView: SearchCollectionView;
-    // let currentSearchText: string;
     export let width = 300;
     export let height = 50;
     export let query: string = null;
@@ -44,27 +41,12 @@
     });
     miniSearch.addAll(fullItems);
 
-    // function focus() {
-    //     textField && textField.nativeView.requestFocus();
-    //     // alert('test')
-    // }
     function onTextChange(e) {
         const query = e.value;
-        // clearSearchTimeout();
-
-        // if (query && query.length > 2) {
-        //     searchAsTypeTimer = setTimeout(() => {
-        //         searchAsTypeTimer = null;
         search(query);
-        //     }, 500);
-        // } else if (currentSearchText && currentSearchText.length > 2) {
-        //     clearSearchTimeout();
-        // }
-        // currentSearchText = query;
     }
     async function search(q: string) {
         try {
-            // loading = true;
             if (q?.length) {
                 items = miniSearch.search(q) as any;
             } else {
@@ -72,23 +54,13 @@
             }
         } catch (err) {
             showError(err);
-        } finally {
-            // loading = false;
         }
     }
 
     let items = fullItems;
 
-    // function clearSearchTimeout() {
-    //     if (searchAsTypeTimer) {
-    //         clearTimeout(searchAsTypeTimer);
-    //         searchAsTypeTimer = null;
-    //     }
-    // }
-
     function close(item) {
         unfocus();
-        // clearSearchTimeout();
         closePopover(item.id);
     }
     function focus() {

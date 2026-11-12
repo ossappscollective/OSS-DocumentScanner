@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { Color, GridLayout, path } from '@nativescript/core';
-    import { PKBarcodeFormat, PKPass, PKPassBarcode, PKPassField, PKPassStructure, PKPassStyle, PKPassTransitType, PKPassType } from '~/models/PKPass';
+    import { Color } from '@nativescript/core';
+    import { PKPass, PKPassField, PKPassStyle, PKPassType } from '~/models/PKPass';
     import { colors, fontScale, windowInset } from '~/variables';
     import { qrcodeService } from '~/services/qrcode';
     import { getBarcodeSVG, getFieldTextAlignment, getPKPassColors, getTransitIcon } from '~/utils/pkpass';
@@ -8,8 +8,6 @@
     import { isEInk } from '@shared/helpers/theme';
     import { showError } from '@shared/utils/showError';
     import { OCRDocument } from '~/models/OCRDocument';
-    import { conditionalEvent, createEventDispatcher } from '@shared/utils/svelte/ui';
-    import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import { openLink } from '~/utils/ui';
 
     const FIELD_LINE_HEIGHT = 16;
@@ -17,16 +15,13 @@
     export let pkpass: PKPass;
     export let document: OCRDocument;
     export let includeBackFields = true;
-    export let forImageRendering = false;
     /** fills the page instead of being a card over it */
     export let fullscreen = false;
     /** room for the toolbar over the bottom of the page */
     export let bottomPadding = 0;
     export let barcodeSvg: string = null;
-    let mainGrid: NativeViewElementNode<GridLayout>;
 
-    let { colorOnBackground, colorOnSurface, colorSurface, colorSurfaceContainerHigh } = $colors;
-    $: ({ colorOnBackground, colorOnSurface, colorSurface, colorSurfaceContainerHigh } = $colors);
+    $: ({ colorOnSurface, colorSurface, colorSurfaceContainerHigh } = $colors);
 
     const passData = pkpass.passData;
     const passStyle = pkpass.getPassStyle();
@@ -46,21 +41,12 @@
     const iconImage = pkpass?.images?.icon2x || pkpass?.images?.icon; // 29x29 points
     const stripImage = pkpass?.images?.strip2x || pkpass?.images?.strip; // Variable by device/type
     const backgroundImage = pkpass?.images?.background2x || pkpass?.images?.background; // 180x220 points
-    const thumbnailImage = pkpass?.images?.thumbnail2x || pkpass?.images?.thumbnail; // 90x90 points
     const footerImage = pkpass?.images?.footer2x || pkpass?.images?.footer; // 286x15 points
     const orgName = passData?.organizationName || getLocalizedText(passData?.logoText) || '';
 
-    let waitCounter = 0;
     $: {
         if (primaryBarcode && foregroundColor) {
             updateBarcode();
-        }
-    }
-
-    function onLoadingStep() {
-        waitCounter -= 1;
-        if (waitCounter === 0) {
-            mainGrid.nativeView.notify({ eventName: 'layoutDone' });
         }
     }
 
@@ -90,26 +76,19 @@
             showError(error);
         }
     }
-    function onLayoutChanged() {
-        if (waitCounter <= 0) {
-            mainGrid.nativeView.notify({ eventName: 'layoutDone' });
-        }
-    }
     function onLinkTap({ link }) {
         openLink(link);
     }
 </script>
 
 <gridlayout
-    bind:this={mainGrid}
     {backgroundColor}
     borderRadius={fullscreen ? 0 : 8}
-    elevation={forImageRendering || fullscreen || isEInk ? 0 : 2}
-    margin={forImageRendering || fullscreen ? 0 : 16}
-    marginBottom={forImageRendering || fullscreen ? 0 : $windowInset.bottom + 16}
-    rows={`auto,auto,${forImageRendering ? 'auto' : '*'},auto`}
+    elevation={fullscreen || isEInk ? 0 : 2}
+    margin={fullscreen ? 0 : 16}
+    marginBottom={fullscreen ? 0 : $windowInset.bottom + 16}
+    rows="auto,auto,*,auto"
     {...$$restProps}
-    use:conditionalEvent={{ condition: forImageRendering, event: 'layoutChanged', callback: onLayoutChanged }}
 >
     {#if backgroundImage && passStyle === PKPassStyle.EventTicket}
         <image height="100%" opacity="0.3" rowSpan={4} src={backgroundImage} stretch="aspectFill" />
@@ -119,11 +98,6 @@
     {/if}
     <stacklayout padding="16" row={0}>
         <gridlayout columns="auto,*,auto,auto">
-            <!-- Icon on the left (29x29 points per Apple spec) -->
-            <!-- {#if iconImage}
-                <image col={0} height={29} marginRight={6} src={iconImage} stretch="aspectFit" verticalAlignment="center" width={29} />
-            {/if} -->
-
             <!-- Logo (max 160x50 points per Apple spec) -->
             {#if logoImage}
                 <image col={0} height={50} src={logoImage} stretch="aspectFit" verticalAlignment="top" />
@@ -279,7 +253,6 @@
                     marginTop={24}
                     padding={8}
                     on:tap={onQRCodeTap}
-                    use:conditionalEvent={{ condition: forImageRendering, event: 'layoutChanged', callback: onLoadingStep }}
                 >
                     <svgview src={barcodeSvg} stretch="aspectFit" width="50%" />
                     {#if primaryBarcode?.altText}

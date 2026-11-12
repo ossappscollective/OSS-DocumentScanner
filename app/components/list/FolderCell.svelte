@@ -18,7 +18,6 @@
     /** a tile of the horizontal row, else a row of the vertical list */
     export let tile = true;
     export let selectionMode: Readable<boolean>;
-    let { colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary, colorSurfaceContainerLow } = $colors;
     $: ({ colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary, colorSurfaceContainerLow } = $colors);
 
     $: markerWidth = $selectionMode ? 36 : 0;

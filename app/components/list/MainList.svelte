@@ -20,7 +20,6 @@
         ObservableArray,
         Page,
         ProxyViewContainer,
-        Screen,
         StackLayout,
         View
     } from '@nativescript/core';
@@ -40,8 +39,7 @@
     import FolderCell from '~/components/list/FolderCell.svelte';
     import { optionsToMenuItems } from '~/utils/appMenu';
     import EditNameActionBar from '~/components/common/EditNameActionBar.svelte';
-    import SelectedIndicator from '~/components/common/SelectedIndicator.svelte';
-    import { l, lc, lcp, lp } from '~/helpers/locale';
+    import { lc, lcp, lp } from '~/helpers/locale';
     import { getRealTheme, isDarkTheme, isEInk, onThemeChanged } from '~/helpers/theme';
     import { getCardAccent } from '~/utils/cardColors';
     import { DocFolder, OCRDocument, OCRPage } from '~/models/OCRDocument';
@@ -94,7 +92,6 @@
         detectOCR,
         goToDocumentView,
         goToFolderView,
-        hideLoading,
         importAndScanImage,
         onAndroidNewItent,
         onBackButton,
@@ -102,13 +99,12 @@
         promptForText,
         showImagePopoverMenu,
         showPDFPopoverMenu,
-        showPopoverMenu,
         showSettings,
         transformPages,
         tryCatchFunction
     } from '~/utils/ui';
     import { sortByKey } from '~/utils/utils.common';
-    import { actionBarHeight, colors, fontScale, fonts, isLandscape, onFolderBackgroundColorChanged, onFontScaleChanged, startOnCam, windowInset } from '~/variables';
+    import { colors, fontScale, fonts, isLandscape, onFolderBackgroundColorChanged, onFontScaleChanged, startOnCam, windowInset } from '~/variables';
 
     export interface Item {
         type?: string;
@@ -122,27 +118,12 @@
 
 <script lang="ts">
     // technique for only specific properties to get updated on store change
-    let {
-        colorError,
-        colorOnBackground,
-        colorOnSurfaceVariant,
-        colorPrimary,
-        colorPrimaryContainer,
-        colorSurface,
-        colorSurfaceContainerHigh,
-        colorSurfaceContainerLow,
-        colorSurfaceContainerLowest
-    } = $colors;
     $: ({
         colorError,
         colorOnBackground,
         colorOnSurfaceVariant,
         colorPrimary,
-        colorPrimaryContainer,
-        colorSurface,
-        colorSurfaceContainerHigh,
-        colorSurfaceContainerLow,
-        colorSurfaceContainerLowest
+        colorPrimaryContainer
     } = $colors);
 
     let folders: DocFolder[] = [];
@@ -151,7 +132,6 @@
     $: folderMargin = Math.max(0, 16 - contentPadding);
     export let documents: ObservableArray<Item> = null;
     export let folderItems: ObservableArray<Item> = null;
-    let nbDocuments: number = 0;
     let showNoDocument = false;
     let mounted = false;
     let page: NativeViewElementNode<Page>;
@@ -189,7 +169,6 @@
     $: if ($syncServicesStore) {
         syncEnabled = syncService.enabled;
     }
-    $: updateTitle(folder);
 
     // the title of a folder starts with the folder icon of its rows, so the page reads as a folder.
     // iOS: the count is the small line next to the icon, the name is the subtitle of the bar (the big line under it)
@@ -215,36 +194,6 @@
     // the bar takes the tonal color of the folder, like the plate of a card
     $: folderAccent = folder?.color && !isEInk ? getCardAccent(folder.color, isDarkTheme(), colorPrimary) : null;
     $: folderTitle = getFolderFormattedTitle(folder, colorOnSurfaceVariant);
-
-    export let updateTitle = (folder) => {
-        if (folder && __IOS__) {
-            title = folder.name;
-        } else if (folder) {
-            // DEV_LOG && console.log('updateTitle', $fontScale, folder);
-            title = createNativeAttributedString(
-                {
-                    spans: [
-                        {
-                            fontFamily: $fonts.mdi,
-                            color: colorOnSurfaceVariant,
-                            fontSize: 24 * $fontScale,
-                            text: 'mdi-folder-outline'
-                        },
-                        {
-                            text: '  ' + folder.name
-                        }
-                    ]
-                },
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                1,
-                true // needed as will be used in a label
-            );
-            // DEV_LOG && console.log('updating folder title', folder, $fonts.mdi, title);
-        }
-    };
 
     let syncRunning = false;
     $: DEV_LOG && console.log('syncEnabled', syncEnabled);
@@ -296,10 +245,6 @@
     }
 
     export async function refresh(force = true, filter?: string) {
-        // if (!shown) {
-        //     needsRefreshOnBack = true;
-        //     return;
-        // }
         // DEV_LOG && console.log('refresh', force, filter);
         if (loading || (!force && lastRefreshFilter === filter) || !documentsService.started) {
             return;
@@ -322,11 +267,6 @@
             );
             updateRowPositions((index) => items[index], items.length);
             documents = new ObservableArray(items);
-            // DEV_LOG &&
-            //     console.log(
-            //         'documents',
-            //         documents.map((d) => d.doc?.id)
-            //     );
             updateNoDocument();
         } catch (error) {
             showError(error);
@@ -385,8 +325,7 @@
     const refreshThrottle = debounce(refresh, 300);
 
     function updateNoDocument() {
-        nbDocuments = documents?.length ?? 0;
-        showNoDocument = nbDocuments === 0;
+        showNoDocument = (documents?.length ?? 0) === 0;
     }
     async function insertDocumentAtSortedIndex(event: DocumentAddedEventData) {
         try {
@@ -508,12 +447,6 @@
         refresh();
     }
     async function onDocumentsDeleted(event: DocumentDeletedEventData) {
-        // DEV_LOG &&
-        //     console.log(
-        //         'onDocumentsDeleted',
-        //         event.documents.map((d) => d.id),
-        //         event.folders
-        //     );
         for (let i = 0; i < event.documents.length; i++) {
             const id = event.documents[i].id;
             const index = documents.findIndex((item) => item.doc && item.doc.id === id);
@@ -687,9 +620,6 @@
         } else if (sortOrder.startsWith('useCount')) {
             refresh();
         }
-    }
-    function onNavigatingFrom() {
-        // shown = false;
     }
     function selectItem(item: Item) {
         if (!item.selected) {
@@ -961,26 +891,6 @@
         return sortByKey(resut, sortOrder);
     }
 
-    // async function loopSelectedDocuments(callback: (d: OCRDocument) => void) {
-    //     if (!documentsService.started) {
-    //         return;
-    //     }
-    //     for (let index = getDocumentsStartIndex(); index < documents.length; index++) {
-    //         const d = documents.getItem(index);
-    //         if (d.doc && d.selected) {
-    //             callback(d.doc);
-    //         }
-    //     }
-    //     for (let index = 0; index < folderItems.length; index++) {
-    //         const d = folderItems.getItem(index);
-    //         if (d.folder && d.selected) {
-    //             const docs = await documentsService.documentRepository.findDocuments({ folder: d.folder });
-    //             for (let i = 0; i < docs.length; i++) {
-    //                 callback(docs[i]);
-    //             }
-    //         }
-    //     }
-    // }
     async function getSelectedPagesAndPossibleSingleDocument(): Promise<[{ page: OCRPage; document: OCRDocument }[], OCRDocument, OCRDocument[]]> {
         const selected: { page: OCRPage; document: OCRDocument }[] = [];
         const docs = await getSelectedDocuments();
@@ -1155,11 +1065,6 @@
                 lottieLightColor = new Color(colorPrimaryContainer).lighten(10);
             }
         }
-    }
-
-    async function showImageExportPopover(event) {
-        const selection = await getSelectedPagesAndPossibleSingleDocument();
-        return showImagePopoverMenu(selection[0], event.object, { vertPos: VerticalPosition.ABOVE });
     }
 
     const contextMenuItems = new WeakMap<View, Item>();
@@ -1467,7 +1372,7 @@
     });
 </script>
 
-<appPage bind:this={page} id="documentList" on:navigatedTo={onNavigatedTo} on:navigatingFrom={onNavigatingFrom}>
+<appPage bind:this={page} id="documentList" on:navigatedTo={onNavigatedTo}>
     <appBar
         bind:this={appBar}
         android:backgroundColor={nbSelected > 0 ? colorPrimaryContainer : folderAccent?.container}

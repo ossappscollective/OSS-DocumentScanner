@@ -17,7 +17,6 @@
     export let alwaysShowNames: boolean;
     export let stripHeight: number = undefined;
 
-    let { colorBackground } = $colors;
     $: ({ colorBackground } = $colors);
 
     $: stacked = layout === 'cardholder' || layout === 'full';

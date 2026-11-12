@@ -6,7 +6,6 @@
     export let title: string = lc('no_card_yet_title');
     export let help: string = lc('no_card_yet_help');
     export let actionText: string = lc('scan_card');
-    let { colorOnSurfaceVariant } = $colors;
     $: ({ colorOnSurfaceVariant } = $colors);
 </script>
 

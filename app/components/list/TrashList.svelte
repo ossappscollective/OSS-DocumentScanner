@@ -22,17 +22,13 @@
 </script>
 
 <script lang="ts">
-    let { colorOnBackground, colorOnSurfaceVariant } = $colors;
     $: ({ colorOnBackground, colorOnSurfaceVariant } = $colors);
 
     let collectionView: NativeViewElementNode<CollectionView>;
     let viewStyle: string;
-    let nbSelected: number = 0;
     let documents: ObservableArray<Item>;
-    let getSyncColors: (item: Item) => string[];
     let onItemLongPress: (item: Item, event?) => Promise<void>;
     let onItemTap: (item: Item) => Promise<void>;
-    let refreshCollectionView: () => void;
 
     $: condensed = viewStyle === 'condensed';
     function getItemRowHeight(viewStyle) {
@@ -44,8 +40,6 @@
     function getItemImageHeight(viewStyle) {
         return condensed ? 44 : 94;
     }
-
-    $: textPaint.color = colorOnBackground || 'black';
 
     function onCanvasDraw(item: Item, { canvas, object }: { canvas: Canvas; object: CanvasView }) {
         const w = canvas.getWidth();
@@ -89,9 +83,6 @@
     bind:viewStyle
     bind:onItemTap
     bind:onItemLongPress
-    bind:nbSelected
-    bind:refreshCollectionView
-    bind:getSyncColors
     bind:documents
     bind:collectionView
 >

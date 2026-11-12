@@ -190,7 +190,6 @@
                     minDist = dist;
                     minIndex = index;
                 }
-                // currentPoint = point;
             }
             const quadCenterDist = distance([(minX + maxX) / 2, (minY + maxY) / 2], point1);
             if (quadCenterDist < centerDist) {
@@ -210,13 +209,6 @@
                 case 2:
                     return [minIndex, [minCorner]] as [number, number[]];
             }
-            // if (minHandleDist < minDist) {
-            //     return [minHandleIndex, minHandleCorners] as [number, number[]];
-            // } else  if (minHandleDist < minDist) {
-            //     return [minHandleIndex, minHandleCorners] as [number, number[]];
-            // } else {
-            //     return [minIndex, [minCorner]] as [number, number[]];
-            // }
         }
         return [-1, []] as [number, number[]];
     }
@@ -248,13 +240,6 @@
                         dispatch('dragging', { detail: true });
                         hapticTick();
                     }
-                    // if (result) {
-                    //     closestQuadIndex = [result[0]];
-                    //     closestCornerQuadIndex = [result[1]];
-                    // } else {
-                    //     closestQuadIndex = [];
-                    //     closestCornerQuadIndex = [];
-                    // }
                     break;
                 }
                 case 'up':
@@ -287,9 +272,7 @@
                             const newX = quad[cornerQuadIndex][0] + touchMoveXDistance;
                             const newY = quad[cornerQuadIndex][1] + touchMoveYDistance;
                             const cornerNewPosition = getMatrixMappedPoint(inversedCurrentMatrix, [newX, newY]);
-                            // console.log('cornerNewPosition', x, y, quad[closestCornerQuadIndex], newX, newY, cornerNewPosition);
                             // make sure the user doesn't drag the corner outside the image preview container
-                            // if (cornerNewPosition[0] >= 0 && cornerNewPosition[0] < actualWidth && cornerNewPosition[1] >= 0 && cornerNewPosition[1] < actualHeight) {
                             cornerNewPosition[0] = Math.max(0, Math.min(actualWidth, cornerNewPosition[0]));
                             cornerNewPosition[1] = Math.max(0, Math.min(actualHeight, cornerNewPosition[1]));
                             updates.push({
@@ -297,9 +280,6 @@
                                 mappedPoint: [newX, newY],
                                 point: cornerNewPosition.map(Math.round)
                             });
-                            // } else {
-                            //     canUpdate = false;
-                            // }
                         }
                         if (canUpdate) {
                             const quad = [...mappedQuads[closestQuadIndex]];
@@ -416,9 +396,6 @@
         }
     }
 
-    // function getRotation() {
-    //     return rotation || imageRotation || 0;
-    // }
     function clearImages() {
         if (zoomImage) {
             recycleImages(zoomImage);
@@ -453,13 +430,6 @@
                 return;
             }
             const canvasRatio = w / h;
-            // let imageWidth = width;
-            // let imageHeight = height;
-            // // const needRotation = false ;
-            // if (needRotation) {
-            //     imageWidth = height;
-            //     imageHeight = width;
-            // }
             const imageRatio = width / height;
             let cx = padding;
             let cy = padding;
@@ -470,20 +440,12 @@
                 drawingRatio = w / width;
                 cy += (h - w / imageRatio) / 2;
             }
-            // DEV_LOG && console.log('updateMatrix', w, h, cx, cy, width, height, imageRatio, canvasRatio);
             currentImageMatrix.reset();
             currentCropMatrix.reset();
-            // if (needRotation) {
-            //     currentImageMatrix.postTranslate(-image.width / 2, -image.height / 2);
-            //     currentImageMatrix.postRotate(rotation);
-            //     currentImageMatrix.postTranslate(image.height / 2, image.width / 2);
-            // }
-            // console.log('updateMatrix', imageWidth, imageHeight, editingImage.rotationAngle, needRotation, editingImage.rotationAngle % 180, imageRatio, canvasRatio, drawingRatio, cx, cy,  quads)
             currentImageMatrix.postScale(drawingRatio, drawingRatio);
             currentCropMatrix.postScale(drawingRatio, drawingRatio);
             currentImageMatrix.postTranslate(cx, cy);
             currentCropMatrix.postTranslate(cx, cy);
-            // inversedCurrentMatrix = new Matrix();
             currentCropMatrix.invert(inversedCurrentMatrix);
             mapQuads();
             nCanvas.invalidate();

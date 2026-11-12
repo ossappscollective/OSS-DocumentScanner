@@ -1,14 +1,13 @@
 <script context="module" lang="ts">
     import { share } from '@akylas/nativescript-app-utils/share';
     import { Template } from '@nativescript-community/svelte-native/components';
-    import { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
     import { CheckBox } from '@nativescript-community/ui-checkbox';
     import { openFilePicker, pickFolder, saveFile } from '@nativescript-community/ui-document-picker';
     import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { alert, confirm } from '@nativescript-community/ui-dialogs';
     import { TextField, TextFieldProperties } from '@nativescript-community/ui-textfield';
     import { TextView } from '@nativescript-community/ui-textview';
-    import { ApplicationSettings, File, ObservableArray, Page, ScrollView, StackLayout, knownFolders, path } from '@nativescript/core';
+    import { ApplicationSettings, File, ScrollView, StackLayout, knownFolders, path } from '@nativescript/core';
     import { presentInAppSponsorBottomsheet } from '@shared/utils/inapp-purchase';
     import { Sentry, startSentry, stopSentry } from '@shared/utils/sentry';
     import { showError } from '@shared/utils/showError';
@@ -105,16 +104,13 @@
     // let { colorOnSurfaceVariant } = $colors;
     // $: ({ colorOnSurfaceVariant } = $colors);
 
-    let { colorOnBackground } = $colors;
     $: ({ colorOnBackground } = $colors);
 
     const getRowProps = (item) => getSettingsRowProps(item, $colors, __IOS__);
     const getIconProps = () => getSettingsIconProps($colors, __IOS__);
 
-    let page: NativeViewElementNode<Page>;
     let settingsCollectionView: BaseSettingsPage;
 
-    let items: ObservableArray<any>;
     // const searchFilter: string = null;
 
     const dataSettingsAvailable = __ANDROID__ && android.os.Environment.getExternalStorageState() === 'mounted';
@@ -216,7 +212,6 @@
                             : ([] as any)
                     )
                     .concat(
-                        // securityService.biometricsAvailable
                         [
                             {
                                 type: 'switch',
@@ -233,7 +228,6 @@
                                 value: securityService.biometricEnabled && securityService.autoLockEnabled
                             }
                         ]
-                        // : []
                     );
             case 'document_detection':
                 return [
@@ -991,13 +985,11 @@
                         id: 'export_settings',
                         title: lc('export_settings'),
                         description: lc('export_settings_desc')
-                        // rightBtnIcon: 'mdi-chevron-right'
                     },
                     {
                         id: 'import_settings',
                         title: lc('import_settings'),
                         description: lc('import_settings_desc')
-                        // rightBtnIcon: 'mdi-chevron-right'
                     },
                     { type: 'sectionheader', title: lc('about') }
                 ])
@@ -1017,7 +1009,6 @@
                 .concat([
                     {
                         id: 'third_party',
-                        // rightBtnIcon: 'mdi-chevron-right',
                         title: lc('third_parties'),
                         description: lc('list_used_third_parties')
                     }
@@ -1025,11 +1016,6 @@
                 .concat(
                     PLAY_STORE_BUILD
                         ? [
-                              //   {
-                              //       id: 'share',
-                              //       rightBtnIcon: 'mdi-chevron-right',
-                              //       title: lc('share_application')
-                              //   },
                               {
                                   type: 'rightIcon',
                                   id: 'review',
@@ -1092,19 +1078,6 @@
                             await backupWorkerService.restoreBackup(zipPath);
                             await hideLoading();
                             showSnack({ message: lc('backup_restored') });
-
-                            // if (__ANDROID__) {
-                            //     const result = await confirm({
-                            //         message: lc('restart_app'),
-                            //         okButtonText: lc('restart'),
-                            //         cancelButtonText: lc('later')
-                            //     });
-                            //     if (result) {
-                            //         restartApp();
-                            //     }
-                            // } else {
-                            //     showSnack({ message: lc('please_restart_app') });
-                            // }
                         }
                     } catch (error) {
                         await hideLoading();
@@ -1112,12 +1085,6 @@
                     }
                     break;
                 case 'export_settings':
-                    // if (__ANDROID__ && SDK_VERSION < 29) {
-                    //     const permRes = await request('storage');
-                    //     if (!isPermResultAuthorized(permRes)) {
-                    //         throw new Error(lc('missing_storage_perm_settings'));
-                    //     }
-                    // }
                     const jsonStr = ApplicationSettings.getAllJSON();
                     if (jsonStr) {
                         const result = await saveFile({
@@ -1264,60 +1231,6 @@
                     });
                     break;
                 }
-                // case 'data_location': {
-                //     await requestManagePermission();
-                //     const result = await pickFolder({
-                //         permissions: {
-                //             read: true,
-                //             write: true,
-                //             recursive: true,
-                //             persistable: true
-                //         }
-                //     });
-                //     const resultPath = result.folders[0];
-                //     if (resultPath) {
-                //         const dstFolder = getRealPath(resultPath);
-                //         const srcFolder = documentsService.rootDataFolder;
-                //         DEV_LOG &&
-                //             console.log(
-                //                 'move data location',
-                //                 JSON.stringify({
-                //                     srcFolder,
-                //                     resultPath,
-                //                     dstFolder
-                //                 })
-                //             );
-                //         let confirmed = true;
-                //         if (srcFolder !== getRealPath(resultPath, true)) {
-                //             confirmed = await confirm({
-                //                 title: lc('move_data'),
-                //                 message: lc('move_data_desc'),
-                //                 okButtonText: lc('ok'),
-                //                 cancelButtonText: lc('cancel')
-                //             });
-                //         }
-                //         if (confirmed) {
-                //             DEV_LOG && console.log('confirmed move data to', srcFolder, dstFolder);
-                //             showLoading(lc('moving_files'));
-                //             await copyFolderContent(srcFolder, dstFolder);
-                //             await removeFolderContent(srcFolder);
-                //             DEV_LOG && console.log('copyFolderContent done');
-                //         }
-                //         ApplicationSettings.setString(SETTINGS_ROOT_DATA_FOLDER, dstFolder);
-                //         // documentsService.dataFolder = Folder.fromPath(dstFolder);
-                //         await alert({
-                //             cancelable: false,
-                //             message: lc('restart_app'),
-                //             okButtonText: lc('restart')
-                //         });
-                //         restartApp();
-                //         // item.text = dstFolder;
-                //         item.description = dstFolder;
-                //         updateItem(item);
-                //     }
-                //     break;
-                // }
-
                 case 'storage_usage': {
                     const storageView = (await import('~/components/settings/StorageView.svelte')).default;
                     navigate({ page: storageView });
@@ -1381,17 +1294,6 @@
                 }
                 return true;
             case 'biometric_auto_lock':
-                // if (value) {
-                //     if (securityService.biometricEnabled) {
-                //         const checkboxView: CheckBox = event.object;
-                //         checkboxView.checked = item.value = false;
-                //     } else {
-                //         securityService.autoLockEnabled = value;
-                //     }
-                // } else {
-                //     securityService.clear();
-                //     securityService.disableBiometric();
-                // }
                 securityService.autoLockEnabled = value;
                 return true;
 
@@ -1424,7 +1326,6 @@
     getLeftIconProps={getIconProps}
     groupRows={true}
     sectionHeaderClass="settingsSectionHeader"
-    {items}
     {onCheckBox}
     onItemLongPress={(item, event) => onLongPress(item.id, event)}
     onItemTap={onTap}

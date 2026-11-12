@@ -9,7 +9,6 @@
     export let totals: StorageSizes;
     export let nbDocuments: number;
 
-    let { colorOnSurface, colorOnSurfaceVariant, colorPrimary, colorSurfaceContainerHigh, colorSurfaceContainerLow, colorTertiary } = $colors;
     $: ({ colorOnSurface, colorOnSurfaceVariant, colorPrimary, colorSurfaceContainerHigh, colorSurfaceContainerLow, colorTertiary } = $colors);
 
     // the bar is split in thousandths: a star column takes a whole number

@@ -13,7 +13,7 @@
     import { colors } from '~/variables';
     import { AuthType } from '~/webdav';
 
-    $: ({ colorError, colorOnError, colorOnSurfaceVariant, colorSecondary } = $colors);
+    $: ({ colorError, colorOnError, colorSecondary } = $colors);
     $: ({ authType } = $store);
     $: authRowProps = getSettingsRowProps({ position: 'only' }, $colors, __IOS__);
     const fieldMargin = '4 16 4 16';

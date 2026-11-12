@@ -15,7 +15,7 @@
 
     const tWidth = (screenWidthDips - 29) / 2;
 
-    async function selectPDFOption(option: keyof PDFExportBaseOptions, event, valueTransformer?, fullRefresh = true) {
+    async function selectPDFOption(option: keyof PDFExportBaseOptions, event, valueTransformer?) {
         try {
             // const OptionSelect = (await import('~/components/OptionSelect.svelte')).default;
             const options = Object.keys(PDF_OPTIONS[option]).map((k) => ({ ...PDF_OPTIONS[option][k], id: k }));
@@ -23,7 +23,7 @@
                 options,
                 anchor: event.object,
                 onClose: (item) => {
-                    updatePDFOption(option, valueTransformer ? valueTransformer(item.id) : item.id, fullRefresh);
+                    updatePDFOption(option, valueTransformer ? valueTransformer(item.id) : item.id);
                 }
             });
         } catch (error) {
@@ -31,13 +31,7 @@
         }
     }
 
-    type PickOfType<T, P> = { [K in keyof T as P extends T[K] ? K : never]: T[K] & P };
-
-    function setProperty<T, P>(obj: T | PickOfType<T, P>, key: keyof typeof obj, value: (typeof obj)[typeof key]) {
-        obj[key] = value;
-    }
-
-    function updatePDFOption(option: keyof PDFExportBaseOptions, value: any, fullRefresh = false) {
+    function updatePDFOption(option: keyof PDFExportBaseOptions, value: any) {
         try {
             clearCheckboxTimer();
             //@ts-ignore
@@ -47,7 +41,7 @@
             showError(error);
         }
     }
-    async function selectSilderPDFOption(option: keyof PDFExportBaseOptions, event, fullRefresh = false) {
+    async function selectSilderPDFOption(option: keyof PDFExportBaseOptions, event) {
         try {
             await showSliderPopover({
                 debounceDuration: 0,
@@ -55,7 +49,7 @@
                 vertPos: VerticalPosition.BELOW,
                 value: $store.exportOptions[option],
                 onChange(value) {
-                    updatePDFOption(option, Math.round(value), fullRefresh);
+                    updatePDFOption(option, Math.round(value));
                 }
             });
         } catch (error) {
@@ -69,20 +63,16 @@
             checkboxTapTimer = null;
         }
     }
-    let ignoreNextOnCheckBoxChange = false;
-    async function onCheckBox(event, pdfOption?: string) {
-        if (ignoreNextOnCheckBoxChange || $store.exportOptions[pdfOption] === event.value) {
+    function onCheckBox(event, pdfOption?: string) {
+        if ($store.exportOptions[pdfOption] === event.value) {
             return;
         }
         const value = event.value;
         clearCheckboxTimer();
         try {
-            ignoreNextOnCheckBoxChange = true;
             $store.exportOptions[pdfOption] = value;
         } catch (error) {
             showError(error);
-        } finally {
-            ignoreNextOnCheckBoxChange = false;
         }
     }
 </script>
