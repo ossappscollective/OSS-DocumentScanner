@@ -19,7 +19,7 @@
     import PdfEdit from '~/components/edit/DocumentEdit.svelte';
     import { lc, lcp } from '~/helpers/locale';
     import { isDarkTheme, isEInk, onThemeChanged } from '~/helpers/theme';
-    import { ExtraFieldType, OCRDocument, OCRPage } from '~/models/OCRDocument';
+    import { OCRDocument, OCRPage } from '~/models/OCRDocument';
     import {
         DocumentDeletedEventData,
         DocumentPageDeletedEventData,
@@ -33,11 +33,6 @@
     import {
         CARD_RATIO,
         DOCUMENT_NAME_FORMAT,
-        EVENT_DOCUMENT_DELETED,
-        EVENT_DOCUMENT_PAGES_ADDED,
-        EVENT_DOCUMENT_PAGE_DELETED,
-        EVENT_DOCUMENT_PAGE_UPDATED,
-        EVENT_DOCUMENT_UPDATED,
         QRCODE_RESIZE_THRESHOLD,
         SETTINGS_DOCUMENT_NAME_FORMAT,
         SHEET_PAN_SOFT_INPUT_MODE
@@ -45,6 +40,8 @@
     import { appIcon } from '~/utils/appIcons';
     import { optionsToMenuItems } from '~/utils/appMenu';
     import { getCardAccent, pickCardColor } from '~/utils/cardColors';
+    import { getSelectedPages, subscribeDocumentEvents } from '~/utils/documentView';
+    import { formatExtraValue, getExtraFields } from '~/utils/extraFields';
     import { getTopBrightness } from '~/utils/images';
     import { documentHasPKPassData, getPKPassColors } from '~/utils/pkpass';
     import { getFormatedDateForFilename } from '~/utils/utils.common';
@@ -82,7 +79,6 @@
 
 <script lang="ts">
     import CardViewEmpty from '~/components/view/CardViewEmpty.svelte';
-    import { EXTRA_PAPERLESS_ID_KEY } from '~/services/sync/paperless/PaperlessNgxPDFSyncService';
 
     $: ({ colorBackground, colorError, colorOnBackground, colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary, colorSurface, colorSurfaceContainerLow } = $colors);
 
@@ -111,7 +107,7 @@
     $: accent = getCardAccent(cardColor, isDarkTheme(), colorPrimary);
     $: photoEditProps = legacyPhotoEdit ? { backgroundColor: '#00000066', borderRadius: 18, color: '#FFFFFF' } : __ANDROID__ ? { backgroundColor: accent.container, color: accent.accent } : {};
     $: hasCustomName = document.name !== getFormatedDateForFilename(document.createdDate, ApplicationSettings.getString(SETTINGS_DOCUMENT_NAME_FORMAT, DOCUMENT_NAME_FORMAT), false);
-    $: details = getDetails(document);
+    $: details = getExtraFields(document.extra);
     $: nbImages = document.pages.filter((p) => p.imagePath).length;
     $: multiplePhotos = nbImages > 1;
     $: multipleQR = qrcodes?.length > 1;
@@ -162,12 +158,6 @@
         updateBackdropBrightness(backdropImage);
     }
 
-    function getDetails(doc: OCRDocument) {
-        const extra = doc.extra || {};
-        return Object.keys(extra)
-            .filter((key) => key !== 'color' && key !== 'pkpass' && key !== EXTRA_PAPERLESS_ID_KEY && typeof extra[key] === 'object')
-            .map((key) => ({ name: key, extra: extra[key] as any }));
-    }
     const pages = document.getObservablePages();
     let items = pages.map<Item>((page, index) => ({ selected: false, page, document, current: index === 0 }));
     $: detailsContainerProps = __ANDROID__ ? {} : { backgroundColor: colorSurface, borderRadius: 16 };
@@ -214,24 +204,6 @@
     function onSelectedIndex(event) {
         currentQRCodeIndex = event.object.selectedIndex;
     }
-    function getSelectedPages() {
-        const selected: { page: OCRPage; document: OCRDocument }[] = [];
-        items.forEach((d, index) => {
-            if (d.selected) {
-                selected.push({ page: d.page, document });
-            }
-        });
-        return selected;
-    }
-    function getSelectedPagesWithData() {
-        const selected: { page: OCRPage; pageIndex: number; document: OCRDocument }[] = [];
-        items.forEach((d, index) => {
-            if (d.selected) {
-                selected.push({ page: d.page, document, pageIndex: index });
-            }
-        });
-        return selected;
-    }
     // the popovers still need a view to be anchored to
     function getAnchor() {
         return page?.nativeView;
@@ -271,26 +243,13 @@
     let nbSelected = 0;
     // updating an item reloads the pager, which reports its selected index again as if it was swiped
     let ignorePagerIndexUntil = 0;
-    function selectItem(item: Item) {
-        if (!item.selected) {
+    function setSelected(item: Item, selected: boolean) {
+        if (item.selected !== selected) {
             ignorePagerIndexUntil = Date.now() + 300;
             items.some((d, index) => {
                 if (d === item) {
-                    nbSelected++;
-                    d.selected = true;
-                    items.setItem(index, d);
-                    return true;
-                }
-            });
-        }
-    }
-    function unselectItem(item: Item) {
-        if (item.selected) {
-            ignorePagerIndexUntil = Date.now() + 300;
-            items.some((d, index) => {
-                if (d === item) {
-                    nbSelected--;
-                    d.selected = false;
+                    nbSelected += selected ? 1 : -1;
+                    d.selected = selected;
                     items.setItem(index, d);
                     return true;
                 }
@@ -313,14 +272,7 @@
         }
     }
     function toggleSelection(item: Item) {
-        if (item.selected) {
-            unselectItem(item);
-        } else {
-            selectItem(item);
-        }
-    }
-    function onItemLongPress(item: Item) {
-        toggleSelection(item);
+        setSelected(item, !item.selected);
     }
     async function onItemTap(item: Item) {
         try {
@@ -352,20 +304,35 @@
             showError(error);
         }
     }
-    // a modal bottom sheet is the Material pattern for the actions of an item (the iOS context menu is registered above)
+    // the actions of a photo: the context menu on iOS, a modal bottom sheet (the Material pattern) on Android
+    function getPhotoActions(item: Item) {
+        const index = items.findIndex((i) => i.page === item.page);
+        const select = () => setSelected(items.getItem(index), true);
+        return [
+            { id: 'fullscreen', title: lc('show_fullscreen_images'), icon: 'fullscreen', mdiIcon: 'mdi-fullscreen', run: () => showFullscreen(index) },
+            { id: 'edit', title: lc('edit'), icon: 'tune', mdiIcon: 'mdi-tune', run: () => editPage(item.page) },
+            { id: 'select', title: lc('select'), icon: 'select', mdiIcon: 'mdi-check-circle-outline', run: select },
+            {
+                id: 'delete',
+                title: lc('delete'),
+                icon: 'delete',
+                mdiIcon: 'mdi-delete',
+                destructive: true,
+                run: async () => {
+                    select();
+                    await runSelectionOption('delete');
+                }
+            }
+        ];
+    }
     async function onImageLongPress(item: Item) {
         if (!__ANDROID__) {
             return;
         }
         try {
             const OptionSelect = (await import('@shared/components/OptionSelect.svelte')).default;
-            const index = items.findIndex((i) => i.page === item.page);
-            const options = [
-                { id: 'fullscreen', name: lc('show_fullscreen_images'), icon: 'mdi-fullscreen' },
-                { id: 'edit', name: lc('edit'), icon: 'mdi-tune' },
-                { id: 'select', name: lc('select'), icon: 'mdi-check-circle-outline' },
-                { id: 'delete', name: lc('delete'), icon: 'mdi-delete', color: colorError }
-            ];
+            const actions = getPhotoActions(item);
+            const options = actions.map((action) => ({ id: action.id, name: action.title, icon: action.mdiIcon, ...(action.destructive ? { color: colorError } : {}) }));
             const rowHeight = 58;
             const height = rowHeight * options.length;
             const option = await showBottomSheet({
@@ -375,21 +342,7 @@
                 ignoreTopSafeArea: true,
                 props: { rowHeight, height, options }
             });
-            switch (option?.id) {
-                case 'fullscreen':
-                    showFullscreen(index);
-                    break;
-                case 'edit':
-                    editPage(item.page);
-                    break;
-                case 'select':
-                    selectItem(items.getItem(index));
-                    break;
-                case 'delete':
-                    selectItem(items.getItem(index));
-                    await runSelectionOption('delete');
-                    break;
-            }
+            await actions.find((action) => action.id === option?.id)?.run();
         } catch (error) {
             showError(error);
         }
@@ -442,24 +395,11 @@
         imageMenuRemovers.set(
             view,
             setContextMenu(view, {
-                items: () => {
-                    const index = items.findIndex((i) => i.page === item.page);
-                    return [
-                        { title: lc('show_fullscreen_images'), icon: appIcon('fullscreen'), onSelect: () => showFullscreen(index) },
-                        { title: lc('edit'), icon: appIcon('tune'), onSelect: () => editPage(item.page) },
-                        { separator: true },
-                        { title: lc('select'), icon: appIcon('select'), onSelect: () => selectItem(items.getItem(index)) },
-                        {
-                            title: lc('delete'),
-                            icon: appIcon('delete'),
-                            destructive: true,
-                            onSelect: async () => {
-                                selectItem(items.getItem(index));
-                                await runSelectionOption('delete');
-                            }
-                        }
-                    ];
-                }
+                items: () =>
+                    getPhotoActions(item).flatMap((action) => [
+                        { title: action.title, icon: appIcon(action.icon), ...(action.destructive ? { destructive: true } : {}), onSelect: action.run },
+                        ...(action.id === 'edit' ? [{ separator: true }] : [])
+                    ])
             })
         );
     }
@@ -481,23 +421,16 @@
                 onGoBack();
             }
         });
-    async function fullscreenSelectedPages() {
+    async function openFullscreen(images: { image: string }[], props: Record<string, unknown> = {}) {
         const component = (await import('~/components/FullScreenImageViewer.svelte')).default;
-        navigate({
-            page: component,
-            // transition: __ANDROID__ ? SharedTransition.custom(new PageTransition(300, undefined, 10), {}) : undefined,
-            props: {
-                images: getSelectedPages()
-                    .filter((p) => p.page.imagePath)
-                    .map((p) => ({
-                        // sharedTransitionTag: `document_${doc.id}_${page.id}`,
-                        name: document.name,
-                        image: p.page.imagePath,
-                        ...p
-                    })),
-                startPageIndex: 0
-            }
-        });
+        navigate({ page: component, props: { images, startPageIndex: 0, ...props } });
+    }
+    function fullscreenSelectedPages() {
+        return openFullscreen(
+            getSelectedPages(items, document)
+                .filter((p) => p.page.imagePath)
+                .map((p) => ({ name: document.name, image: p.page.imagePath, ...p }))
+        );
     }
     async function deleteSelectedPages() {
         if (nbSelected > 0) {
@@ -614,25 +547,22 @@
         if (__ANDROID__) {
             Application.android.on(Application.android.activityBackPressedEvent, onAndroidBackButton);
         }
-        documentsService.on(EVENT_DOCUMENT_UPDATED, onDocumentUpdated);
-        documentsService.on(EVENT_DOCUMENT_DELETED, onDocumentsDeleted);
-        documentsService.on(EVENT_DOCUMENT_PAGE_DELETED, onDocumentPageDeleted);
-        documentsService.on(EVENT_DOCUMENT_PAGE_UPDATED, onDocumentPageUpdated);
-        documentsService.on(EVENT_DOCUMENT_PAGES_ADDED, onPagesAdded);
 
         shortcutService.updateShortcuts(document);
         documentsService.documentRepository.incrementUsage(document).catch(() => {});
         // refresh();
+        return subscribeDocumentEvents({
+            updated: onDocumentUpdated,
+            deleted: onDocumentsDeleted,
+            pageDeleted: onDocumentPageDeleted,
+            pageUpdated: onDocumentPageUpdated,
+            pagesAdded: onPagesAdded
+        });
     });
     onDestroy(() => {
         if (__ANDROID__) {
             Application.android.off(Application.android.activityBackPressedEvent, onAndroidBackButton);
         }
-        documentsService.off(EVENT_DOCUMENT_UPDATED, onDocumentUpdated);
-        documentsService.off(EVENT_DOCUMENT_DELETED, onDocumentsDeleted);
-        documentsService.off(EVENT_DOCUMENT_PAGE_DELETED, onDocumentPageDeleted);
-        documentsService.off(EVENT_DOCUMENT_PAGE_UPDATED, onDocumentPageUpdated);
-        documentsService.off(EVENT_DOCUMENT_PAGES_ADDED, onPagesAdded);
     });
 
     function refreshCollectionView() {
@@ -654,28 +584,22 @@
             DEV_LOG && console.log('runSelectionOption', id);
             switch (id) {
                 case 'share':
-                    result = await showImagePopoverMenu(getSelectedPages(), getAnchor());
-                    if (result) {
-                        unselectAll();
-                    }
+                    result = await showImagePopoverMenu(getSelectedPages(items, document), getAnchor());
                     break;
                 case 'fullscreen':
                     await fullscreenSelectedPages();
-                    unselectAll();
+                    result = true;
                     break;
                 case 'show_ocr':
-                    await showOCRData(document, getSelectedPagesWithData()[0]?.pageIndex);
+                    await showOCRData(document, getSelectedPages(items, document)[0]?.pageIndex);
                     break;
                 case 'ocr':
-                    result = await detectOCR({ pages: getSelectedPagesWithData() });
-                    if (result) {
-                        unselectAll();
-                    }
+                    result = await detectOCR({ pages: getSelectedPages(items, document) });
                     break;
                 case 'qrcode': {
                     let found = false;
                     await Promise.all(
-                        getSelectedPagesWithData().map((page) =>
+                        getSelectedPages(items, document).map((page) =>
                             qrcodeService.detectQRcode(document, page.pageIndex).then((r) => {
                                 found = found || r?.length > 0;
                             })
@@ -684,21 +608,18 @@
                     if (!found) {
                         showSnack({ message: lc('no_qrcode_found') });
                     }
-                    unselectAll();
+                    result = true;
                     break;
                 }
                 case 'delete':
                     result = await deleteSelectedPages();
-                    if (result) {
-                        unselectAll();
-                    }
                     break;
                 case 'transform':
-                    result = await transformPages({ pages: getSelectedPagesWithData() });
-                    if (result) {
-                        unselectAll();
-                    }
+                    result = await transformPages({ pages: getSelectedPages(items, document) });
                     break;
+            }
+            if (result) {
+                unselectAll();
             }
         } catch (error) {
             showError(error);
@@ -764,7 +685,7 @@
         ];
     }
     function getSelectionMenu(pkpass: boolean): MenuItem[] {
-        const withImages = !pkpass && getSelectedPagesWithData().some((p) => p.page.imagePath);
+        const withImages = !pkpass && getSelectedPages(items, document).some((p) => p.page.imagePath);
         const menuOptions: { id: string; name: string }[] = [{ id: 'fullscreen', name: lc('show_fullscreen_images') }];
         if (withImages) {
             menuOptions.push({ id: 'transform', name: lc('transform_images') }, { id: 'ocr', name: lc('ocr_document') }, { id: 'show_ocr', name: lc('show_ocr_text') }, { id: 'qrcode', name: lc('detect_qrcode') });
@@ -852,76 +773,74 @@
     async function runAddOption(id: string) {
         try {
             let found = false;
-            if (id) {
-                switch (id) {
-                    case 'camera':
-                        await importImageFromCamera({ document, inverseUseSystemCamera: false });
-                        break;
-                    case 'import':
-                        await importDocument();
-                        break;
-                    case 'import_image':
-                        await importAndScanImage({ canGoToView: false, forceGalleryPick: true, document, importPDFs: false });
-                        break;
-                    case 'add_qrcode_camera':
-                        await requestCameraPermission();
-                        const Camera = (await import('~/components/camera/Camera.svelte')).default;
-                        const qrcodes: QRCodeData = await showModal({
-                            page: Camera,
-                            fullscreen: true,
-                            props: {
-                                QRCodeOnly: true
-                            }
-                        });
-                        if (qrcodes?.length) {
+            switch (id) {
+                case 'camera':
+                    await importImageFromCamera({ document, inverseUseSystemCamera: false });
+                    break;
+                case 'import':
+                    await importDocument();
+                    break;
+                case 'import_image':
+                    await importAndScanImage({ canGoToView: false, forceGalleryPick: true, document, importPDFs: false });
+                    break;
+                case 'add_qrcode_camera':
+                    await requestCameraPermission();
+                    const Camera = (await import('~/components/camera/Camera.svelte')).default;
+                    const scanned: QRCodeData = await showModal({
+                        page: Camera,
+                        fullscreen: true,
+                        props: {
+                            QRCodeOnly: true
+                        }
+                    });
+                    if (scanned?.length) {
+                        //we add the qrcode to the first page (less risk of it being removed with the page)
+                        await addQRCodes(scanned);
+                        found = true;
+                    } else {
+                        showSnack({ message: lc('no_qrcode_found') });
+                    }
+                    DEV_LOG && console.log('qrcodes', scanned);
+                    break;
+                case 'add_qrcode_file':
+                    try {
+                        const data = await createImagePicker({
+                            mediaType: 1,
+                            mode: 'multiple'
+                        }).present();
+                        const detected = (
+                            await Promise.all(
+                                data.map((d) =>
+                                    detectQRCodeFromFile(d.path, {
+                                        resizeThreshold: QRCODE_RESIZE_THRESHOLD
+                                    })
+                                )
+                            )
+                        ).filter((q) => !!q);
+                        if (detected?.length) {
                             //we add the qrcode to the first page (less risk of it being removed with the page)
-                            await addQRCodes(qrcodes);
+                            await addQRCodes(detected.flat());
                             found = true;
                         } else {
                             showSnack({ message: lc('no_qrcode_found') });
                         }
-                        DEV_LOG && console.log('qrcodes', qrcodes);
-                        break;
-                    case 'add_qrcode_file':
-                        try {
-                            const data = await createImagePicker({
-                                mediaType: 1,
-                                mode: 'multiple'
-                            }).present();
-                            const qrcodes = (
-                                await Promise.all(
-                                    data.map((d) =>
-                                        detectQRCodeFromFile(d.path, {
-                                            resizeThreshold: QRCODE_RESIZE_THRESHOLD
-                                        })
-                                    )
-                                )
-                            ).filter((q) => !!q);
-                            if (qrcodes?.length) {
-                                //we add the qrcode to the first page (less risk of it being removed with the page)
-                                await addQRCodes(qrcodes.flat());
-                                found = true;
-                            } else {
-                                showSnack({ message: lc('no_qrcode_found') });
-                            }
-                        } catch (error) {
-                            //cancel will throw, we want to ignore it!
-                        }
-                        break;
-                    case 'add_qrcode_manual': {
-                        const result = await qrcodeService.createQRCode();
-                        if (result?.text?.length) {
-                            await addQRCodes([result]);
-                        }
-                        break;
+                    } catch (error) {
+                        //cancel will throw, we want to ignore it!
                     }
+                    break;
+                case 'add_qrcode_manual': {
+                    const result = await qrcodeService.createQRCode();
+                    if (result?.text?.length) {
+                        await addQRCodes([result]);
+                    }
+                    break;
                 }
-                await updateQRCodes();
-                if (found) {
-                    setTimeout(() => {
-                        qrPager?.nativeElement?.scrollToIndexAnimated(qrcodes?.length - 1, true);
-                    }, 10);
-                }
+            }
+            await updateQRCodes();
+            if (found) {
+                setTimeout(() => {
+                    qrPager?.nativeElement?.scrollToIndexAnimated(qrcodes?.length - 1, true);
+                }, 10);
             }
         } catch (error) {
             showError(error);
@@ -941,36 +860,24 @@
         });
     }
 
-    async function showFullscreen(startPageIndex = 0) {
-        const component = (await import('~/components/FullScreenImageViewer.svelte')).default;
-        navigate({
-            page: component,
-            props: {
-                images: document.pages.map((page, index) => ({
-                    sharedTransitionTag: `document_${document.id}_${page.id}`,
-                    name: document.name,
-                    image: page.imagePath,
-                    ...page
-                })),
+    function showFullscreen(startPageIndex = 0) {
+        return openFullscreen(
+            document.pages.map((page) => ({
+                sharedTransitionTag: `document_${document.id}_${page.id}`,
+                name: document.name,
+                image: page.imagePath,
+                ...page
+            })),
+            {
                 keepScreenAwake: true,
                 onEdit: (index: number) => editPage(document.pages[index]),
                 onOCR: (index: number) => showOCRData(document, index),
                 screenBrightness: 1,
                 startPageIndex
             }
-        });
+        );
     }
 
-    function formatItemValue(item) {
-        if (item.extra) {
-            switch (item.extra.type) {
-                case ExtraFieldType.Date:
-                    return dayjs(item.extra.value).format(item.extra.format || 'LL');
-                default:
-                    return item.extra.value;
-            }
-        }
-    }
     function getItemBackgroundColor(item) {
         return isEInk ? null : (item.page?.extra?.color ?? item.page.colors?.[0] ?? document.extra?.color);
     }
@@ -1163,7 +1070,7 @@
                             rowHeight={FILMSTRIP_HEIGHT}
                             visibility={multiplePhotos ? 'visible' : 'collapsed'}>
                             <Template let:index let:item>
-                                <gridlayout class="cardItemTemplate" elevation={0} margin={4} rippleColor={colorSurface} on:tap={() => onItemTap(item)} on:longPress={() => onItemLongPress(item)}>
+                                <gridlayout class="cardItemTemplate" elevation={0} margin={4} rippleColor={colorSurface} on:tap={() => onItemTap(item)} on:longPress={() => toggleSelection(item)}>
                                     <!-- the content is what is scaled: the cell itself keeps its size and its touch handlers -->
                                     <gridlayout class={item.current ? 'thumbnailCurrent' : 'thumbnail'} backgroundColor={getItemBackgroundColor(item)} borderRadius={6}>
                                         <RotableImageView id="imageView" borderRadius={6} decodeWidth={FILMSTRIP_COL_WIDTH} item={item.page} stretch="aspectFill" width="100%" />
@@ -1197,7 +1104,7 @@
                             {#each details as detail, index (detail.name)}
                                 <label linkColor={colorOnSurface} {...{ linkUnderline: false }} selectable={true} textWrap={true} {...getDetailRowProps(index, details.length)}>
                                     <span color={colorOnSurfaceVariant} fontSize={13} text={detail.name} />
-                                    <span color={colorOnSurface} fontSize={17} text={'\n' + (formatItemValue(detail) ?? '')} />
+                                    <span color={colorOnSurface} fontSize={17} text={'\n' + formatExtraValue(detail.extra)} />
                                 </label>
                             {/each}
                         </stacklayout>

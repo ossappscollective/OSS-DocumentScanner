@@ -29,6 +29,7 @@
         TRANSFORMS_SPLIT
     } from '~/utils/constants';
     import { TRANSFORMS } from '~/utils/localized_constant';
+    import { createSwitchRowTap } from '~/utils/switchRow';
     import { showError } from '@shared/utils/showError';
     import { ColorMatricesTypes, getColorMatrix, showMatrixLevelPopover } from '~/utils/ui';
     import { colors, windowInset } from '~/variables';
@@ -121,12 +122,6 @@
         filtersView?.refreshVisibleItems();
     }
 
-    function setColorType(type) {
-        colorType = type;
-        colorMatrix = getColorMatrix(type);
-        refreshCollectionView();
-        onColorChange?.(colorType, colorMatrix);
-    }
     function onColorMatrixChange(type, value, refreshCV = false) {
         colorType = type;
         colorMatrix = getColorMatrix(colorType, value);
@@ -195,38 +190,34 @@
                       full: { name: lc('full') },
                       limited: { name: lc('limited') }
                   }
-              }
+              },
+              ...(__ANDROID__
+                  ? [
+                        {
+                            id: 'aspectRatio',
+                            title: lc('aspect_ratio'),
+                            default: '4:3',
+                            options: {
+                                '4:3': { name: '4:3' },
+                                '16:9': { name: '16:9' }
+                            }
+                        }
+                    ]
+                  : []),
+              ...(__ANDROID__ && currentResolution && resolutions
+                  ? [
+                        {
+                            id: 'pictureSize',
+                            title: lc('picture_size'),
+                            default: currentResolution.pictureSize,
+                            options: resolutions.reduce((acc, current) => {
+                                acc[current.pictureSize] = { ...current, name: `${current.pictureSize} (${current.aspectRatio})` };
+                                return acc;
+                            }, {})
+                        }
+                    ]
+                  : [])
           ]
-              .concat(
-                  __ANDROID__
-                      ? [
-                            {
-                                id: 'aspectRatio',
-                                title: lc('aspect_ratio'),
-                                default: '4:3',
-                                options: {
-                                    '4:3': { name: '4:3' },
-                                    '16:9': { name: '16:9' }
-                                }
-                            }
-                        ]
-                      : ([] as any)
-              )
-              .concat(
-                  __ANDROID__ && currentResolution && resolutions
-                      ? [
-                            {
-                                id: 'pictureSize',
-                                title: lc('picture_size'),
-                                default: currentResolution.pictureSize,
-                                options: resolutions.reduce((acc, current) => {
-                                    acc[current.pictureSize] = { ...current, name: `${current.pictureSize} (${current.aspectRatio})` };
-                                    return acc;
-                                }, {})
-                            }
-                        ]
-                      : ([] as any)
-              )
         : [];
 
     function selectOption(item, event) {
@@ -246,23 +237,16 @@
         });
     }
 
-    let checkboxTapTimer;
-    function clearCheckboxTimer() {
-        if (checkboxTapTimer) {
-            clearTimeout(checkboxTapTimer);
-            checkboxTapTimer = null;
-        }
-    }
+    const switchRowTap = createSwitchRowTap();
     function onCheckedChanged(item, event) {
-        clearCheckboxTimer();
+        switchRowTap.cancel();
         addOrRemoveTransform(item.id);
     }
     function onTransformTap(item, event) {
         const checkboxView: CheckBox | Switch = (event.object as View).getViewById('checkbox');
-        clearCheckboxTimer();
-        checkboxTapTimer = setTimeout(() => {
+        switchRowTap.onRowTap(() => {
             checkboxView.checked = !checkboxView.checked;
-        }, 10);
+        });
     }
 
     function onCloseBottomSheet() {
@@ -422,7 +406,7 @@
             <!-- the filters drawn on the image itself: a 64 tile with the radius of the tiles, the selected one has a 2.5 ring, its name is under it -->
             <collectionview colWidth={80} height={104} items={filters} orientation="horizontal" paddingLeft={12} paddingRight={12} on:loaded={onFiltersLoaded}>
                 <Template let:item>
-                    <gridlayout padding="4 8" rows="auto,auto" on:tap={() => setColorType(item.colorType)} on:longPress={(event) => setColorMatrixLevels(item, event)}>
+                    <gridlayout padding="4 8" rows="auto,auto" on:tap={() => onColorMatrixChange(item.colorType, undefined, true)} on:longPress={(event) => setColorMatrixLevels(item, event)}>
                         <image
                             borderColor={colorPrimary}
                             borderRadius={12}

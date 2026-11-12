@@ -97,6 +97,45 @@
     const numberTextFieldProperties = {
         keyboardType: 'integer'
     } as TextFieldProperties;
+
+    const switchItem = (id: string, defaultValue: boolean, title: string, description?: string) => ({
+        type: 'switch',
+        id,
+        title,
+        ...(description === undefined ? {} : { description }),
+        value: ApplicationSettings.getBoolean(id, defaultValue)
+    });
+    const sliderItem = (key: string, min: number, max: number, defaultValue: number, title: string, description: string) => ({
+        id: 'setting',
+        key,
+        min,
+        max,
+        step: 1,
+        formatter: (value: number) => value.toFixed(),
+        title,
+        description,
+        type: 'slider',
+        rightValue: () => ApplicationSettings.getNumber(key, defaultValue)
+    });
+    const numberPromptItem = (key: string, defaultValue: number, title: string, description: string) => ({
+        id: 'setting',
+        key,
+        title,
+        description,
+        rightValue: () => ApplicationSettings.getNumber(key, defaultValue),
+        type: 'prompt',
+        textFieldProperties: numberTextFieldProperties
+    });
+
+    const PDF_OPTIONS_STORE_KEY = 'default_export_options';
+    const getPdfOptions = () => getStoreSetting(PDF_OPTIONS_STORE_KEY, DEFAULT_PDF_OPTIONS_STRING);
+    const pdfOptionItem = (key: string, props: Record<string, unknown>) => ({
+        id: 'store_setting',
+        storeKey: PDF_OPTIONS_STORE_KEY,
+        storeDefault: DEFAULT_PDF_OPTIONS_STRING,
+        key,
+        ...props
+    });
 </script>
 
 <script lang="ts">
@@ -155,13 +194,7 @@
         switch (id) {
             case 'ocr':
                 return [
-                    {
-                        type: 'switch',
-                        id: SETTINGS_OCR_COPY_USE_SPACE,
-                        title: lc('use_space_when__ocr_copy_text'),
-                        description: lc('use_space_when__ocr_copy_text_desc'),
-                        value: ApplicationSettings.getBoolean(SETTINGS_OCR_COPY_USE_SPACE, DEFAULT_OCR_COPY_USE_SPACE)
-                    },
+                    switchItem(SETTINGS_OCR_COPY_USE_SPACE, DEFAULT_OCR_COPY_USE_SPACE, lc('use_space_when__ocr_copy_text'), lc('use_space_when__ocr_copy_text_desc')),
                     { type: 'sectionheader', title: lc('quality') },
                     {
                         type: 'ocr_settings',
@@ -169,99 +202,44 @@
                     }
                 ];
             case 'camera':
-                return (
-                    __ANDROID__
+                return [
+                    ...(__ANDROID__ ? [switchItem('use_system_camera', USE_SYSTEM_CAMERA, lc('use_system_camera'), lc('use_system_camera_desc'))] : []),
+                    switchItem(SETTINGS_START_ON_CAM, START_ON_CAM, lc('start_app_on_cam'), lc('start_app_on_cam_desc')),
+                    switchItem(SETTINGS_FONT_CAM_MIRRORED, DEFAULT_FONT_CAM_MIRRORED, lc('front_cam_mirrored'), lc('front_cam_mirrored_desc'))
+                ];
+            case 'security':
+                return [
+                    ...(__ANDROID__
                         ? [
                               {
                                   type: 'switch',
-                                  id: 'use_system_camera',
-                                  title: lc('use_system_camera'),
-                                  description: lc('use_system_camera_desc'),
-                                  value: ApplicationSettings.getBoolean('use_system_camera', USE_SYSTEM_CAMERA)
+                                  key: 'allow_screenshot',
+                                  title: lc('allow_app_screenshot'),
+                                  value: ApplicationSettings.getBoolean('allow_screenshot', true)
                               }
                           ]
-                        : []
-                ).concat([
+                        : []),
                     {
                         type: 'switch',
-                        id: SETTINGS_START_ON_CAM,
-                        title: lc('start_app_on_cam'),
-                        description: lc('start_app_on_cam_desc'),
-                        value: ApplicationSettings.getBoolean(SETTINGS_START_ON_CAM, START_ON_CAM)
+                        id: 'biometric_lock',
+                        title: lc('biometric_lock'),
+                        description: lc('biometric_lock_desc'),
+                        value: securityService.biometricEnabled
                     },
                     {
                         type: 'switch',
-                        id: SETTINGS_FONT_CAM_MIRRORED,
-                        title: lc('front_cam_mirrored'),
-                        description: lc('front_cam_mirrored_desc'),
-                        value: ApplicationSettings.getBoolean(SETTINGS_FONT_CAM_MIRRORED, DEFAULT_FONT_CAM_MIRRORED)
+                        id: 'biometric_auto_lock',
+                        title: lc('biometric_auto_lock'),
+                        description: lc('biometric_auto_lock_desc'),
+                        value: securityService.biometricEnabled && securityService.autoLockEnabled
                     }
-                ]);
-            case 'security':
-                return []
-                    .concat(
-                        __ANDROID__
-                            ? [
-                                  {
-                                      type: 'switch',
-                                      key: 'allow_screenshot',
-                                      title: lc('allow_app_screenshot'),
-                                      value: ApplicationSettings.getBoolean('allow_screenshot', true)
-                                  }
-                              ]
-                            : ([] as any)
-                    )
-                    .concat(
-                        [
-                            {
-                                type: 'switch',
-                                id: 'biometric_lock',
-                                title: lc('biometric_lock'),
-                                description: lc('biometric_lock_desc'),
-                                value: securityService.biometricEnabled
-                            },
-                            {
-                                type: 'switch',
-                                id: 'biometric_auto_lock',
-                                title: lc('biometric_auto_lock'),
-                                description: lc('biometric_auto_lock_desc'),
-                                value: securityService.biometricEnabled && securityService.autoLockEnabled
-                            }
-                        ]
-                    );
+                ];
             case 'document_detection':
                 return [
-                    {
-                        type: 'switch',
-                        id: SETTINGS_CROP_ENABLED,
-                        title: lc('crop_enabled'),
-                        value: ApplicationSettings.getBoolean(SETTINGS_CROP_ENABLED, CROP_ENABLED)
-                    },
-                    {
-                        type: 'switch',
-                        id: SETTINGS_ALWAYS_PROMPT_CROP_EDIT,
-                        title: lc('always_prompt_crop_edit'),
-                        description: lc('always_prompt_crop_edit_desc'),
-                        value: ApplicationSettings.getBoolean(SETTINGS_ALWAYS_PROMPT_CROP_EDIT, ALWAYS_PROMPT_CROP_EDIT)
-                    },
-                    {
-                        id: 'setting',
-                        key: 'previewResizeThreshold',
-                        title: lc('preview_resize_threshold'),
-                        description: lc('preview_resize_threshold_desc'),
-                        rightValue: () => ApplicationSettings.getNumber('previewResizeThreshold', PREVIEW_RESIZE_THRESHOLD),
-                        type: 'prompt',
-                        textFieldProperties: numberTextFieldProperties
-                    },
-                    {
-                        id: 'setting',
-                        key: 'documentNotDetectedMargin',
-                        title: lc('document_not_detected_margin'),
-                        description: lc('document_not_detected_margin_desc'),
-                        rightValue: () => ApplicationSettings.getNumber('documentNotDetectedMargin', DOCUMENT_NOT_DETECTED_MARGIN),
-                        type: 'prompt',
-                        textFieldProperties: numberTextFieldProperties
-                    },
+                    switchItem(SETTINGS_CROP_ENABLED, CROP_ENABLED, lc('crop_enabled')),
+                    switchItem(SETTINGS_ALWAYS_PROMPT_CROP_EDIT, ALWAYS_PROMPT_CROP_EDIT, lc('always_prompt_crop_edit'), lc('always_prompt_crop_edit_desc')),
+                    numberPromptItem('previewResizeThreshold', PREVIEW_RESIZE_THRESHOLD, lc('preview_resize_threshold'), lc('preview_resize_threshold_desc')),
+                    numberPromptItem('documentNotDetectedMargin', DOCUMENT_NOT_DETECTED_MARGIN, lc('document_not_detected_margin'), lc('document_not_detected_margin_desc')),
                     {
                         id: 'setting',
                         key: SETTINGS_MAGNIFIER_SENSITIVITY,
@@ -279,39 +257,10 @@
                 ];
             case 'autoscan':
                 return [
-                    {
-                        type: 'switch',
-                        id: 'autoScan',
-                        title: lc('auto_scan'),
-                        value: ApplicationSettings.getBoolean('autoScan', AUTO_SCAN_ENABLED)
-                    },
-                    {
-                        id: 'setting',
-                        key: 'autoScan_distanceThreshold',
-                        title: lc('auto_scan_distance_threshold'),
-                        description: lc('auto_scan_distance_threshold_desc'),
-                        rightValue: () => ApplicationSettings.getNumber('autoScan_distanceThreshold', AUTO_SCAN_DISTANCETHRESHOLD),
-                        type: 'prompt',
-                        textFieldProperties: numberTextFieldProperties
-                    },
-                    {
-                        id: 'setting',
-                        key: 'autoScan_autoScanDuration',
-                        title: lc('auto_scan_duration'),
-                        description: lc('auto_scan_duration_desc'),
-                        rightValue: () => ApplicationSettings.getNumber('autoScan_autoScanDuration', AUTO_SCAN_DURATION),
-                        type: 'prompt',
-                        textFieldProperties: numberTextFieldProperties
-                    },
-                    {
-                        id: 'setting',
-                        key: 'autoScan_preAutoScanDelay',
-                        title: lc('auto_scan_delay'),
-                        description: lc('auto_scan_delay_desc'),
-                        rightValue: () => ApplicationSettings.getNumber('autoScan_preAutoScanDelay', AUTO_SCAN_DELAY),
-                        type: 'prompt',
-                        textFieldProperties: numberTextFieldProperties
-                    }
+                    switchItem('autoScan', AUTO_SCAN_ENABLED, lc('auto_scan')),
+                    numberPromptItem('autoScan_distanceThreshold', AUTO_SCAN_DISTANCETHRESHOLD, lc('auto_scan_distance_threshold'), lc('auto_scan_distance_threshold_desc')),
+                    numberPromptItem('autoScan_autoScanDuration', AUTO_SCAN_DURATION, lc('auto_scan_duration'), lc('auto_scan_duration_desc')),
+                    numberPromptItem('autoScan_preAutoScanDelay', AUTO_SCAN_DELAY, lc('auto_scan_delay'), lc('auto_scan_delay_desc'))
                 ];
             case 'images':
                 return [
@@ -328,25 +277,8 @@
                             { value: 'png', title: 'PNG' }
                         ]
                     },
-                    {
-                        id: 'setting',
-                        key: SETTINGS_IMAGE_EXPORT_QUALITY,
-                        min: 10,
-                        max: 100,
-                        step: 1,
-                        formatter: (value) => value.toFixed(),
-                        title: lc('image_quality'),
-                        description: lc('image_quality_desc'),
-                        type: 'slider',
-                        rightValue: () => ApplicationSettings.getNumber(SETTINGS_IMAGE_EXPORT_QUALITY, IMG_COMPRESS)
-                    },
-                    {
-                        type: 'switch',
-                        id: SETTINGS_KEEP_ORIGINAL_IMAGES,
-                        title: lc('keep_original_images'),
-                        description: lc('keep_original_images_desc'),
-                        value: ApplicationSettings.getBoolean(SETTINGS_KEEP_ORIGINAL_IMAGES, KEEP_ORIGINAL_IMAGES)
-                    }
+                    sliderItem(SETTINGS_IMAGE_EXPORT_QUALITY, 10, 100, IMG_COMPRESS, lc('image_quality'), lc('image_quality_desc')),
+                    switchItem(SETTINGS_KEEP_ORIGINAL_IMAGES, KEEP_ORIGINAL_IMAGES, lc('keep_original_images'), lc('keep_original_images_desc'))
                 ];
             case 'pdf_import': {
                 return [
@@ -379,8 +311,8 @@
                 ];
             }
             case 'pdf_export':
-                return (
-                    (__ANDROID__
+                return [
+                    ...(__ANDROID__
                         ? [
                               {
                                   type: 'rightIcon',
@@ -411,105 +343,66 @@
                                   title: lc('page_layout')
                               }
                           ]
-                        : []) as any[]
-                )
-                    .concat([
-                        {
-                            id: 'store_setting',
-                            storeKey: 'default_export_options',
-                            storeDefault: DEFAULT_PDF_OPTIONS_STRING,
-                            key: 'password',
-                            valueType: 'string',
-                            title: lc('optional_pdf_password'),
-                            type: 'prompt',
-                            default: () => getStoreSetting('default_export_options', DEFAULT_PDF_OPTIONS_STRING)['password'],
-                            textFieldProperties: {
-                                secure: true
-                            }
+                        : []),
+                    pdfOptionItem('password', {
+                        valueType: 'string',
+                        title: lc('optional_pdf_password'),
+                        type: 'prompt',
+                        default: () => getPdfOptions()['password'],
+                        textFieldProperties: {
+                            secure: true
                         }
-                    ])
-                    .concat(
-                        Object.keys(PDF_OPTIONS).map((option) => ({
-                            id: 'store_setting',
-                            storeKey: 'default_export_options',
-                            storeDefault: DEFAULT_PDF_OPTIONS_STRING,
-                            key: option,
-                            valueType: typeof getStoreSetting('default_export_options', DEFAULT_PDF_OPTIONS_STRING)[option],
+                    }),
+                    ...Object.keys(PDF_OPTIONS).map((option) =>
+                        pdfOptionItem(option, {
+                            valueType: typeof getPdfOptions()[option],
                             title: lc(option),
-                            rightValue: () => PDF_OPTIONS[option][getStoreSetting('default_export_options', DEFAULT_PDF_OPTIONS_STRING)[option]].name,
-                            currentValue: () => getStoreSetting('default_export_options', DEFAULT_PDF_OPTIONS_STRING)[option],
+                            rightValue: () => PDF_OPTIONS[option][getPdfOptions()[option]].name,
+                            currentValue: () => getPdfOptions()[option],
                             values: Object.keys(PDF_OPTIONS[option]).map((k) => ({ ...PDF_OPTIONS[option][k], value: k }))
-                        })) as any
-                    )
-                    .concat([
-                        {
-                            id: 'store_setting',
-                            storeKey: 'default_export_options',
-                            storeDefault: DEFAULT_PDF_OPTIONS_STRING,
-                            key: 'page_padding',
-                            title: lc('page_padding'),
-                            type: 'prompt',
-                            textFieldProperties: numberTextFieldProperties,
-                            rightValue: () => getStoreSetting('default_export_options', DEFAULT_PDF_OPTIONS_STRING)['page_padding']
-                        },
-                        {
-                            type: 'sectionheader',
-                            title: lc('image_settings')
-                        },
-                        {
-                            id: 'store_setting',
-                            storeKey: 'default_export_options',
-                            storeDefault: DEFAULT_PDF_OPTIONS_STRING,
-                            key: 'imageSizeThreshold',
-                            title: lc('image_size_threshold'),
-                            description: lc('image_size_threshold_desc'),
-                            type: 'prompt',
-                            textFieldProperties: numberTextFieldProperties,
-                            rightValue: () => getStoreSetting('default_export_options', DEFAULT_PDF_OPTIONS_STRING)['imageSizeThreshold']
-                        },
-                        {
-                            id: 'store_setting',
-                            storeKey: 'default_export_options',
-                            storeDefault: DEFAULT_PDF_OPTIONS_STRING,
-                            key: 'imageLoadScale',
-                            min: 0.5,
-                            max: 10,
-                            step: 0.5,
-                            formatter: (value) => value.toFixed(1),
-                            title: lc('image_load_scale'),
-                            description: lc('image_load_scale_desc'),
-                            type: 'slider',
-                            rightValue: () => getStoreSetting('default_export_options', DEFAULT_PDF_OPTIONS_STRING)['imageLoadScale']
-                        },
-                        {
-                            id: 'store_setting',
-                            storeKey: 'default_export_options',
-                            storeDefault: DEFAULT_PDF_OPTIONS_STRING,
-                            key: 'jpegQuality',
-                            min: 0,
-                            max: 100,
-                            step: 1,
-                            formatter: (value) => value.toFixed(),
-                            title: lc('jpeg_quality'),
-                            description: lc('pdf_export_jpeg_quality'),
-                            type: 'slider',
-                            rightValue: () => getStoreSetting('default_export_options', DEFAULT_PDF_OPTIONS_STRING)['jpegQuality']
-                        }
-                    ] as any);
+                        })
+                    ),
+                    pdfOptionItem('page_padding', {
+                        title: lc('page_padding'),
+                        type: 'prompt',
+                        textFieldProperties: numberTextFieldProperties,
+                        rightValue: () => getPdfOptions()['page_padding']
+                    }),
+                    {
+                        type: 'sectionheader',
+                        title: lc('image_settings')
+                    },
+                    pdfOptionItem('imageSizeThreshold', {
+                        title: lc('image_size_threshold'),
+                        description: lc('image_size_threshold_desc'),
+                        type: 'prompt',
+                        textFieldProperties: numberTextFieldProperties,
+                        rightValue: () => getPdfOptions()['imageSizeThreshold']
+                    }),
+                    pdfOptionItem('imageLoadScale', {
+                        min: 0.5,
+                        max: 10,
+                        step: 0.5,
+                        formatter: (value: number) => value.toFixed(1),
+                        title: lc('image_load_scale'),
+                        description: lc('image_load_scale_desc'),
+                        type: 'slider',
+                        rightValue: () => getPdfOptions()['imageLoadScale']
+                    }),
+                    pdfOptionItem('jpegQuality', {
+                        min: 0,
+                        max: 100,
+                        step: 1,
+                        formatter: (value: number) => value.toFixed(),
+                        title: lc('jpeg_quality'),
+                        description: lc('pdf_export_jpeg_quality'),
+                        type: 'slider',
+                        rightValue: () => getPdfOptions()['jpegQuality']
+                    })
+                ];
             case 'operations':
                 return [
-                    {
-                        id: 'setting',
-                        key: SETTINGS_TRANSFORM_BATCH_SIZE,
-                        min: 1,
-                        max: 10,
-                        step: 1,
-                        formatter: (value) => value.toFixed(),
-                        title: lc('transformer_batch_size'),
-                        description: lc('transformer_batch_size_desc'),
-                        type: 'slider',
-                        rightValue: () => ApplicationSettings.getNumber(SETTINGS_TRANSFORM_BATCH_SIZE, TRANSFORM_BATCH_SIZE)
-                    },
+                    sliderItem(SETTINGS_TRANSFORM_BATCH_SIZE, 1, 10, TRANSFORM_BATCH_SIZE, lc('transformer_batch_size'), lc('transformer_batch_size_desc')),
                     {
                         id: 'image_processing_settings',
                         title: lc('image_processing_settings'),
@@ -518,13 +411,7 @@
                 ];
             case 'trash':
                 return [
-                    {
-                        type: 'switch',
-                        id: SETTINGS_TRASH_ENABLED,
-                        title: lc('trash_enabled'),
-                        description: lc('trash_enabled_desc'),
-                        value: ApplicationSettings.getBoolean(SETTINGS_TRASH_ENABLED, DEFAULT_TRASH_ENABLED)
-                    },
+                    switchItem(SETTINGS_TRASH_ENABLED, DEFAULT_TRASH_ENABLED, lc('trash_enabled'), lc('trash_enabled_desc')),
                     {
                         id: 'reset_trash_remember',
                         rightBtnIcon: 'mdi-restore',
@@ -535,13 +422,7 @@
                 ];
             case 'folders':
                 return [
-                    {
-                        type: 'switch',
-                        id: SETTINGS_DRAW_FOLDERS_BACKGROUND,
-                        title: lc('folder_color_as_background'),
-                        description: lc('folder_color_as_background_desc'),
-                        value: ApplicationSettings.getBoolean(SETTINGS_DRAW_FOLDERS_BACKGROUND, DEFAULT_DRAW_FOLDERS_BACKGROUND)
-                    },
+                    switchItem(SETTINGS_DRAW_FOLDERS_BACKGROUND, DEFAULT_DRAW_FOLDERS_BACKGROUND, lc('folder_color_as_background'), lc('folder_color_as_background_desc')),
                     {
                         id: 'folder_management',
                         title: lc('manage_folders'),
@@ -550,13 +431,7 @@
                 ];
             case 'sync':
                 return [
-                    {
-                        type: 'switch',
-                        id: SETTINGS_SYNC_ON_START,
-                        title: lc('sync_on_start'),
-                        description: lc('sync_on_start_desc'),
-                        value: ApplicationSettings.getBoolean(SETTINGS_SYNC_ON_START, false)
-                    },
+                    switchItem(SETTINGS_SYNC_ON_START, false, lc('sync_on_start'), lc('sync_on_start_desc')),
                     {
                         id: 'data_sync',
                         title: lc('data_sync'),
@@ -574,17 +449,7 @@
                     }
                 ];
             case 'debugging':
-                return PLAY_STORE_BUILD
-                    ? [
-                          {
-                              type: 'switch',
-                              id: SETTINGS_ENABLE_CRASH_REPORT,
-                              title: lc('crash_report'),
-                              description: lc('crash_report_desc'),
-                              value: ApplicationSettings.getBoolean(SETTINGS_ENABLE_CRASH_REPORT, PLAY_STORE_BUILD)
-                          }
-                      ]
-                    : [];
+                return PLAY_STORE_BUILD ? [switchItem(SETTINGS_ENABLE_CRASH_REPORT, PLAY_STORE_BUILD, lc('crash_report'), lc('crash_report_desc'))] : [];
             case 'document_naming':
                 return [
                     {
@@ -609,12 +474,7 @@
                         type: 'sectionheader',
                         title: lc('export_settings')
                     },
-                    {
-                        type: 'switch',
-                        id: SETTINGS_FILE_NAME_USE_DOCUMENT_NAME,
-                        title: lc('filename_use_document_name'),
-                        value: ApplicationSettings.getBoolean(SETTINGS_FILE_NAME_USE_DOCUMENT_NAME, FILENAME_USE_DOCUMENT_NAME)
-                    },
+                    switchItem(SETTINGS_FILE_NAME_USE_DOCUMENT_NAME, FILENAME_USE_DOCUMENT_NAME, lc('filename_use_document_name')),
                     {
                         id: 'setting',
                         key: SETTINGS_FILE_NAME_FORMAT,
@@ -641,10 +501,9 @@
                         title: lc('documents_storage'),
                         description: lc('documents_storage_desc'),
                         rightValue: () => (documentsStorageSizes ? filesize(documentsStorageSizes.total, { output: 'string' }) : null)
-                    }
-                ].concat(
-                    dataSettingsAvailable
-                        ? ([
+                    },
+                    ...(dataSettingsAvailable
+                        ? [
                               {
                                   id: 'setting',
                                   key: 'storage_location',
@@ -697,9 +556,9 @@
                                       }
                                   }
                               }
-                          ] as any)
-                        : []
-                );
+                          ]
+                        : [])
+                ];
             case 'appearance':
                 return [
                     {
@@ -712,319 +571,126 @@
                         description: () => getColorThemeDisplayName(),
                         title: lc('color_theme.title')
                     },
-                    {
-                        type: 'switch',
-                        id: 'auto_black',
-                        title: lc('auto_black'),
-                        value: ApplicationSettings.getBoolean('auto_black', false)
-                    },
-                    {
-                        id: 'setting',
-                        key: SETTINGS_NB_COLUMNS,
-                        min: 1,
-                        max: 7,
-                        step: 1,
-                        formatter: (value) => value.toFixed(),
-                        title: lc('nb_columns'),
-                        description: lc('nb_columns_desc'),
-                        type: 'slider',
-                        rightValue: () => ApplicationSettings.getNumber(SETTINGS_NB_COLUMNS, DEFAULT_NB_COLUMNS)
-                    },
-                    {
-                        id: 'setting',
-                        key: SETTINGS_NB_COLUMNS_LANDSCAPE,
-                        min: 1,
-                        max: 7,
-                        step: 1,
-                        formatter: (value) => value.toFixed(),
-                        title: lc('nb_columns_landscape'),
-                        description: lc('nb_columns_landscape_desc'),
-                        type: 'slider',
-                        rightValue: () => ApplicationSettings.getNumber(SETTINGS_NB_COLUMNS_LANDSCAPE, DEFAULT_NB_COLUMNS_LANDSCAPE)
-                    }
-                ]
-                    .concat(
-                        CARD_APP
-                            ? [
-                                  {
-                                      type: 'switch',
-                                      id: SETTINGS_CARD_ALWAYS_SHOW_NAME,
-                                      title: lc('always_show_card_name'),
-                                      value: ApplicationSettings.getBoolean(SETTINGS_CARD_ALWAYS_SHOW_NAME, DEFAULT_CARD_ALWAYS_SHOW_NAME)
-                                  }
-                              ]
-                            : [
-                                  {
-                                      id: 'setting',
-                                      key: SETTINGS_NB_COLUMNS_VIEW,
-                                      min: 1,
-                                      max: 7,
-                                      step: 1,
-                                      formatter: (value) => value.toFixed(),
-                                      title: lc('nb_columns_view'),
-                                      description: lc('nb_columns_view_desc'),
-                                      type: 'slider',
-                                      rightValue: () => ApplicationSettings.getNumber(SETTINGS_NB_COLUMNS_VIEW, DEFAULT_NB_COLUMNS_VIEW)
-                                  },
-                                  {
-                                      id: 'setting',
-                                      key: SETTINGS_NB_COLUMNS_VIEW_LANDSCAPE,
-                                      min: 1,
-                                      max: 7,
-                                      step: 1,
-                                      formatter: (value) => value.toFixed(),
-                                      title: lc('nb_columns_view_landscape'),
-                                      description: lc('nb_columns_view_landscape_desc'),
-                                      type: 'slider',
-                                      rightValue: () => ApplicationSettings.getNumber(SETTINGS_NB_COLUMNS_VIEW_LANDSCAPE, DEFAULT_NB_COLUMNS_VIEW_LANDSCAPE)
-                                  }
-                              ]
-                    )
-                    .concat(
-                        CARD_APP
-                            ? [
-                                  {
-                                      type: 'switch',
-                                      id: SETTINGS_FORCE_WHITE_BACKGROUND_QRCODE,
-                                      title: lc('force_white_background_qrcode'),
-                                      description: lc('force_white_background_qrcode_desc'),
-                                      value: ApplicationSettings.getBoolean(SETTINGS_FORCE_WHITE_BACKGROUND_QRCODE, DEFAULT_FORCE_WHITE_BACKGROUND_QRCODE)
-                                  }
-                              ]
-                            : ([] as any)
-                    )
-                    .concat(
-                        __ANDROID__
-                            ? [
-                                  {
-                                      type: 'switch',
-                                      id: 'quicktoggle',
-                                      title: lc('show_quicksettings_tile'),
-                                      description: lc('show_quicktoggle_desc'),
-                                      value: ApplicationSettings.getBoolean(SETTINGS_QUICK_TOGGLE_ENABLED, false)
-                                  }
-                              ]
-                            : ([] as any)
-                    );
+                    switchItem('auto_black', false, lc('auto_black')),
+                    sliderItem(SETTINGS_NB_COLUMNS, 1, 7, DEFAULT_NB_COLUMNS, lc('nb_columns'), lc('nb_columns_desc')),
+                    sliderItem(SETTINGS_NB_COLUMNS_LANDSCAPE, 1, 7, DEFAULT_NB_COLUMNS_LANDSCAPE, lc('nb_columns_landscape'), lc('nb_columns_landscape_desc')),
+                    ...(CARD_APP
+                        ? [switchItem(SETTINGS_CARD_ALWAYS_SHOW_NAME, DEFAULT_CARD_ALWAYS_SHOW_NAME, lc('always_show_card_name'))]
+                        : [
+                              sliderItem(SETTINGS_NB_COLUMNS_VIEW, 1, 7, DEFAULT_NB_COLUMNS_VIEW, lc('nb_columns_view'), lc('nb_columns_view_desc')),
+                              sliderItem(SETTINGS_NB_COLUMNS_VIEW_LANDSCAPE, 1, 7, DEFAULT_NB_COLUMNS_VIEW_LANDSCAPE, lc('nb_columns_view_landscape'), lc('nb_columns_view_landscape_desc'))
+                          ]),
+                    ...(CARD_APP
+                        ? [switchItem(SETTINGS_FORCE_WHITE_BACKGROUND_QRCODE, DEFAULT_FORCE_WHITE_BACKGROUND_QRCODE, lc('force_white_background_qrcode'), lc('force_white_background_qrcode_desc'))]
+                        : []),
+                    ...(__ANDROID__
+                        ? [
+                              {
+                                  type: 'switch',
+                                  id: 'quicktoggle',
+                                  title: lc('show_quicksettings_tile'),
+                                  description: lc('show_quicktoggle_desc'),
+                                  value: ApplicationSettings.getBoolean(SETTINGS_QUICK_TOGGLE_ENABLED, false)
+                              }
+                          ]
+                        : [])
+                ];
             default:
                 break;
         }
     }
 
+    function subSettingsItem(id: string, icon: string, title: string, description: string) {
+        return { id: 'sub_settings', icon, title, description, options: () => getSubSettings(id) };
+    }
+
     function getAvailableOptions(force?: boolean, filter?: string) {
         return (
-            options ||
-            (
-                [
-                    {
-                        type: 'header',
-                        title: lc('donate')
-                    },
-                    {
-                        type: 'sectionheader',
-                        title: lc('general')
-                    },
-                    {
-                        id: 'language',
-                        icon: 'mdi-translate',
-                        description: () => getLocaleDisplayName(),
-                        title: lc('language')
-                    },
-                    {
-                        id: 'sub_settings',
-                        options: () => getSubSettings('appearance'),
-                        icon: 'mdi-cards-outline',
-                        description: () => lc('appearance_settings'),
-                        title: lc('appearance')
-                    }
-                ] as any
-            )
-                .concat(
-                    __ANDROID__ || securityService.biometricsAvailable
-                        ? [
-                              {
-                                  id: 'sub_settings',
-                                  icon: 'mdi-fingerprint',
-                                  title: lc('security'),
-                                  description: lc('security_settings'),
-                                  options: () => getSubSettings('security')
-                              }
-                          ]
-                        : []
-                )
-                .concat([{ type: 'sectionheader', title: lc('scan') }])
-                .concat(
-                    $hasCamera
-                        ? [
-                              {
-                                  id: 'sub_settings',
-                                  title: lc('camera'),
-                                  description: lc('camera_settings'),
-                                  icon: 'mdi-camera',
-                                  options: () => getSubSettings('camera')
-                              }
-                          ]
-                        : []
-                )
-                .concat([
-                    {
-                        id: 'sub_settings',
-                        title: lc('document_detection'),
-                        description: lc('document_detection_settings'),
-                        icon: 'mdi-text-box-search',
-                        options: () => getSubSettings('document_detection')
-                    }
-                ])
-                .concat([
-                    {
-                        id: 'sub_settings',
-                        title: lc('ocr'),
-                        description: lc('ocr_settings'),
-                        icon: 'mdi-ocr',
-                        options: () => getSubSettings('ocr')
-                    }
-                ])
-                .concat(
-                    $hasCamera
-                        ? [
-                              {
-                                  id: 'sub_settings',
-                                  icon: 'mdi-file-star-four-points',
-                                  title: lc('autoscan'),
-                                  description: lc('autoscan_settings'),
-                                  options: () => getSubSettings('autoscan')
-                              }
-                          ]
-                        : []
-                )
-                .concat([
-                    { type: 'sectionheader', title: lc('documents') },
-                    {
-                        id: 'sub_settings',
-                        icon: 'mdi-file-document-edit',
-                        title: lc('document_naming_template'),
-                        description: lc('document_naming_settings'),
-                        options: () => getSubSettings('document_naming')
-                    },
-                    {
-                        id: 'sub_settings',
-                        icon: 'mdi-file-pdf-box',
-                        title: lc('pdf_import'),
-                        description: lc('pdf_import_settings'),
-                        options: () => getSubSettings('pdf_import')
-                    },
-                    {
-                        id: 'sub_settings',
-                        icon: 'mdi-file-pdf-box',
-                        title: lc('pdf_export'),
-                        description: lc('pdf_export_settings'),
-                        options: () => getSubSettings('pdf_export')
-                    },
-                    {
-                        id: 'sub_settings',
-                        icon: 'mdi-image',
-                        title: lc('image_settings'),
-                        description: lc('image_settings_desc'),
-                        options: () => getSubSettings('images')
-                    },
-                    {
-                        id: 'sub_settings',
-                        icon: 'mdi-function',
-                        title: lc('operations'),
-                        description: lc('operations_settings_desc'),
-                        options: () => getSubSettings('operations')
-                    },
-                    {
-                        id: 'sub_settings',
-                        icon: 'mdi-folder-multiple',
-                        title: lc('folders'),
-                        description: lc('folders_settings_desc'),
-                        options: () => getSubSettings('folders')
-                    },
-                    {
-                        id: 'sub_settings',
-                        icon: 'mdi-trash-can-outline',
-                        title: lc('trash'),
-                        description: lc('trash_settings'),
-                        options: () => getSubSettings('trash')
-                    },
-                    { type: 'sectionheader', title: lc('data') },
-                    {
-                        id: 'sub_settings',
-                        icon: 'mdi-database-outline',
-                        title: lc('storage'),
-                        description: lc('storage_settings_desc'),
-                        options: () => getSubSettings('storage')
-                    },
-                    {
-                        id: 'sub_settings',
-                        icon: 'mdi-sync',
-                        title: lc('sync'),
-                        description: lc('sync_settings_desc'),
-                        options: () => getSubSettings('sync')
-                    },
-                    {
-                        type: 'sectionheader',
-                        title: lc('backup_restore')
-                    },
-                    {
-                        id: 'create_backup',
-                        title: lc('create_backup'),
-                        description: lc('create_backup_desc')
-                    },
-                    {
-                        id: 'restore_backup',
-                        title: lc('restore_backup'),
-                        description: lc('restore_backup_desc')
-                    },
-                    {
-                        type: 'sectionheader',
-                        title: lc('settings')
-                    },
-                    {
-                        id: 'export_settings',
-                        title: lc('export_settings'),
-                        description: lc('export_settings_desc')
-                    },
-                    {
-                        id: 'import_settings',
-                        title: lc('import_settings'),
-                        description: lc('import_settings_desc')
-                    },
-                    { type: 'sectionheader', title: lc('about') }
-                ])
-                .concat(
-                    PLAY_STORE_BUILD
-                        ? [
-                              {
-                                  id: 'sub_settings',
-                                  icon: 'mdi-bug-outline',
-                                  title: lc('debugging'),
-                                  description: lc('debugging_settings_desc'),
-                                  options: () => getSubSettings('debugging')
-                              }
-                          ]
-                        : []
-                )
-                .concat([
-                    {
-                        id: 'third_party',
-                        title: lc('third_parties'),
-                        description: lc('list_used_third_parties')
-                    }
-                ])
-                .concat(
-                    PLAY_STORE_BUILD
-                        ? [
-                              {
-                                  type: 'rightIcon',
-                                  id: 'review',
-                                  rightBtnIcon: 'mdi-chevron-right',
-                                  title: lc('review_application')
-                              }
-                          ]
-                        : []
-                )
+            options || [
+                {
+                    type: 'header',
+                    title: lc('donate')
+                },
+                {
+                    type: 'sectionheader',
+                    title: lc('general')
+                },
+                {
+                    id: 'language',
+                    icon: 'mdi-translate',
+                    description: () => getLocaleDisplayName(),
+                    title: lc('language')
+                },
+                {
+                    id: 'sub_settings',
+                    options: () => getSubSettings('appearance'),
+                    icon: 'mdi-cards-outline',
+                    description: () => lc('appearance_settings'),
+                    title: lc('appearance')
+                },
+                ...(__ANDROID__ || securityService.biometricsAvailable ? [subSettingsItem('security', 'mdi-fingerprint', lc('security'), lc('security_settings'))] : []),
+                { type: 'sectionheader', title: lc('scan') },
+                ...($hasCamera ? [subSettingsItem('camera', 'mdi-camera', lc('camera'), lc('camera_settings'))] : []),
+                subSettingsItem('document_detection', 'mdi-text-box-search', lc('document_detection'), lc('document_detection_settings')),
+                subSettingsItem('ocr', 'mdi-ocr', lc('ocr'), lc('ocr_settings')),
+                ...($hasCamera ? [subSettingsItem('autoscan', 'mdi-file-star-four-points', lc('autoscan'), lc('autoscan_settings'))] : []),
+                { type: 'sectionheader', title: lc('documents') },
+                subSettingsItem('document_naming', 'mdi-file-document-edit', lc('document_naming_template'), lc('document_naming_settings')),
+                subSettingsItem('pdf_import', 'mdi-file-pdf-box', lc('pdf_import'), lc('pdf_import_settings')),
+                subSettingsItem('pdf_export', 'mdi-file-pdf-box', lc('pdf_export'), lc('pdf_export_settings')),
+                subSettingsItem('images', 'mdi-image', lc('image_settings'), lc('image_settings_desc')),
+                subSettingsItem('operations', 'mdi-function', lc('operations'), lc('operations_settings_desc')),
+                subSettingsItem('folders', 'mdi-folder-multiple', lc('folders'), lc('folders_settings_desc')),
+                subSettingsItem('trash', 'mdi-trash-can-outline', lc('trash'), lc('trash_settings')),
+                { type: 'sectionheader', title: lc('data') },
+                subSettingsItem('storage', 'mdi-database-outline', lc('storage'), lc('storage_settings_desc')),
+                subSettingsItem('sync', 'mdi-sync', lc('sync'), lc('sync_settings_desc')),
+                {
+                    type: 'sectionheader',
+                    title: lc('backup_restore')
+                },
+                {
+                    id: 'create_backup',
+                    title: lc('create_backup'),
+                    description: lc('create_backup_desc')
+                },
+                {
+                    id: 'restore_backup',
+                    title: lc('restore_backup'),
+                    description: lc('restore_backup_desc')
+                },
+                {
+                    type: 'sectionheader',
+                    title: lc('settings')
+                },
+                {
+                    id: 'export_settings',
+                    title: lc('export_settings'),
+                    description: lc('export_settings_desc')
+                },
+                {
+                    id: 'import_settings',
+                    title: lc('import_settings'),
+                    description: lc('import_settings_desc')
+                },
+                { type: 'sectionheader', title: lc('about') },
+                ...(PLAY_STORE_BUILD ? [subSettingsItem('debugging', 'mdi-bug-outline', lc('debugging'), lc('debugging_settings_desc'))] : []),
+                {
+                    id: 'third_party',
+                    title: lc('third_parties'),
+                    description: lc('list_used_third_parties')
+                },
+                ...(PLAY_STORE_BUILD
+                    ? [
+                          {
+                              type: 'rightIcon',
+                              id: 'review',
+                              rightBtnIcon: 'mdi-chevron-right',
+                              title: lc('review_application')
+                          }
+                      ]
+                    : [])
+            ]
         );
     }
 

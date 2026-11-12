@@ -17,6 +17,7 @@
         EventData,
         Frame,
         NavigatedData,
+        Observable,
         ObservableArray,
         Page,
         ProxyViewContainer,
@@ -106,6 +107,8 @@
     import { sortByKey } from '~/utils/utils.common';
     import { colors, fontScale, fonts, isLandscape, onFolderBackgroundColorChanged, onFontScaleChanged, startOnCam, windowInset } from '~/variables';
 
+    type Subscription = [Pick<Observable, 'on' | 'off'>, string, (event: any) => void];
+
     export interface Item {
         type?: string;
         doc?: OCRDocument;
@@ -150,7 +153,7 @@
     export let itemTemplateSelector = (viewStyle, item?: Item) => item?.type || 'default';
     export let viewStyles: { [k: string]: { name: string; icon?: string; type?: string; boxType?: string } };
     export let folderViewStyles: { [k: string]: { name: string; icon?: string; type?: string; boxType?: string } } = {};
-    export let sortKeys: { [k: string]: { name: string; icon?: string; type?: string; key?: string } } = {
+    const sortKeys: { [k: string]: { name: string; icon?: string; type?: string; key?: string } } = {
         name: { name: lc('name') },
         createdDate: { name: lc('date') },
         useCount: { name: lc('most_used') }
@@ -158,7 +161,6 @@
     export let onlyForImport = false;
     export let isTrash = false;
     export let viewStyleChanged = (oldValue, newValue) => newValue !== oldValue;
-    export let folderViewStyleChanged = (oldValue, newValue) => newValue !== oldValue;
     export let sortOrder = ApplicationSettings.getString(SETTINGS_SORT_ORDER, DEFAULT_SORT_ORDER);
     export let syncEnabled = syncService.enabled;
     export let viewStyle: string = ApplicationSettings.getString(SETTINGS_VIEW_STYLE, DEFAULT_VIEW_STYLE);
@@ -520,74 +522,58 @@
         }
     }
 
+    let subscriptions: Subscription[] = [];
     onMount(() => {
         mounted = true;
         // load while the page transition runs: the cards are there when it ends
         if (documentsService.started) {
             refresh(false);
         }
-        if (__IOS__) {
-            Application.on(windowCommandEvent, onWindowCommand);
-        }
         // DEV_LOG && console.log('MainList', 'onMount', documentsService.id, viewStyle);
         updateColumns($isLandscape);
-        Application.on('snackMessageAnimation', onSnackMessageAnimation);
+        subscriptions = [
+            [Application, 'snackMessageAnimation', onSnackMessageAnimation],
+            [documentsService, EVENT_DOCUMENT_DELETED, onDocumentsDeleted]
+        ];
+        if (__IOS__) {
+            subscriptions.push([Application, windowCommandEvent, onWindowCommand]);
+        }
         if (__ANDROID__) {
-            Application.android.on(Application.android.activityBackPressedEvent, onAndroidBackButton);
+            subscriptions.push([Application.android, Application.android.activityBackPressedEvent, onAndroidBackButton]);
         }
         if (!isTrash) {
             if (__ANDROID__) {
-                Application.android.on(Application.android.activityNewIntentEvent, onAndroidNewItent);
-                const intent = Application.android['startIntent'];
-                if (intent) {
-                    onAndroidNewItent({ intent } as any);
-                }
+                subscriptions.push([Application.android, Application.android.activityNewIntentEvent, onAndroidNewItent]);
             }
-            documentsService.on(EVENT_DOCUMENT_PAGE_UPDATED, onDocumentPageUpdated);
-            documentsService.on(EVENT_DOCUMENT_PAGE_DELETED, onDocumentPageUpdated);
-            documentsService.on(EVENT_DOCUMENT_ADDED, onDocumentAdded);
-            documentsService.on(EVENT_DOCUMENT_UPDATED, onDocumentUpdated);
-            documentsService.on(EVENT_DOCUMENT_MOVED_FOLDER, onDocumentMovedFolder);
-            documentsService.on(EVENT_DOCUMENT_TRASHED, refreshSimple);
-            documentsService.on(EVENT_DOCUMENT_RESTORED, refreshSimple);
-            documentsService.on(EVENT_FOLDER_ADDED, onFolderAdded);
-            documentsService.on(EVENT_FOLDER_UPDATED, onFolderUpdated);
-            documentsService.on(EVENT_FOLDER_DELETED, onFolderDeleted);
-            syncService.on(EVENT_SYNC_STATE, onSyncState);
-            syncService.on(EVENT_STATE, refreshSimple);
+            subscriptions.push(
+                [documentsService, EVENT_DOCUMENT_PAGE_UPDATED, onDocumentPageUpdated],
+                [documentsService, EVENT_DOCUMENT_PAGE_DELETED, onDocumentPageUpdated],
+                [documentsService, EVENT_DOCUMENT_ADDED, onDocumentAdded],
+                [documentsService, EVENT_DOCUMENT_UPDATED, onDocumentUpdated],
+                [documentsService, EVENT_DOCUMENT_MOVED_FOLDER, onDocumentMovedFolder],
+                [documentsService, EVENT_DOCUMENT_TRASHED, refreshSimple],
+                [documentsService, EVENT_DOCUMENT_RESTORED, refreshSimple],
+                [documentsService, EVENT_FOLDER_ADDED, onFolderAdded],
+                [documentsService, EVENT_FOLDER_UPDATED, onFolderUpdated],
+                [documentsService, EVENT_FOLDER_DELETED, onFolderDeleted],
+                [syncService, EVENT_SYNC_STATE, onSyncState],
+                [syncService, EVENT_STATE, refreshSimple]
+            );
         }
-        documentsService.on(EVENT_DOCUMENT_DELETED, onDocumentsDeleted);
+        subscriptions.forEach(([emitter, eventName, handler]) => emitter.on(eventName, handler));
+        if (__ANDROID__ && !isTrash) {
+            const intent = Application.android['startIntent'];
+            if (intent) {
+                onAndroidNewItent({ intent } as any);
+            }
+        }
     });
     onDestroy(() => {
         DEV_LOG && console.log('MainList', 'onDestroy');
         prefs.off(`key:${SETTINGS_NB_COLUMNS}`, onNbColumnsPreferenceChanged);
         prefs.off(`key:${SETTINGS_NB_COLUMNS_LANDSCAPE}`, onNbColumnsPreferenceChanged);
         unsubscribeSyncServices();
-        if (__IOS__) {
-            Application.off(windowCommandEvent, onWindowCommand);
-        }
-        Application.off('snackMessageAnimation', onSnackMessageAnimation);
-        if (__ANDROID__) {
-            Application.android.off(Application.android.activityBackPressedEvent, onAndroidBackButton);
-        }
-        if (!isTrash) {
-            if (__ANDROID__) {
-                Application.android.off(Application.android.activityNewIntentEvent, onAndroidNewItent);
-            }
-            documentsService.off(EVENT_DOCUMENT_PAGE_UPDATED, onDocumentPageUpdated);
-            documentsService.off(EVENT_DOCUMENT_PAGE_DELETED, onDocumentPageUpdated);
-            documentsService.off(EVENT_DOCUMENT_UPDATED, onDocumentUpdated);
-            documentsService.off(EVENT_DOCUMENT_ADDED, onDocumentAdded);
-            documentsService.off(EVENT_DOCUMENT_MOVED_FOLDER, onDocumentMovedFolder);
-            documentsService.off(EVENT_DOCUMENT_TRASHED, refreshSimple);
-            documentsService.off(EVENT_DOCUMENT_RESTORED, refreshSimple);
-            documentsService.off(EVENT_FOLDER_ADDED, onFolderAdded);
-            documentsService.off(EVENT_FOLDER_UPDATED, onFolderUpdated);
-            documentsService.off(EVENT_FOLDER_DELETED, onFolderDeleted);
-            syncService.off(EVENT_SYNC_STATE, onSyncState);
-            syncService.off(EVENT_STATE, refreshSimple);
-        }
-        documentsService.off(EVENT_DOCUMENT_DELETED, onDocumentsDeleted);
+        subscriptions.forEach(([emitter, eventName, handler]) => emitter.off(eventName, handler));
     });
 
     export let showActionButton = !startOnCam;
@@ -623,75 +609,21 @@
             refresh();
         }
     }
-    function selectItem(item: Item) {
-        if (!item.selected) {
-            if (item.folder) {
-                if (folderViewStyle === 'horizontal') {
-                    folderItems?.some((d, index) => {
-                        if (d.folder === item.folder) {
-                            nbSelected += d.folder.count;
-                            d.selected = true;
-                            folderItems.setItem(index, d);
-                            return true;
-                        }
-                    });
-                } else {
-                    documents?.some((d, index) => {
-                        if (d.folder === item.folder) {
-                            nbSelected += 1;
-                            d.selected = true;
-                            documents.setItem(index, d);
-                            return true;
-                        }
-                    });
-                }
-            } else {
-                documents?.some((d, index) => {
-                    if (d === item) {
-                        nbSelected += 1;
-                        d.selected = true;
-                        documents.setItem(index, d);
-                        return true;
-                    }
-                });
-            }
+    function setSelected(item: Item, selected: boolean) {
+        if (!!item.selected === selected) {
+            return;
         }
-    }
-
-    function unselectItem(item: Item) {
-        // DEV_LOG && console.log('unselectItem', item);
-        if (item.selected) {
-            if (item.folder) {
-                if (folderViewStyle === 'horizontal') {
-                    folderItems?.some((d, index) => {
-                        if (d.folder === item.folder) {
-                            nbSelected -= d.folder.count;
-                            d.selected = false;
-                            folderItems.setItem(index, d);
-                            return true;
-                        }
-                    });
-                } else {
-                    documents?.some((d, index) => {
-                        if (d.folder === item.folder) {
-                            nbSelected -= 1;
-                            d.selected = false;
-                            documents.setItem(index, d);
-                            return true;
-                        }
-                    });
-                }
-            } else {
-                documents?.some((d, index) => {
-                    if (d === item) {
-                        nbSelected -= 1;
-                        d.selected = false;
-                        documents.setItem(index, d);
-                        return true;
-                    }
-                });
+        const horizontalFolder = !!item.folder && folderViewStyle === 'horizontal';
+        const items = horizontalFolder ? folderItems : documents;
+        items?.some((current, index) => {
+            if (item.folder ? current.folder !== item.folder : current !== item) {
+                return false;
             }
-        }
+            nbSelected += (selected ? 1 : -1) * (horizontalFolder ? current.folder.count : 1);
+            current.selected = selected;
+            items.setItem(index, current);
+            return true;
+        });
     }
 
     function getTotalNbDocuments() {
@@ -712,42 +644,29 @@
         }
         return 0;
     }
+    function setAllSelected(selected: boolean) {
+        const startIndex = getDocumentsStartIndex();
+        if (documents) {
+            documents.splice(startIndex, documents.length - startIndex, ...documents.slice(startIndex).map((current) => ({ ...current, selected })));
+        }
+        if (folderItems) {
+            folderItems.splice(0, folderItems.length, ...folderItems.map((current) => ({ ...current, selected })));
+        }
+    }
     function unselectAll() {
         nbSelected = 0;
-        const startIndex = getDocumentsStartIndex();
-        if (documents) {
-            documents.splice(startIndex, documents.length - startIndex, ...documents.slice(startIndex).map((i) => ({ ...i, selected: false })));
-        }
-        if (folderItems) {
-            folderItems.splice(0, folderItems.length, ...folderItems.map((i) => ({ ...i, selected: false })));
-        }
+        setAllSelected(false);
     }
     function selectAll() {
-        let newCount = getTotalNbDocuments(); // -1 because the first
-        const startIndex = getDocumentsStartIndex();
+        let newCount = getTotalNbDocuments();
+        folderItems?.forEach((current) => (newCount += current.folder.count));
         DEV_LOG && console.log('selectAll', documents.length);
-        if (documents) {
-            documents.splice(startIndex, documents.length - startIndex, ...documents.slice(startIndex).map((i) => ({ ...i, selected: true })));
-        }
-        if (folderItems) {
-            folderItems.splice(
-                0,
-                folderItems.length,
-                ...folderItems.map((i) => {
-                    newCount += i.folder.count;
-                    return { ...i, selected: true };
-                })
-            );
-        }
+        setAllSelected(true);
         nbSelected = newCount;
     }
-    export function onItemLongPress(item: Item, event?) {
+    export function onItemLongPress(item: Item) {
         DEV_LOG && console.log('onItemLongPress', !!item.selected, item.folder);
-        if (item.selected) {
-            unselectItem(item);
-        } else {
-            selectItem(item);
-        }
+        setSelected(item, !item.selected);
     }
 
     export let handleDocumentTap = async (doc: OCRDocument) => {
@@ -756,7 +675,7 @@
     export let handleFolderTap = async (folder: DocFolder) => {
         await goToFolderView(folder);
     };
-    export const onItemTapFast = async function (item: Item) {
+    const onItemTapFast = async function (item: Item) {
         try {
             if (selecting) {
                 onItemLongPress(item);
@@ -769,7 +688,7 @@
             showError(error);
         }
     };
-    export const onItemTapThrottled = throttle(onItemTapFast, 500);
+    const onItemTapThrottled = throttle(onItemTapFast, 500);
 
     export const onItemTap = async function (item: Item) {
         if (selecting) {
@@ -829,68 +748,37 @@
             }
         });
     }
-    function getSelectedItems() {
-        const selected: Item[] = [];
-        for (let index = 0; index < folderItems.length; index++) {
-            const d = folderItems.getItem(index);
-            if (d.selected) {
-                selected.push(d);
-            }
-        }
-        for (let index = getDocumentsStartIndex(); index < documents.length; index++) {
-            const d = documents.getItem(index);
-            if (d.selected) {
-                selected.push(d);
-            }
-        }
-        return selected;
-    }
-
-    export async function getSelectedDocuments() {
-        const selected: OCRDocument[] = [];
+    // `onlySelected` false: all the documents of the list, the folders being expanded
+    async function getDocuments(onlySelected: boolean) {
+        const result: OCRDocument[] = [];
         if (!documentsService.started) {
-            return selected;
+            return result;
         }
-        for (let index = getDocumentsStartIndex(); index < documents.length; index++) {
-            const d = documents.getItem(index);
-            if (d.doc && d.selected) {
-                selected.push(d.doc);
-            } else if (d.folder && d.selected) {
-                selected.push(...(await documentsService.documentRepository.findDocuments({ folder: d.folder })));
+        const addItem = async (item: Item) => {
+            if (onlySelected && !item.selected) {
+                return;
             }
+            if (item.doc) {
+                result.push(item.doc);
+            } else if (item.folder) {
+                result.push(...(await documentsService.documentRepository.findDocuments({ folder: item.folder })));
+            }
+        };
+        for (let index = getDocumentsStartIndex(); index < documents.length; index++) {
+            await addItem(documents.getItem(index));
         }
         if (folderItems) {
             for (let index = 0; index < folderItems.length; index++) {
-                const d = folderItems.getItem(index);
-                if (d.folder && d.selected) {
-                    selected.push(...(await documentsService.documentRepository.findDocuments({ folder: d.folder })));
-                }
+                await addItem(folderItems.getItem(index));
             }
         }
-        return sortByKey(selected, sortOrder);
+        return sortByKey(result, sortOrder);
+    }
+    export async function getSelectedDocuments() {
+        return getDocuments(true);
     }
     export async function getAllDocuments() {
-        const resut: OCRDocument[] = [];
-        if (!documentsService.started) {
-            return resut;
-        }
-        for (let index = getDocumentsStartIndex(); index < documents.length; index++) {
-            const d = documents.getItem(index);
-            if (d.doc) {
-                resut.push(d.doc);
-            } else if (d.folder) {
-                resut.push(...(await documentsService.documentRepository.findDocuments({ folder: d.folder })));
-            }
-        }
-        if (folderItems) {
-            for (let index = 0; index < folderItems.length; index++) {
-                const d = folderItems.getItem(index);
-                if (d.folder) {
-                    resut.push(...(await documentsService.documentRepository.findDocuments({ folder: d.folder })));
-                }
-            }
-        }
-        return sortByKey(resut, sortOrder);
+        return getDocuments(false);
     }
 
     async function getSelectedPagesAndPossibleSingleDocument(): Promise<[{ page: OCRPage; document: OCRDocument }[], OCRDocument, OCRDocument[]]> {
@@ -914,43 +802,31 @@
     }
     async function deleteSelectedDocuments() {
         if (nbSelected > 0) {
-            try {
-                // the trash list only offers "delete permanently"
-                return await deleteDocumentsWithConfirm(await getSelectedDocuments());
-            } catch (error) {
-                showError(error);
-            }
+            // the trash list only offers "delete permanently"
+            return deleteDocumentsWithConfirm(await getSelectedDocuments());
         }
     }
 
     async function deleteSelectedDocumentsPermanently() {
         if (nbSelected > 0) {
-            try {
-                const result = await confirm({
-                    cancelButtonText: lc('cancel'),
-                    message: lcp('confirm_delete_permanently', nbSelected),
-                    okButtonText: lc('delete_permanently'),
-                    title: lc('delete_permanently')
-                });
-                if (result) {
-                    await documentsService.deleteDocuments(await getSelectedDocuments());
-                    return true;
-                }
-                return false;
-            } catch (error) {
-                showError(error);
+            const result = await confirm({
+                cancelButtonText: lc('cancel'),
+                message: lcp('confirm_delete_permanently', nbSelected),
+                okButtonText: lc('delete_permanently'),
+                title: lc('delete_permanently')
+            });
+            if (result) {
+                await documentsService.deleteDocuments(await getSelectedDocuments());
+                return true;
             }
+            return false;
         }
     }
 
     async function restoreSelectedDocuments() {
         if (nbSelected > 0) {
-            try {
-                await documentsService.restoreDocuments(await getSelectedDocuments());
-                return true;
-            } catch (error) {
-                showError(error);
-            }
+            await documentsService.restoreDocuments(await getSelectedDocuments());
+            return true;
         }
     }
 
@@ -964,7 +840,7 @@
         }
     }
     function selectFolderViewStyle(id: string) {
-        const changed = folderViewStyleChanged(id, folderViewStyle);
+        const changed = id !== folderViewStyle;
         folderViewStyle = id;
         ApplicationSettings.setString(SETTINGS_FOLDER_VIEW_STYLE, folderViewStyle);
         if (changed) {
@@ -1078,7 +954,7 @@
         }
         if (!item.selected) {
             unselectAll();
-            selectItem(findCurrentItem(item));
+            setSelected(findCurrentItem(item), true);
         }
         return handleSelectionAction({ object: view }, { id: optionId, name: optionId });
     }
@@ -1088,10 +964,7 @@
         if (!item?.doc && !item?.folder) {
             return [];
         }
-        const options = getSelectionToolbarOptions().filter((option) => option.id !== 'select_all' && option.id !== 'rename');
-        if (!isTrash && (nbSelected === 0 || (nbSelected === 1 && item.selected))) {
-            options.splice(options.findIndex((option) => option.id === 'delete') + 1, 0, { icon: 'mdi-rename', id: 'rename', name: lc('rename') });
-        }
+        const options = getSelectionToolbarOptions(nbSelected === 0 || (nbSelected === 1 && item.selected)).filter((option) => option.id !== 'select_all');
         return [
             ...(isTrash ? [] : [{ id: 'open', title: lc('open'), icon: appIcon('open') }]),
             { id: 'select', title: lc('select'), icon: appIcon('select') },
@@ -1118,7 +991,7 @@
         contextMenuItems.set(view, event.bindingContext);
     }
 
-    function getSelectionToolbarOptions() {
+    function getSelectionToolbarOptions(withRename = nbSelected === 1) {
         if (isTrash) {
             return [
                 { id: 'select_all', name: lc('select_all'), icon: 'mdi-select-all' },
@@ -1134,7 +1007,7 @@
             { icon: 'mdi-text-recognition', id: 'ocr', name: lc('ocr_document') },
             { id: 'select_all', name: lc('select_all'), icon: 'mdi-select-all' },
             { color: colorError, icon: 'mdi-delete', id: 'delete', name: lc('delete') },
-            ...(nbSelected === 1 ? [{ icon: 'mdi-rename', id: 'rename', name: lc('rename') }] : []),
+            ...(withRename ? [{ icon: 'mdi-rename', id: 'rename', name: lc('rename') }] : []),
             { icon: 'mdi-star', id: 'favorite', name: lc('toggle_favorite') },
             { icon: 'mdi-folder-swap', id: 'move_folder', name: lc('move_folder') },
             { icon: 'mdi-fullscreen', id: 'fullscreen', name: lc('show_fullscreen_images') },
@@ -1146,6 +1019,22 @@
         try {
             let result;
             DEV_LOG && console.log('handleSelectionAction', option.id);
+            // these unselect everything once they succeed
+            const unselectingActions: { [id: string]: () => Promise<unknown> } = {
+                share: async () => showImagePopoverMenu((await getSelectedPagesAndPossibleSingleDocument())[0], event.object, { vertPos: VerticalPosition.ABOVE }),
+                ocr: async () => detectOCR({ documents: await getSelectedDocuments() }),
+                transform: async () => transformPages({ documents: await getSelectedDocuments() }),
+                delete_originals: async () => deleteOriginalImages({ documents: await getSelectedDocuments() }),
+                delete: deleteSelectedDocuments,
+                restore: restoreSelectedDocuments,
+                delete_permanently: deleteSelectedDocumentsPermanently
+            };
+            if (unselectingActions[option.id]) {
+                if (await unselectingActions[option.id]()) {
+                    unselectAll();
+                }
+                return;
+            }
             switch (option.id) {
                 case 'pdf':
                     const data = await getSelectedPagesAndPossibleSingleDocument();
@@ -1159,7 +1048,7 @@
                     }
                     break;
                 case 'rename':
-                    const item = getSelectedItems()[0];
+                    const item = [...folderItems.slice(), ...documents.slice(getDocumentsStartIndex())].find((current) => current.selected);
                     result = await promptForText({
                         title: lc('rename'),
                         defaultText: (item.doc || item.folder).name,
@@ -1171,52 +1060,9 @@
                         });
                     }
                     break;
-                case 'share':
-                    const selection = await getSelectedPagesAndPossibleSingleDocument();
-                    result = await showImagePopoverMenu(selection[0], event.object, { vertPos: VerticalPosition.ABOVE });
-                    if (result) {
-                        unselectAll();
-                    }
-                    break;
                 case 'fullscreen':
                     await fullscreenSelectedDocuments();
                     unselectAll();
-                    break;
-                case 'ocr':
-                    result = await detectOCR({ documents: await getSelectedDocuments() });
-                    if (result) {
-                        unselectAll();
-                    }
-                    break;
-                case 'transform':
-                    result = await transformPages({ documents: await getSelectedDocuments() });
-                    if (result) {
-                        unselectAll();
-                    }
-                    break;
-                case 'delete_originals':
-                    result = await deleteOriginalImages({ documents: await getSelectedDocuments() });
-                    if (result) {
-                        unselectAll();
-                    }
-                    break;
-                case 'delete':
-                    result = await deleteSelectedDocuments();
-                    if (result) {
-                        unselectAll();
-                    }
-                    break;
-                case 'restore':
-                    result = await restoreSelectedDocuments();
-                    if (result) {
-                        unselectAll();
-                    }
-                    break;
-                case 'delete_permanently':
-                    result = await deleteSelectedDocumentsPermanently();
-                    if (result) {
-                        unselectAll();
-                    }
                     break;
                 case 'favorite':
                     await toggleFavoriteSelectedDocuments();
@@ -1300,11 +1146,10 @@
     // Android: the actions are in the top bar while selecting, iOS: in the bottom toolbar
     $: selectionOptions = nbSelected > 0 ? splitSelectionOptions(getSelectionToolbarOptions()) : { main: [], more: [] };
     $: selectionMoreMenu = optionsToMenuItems(selectionOptions.more, onSelectionAction);
-    function getSelectionBottomItems(options: OptionType[]) {
+    function getSelectionBottomItems({ main, more }: { main: OptionType[]; more: OptionType[] }) {
         if (__ANDROID__) {
             return [];
         }
-        const { main, more } = splitSelectionOptions(options);
         const items: any[] = main.flatMap((option) => [{ spacer: true }, { text: option.name, icon: appIcon(option.id), color: option.color, onTap: () => onSelectionAction(option) }]);
         if (more.length) {
             items.push(
@@ -1318,24 +1163,19 @@
         }
         return items.concat({ spacer: true });
     }
-    $: bottomItems =
-        nbSelected > 0
-            ? getSelectionBottomItems(getSelectionToolbarOptions())
-            : __IOS__ && !isTrash && !onlyForImport
-              ? primaryAction
-                  ? [{ search: true }, { text: primaryAction.text, icon: appIcon(primaryAction.icon), prominent: true, color: folderAccent?.accent ?? colorPrimary, onTap: primaryAction.onTap }]
-                  : [{ search: true }]
-              : [];
+    $: bottomItems = selecting
+        ? getSelectionBottomItems(selectionOptions)
+        : __IOS__ && !isTrash && !onlyForImport
+          ? [
+                { search: true },
+                ...(primaryAction ? [{ text: primaryAction.text, icon: appIcon(primaryAction.icon), prominent: true, color: folderAccent?.accent ?? colorPrimary, onTap: primaryAction.onTap }] : [])
+            ]
+          : [];
+    $: trashMenuItems = !isTrash && trashEnabled ? [{ title: lc('open_trash'), icon: appIcon('trash'), onSelect: openTrash }] : [];
     let iosMenu: MenuItem[];
-    $: iosMenu = [
-        { title: lc('view_style'), icon: appIcon('view_style'), items: getIOSViewStyleItems(viewStyle, folderViewStyle, sortOrder) },
-        ...(!isTrash && trashEnabled ? [{ title: lc('open_trash'), icon: appIcon('trash'), onSelect: openTrash }] : [])
-    ];
+    $: iosMenu = [{ title: lc('view_style'), icon: appIcon('view_style'), items: getIOSViewStyleItems(viewStyle, folderViewStyle, sortOrder) }, ...trashMenuItems];
     let optionsMenu: MenuItem[];
-    $: optionsMenu = [
-        ...(!isTrash && trashEnabled ? [{ title: lc('open_trash'), icon: appIcon('trash'), onSelect: openTrash }] : []),
-        { title: lc('preferences'), icon: appIcon('settings'), onSelect: openPreferences }
-    ];
+    $: optionsMenu = [...trashMenuItems, { title: lc('preferences'), icon: appIcon('settings'), onSelect: openPreferences }];
 
     function onSearchChange(event: { text: string }) {
         const query = event.text?.toLowerCase();
@@ -1468,7 +1308,7 @@
                     marginLeft={folderMargin}
                     marginRight={folderMargin}
                     tile={false}
-                    on:longPress={(e) => onItemLongPress(item, e)}
+                    on:longPress={() => onItemLongPress(item)}
                     on:tap={() => onItemTap(item)}
                 />
             </Template>
@@ -1490,7 +1330,7 @@
                             name={folder ? item.folder.name.replace(folder.name + '/', '') : item.folder.name}
                             {item}
                             margin={4}
-                            on:longPress={(e) => onItemLongPress(item, e)}
+                            on:longPress={() => onItemLongPress(item)}
                             on:tap={() => onItemTap(item)}
                         />
                     </Template>

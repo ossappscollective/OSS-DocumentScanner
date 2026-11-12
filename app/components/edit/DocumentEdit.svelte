@@ -15,6 +15,8 @@
     import { OCRData, QRCodeData, Quad, getImageSize } from 'plugin-nativeprocessor';
     import { onDestroy, onMount } from 'svelte';
     import { Writable } from 'svelte/store';
+    import PageCounter from '~/components/common/PageCounter.svelte';
+    import PersistentSheetFrame, { SHEET_GRABBER_HEIGHT } from '~/components/common/PersistentSheetFrame.svelte';
     import RotableImageView from '~/components/common/RotableImageView.svelte';
     import SheetHeader from '~/components/common/SheetHeader.svelte';
     import AdjustSheet from '~/components/widgets/ImageProcessingSettingsBottomSheet.svelte';
@@ -29,7 +31,7 @@
     import { DEFAULT_BRIGHTNESS, DEFAULT_COLORTYPE, DEFAULT_CONTRAST, EVENT_DOCUMENT_DELETED, EVENT_DOCUMENT_PAGE_UPDATED, EVENT_DOCUMENT_UPDATED, TRANSFORMS_SPLIT } from '~/utils/constants';
     import { hasOriginalImage } from '~/utils/originals';
     import { createPageSheetTranslation, getPageFit, setPageFit } from '~/utils/pageSheet';
-    import { getIOSBottomInset, getIOSViewBottomInset } from '~/utils/safeArea';
+    import { getIOSBottomInset, getIOSViewBottomInset, measureWidth } from '~/utils/safeArea';
     import {
         detectOCROnPage,
         hideLoading,
@@ -42,7 +44,7 @@
     import { colors, screenHeightDips, windowInset } from '~/variables';
 
     // technique for only specific properties to get updated on store change
-    $: ({ colorBackground, colorOnBackground, colorOutlineVariant, colorSecondaryContainer, colorSurfaceContainerLow } = $colors);
+    $: ({ colorOnBackground } = $colors);
 
     export let startPageIndex: number = 0;
     DEV_LOG && console.log('startPageIndex', startPageIndex);
@@ -65,7 +67,6 @@
     let adjusting = false;
     // the adjust sheet is a persistent sheet of the page: a grabber, a header, the list of the adjustments, and the room of the bottom toolbar under them.
     // The pager keeps its width: each page scales and moves with the sheet (so the neighbors stay seen), and the pages stay interactive
-    const SHEET_GRABBER_HEIGHT = 28;
     const SHEET_HEADER_HEIGHT = 64;
     const ADJUST_LIST_HEIGHT = Math.round(screenHeightDips * 0.4);
     let sheet: NativeViewElementNode<PersistentBottomSheet>;
@@ -85,10 +86,7 @@
     }
     function onSheetLayout() {
         updateBottomInset();
-        const width = Utils.layout.toDeviceIndependentPixels(sheet?.nativeView?.getMeasuredWidth() ?? 0);
-        if (width && Math.abs(width - (sheetWidth ?? 0)) > 1) {
-            sheetWidth = width;
-        }
+        sheetWidth = measureWidth(sheet?.nativeView, sheetWidth);
     }
     // the sizes of the views do not change with the transformations: they are measured when the sheet opens
     let pageArea: { containerHeight: number; areaHeight: number; areaWidth: number };
@@ -562,35 +560,12 @@
                 </Template>
             </pager>
             {#if items.length > 1 && !adjusting}
-                <label
-                    backgroundColor={__IOS__ ? '#7676801F' : colorSecondaryContainer}
-                    borderRadius={14}
-                    color={colorOnBackground}
-                    fontSize={13}
-                    height={28}
-                    horizontalAlignment="center"
-                    isUserInteractionEnabled={false}
-                    marginBottom={12}
-                    padding="0 12"
-                    row={1}
-                    text={`${currentIndex + 1} / ${items.length}`}
-                    verticalAlignment="bottom"
-                    verticalTextAlignment="center" />
+                <PageCounter marginBottom={12} row={1} text={`${currentIndex + 1} / ${items.length}`} />
             {/if}
         </gridlayout>
-        <gridlayout
-            prop:bottomSheet
-            backgroundColor={__IOS__ ? colorBackground : colorSurfaceContainerLow}
-            borderTopLeftRadius={__IOS__ ? 26 : 28}
-            borderTopRightRadius={__IOS__ ? 26 : 28}
-            boxShadow={__IOS__ && adjusting ? '0 -3 10 #00000072' : undefined}
-            height={sheetHeight + bottomInset}
-            horizontalAlignment="left"
-            rows="28,auto,auto"
-            width={sheetWidth}>
-            <absolutelayout backgroundColor={colorOutlineVariant} borderRadius={2.5} height={5} horizontalAlignment="center" marginTop={10} width={36} />
+        <PersistentSheetFrame height={sheetHeight + bottomInset} rows="auto,auto" shadow={adjusting} width={sheetWidth}>
             <!-- the quick way to close it: the sheet is not modal, the page stays in use -->
-            <SheetHeader doneText={lc('done')} onCancel={closeAdjustments} onDone={closeAdjustments} row={1} showCancel={false} title={lc('adjust')} />
+            <SheetHeader doneText={lc('done')} onDone={closeAdjustments} row={1} showCancel={false} title={lc('adjust')} />
             <AdjustSheet
                 brightness={typeof currentItem?.brightness === 'number' ? currentItem.brightness : DEFAULT_BRIGHTNESS}
                 cameraOptionsStore={null}
@@ -609,6 +584,6 @@
                 sheetHeight={ADJUST_LIST_HEIGHT + bottomInset}
                 showTransforms={hasOriginalImage(currentItem)}
                 transforms={[...(transforms ?? [])]} />
-        </gridlayout>
+        </PersistentSheetFrame>
     </bottomsheet>
 </appPage>

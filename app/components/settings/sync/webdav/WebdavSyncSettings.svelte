@@ -1,15 +1,16 @@
 <script lang="ts">
     import { Template } from '@nativescript-community/svelte-native/components';
     import { Writable } from 'svelte/store';
-    import ImageSyncSettings from '~/components/settings/sync/ImageSyncSettings.svelte';
+    import { getSyncSettingsBase } from '~/components/settings/sync/getSyncSettingsBase';
     import WebdavSettingsView from '~/components/settings/sync/webdav/WebdavSettingsView.svelte';
     import { lc } from '~/helpers/locale';
-    import { WebdavImageSyncServiceOptions } from '~/services/sync/webdav/WebdavImageSyncService';
+    import { SYNC_TYPES } from '~/services/sync/types';
+    import { WebdavSyncOptions } from '~/services/sync/webdav/Webdav';
 
-    export let data: WebdavImageSyncServiceOptions = {} as any;
+    export let data: WebdavSyncOptions & { type: SYNC_TYPES };
 
     let updateItem;
-    let store: Writable<WebdavImageSyncServiceOptions>;
+    let store: Writable<WebdavSyncOptions>;
 
     const topItems = [
         {
@@ -27,8 +28,8 @@
     }
 </script>
 
-<ImageSyncSettings {data} serviceType="webdav_image" {topItems} {validateSave} bind:updateItem bind:store>
+<svelte:component this={getSyncSettingsBase(data.type)} {data} serviceType={data.type} {topItems} {validateSave} bind:updateItem bind:store>
     <Template key="webdav" let:item>
         <WebdavSettingsView bind:this={webdavView} {store} />
     </Template>
-</ImageSyncSettings>
+</svelte:component>

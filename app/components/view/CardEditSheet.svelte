@@ -3,20 +3,20 @@
     import { Template } from '@nativescript-community/svelte-native/components';
     import SheetHeader from '~/components/common/SheetHeader.svelte';
     import { showError } from '@shared/utils/showError';
-    import dayjs from 'dayjs';
-    import { ExtraFieldType, OCRDocument } from '~/models/OCRDocument';
+    import { OCRDocument } from '~/models/OCRDocument';
     import { shortcutService } from '~/services/shortcuts';
     import { appIcon } from '~/utils/appIcons';
+    import { formatExtraValue, getExtraFields } from '~/utils/extraFields';
     import { pickColor } from '~/utils/ui';
     import { colors } from '~/variables';
     import FormTextField from '~/components/common/FormTextField.svelte';
     import CardEditCodeRow from '~/components/view/CardEditCodeRow.svelte';
+    import CardEditDeleteButton from '~/components/view/CardEditDeleteButton.svelte';
 
     interface CodeRow {
         pageIndex: number;
         original: any;
         text: string;
-        scale: number;
         removed: boolean;
     }
     interface FieldRow {
@@ -28,7 +28,7 @@
 </script>
 
 <script lang="ts">
-    $: ({ colorError, colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary } = $colors);
+    $: ({ colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary } = $colors);
 
     export let document: OCRDocument;
     let rootView;
@@ -38,12 +38,10 @@
     let codes: CodeRow[] = [];
     document.pages.forEach((page, pageIndex) => {
         (page.qrcode || []).forEach((qrcode) => {
-            codes.push({ pageIndex, original: qrcode, text: qrcode.text, scale: qrcode.scale ?? 1, removed: false });
+            codes.push({ pageIndex, original: qrcode, text: qrcode.text, removed: false });
         });
     });
-    let fields: FieldRow[] = Object.keys(document.extra || {})
-        .filter((key) => key !== 'color' && key !== 'pkpass' && typeof document.extra[key] === 'object')
-        .map((key) => ({ key, name: key, extra: { ...(document.extra[key] as any) }, removed: false }));
+    let fields: FieldRow[] = getExtraFields(document.extra).map(({ name: key, extra }) => ({ key, name: key, extra: { ...extra }, removed: false }));
 
     // the rows are built again when the structure changes, never when a text is typed: the text fields keep their focus
     let listItems: any[] = [];
@@ -57,8 +55,7 @@
             { type: 'sectionheader', title: lc('extra_fields').toUpperCase() },
             ...visibleFields.map((field) => ({ type: 'field', field })),
             // without any field the button of the header is far from the title of this section
-            ...(visibleFields.length ? [] : [{ type: 'addfield' }]),
-            { type: 'spacer' }
+            ...(visibleFields.length ? [] : [{ type: 'addfield' }])
         ];
     }
     rebuild();
@@ -82,9 +79,6 @@
         } catch (error) {
             showError(error);
         }
-    }
-    function formatValue(extra) {
-        return extra?.type === ExtraFieldType.Date ? dayjs(extra.value).format(extra.format || 'LL') : (extra?.value ?? '');
     }
     // the form of a field replaces the content of this sheet: no second sheet over it
     let fieldForm: { field?: FieldRow; ExtraFieldPicker: any } = null;
@@ -120,14 +114,12 @@
         try {
             const pagesChanged = new Set<number>();
             codes.forEach((code) => {
-                if (code.removed || code.text !== code.original.text || (code.scale ?? 1) !== (code.original.scale ?? 1)) {
+                if (code.removed || code.text !== code.original.text) {
                     pagesChanged.add(code.pageIndex);
                 }
             });
             for (const pageIndex of pagesChanged) {
-                const qrcode = codes
-                    .filter((code) => code.pageIndex === pageIndex && !code.removed)
-                    .map((code) => ({ ...code.original, text: code.text, ...(code.scale !== 1 || code.original.scale ? { scale: code.scale } : {}) }));
+                const qrcode = codes.filter((code) => code.pageIndex === pageIndex && !code.removed).map((code) => ({ ...code.original, text: code.text }));
                 await document.updatePage(pageIndex, { qrcode }, false, false);
             }
             const extra = { ...(document.extra || {}) };
@@ -165,7 +157,7 @@
         onDone={save}
         title={lc('edit')}
     />
-    <collectionview row={1} {itemTemplateSelector} items={listItems} visibility={fieldForm ? 'collapse' : 'visible'}>
+    <collectionview row={1} {itemTemplateSelector} items={listItems} paddingBottom={24} visibility={fieldForm ? 'collapse' : 'visible'}>
         <Template key="name" let:item>
             <FormTextField label={lc('name')} margin="0 16 8 16" bind:text={name} />
         </Template>
@@ -193,31 +185,15 @@
                     minHeight={48}
                     multiline={true}
                     margin="0 0 8 0"
-                    text={formatValue(item.field.extra) + ''}
+                    text={formatExtraValue(item.field.extra) + ''}
                     onTap={() => editField(item.field)}
                 />
-                <uibutton
-                    accessibilityLabel={lc('delete')}
-                    col={1}
-                    color={colorError}
-                    height={44}
-                    marginTop={__IOS__ ? 18 : 6}
-                    padding="0"
-                    variant="text"
-                    verticalAlignment="top"
-                    width={44}
-                    {...{ src: appIcon('delete') }}
-                    on:tap={() => removeField(item.field)}
-                />
+                <CardEditDeleteButton col={1} on:tap={() => removeField(item.field)} />
             </gridlayout>
         </Template>
 
         <Template key="addfield" let:item>
             <uibutton height={44} margin="4 16 8 16" text={lc('add_extra_field')} variant="outline" on:tap={() => editField()} />
-        </Template>
-
-        <Template key="spacer" let:item>
-            <gridlayout height={24} />
         </Template>
     </collectionview>
 </gesturerootview>
