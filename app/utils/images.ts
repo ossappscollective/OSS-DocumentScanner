@@ -1,9 +1,31 @@
 import { ImageSource, Screen, Utils } from '@nativescript/core';
 
+@NativeClass
+class LoadImageDelegate extends NSObject implements NCompletionDelegate {
+    static ObjCProtocols = [NCompletionDelegate];
+    resolve: (image: UIImage) => void;
+    reject: (error: NSError) => void;
+    onCompleteError(result: UIImage, error: NSError) {
+        if (error) {
+            this.reject(error);
+        } else {
+            this.resolve(result);
+        }
+    }
+    onProgress(_progress: number) {}
+}
+
 export async function loadImage(imagePath, loadOptions: { width?; height?; resizeThreshold?; sourceWidth?; sourceHeight?; jpegQuality? } = {}) {
     loadOptions.resizeThreshold = loadOptions.resizeThreshold || 4500;
     if (__IOS__) {
-        return new ImageSource(ImageUtils.readImageFromFileSync(imagePath, JSON.stringify(loadOptions)));
+        // the decode is done on a background queue
+        const image = await new Promise<UIImage>((resolve, reject) => {
+            const delegate = new LoadImageDelegate();
+            delegate.resolve = resolve;
+            delegate.reject = reject;
+            ImageUtils.readImageFromFile(imagePath, delegate, JSON.stringify(loadOptions));
+        });
+        return new ImageSource(image);
     } else {
         const result = new ImageSource(com.akylas.documentscanner.utils.ImageUtil.Companion.readBitmapFromFile(Utils.android.getApplicationContext(), imagePath, JSON.stringify(loadOptions)));
         // DEV_LOG && console.log('loadImage', imagePath, result);
