@@ -1,4 +1,6 @@
-import { ImageSource, Screen, Utils } from '@nativescript/core';
+import { ImageSource, Screen } from '@nativescript/core';
+
+export * from './images.common';
 
 @NativeClass
 class LoadImageDelegate extends NSObject implements NCompletionDelegate {
@@ -17,53 +19,19 @@ class LoadImageDelegate extends NSObject implements NCompletionDelegate {
 
 export async function loadImage(imagePath, loadOptions: { width?; height?; resizeThreshold?; sourceWidth?; sourceHeight?; jpegQuality? } = {}) {
     loadOptions.resizeThreshold = loadOptions.resizeThreshold || 4500;
-    if (__IOS__) {
-        // the decode is done on a background queue
-        const image = await new Promise<UIImage>((resolve, reject) => {
-            const delegate = new LoadImageDelegate();
-            delegate.resolve = resolve;
-            delegate.reject = reject;
-            ImageUtils.readImageFromFile(imagePath, delegate, JSON.stringify(loadOptions));
-        });
-        return new ImageSource(image);
-    } else {
-        const result = new ImageSource(com.akylas.documentscanner.utils.ImageUtil.Companion.readBitmapFromFile(Utils.android.getApplicationContext(), imagePath, JSON.stringify(loadOptions)));
-        // DEV_LOG && console.log('loadImage', imagePath, result);
-        return result;
-    }
-    // const asset = new ImageAsset(imagePath);
-    // asset.options = { autoScaleFactor: false, keepAspectRatio: true, width: Math.round(reqWidth), height: Math.round(reqHeight) };
-    // DEV_LOG && console.log('loadImage', sourceWidth, sourceHeight, resizeThreshold, imageScale, reqWidth, reqHeight, asset.options);
-    // const bitmap = await asset.getImage();
-    // return new ImageSource(bitmap);
+    // the decode is done on a background queue
+    const image = await new Promise<UIImage>((resolve, reject) => {
+        const delegate = new LoadImageDelegate();
+        delegate.resolve = resolve;
+        delegate.reject = reject;
+        ImageUtils.readImageFromFile(imagePath, delegate, JSON.stringify(loadOptions));
+    });
+    return new ImageSource(image);
 }
 
-export function recycleImages(...args) {
-    if (__ANDROID__) {
-        for (let index = 0; index < args.length; index++) {
-            const arg = args[index];
-            if (!arg) {
-                continue;
-            }
-            // this first test detect android native arrays
-            if (Array.isArray(arg)) {
-                recycleImages(...arg);
-            } else if (typeof arg === 'object' && arg.length > 0) {
-                for (let j = 0; j < arg.length; j++) {
-                    arg[j]?.recycle?.();
-                }
-            } else if (arg.android) {
-                arg.android.recycle?.();
-            } else {
-                arg.recycle?.();
-            }
-        }
-    }
-}
-
-/** iOS: the average brightness (0-255) of the visible top of a photo, where the bars and the title are drawn over its blurred copy. null when it cannot be read */
+/** The average brightness (0-255) of the visible top of a photo, where the bars and the title are drawn over its blurred copy. null when it cannot be read */
 export async function getTopBrightness(imagePath: string, topRatio = 0.3): Promise<number | null> {
-    if (!__IOS__ || !imagePath) {
+    if (!imagePath) {
         return null;
     }
     try {
