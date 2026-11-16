@@ -148,7 +148,8 @@ export class OCRService extends Observable {
     mDataType: 'best' | 'standard' | 'fast';
     mDownloadedLanguages: string[] = [];
     async start(defaultLanguage: string) {
-        this.languages = ApplicationSettings.getString('tesseract_languages', defaultLanguage);
+        // an empty language was saved when the last one was removed: '+jpn' then
+        this.languages = ApplicationSettings.getString('tesseract_languages', defaultLanguage).split('+').filter(Boolean).join('+') || defaultLanguage;
         this.dataType = ApplicationSettings.getString('tesseract_datatype', 'best') as any;
     }
 
@@ -164,7 +165,7 @@ export class OCRService extends Observable {
         return this.mLanguages;
     }
     get languagesArray() {
-        return this.mLanguages.split('+');
+        return this.mLanguages.split('+').filter(Boolean);
     }
 
     updateDownloadedLanguages() {
@@ -312,7 +313,7 @@ export class OCRService extends Observable {
         onProgress?: (progress) => Promise<void>;
         confirmDownload?: (toDownload) => Promise<boolean>;
     }) {
-        const langArray = languages.split('+');
+        const langArray = languages.split('+').filter(Boolean);
         const toDownload = [];
         const destinationFolder = Folder.fromPath(this.baseDataPath).getFolder(dataType);
         DEV_LOG && console.log('checkOrDownload', dataType, languages);
