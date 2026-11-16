@@ -151,7 +151,7 @@
                     {/each}
                 </wraplayout>
                 {#if showDownloadButton}
-                    <uibutton horizontalAlignment="right" isEnabled={canDownload} marginTop={8} opacity={canDownload ? 1 : 0.4} text={lc('download')} on:tap={downloadLanguages} />
+                    <uibutton horizontalAlignment="right" isEnabled={canDownload} marginTop={8} text={lc('download')} on:tap={downloadLanguages} />
                 {/if}
             </stacklayout>
 
@@ -165,7 +165,7 @@
                         padding="8 8 8 16"
                         {...getRowCorners(getModelPosition(index, installedModels.length), __IOS__)}
                     >
-                        <label color={colorOnSurface} fontSize={14} verticalAlignment="middle">
+                        <label color={colorOnSurface} fontSize={14} textWrap={true} verticalAlignment="middle">
                             <span text={localizedLanguage(model.language, OCRLanguages)} />
                             <span color={colorOnSurfaceVariant} text={`\n${lc(model.dataType)} · ${filesize(model.size, { output: 'string' })}`} />
                         </label>

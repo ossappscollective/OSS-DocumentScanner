@@ -81,6 +81,18 @@ button[variant='contained'] {
     height: 44;
 }
 
+// disabled: the system fill and the tertiary label, like a native button
+button[variant='contained']:disabled {
+    background-color: #7878801f;
+    color: #3c3c434d;
+
+    .ns-dark &,
+    .ns-black & {
+        background-color: #7878803d;
+        color: #ebebf54d;
+    }
+}
+
 .sheetHeaderTitle {
     font-size: 17;
     font-weight: bold;
