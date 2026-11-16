@@ -141,6 +141,7 @@
     "connection_status": "Verbindungsstatus",
     "contrast": "Kontrast",
     "copied": "kopiert",
+    "copy": "Kopie",
     "crash_report": "Absturzberichte aktivieren",
     "crash_report_desc": "Wenn aktiviert, werden Absturzberichte zu einem privaten Datenwachdienst geschickt. Es werden keine Daten weitergegeben, die Daten werden regelmäßig gelöscht. Die Daten werden ausschließlich zur Fehlerbehebung benutzt.",
     "create": "erstellen",
