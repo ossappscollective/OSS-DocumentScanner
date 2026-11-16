@@ -9,7 +9,7 @@
     import { Item } from '~/components/list/MainList.svelte';
     import { isEInk } from '~/helpers/theme';
     import { appIcon } from '~/utils/appIcons';
-    import { getInfoPill, getPaperEdge, isAutoName } from '~/utils/documentCell';
+    import { getInfoPill, isAutoName } from '~/utils/documentCell';
     import { colors } from '~/variables';
 
     export let item: Item;
@@ -34,14 +34,14 @@
         backgroundColor={isEInk ? null : (page?.colors?.[1] ?? colorSurfaceContainerHigh)}
         borderRadius={radius}
         margin={6}
-        {...getPaperEdge(__IOS__, isEInk, colorOutlineVariant)}
+        borderColor={colorOutlineVariant}
+        borderWidth={1}
         scaleX={item.selected ? 0.95 : 1}
         scaleY={item.selected ? 0.95 : 1}
         on:tap
         on:longPress>
         <RotableImageView
             id="imageView"
-            borderRadius={radius}
             decodeWidth={Utils.layout.toDevicePixels(width)}
             document={item.doc}
             fadeDuration={100}

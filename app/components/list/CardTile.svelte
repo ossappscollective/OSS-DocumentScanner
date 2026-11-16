@@ -9,7 +9,7 @@
     import { getTileColors } from '~/utils/cardColors';
     import { CARDHOLDER_GAP } from '~/utils/constants';
     import { colors } from '~/variables';
-    const tileRadius = __IOS__ ? 18 : 20;
+    export const tileRadius = __IOS__ ? 18 : 20;
 </script>
 
 <script lang="ts">
@@ -40,8 +40,7 @@
                     // @akylas/nativescript (background.ios) applies the alpha of the color twice on iOS (shadowOpacity and shadowColor):
                     // 0x72 renders the 20% of the design. Use 0x33 again once it is fixed there
                     boxShadow: isEInk ? 0 : layout === 'cardholder' ? `0 -2 5 ${__IOS__ ? '#0000008C' : '#0000004D'}` : `0 -3 10 ${__IOS__ ? '#00000072' : '#00000033'}`,
-                    ...(layout === 'cardholder' ? { marginTop: CARDHOLDER_GAP, marginLeft: 16 / nbColumns, marginRight: 16 / nbColumns } : { margin: 16 / nbColumns }),
-                    ...(isEInk ? {} : { borderWidth: 1, borderColor: '#FFFFFF47' })
+                    ...(layout === 'cardholder' ? { marginTop: CARDHOLDER_GAP, marginLeft: 16 / nbColumns, marginRight: 16 / nbColumns } : { margin: 16 / nbColumns })
                 });
                 break;
             case 'columns':
@@ -62,6 +61,10 @@
         {#if layout === 'cardholder' && !isEInk}
             <!-- the card goes into its slot: the bottom of the strip gets darker -->
             <stacklayout backgroundImage="linear-gradient(to bottom, #00000000, #00000033)" height={12} isUserInteractionEnabled={false} marginTop={stripHeight - 12} verticalAlignment="top" />
+        {/if}
+        {#if (layout === 'cardholder' || layout === 'full') && !isEInk}
+            <!-- the edge of the card is over its face: a border of the tile would show the fill of the tile around the face -->
+            <gridlayout borderColor="#FFFFFF47" borderRadius={tileRadius} borderWidth={1} isUserInteractionEnabled={false} />
         {/if}
         <SelectedIndicator selected={item.selected} />
         <SyncIndicator {syncColors} verticalAlignment="top" visible={syncEnabled} />
