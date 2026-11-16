@@ -20,7 +20,7 @@
     import { appIcon } from '~/utils/appIcons';
     import { getIOSBottomInset } from '~/utils/safeArea';
     import { copyOCRToClipboard } from '~/utils/ui';
-    import { colors, screenHeightDips } from '~/variables';
+    import { colors, screenHeightDips, windowInset } from '~/variables';
 
     let { colorBackground, colorOnBackground, colorPrimary } = $colors;
     // technique for only specific properties to get updated on store change
@@ -68,6 +68,8 @@
     let currentIndex = startIndex;
     const viewState = writable<OCRViewState>({ page: items[startIndex]?.pageIndex, block: -1, showText: false, version: 0 });
 
+    // the textview fills the sheet at its full step: below it the bottom is out of the screen, the text scrolls up to what is shown
+    $: hiddenHeight = sheetHeight - steps[stepIndex];
     $: text = texts[currentIndex];
     $: dirty = texts.some((value, index) => value !== items[index].ocrData.text);
 
@@ -87,9 +89,39 @@
         }
         const range = getBlockRanges(text, items[currentIndex].ocrData.blocks)[block];
         if (range) {
-            textView?.nativeView?.setSelection(range.start, range.end);
-            if (__IOS__) {
-                textView?.nativeView?.nativeViewProtected?.scrollRangeToVisible(NSMakeRange(range.start, range.end - range.start));
+            selectRange(range.start, range.end);
+        }
+    }
+
+    // the selection is drawn when the view has the focus, and the text goes to it
+    function selectRange(start: number, end: number) {
+        const view = textView?.nativeView;
+        if (!view) {
+            return;
+        }
+        view.setSelection(start, end);
+        if (__IOS__) {
+            view.focus();
+            view.nativeViewProtected?.scrollRangeToVisible(NSMakeRange(start, end - start));
+        } else {
+            const editText = view.nativeTextViewProtected;
+            // not `focus()`: it shows the keyboard
+            editText.requestFocus();
+            const layout = editText?.getLayout();
+            if (layout) {
+                editText.scrollTo(0, layout.getLineTop(layout.getLineForOffset(start)));
+            }
+        }
+    }
+
+    // the text view changes of size with the step: the selection stays in the part which is shown
+    function revealSelection() {
+        const view = textView?.nativeView;
+        if (__IOS__ && view && !editing) {
+            const nativeView = view.nativeViewProtected;
+            const range = nativeView?.selectedRange;
+            if (range?.length) {
+                nativeView.scrollRangeToVisible(range);
             }
         }
     }
@@ -104,6 +136,7 @@
             const editText = view?.nativeTextViewProtected;
             if (editText) {
                 editText.setTextIsSelectable(true);
+                editText.setShowSoftInputOnFocus(false);
                 editText.setFocusable(true);
                 editText.setFocusableInTouchMode(true);
                 editText.setClickable(true);
@@ -124,6 +157,7 @@
             if (stepIndex < EDIT_STEP_INDEX) {
                 sheet?.nativeView?.animateStepIndex(EDIT_STEP_INDEX);
             }
+            textView?.nativeView?.nativeTextViewProtected?.setShowSoftInputOnFocus?.(true);
             textView?.nativeView?.focus();
         } else {
             textView?.nativeView?.blur();
@@ -195,7 +229,14 @@
         <appBarItem icon={appIcon('copy')} ios.position="right" text={lc('copy')} on:tap={copyText} />
         <appBarItem {...{ isEnabled: dirty }} icon={appIcon('save')} ios.position="right" text={lc('save')} on:tap={saveEdit} />
     </appBar>
-    <bottomsheet bind:this={sheet} scrollViewId={__IOS__ ? 'ocrText' : undefined} stepIndex={START_STEP_INDEX} {steps} on:stepIndexChange={(event) => (stepIndex = event.value)}>
+    <bottomsheet
+        bind:this={sheet}
+        scrollAtAnyStep={true}
+        scrollViewId="ocrText"
+        stepIndex={START_STEP_INDEX}
+        {steps}
+        on:animated={revealSelection}
+        on:stepIndexChange={(event) => (stepIndex = event.value)}>
         <gridlayout class="pageContent" height="100%" width="100%">
             <pager {items} selectedIndex={startIndex} on:selectedIndexChange={onSelectedIndex}>
                 <Template let:item>
@@ -213,8 +254,10 @@
                 color={colorOnBackground}
                 editable={editing}
                 fontSize={16}
-                padding="0 16"
-                ios:paddingBottom={bottomInset}
+                android:paddingBottom={$windowInset.bottom}
+                marginBottom={hiddenHeight}
+                paddingLeft={16}
+                paddingRight={16}
                 row={2}
                 {text}
                 variant="none"
