@@ -6,7 +6,7 @@
     import { Img } from '@nativescript-community/ui-image';
     import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { type MenuItem, showMenu } from '@nativescript-community/ui-menu';
-    import { AnimationDefinition, Application, ApplicationSettings, EventData, Page, PageTransition, SharedTransition, StackLayout, View } from '@nativescript/core';
+    import { AnimationDefinition, Application, ApplicationSettings, EventData, Page, StackLayout, View } from '@nativescript/core';
     import { AndroidActivityBackPressedEventData } from '@nativescript/core/application';
     import { showError } from '@shared/utils/showError';
     import { goBack, navigate, showModal } from '@shared/utils/svelte/ui';
@@ -271,16 +271,6 @@
                 const index = items.findIndex((p) => p.page === item.page);
                 navigate({
                     page: PdfEdit,
-                    transition:
-                        __ANDROID__ && !CARD_APP
-                            ? SharedTransition.custom(new PageTransition(300, undefined, 10), {
-                                  pageStart: {
-                                      sharedTransitionTags: {
-                                          [`document_${document.id}_${item.page.id}`]: {}
-                                      }
-                                  }
-                              })
-                            : undefined,
                     props: {
                         document,
                         startPageIndex: index
