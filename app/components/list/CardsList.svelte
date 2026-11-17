@@ -34,6 +34,7 @@
     import { appIcon } from '~/utils/appIcons';
     import { getCardVariant } from '~/utils/cardCell';
     import { goToDocumentAfterScan, importImageFromCamera } from '~/utils/ui';
+    import { getHorizontalInsets } from '~/utils/safeArea';
     import { colors, hasCamera, isLandscape, screenHeightDips, screenWidthDips, windowInset } from '~/variables';
     import MainList, { Item } from './MainList.svelte';
 
@@ -73,9 +74,9 @@
     let folderItems: ObservableArray<Item>;
     let documents: ObservableArray<Item>;
     $: contentPadding = viewStyle === 'columns' ? columnsPadding : 0;
-    $: itemWidth = (($isLandscape ? screenHeightDips : screenWidthDips) - $windowInset.left - $windowInset.right - 2 * contentPadding) / $nbColumns - 2 * rowMargin;
+    $: itemWidth = (($isLandscape ? screenHeightDips : screenWidthDips) - getHorizontalInsets($windowInset) - 2 * contentPadding) / $nbColumns - 2 * rowMargin;
     $: itemHeight = itemWidth * CARD_RATIO + 2 * rowMargin;
-    $: itemHeight, refreshCollectionView?.();
+    $: (itemHeight, refreshCollectionView?.());
 
     $: itemRowHeight = getItemRowHeight(viewStyle, itemHeight, $isLandscape);
     $: stripHeight = getStripHeight(viewStyle, itemHeight, itemRowHeight);
@@ -145,6 +146,17 @@
         // DEV_LOG && console.log('getItemOverlap', viewStyle, itemHeight);
         switch (viewStyle) {
             case 'full':
+                if (__ANDROID__) {
+                    // the next row covers the bottom of a card: the overlap is on that bottom, not on the top of the next row.
+                    // The RecyclerView stops filling when a row takes all the room left: with the overlap on the top of the next
+                    // row, that next row (which is partly in the room) was only added when scrolling
+                    return (item, position) => {
+                        if (!item?.doc || position + $nbColumns >= documents.length) {
+                            return [0, 0, 0, 0];
+                        }
+                        return [0, 0, -(1 - FULL_VISIBLE_RATIO) * itemHeight, 0];
+                    };
+                }
                 return (item, position) => {
                     // the folders (a row or one item each) come before the cards: only the cards overlap, but not the first row of them
                     if (!item?.doc || position < (documents?.findIndex((current) => !!current.doc) ?? 0) + $nbColumns) {

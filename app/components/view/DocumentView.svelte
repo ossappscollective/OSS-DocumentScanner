@@ -56,6 +56,7 @@
         transformPages,
         tryCatchFunction
     } from '~/utils/ui';
+    import { getHorizontalInsets } from '~/utils/safeArea';
     import { colors, hasCamera, isLandscape, screenHeightDips, screenWidthDips, windowInset } from '~/variables';
 
     // 16 from the screen edge to a tile, 12 between two tiles
@@ -88,7 +89,7 @@
     }
     $: nbColumns = updateColumns($isLandscape);
     $: colWidth = 100 / nbColumns + '%';
-    $: itemWidth = (($isLandscape ? screenHeightDips : screenWidthDips) - $windowInset.left - $windowInset.right - 2 * columnsPadding) / nbColumns - 2 * rowMargin;
+    $: itemWidth = (($isLandscape ? screenHeightDips : screenWidthDips) - getHorizontalInsets($windowInset) - 2 * columnsPadding) / nbColumns - 2 * rowMargin;
     $: tileRadius = getTileRadius(itemWidth, itemWidth * DOCUMENT_TILE_RATIO);
 
     const onNbColumnsPreferenceChanged = () => (nbColumns = updateColumns($isLandscape));
@@ -598,7 +599,8 @@
         subtitle={nbSelected === 0 ? subtitle : null}
         title={nbSelected > 0 ? lcp('selected', nbSelected) : title}
         titleAlignment="leading"
-        ios:translucent={true}>
+        ios:translucent={true}
+    >
         {#if __ANDROID__}
             <navigationButton {...{ 'android.systemIcon': nbSelected > 0 ? 'ic_menu_close_clear_cancel' : 'ic_menu_back' }} on:tap={nbSelected > 0 ? unselectAll : onGoBack} />
         {/if}
@@ -636,7 +638,8 @@
             paddingBottom={Math.max($windowInset.bottom, 88)}
             paddingLeft={columnsPadding}
             paddingRight={columnsPadding}
-            row={2}>
+            row={2}
+        >
             <Template let:item>
                 <DocumentPageTile
                     documentId={document.id}
@@ -646,7 +649,8 @@
                     selected={item.selected}
                     width={itemWidth}
                     on:tap={() => onItemTap(item)}
-                    on:longPress={() => toggleSelection(item)} />
+                    on:longPress={() => toggleSelection(item)}
+                />
             </Template>
         </collectionview>
     </gridlayout>
@@ -662,7 +666,8 @@
                     src={appIcon($hasCamera ? 'camera' : 'add')}
                     text={lc('add')}
                     on:tap={(event) => ($hasCamera ? addPages() : showMenuAbove(event, addMenu))}
-                    on:longPress={() => addPages(true)} />
+                    on:longPress={() => addPages(true)}
+                />
             </stacklayout>
         {/if}
     </appPageOverlay>
