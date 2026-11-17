@@ -59,6 +59,9 @@ export const PDF_EXT = '.pdf';
 export const PKPASS_EXT = '.pkpass';
 export const ESPASS_EXT = '.espass';
 export const CARD_RATIO = 0.629;
+/** the thumbnail of a page in a list, 56 high: with the ratio of the pages (cards are wide) */
+export const PAGE_THUMBNAIL_HEIGHT = 56;
+export const PAGE_THUMBNAIL_WIDTH = CARD_APP ? Math.round(PAGE_THUMBNAIL_HEIGHT / CARD_RATIO) : 40;
 export const DOCUMENT_TILE_RATIO = 1.41;
 export const CARDHOLDER_GAP = 8;
 export const IMAGE_DECODE_HEIGHT = Math.max(Screen.mainScreen.widthPixels, Screen.mainScreen.heightPixels);

@@ -51,7 +51,7 @@
         showSnack,
         transformPages
     } from '~/utils/ui';
-    import { FILMSTRIP_HEIGHT, PEEK_WIDTH, getCardViewLayout } from '~/components/view/CardViewLayout';
+    import { FILMSTRIP_CELL_MARGIN, FILMSTRIP_COL_WIDTH, FILMSTRIP_HEIGHT, FILMSTRIP_THUMBNAIL_RADIUS, PEEK_WIDTH, getCardViewLayout } from '~/components/view/CardViewLayout';
     import { getHorizontalInsets, getIOSHorizontalSafeInset } from '~/utils/safeArea';
     import { colors, fonts, hasCamera, isLandscape, onFontScaleChanged, screenHeightDips, screenWidthDips, windowInset } from '~/variables';
     import PKPassView from '~/components/pkpass/PKPassView.svelte';
@@ -70,7 +70,6 @@
     const DETAILS_LANDSCAPE_WIDTH = 560;
     // the height of the logo of a pass in the bar, its width follows the image
     const PASS_LOGO_HEIGHT = 32;
-    const FILMSTRIP_COL_WIDTH = 48;
     interface Item {
         page: OCRPage;
         selected: boolean;
@@ -1221,16 +1220,32 @@
                                         <gridlayout
                                             class="cardItemTemplate"
                                             elevation={0}
-                                            margin={4}
+                                            margin={FILMSTRIP_CELL_MARGIN}
                                             rippleColor={colorSurface}
                                             on:tap={() => onItemTap(item)}
                                             on:longPress={() => toggleSelection(item)}
                                         >
                                             <!-- the content is what is scaled: the cell itself keeps its size and its touch handlers -->
-                                            <gridlayout class={item.current ? 'thumbnailCurrent' : 'thumbnail'} backgroundColor={getItemBackgroundColor(item)} borderRadius={6}>
-                                                <RotableImageView id="imageView" borderRadius={6} decodeWidth={FILMSTRIP_COL_WIDTH} item={item.page} stretch="aspectFill" width="100%" />
-                                                <gridlayout class="thumbnailScrim" backgroundColor="#00000066" borderRadius={6} isUserInteractionEnabled={false} />
-                                                <gridlayout backgroundColor="#0000004D" borderRadius={6} isUserInteractionEnabled={false} visibility={item.selected ? 'visible' : 'hidden'}>
+                                            <gridlayout
+                                                class={item.current ? 'thumbnailCurrent' : 'thumbnail'}
+                                                backgroundColor={getItemBackgroundColor(item)}
+                                                borderRadius={FILMSTRIP_THUMBNAIL_RADIUS}
+                                            >
+                                                <RotableImageView
+                                                    id="imageView"
+                                                    borderRadius={FILMSTRIP_THUMBNAIL_RADIUS}
+                                                    decodeWidth={FILMSTRIP_COL_WIDTH}
+                                                    item={item.page}
+                                                    stretch="aspectFill"
+                                                    width="100%"
+                                                />
+                                                <gridlayout class="thumbnailScrim" backgroundColor="#00000066" borderRadius={FILMSTRIP_THUMBNAIL_RADIUS} isUserInteractionEnabled={false} />
+                                                <gridlayout
+                                                    backgroundColor="#0000004D"
+                                                    borderRadius={FILMSTRIP_THUMBNAIL_RADIUS}
+                                                    isUserInteractionEnabled={false}
+                                                    visibility={item.selected ? 'visible' : 'hidden'}
+                                                >
                                                     <label
                                                         backgroundColor={colorPrimary}
                                                         borderColor="white"

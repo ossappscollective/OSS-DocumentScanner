@@ -1,7 +1,12 @@
 import { CARD_RATIO } from '~/utils/constants';
 
 export const CODE_ZONE_HEIGHT = 270;
-export const FILMSTRIP_HEIGHT = 60;
+// the thumbnails of the pages have the ratio of the pages: cards are wide
+export const FILMSTRIP_CELL_MARGIN = 4;
+export const FILMSTRIP_COL_WIDTH = CARD_APP ? 76 : 48;
+// a card has rounded corners of a tenth of its height
+export const FILMSTRIP_THUMBNAIL_RADIUS = CARD_APP ? 4 : 6;
+export const FILMSTRIP_HEIGHT = CARD_APP ? Math.round((FILMSTRIP_COL_WIDTH - 2 * FILMSTRIP_CELL_MARGIN) * CARD_RATIO) + 2 * FILMSTRIP_CELL_MARGIN : 60;
 // room under the photo for its shadow
 export const PHOTO_SHADOW_ROOM = 12;
 export const PEEK_WIDTH = 44;
