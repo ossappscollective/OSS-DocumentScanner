@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { Affine, applyToPoint, getBlockAt, getBlockRanges, getFitMatrix, invert, multiply } from './OCROverlay';
+import { Affine, applyToPoint, getAndroidFullMatrix, getBlockAt, getBlockRanges, getFitMatrix, invert, multiply } from './OCROverlay';
 
 const IDENTITY: Affine = [1, 0, 0, 1, 0, 0];
 
@@ -99,5 +99,32 @@ describe('getBlockRanges', () => {
             { start: 0, end: 1 },
             { start: 3, end: 4 }
         ]);
+    });
+});
+
+describe('getAndroidFullMatrix', () => {
+    // measured on an emulator: a 2400x3395 drawable of a 1240x1754 OCR image, at rest in a 1080x2400 view (density 2.625)
+    const base = { density: 2.625, drawableWidth: 2400, drawableHeight: 3395, imageWidth: 1240, imageHeight: 1754 };
+    const atRest = [0.45, 0, 0, 0, 0.45, 436.125, 0, 0, 1];
+
+    test('maps the pixels of the OCR image to the dips of the view', () => {
+        const matrix = getAndroidFullMatrix({ ...base, values: atRest });
+        // the top left corner of the image is at 436 px from the top of the view
+        expectPoint(matrix, 0, 0, [0, 436.125 / 2.625]);
+        expectPoint(matrix, 1240, 1754, [1080 / 2.625, (436.125 + 3395 * 0.45) / 2.625]);
+    });
+
+    test('follows the zoom and the pan of the view', () => {
+        // zoom x2 around the top left corner, moved 100 px to the right
+        const matrix = getAndroidFullMatrix({ ...base, values: [0.9, 0, 100, 0, 0.9, 872.25, 0, 0, 1] });
+        expectPoint(matrix, 0, 0, [100 / 2.625, 872.25 / 2.625]);
+        expectPoint(matrix, 620, 0, [(100 + 1200 * 0.9) / 2.625, 872.25 / 2.625]);
+    });
+
+    test('keeps the rotation of the view transform', () => {
+        // rotated clockwise by 90: x' = -0.45 * y + 1080, y' = 0.45 * x
+        const matrix = getAndroidFullMatrix({ ...base, values: [0, -0.45, 1080, 0.45, 0, 0, 0, 0, 1] });
+        expectPoint(matrix, 0, 0, [1080 / 2.625, 0]);
+        expectPoint(matrix, 1240, 0, [1080 / 2.625, 1240 * (2400 / 1240) * 0.45 / 2.625]);
     });
 });

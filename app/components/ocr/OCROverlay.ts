@@ -59,6 +59,32 @@ export function getFitMatrix({
     return [a, b, c, d, viewWidth / 2 - (a * centerX + c * centerY), viewHeight / 2 - (b * centerX + d * centerY)];
 }
 
+// Android: the transform of the zoom view maps the pixels of the shown image (drawable) to the pixels of the view, the fit and the rotation included.
+// The OCR runs on an image which can be another size, and the canvas draws in dips
+export function getAndroidFullMatrix({
+    density,
+    drawableHeight,
+    drawableWidth,
+    imageHeight,
+    imageWidth,
+    values
+}: {
+    // `android.graphics.Matrix.getValues`
+    values: ArrayLike<number>;
+    density: number;
+    drawableWidth: number;
+    drawableHeight: number;
+    imageWidth: number;
+    imageHeight: number;
+}): Affine {
+    if (!imageWidth || !imageHeight) {
+        return [1, 0, 0, 1, 0, 0];
+    }
+    // Android matrix values: scale x, skew x, translate x, skew y, scale y, translate y
+    const zoom: Affine = [values[0] / density, values[3] / density, values[1] / density, values[4] / density, values[2] / density, values[5] / density];
+    return multiply([drawableWidth / imageWidth, 0, 0, drawableHeight / imageHeight, 0, 0], zoom);
+}
+
 // `matrix` maps image pixels to view points. -1 when no block is under the point, the smallest one when they overlap
 export function getBlockAt(blocks: { box: Box }[], matrix: Affine, x: number, y: number) {
     const point = applyToPoint(invert(matrix), x, y);
