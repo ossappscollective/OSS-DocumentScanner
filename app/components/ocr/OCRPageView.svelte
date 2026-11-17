@@ -6,7 +6,7 @@
     import { onDestroy } from 'svelte';
     import type { Writable } from 'svelte/store';
     import { OCRData } from 'plugin-nativeprocessor';
-    import { Affine, OCRViewState, getBlockAt, getFitMatrix, multiply } from '~/components/ocr/OCROverlay';
+    import { Affine, OCRViewState, getAndroidFullMatrix, getBlockAt, getFitMatrix, multiply } from '~/components/ocr/OCROverlay';
     import { isEInk } from '~/helpers/theme';
     import { IMAGE_CONTEXT_OPTIONS, IMAGE_DECODE_HEIGHT } from '~/utils/constants';
     import { colors } from '~/variables';
@@ -27,6 +27,8 @@
     let canvasView: NativeViewElementNode<CanvasView>;
     // the zoom and pan of the image, from the zoom view
     let zoomMatrix: Affine = [1, 0, 0, 1, 0, 0];
+    // Android: the zoom view gives the whole matrix, not only the zoom
+    let androidMatrix: Affine = null;
     let touchStart: { x: number; y: number; time: number } = null;
     let zoomImage: NativeViewElementNode<any>;
     let polling = false;
@@ -45,6 +47,9 @@
     }
 
     function getFullMatrix(): Affine {
+        if (__ANDROID__) {
+            return androidMatrix;
+        }
         const size = canvasView?.nativeView?.getActualSize();
         if (!size) {
             return null;
@@ -57,9 +62,18 @@
         if (event.android) {
             const values = Array.create('float', 9);
             event.android.getValues(values);
-            // the matrix is in pixels, the canvas in dips
-            const density = Utils.layout.getDisplayDensity();
-            zoomMatrix = [values[0], values[3], values[1], values[4], values[2] / density, values[5] / density];
+            const drawable = zoomImage?.nativeView?.nativeViewProtected?.getDrawable();
+            if (drawable) {
+                const { imageHeight, imageWidth } = item.ocrData;
+                androidMatrix = getAndroidFullMatrix({
+                    values: Array.from(values),
+                    density: Utils.layout.getDisplayDensity(),
+                    drawableWidth: drawable.getIntrinsicWidth(),
+                    drawableHeight: drawable.getIntrinsicHeight(),
+                    imageWidth,
+                    imageHeight
+                });
+            }
         } else if (event.ios) {
             zoomMatrix = [event.ios.a, event.ios.b, event.ios.c, event.ios.d, event.ios.tx, event.ios.ty];
         }
