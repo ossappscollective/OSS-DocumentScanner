@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CARD_RATIO } from '~/utils/constants';
-import { CODE_ZONE_HEIGHT, FILMSTRIP_HEIGHT, PHOTO_INSET, PHOTO_SHADOW_ROOM, PEEK_WIDTH, getCardViewLayout } from './CardViewLayout';
+import { CODE_ZONE_HEIGHT, FILMSTRIP_COL_WIDTH, FILMSTRIP_HEIGHT, PHOTO_INSET, PHOTO_SHADOW_ROOM, PEEK_WIDTH, getCardViewLayout, getFilmstripLayout } from './CardViewLayout';
 
 const base = { bleed: 0, sideBySide: false, landscape: false, hasQRCodes: false, hasImages: true, multiplePhotos: false, multipleQR: false, paneWidth: 400, pageHeight: 800 };
 
@@ -104,5 +104,28 @@ describe('getCardViewLayout in landscape', () => {
     it('adds the peek of the neighbors to the width of several codes, within the pane', () => {
         const several = getCardViewLayout({ ...landscape, hasQRCodes: true, hasImages: false, multipleQR: true });
         expect(several.qrZoneWidth).toBe(Math.min(several.qrZoneHeight - 32 + 60 + 2 * PEEK_WIDTH, 800));
+    });
+});
+
+describe('getFilmstripLayout', () => {
+    it('centers thumbnails which all fit, and does not scroll', () => {
+        const { padding, scrollable } = getFilmstripLayout(2, 400);
+        expect(scrollable).toBe(false);
+        expect(padding).toBe((400 - 2 * FILMSTRIP_COL_WIDTH) / 2);
+    });
+
+    it('scrolls when some are off screen, and lets the first and the last reach the center', () => {
+        const { padding, scrollable } = getFilmstripLayout(Math.ceil(400 / FILMSTRIP_COL_WIDTH) + 1, 400);
+        expect(scrollable).toBe(true);
+        expect(padding).toBe((400 - FILMSTRIP_COL_WIDTH) / 2);
+    });
+
+    it('does not scroll when the thumbnails exactly fill the width', () => {
+        expect(getFilmstripLayout(4, 4 * FILMSTRIP_COL_WIDTH).scrollable).toBe(false);
+    });
+
+    it('has no negative padding in a narrow pane', () => {
+        expect(getFilmstripLayout(1, 10).padding).toBeGreaterThanOrEqual(0);
+        expect(getFilmstripLayout(5, 10).padding).toBeGreaterThanOrEqual(0);
     });
 });

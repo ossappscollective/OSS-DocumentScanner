@@ -51,7 +51,7 @@
         showSnack,
         transformPages
     } from '~/utils/ui';
-    import { FILMSTRIP_CELL_MARGIN, FILMSTRIP_COL_WIDTH, FILMSTRIP_HEIGHT, FILMSTRIP_THUMBNAIL_RADIUS, PEEK_WIDTH, getCardViewLayout } from '~/components/view/CardViewLayout';
+    import { FILMSTRIP_CELL_MARGIN, FILMSTRIP_COL_WIDTH, FILMSTRIP_HEIGHT, FILMSTRIP_THUMBNAIL_RADIUS, PEEK_WIDTH, getCardViewLayout, getFilmstripLayout } from '~/components/view/CardViewLayout';
     import { getHorizontalInsets, getIOSHorizontalSafeInset } from '~/utils/safeArea';
     import { colors, fonts, hasCamera, isLandscape, onFontScaleChanged, screenHeightDips, screenWidthDips, windowInset } from '~/variables';
     import PKPassView from '~/components/pkpass/PKPassView.svelte';
@@ -169,7 +169,7 @@
     $: photoCardProps = $isLandscape
         ? { horizontalAlignment: 'center' as const, height: photoCardHeight, width: photoCardWidth }
         : { horizontalAlignment: 'stretch' as const, height: photoCardHeight, width: '100%' };
-    $: filmstripPadding = Math.max(0, (paneWidth - FILMSTRIP_COL_WIDTH) / 2);
+    $: filmstrip = getFilmstripLayout(nbImages, paneWidth);
     $: hasHero = hasQRCodes || hasImages;
     $: isEmptyCard = !hasHero && !details.length && !isPKPassDocument;
     // no photo: the card color is the backdrop
@@ -412,8 +412,11 @@
         items.forEach((item, position) => (item.current = position === index));
         collectionView?.nativeElement?.refreshVisibleItems();
     }
-    // the strip has half a screen of padding at both ends: the offset of a thumbnail from the start is the offset which centers it
+    // a scrolling strip has half a screen of padding at both ends: the offset of a thumbnail from the start is the offset which centers it
     function centerStrip(strip: CollectionView, index: number) {
+        if (!filmstrip.scrollable) {
+            return;
+        }
         const native = strip.nativeViewProtected;
         const offset = index * FILMSTRIP_COL_WIDTH;
         if (__IOS__) {
@@ -1210,8 +1213,9 @@
                                     {items}
                                     margin="8 0 8 0"
                                     orientation="horizontal"
-                                    paddingLeft={filmstripPadding}
-                                    paddingRight={filmstripPadding}
+                                    isScrollEnabled={filmstrip.scrollable}
+                                    paddingLeft={filmstrip.padding}
+                                    paddingRight={filmstrip.padding}
                                     row={1}
                                     rowHeight={FILMSTRIP_HEIGHT}
                                     visibility={multiplePhotos ? 'visible' : 'collapsed'}
@@ -1219,6 +1223,7 @@
                                     <Template let:index let:item>
                                         <gridlayout
                                             class="cardItemTemplate"
+                                            borderRadius={FILMSTRIP_THUMBNAIL_RADIUS}
                                             elevation={0}
                                             margin={FILMSTRIP_CELL_MARGIN}
                                             rippleColor={colorSurface}
