@@ -37,10 +37,12 @@
     } from '~/utils/constants';
     import { ZOOM_SLIDER_STEPS, clampZoom, percentToZoom, zoomToPercent } from '~/utils/cameraZoom';
     import { appIcon } from '~/utils/appIcons';
+    import { toSurfaceRotation } from '~/utils/cameraOrientation';
+    import { counterRotate } from '~/utils/svelte/actions';
     import { recycleImages } from '~/utils/images';
     import { confirmGoBack, goToDocumentAfterScan, hideLoading, onBackButton, processCameraImage, requestCameraPermission, showLoading, showSettings } from '~/utils/ui';
     import { checkAvailableStorage } from '~/utils/utils';
-    import { colors, shouldListenForSensorOrientation, startOnCam, windowInset } from '~/variables';
+    import { colors, orientationDegrees, shouldListenForSensorOrientation, startOnCam, windowInset } from '~/variables';
 </script>
 
 <script lang="ts">
@@ -200,7 +202,9 @@
                 pictureSize: pictureSize as any,
                 storageLocation: 'file:' + knownFolders.temp().path,
                 fileName: `capture_${Date.now()}.${compressQuality}`,
-                flashMode: actualFlashMode
+                flashMode: actualFlashMode,
+                // the screen is locked in portrait: the capture must follow the device
+                targetRotation: __ANDROID__ ? toSurfaceRotation($orientationDegrees) : undefined
                 // maxWidth: 10500,
                 // maxHeight: 10500
             });
@@ -631,6 +635,10 @@
         try {
             minZoom = cameraView.nativeView.minZoom;
             maxZoom = Math.min(cameraView.nativeView.maxZoom, 16);
+            if (!PRODUCTION && maxZoom === minZoom) {
+                // emulators report no zoom range: fake one to see the slider
+                maxZoom = minZoom * 8;
+            }
             neutralZoom = clampZoom(cameraView.nativeView.neutralZoom, minZoom, maxZoom, minZoom);
             zoom = clampZoom(ApplicationSettings.getNumber('defaultZoom', neutralZoom), minZoom, maxZoom, neutralZoom);
             floatZoom = zoom;
@@ -653,11 +661,15 @@
     }
     function onCameraHolderLoaded() {
         DEV_LOG && console.log('Camera', 'onCameraHolderLoaded');
+        if (__IOS__) {
+            // the screen is locked in portrait: the stream must not turn with the device
+            cameraView.nativeView.nativeViewProtected.automaticallyUpdatesDeviceOrientation = false;
+        }
         applyProcessor();
     }
 </script>
 
-<page bind:this={page} id="camera" actionBarHidden={true} statusBarStyle="dark" on:navigatedTo={onNavigatedTo} on:navigatedFrom={onNavigatedFrom}>
+<page bind:this={page} id="camera" actionBarHidden={true} screenOrientation="portrait" statusBarStyle="dark" on:navigatedTo={onNavigatedTo} on:navigatedFrom={onNavigatedFrom}>
     <gridlayout class="pageContent" backgroundColor="black" rows="auto,*,auto">
         <absolutelayout rowSpan={viewsize === 'full' ? 3 : 2} on:loaded={onCameraHolderLoaded}>
             <cameraView
@@ -686,7 +698,7 @@
 
         <gridlayout columns="auto,*,auto" marginLeft={12} marginRight={12} marginTop={8} android:marginTop={8 + $windowInset.top}>
             {#if !startOnCam}
-                <uibutton class="overlayIconButton" accessibilityLabel={lc('close')} color="white" height={44} variant={overlayButtonVariant} width={44} {...{ src: appIcon('close') }} on:tap={() => onGoBack()} />
+                <uibutton class="overlayIconButton" accessibilityLabel={lc('close')} color="white" height={44} variant={overlayButtonVariant} width={44} {...{ src: appIcon('close') }} on:tap={() => onGoBack()} use:counterRotate />
             {/if}
             <stacklayout col={2} orientation="horizontal">
                 <uibutton
@@ -698,8 +710,9 @@
                     variant={torchEnabled ? activeButtonVariant : overlayButtonVariant}
                     width={44}
                     {...{ src: appIcon(torchEnabled ? 'torch' : (FLASH_ICON_IDS[flashMode] ?? 'flash_off')) }}
-                    on:tap={showFlashMenu} />
-                <uibutton class="overlayIconButton" accessibilityLabel={lc('toggle_camera')} color="white" height={44} margin={4} variant={overlayButtonVariant} width={44} {...{ src: appIcon('switch_camera') }} on:tap={toggleCamera} />
+                    on:tap={showFlashMenu}
+                    use:counterRotate />
+                <uibutton class="overlayIconButton" accessibilityLabel={lc('toggle_camera')} color="white" height={44} margin={4} variant={overlayButtonVariant} width={44} {...{ src: appIcon('switch_camera') }} on:tap={toggleCamera} use:counterRotate />
                 <uibutton
                     class="overlayIconButton"
                     accessibilityLabel={startOnCam ? lc('more_options') : lc('camera_settings')}
@@ -710,7 +723,8 @@
                     variant={overlayButtonVariant}
                     width={44}
                     {...{ src: appIcon(startOnCam ? (__IOS__ ? 'more' : 'settings') : 'tune') }}
-                    on:tap={startOnCam ? showMoreMenu : showCameraSettings} />
+                    on:tap={startOnCam ? showMoreMenu : showCameraSettings}
+                    use:counterRotate />
             </stacklayout>
         </gridlayout>
 
@@ -724,11 +738,11 @@
             width="70%"
         >
             <slider
-                backgroundColor={colorBackground}
                 colSpan={3}
                 maxValue={ZOOM_SLIDER_STEPS}
                 minValue={0}
                 thumbColor="transparent"
+                trackBackgroundColor={colorBackground}
                 value={zoomToPercent(zoom, minZoom, maxZoom)}
                 on:valueChange={onZoomValue} />
             <label
@@ -745,6 +759,7 @@
                 textAlignment="center"
                 verticalTextAlignment="center"
                 width={40}
+                use:counterRotate
             />
         </gridlayout>
 
@@ -760,7 +775,8 @@
             row={1}
             text={batchMessage}
             verticalAlignment="bottom"
-            visibility={batchMessage ? 'visible' : 'collapsed'} />
+            visibility={batchMessage ? 'visible' : 'collapsed'}
+            use:counterRotate />
 
         <gridlayout columns="*,auto,*" ios:paddingBottom={30} android:marginBottom={30 + $windowInset.bottom} paddingTop={10} row={2} visibility={QRCodeOnly ? 'collapsed' : 'visible'}>
             <stacklayout horizontalAlignment="left" marginLeft={16} orientation="horizontal" verticalAlignment="center">
@@ -774,9 +790,10 @@
                         variant={batchMode ? activeButtonVariant : overlayButtonVariant}
                         width={44}
                         {...{ src: appIcon(batchMode ? 'batch' : 'image') }}
-                        on:tap={toggleBatchMode} />
+                        on:tap={toggleBatchMode}
+                        use:counterRotate />
                 {/if}
-                <gridlayout height={48} margin={4} visibility={lastPage?.imagePath ? 'visible' : 'collapsed'} width={48}>
+                <gridlayout height={48} margin={4} visibility={lastPage?.imagePath ? 'visible' : 'collapsed'} width={48} use:counterRotate>
                     <image
                         borderColor="white"
                         borderRadius={8}
@@ -821,7 +838,8 @@
                 visibility={nbPages > 0 ? 'visible' : 'hidden'}
                 width={56}
                 {...{ src: appIcon('check') }}
-                on:tap={() => saveCurrentDocument()} />
+                on:tap={() => saveCurrentDocument()}
+                use:counterRotate />
         </gridlayout>
     </gridlayout>
 </page>
