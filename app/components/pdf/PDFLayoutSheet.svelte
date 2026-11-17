@@ -8,7 +8,7 @@
     import { lc } from '~/helpers/locale';
     import type { PDFExportBaseOptions } from '~/services/pdf/PDFCanvas';
     import { appIcon } from '~/utils/appIcons';
-    import { DEFAULT_PDF_OPTIONS, PDF_LAYOUT_KEYS } from '~/utils/constants';
+    import { DEFAULT_PDF_OPTIONS, PDF_LAYOUT_KEYS, isPDFLayoutModified } from '~/utils/constants';
     import { PDF_OPTIONS } from '~/utils/localized_constant';
     import { createSwitchRowTap } from '~/utils/switchRow';
     import { colors, windowInset } from '~/variables';
@@ -26,7 +26,7 @@
     export let optionsStore: Writable<PDFExportBaseOptions>;
     export let hasOCRText = false;
     /** the height of the sheet (dip): the content scrolls inside it */
-    export let sheetHeight: number;
+    export let sheetHeight: number | string;
     /** iOS 26 sheet drawn as glass (shown with `transparent`): the content must not paint an opaque background */
     export let glass = false;
     export let onChange: (key: string, value: string | number | boolean) => void;
@@ -34,6 +34,8 @@
     export let onOpenSettings: () => void;
     /** the content of a persistent sheet of the page, not of a modal sheet */
     export let inline = false;
+    /** the header (title, reset, done): the panel of the landscape has these in the bar of the page */
+    export let showHeader = true;
     /** the persistent sheet closes itself with this */
     export let onClose: () => void = undefined;
     /** the id of the scroll view, for the persistent sheet to hand the scrolling over to it */
@@ -52,7 +54,7 @@
 
     $: ({ color, draw_ocr_text, items_per_page, orientation, page_padding, paper_size } = $optionsStore);
     $: fullSize = paper_size === 'full';
-    $: modified = PDF_LAYOUT_KEYS.some((key) => $optionsStore[key] !== DEFAULT_PDF_OPTIONS[key]);
+    $: modified = isPDFLayoutModified($optionsStore);
     $: contentItems.setItem(0, { color, draw_ocr_text, fullSize, items_per_page, orientation, page_padding, paper_size });
 
     function setOption(key: string, value: string | number | boolean) {
@@ -101,8 +103,10 @@
 </script>
 
 <!-- Android: the grabber of the modal sheet pushes the content down by 28 inside the detent -->
-<SheetRoot height={__ANDROID__ && !inline ? sheetHeight - 28 : sheetHeight} {inline} rows="auto,*" {...__IOS__ && !inline ? { backgroundColor: glass ? 'transparent' : colorBackground } : {}} {...$$restProps}>
-    <SheetHeader actionEnabled={modified} actionText={lc('reset')} doneText={inline ? lc('done') : undefined} onAction={onReset} onDone={onClose} showCancel={false} title={lc('page_layout')} />
+<SheetRoot height={__ANDROID__ && !inline && typeof sheetHeight === 'number' ? sheetHeight - 28 : sheetHeight} {inline} rows="auto,*" {...__IOS__ && !inline ? { backgroundColor: glass ? 'transparent' : colorBackground } : {}} {...$$restProps}>
+    {#if showHeader}
+        <SheetHeader actionEnabled={modified} actionText={lc('reset')} doneText={inline ? lc('done') : undefined} onAction={onReset} onDone={onClose} showCancel={false} title={lc('page_layout')} />
+    {/if}
     <collectionview id={scrollId} items={contentItems} row={1} on:loaded={hideScrollEdgeEffect}>
         <Template let:item>
             {@const { color, draw_ocr_text, fullSize, items_per_page, orientation, page_padding, paper_size } = item}

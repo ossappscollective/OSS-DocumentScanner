@@ -17,19 +17,20 @@
     import { isDarkTheme } from '~/helpers/theme';
     import PageCounter, { COUNTER_HEIGHT } from '~/components/common/PageCounter.svelte';
     import PersistentSheetFrame, { SHEET_GRABBER_HEIGHT } from '~/components/common/PersistentSheetFrame.svelte';
+    import PageSheetLayout from '~/components/common/PageSheetLayout.svelte';
     import PDFLayoutSheet from '~/components/pdf/PDFLayoutSheet.svelte';
     import { OCRDocument, OCRPage } from '~/models/OCRDocument';
     import PDFCanvas, { PDFCanvasItem, PDFExportBaseOptions } from '~/services/pdf/PDFCanvas';
     import { getTransformedImage } from '~/services/pdf/PDFExportCanvas.common';
     import { exportPDFAsync } from '~/services/pdf/PDFExporter';
     import { appIcon } from '~/utils/appIcons';
-    import { ANDROID_CONTENT, DEFAULT_PDF_OPTIONS, IMAGE_CONTEXT_OPTIONS, PDF_EXT, PDF_LAYOUT_KEYS, SEPARATOR } from '~/utils/constants';
+    import { ANDROID_CONTENT, DEFAULT_PDF_OPTIONS, IMAGE_CONTEXT_OPTIONS, PDF_EXT, PDF_LAYOUT_KEYS, SEPARATOR, isPDFLayoutModified } from '~/utils/constants';
     import { PDF_OPTIONS } from '~/utils/localized_constant';
     import { getPageColorMatrix } from '~/utils/matrix';
     import { createPageSheetTranslation, getPageFit, setPageFit } from '~/utils/pageSheet';
     import { getIOSBottomInset, getIOSViewBottomInset, measureWidth } from '~/utils/safeArea';
     import { askPDFExportOptions, hideLoading, requestStoragePermission, showLoading, showSettings, showSnack } from '~/utils/ui';
-    import { colors, screenHeightDips, screenWidthDips, windowInset } from '~/variables';
+    import { colors, isLandscape, screenHeightDips, screenWidthDips, windowInset } from '~/variables';
 
     // the neighbors peek by 16 with a gap of 8: the sheet is the screen width minus 48
     const PAGER_PEAKING = 20;
@@ -74,6 +75,8 @@
     let error: string = null;
     // the layout is what this screen is about: its sheet is open from the start, without an animation
     let adjusting = true;
+    // landscape: the layout is a panel on the side, the pages do not move for a sheet
+    $: sheetOpen = adjusting && !$isLandscape;
     let snackVisible = false;
     const pdfCanvas = new PDFCanvas();
     const optionsStore = writable(pdfCanvas.options);
@@ -114,7 +117,7 @@
     }
 
     // the height of the page body, between the bars: updated by the first layout
-    let contentHeight = screenHeightDips - (__IOS__ ? 202 : 160);
+    let contentHeight = $isLandscape ? screenWidthDips - 80 : screenHeightDips - (__IOS__ ? 202 : 160);
     function onContentLayout() {
         const height = Utils.layout.toDeviceIndependentPixels(pageContent?.nativeView?.getMeasuredHeight() ?? 0);
         if (height && Math.abs(height - contentHeight) > 1) {
@@ -122,8 +125,13 @@
         }
     }
     // the room of the sheets: below the bar and above the counter and the controls
-    $: controlsRoom = __IOS__ ? 0 : $windowInset.bottom + 16 + CONTROL_HEIGHT;
+    // Android portrait: the buttons are over the bottom of the page, in landscape they are over the panel
+    $: controlsRoom = __IOS__ ? 0 : $isLandscape ? $windowInset.bottom : $windowInset.bottom + 16 + CONTROL_HEIGHT;
     $: counterBottom = controlsRoom + COUNTER_GAP;
+    // the pages are templates of the pager: they are drawn again when their room changes (the first guess of the height is not the measured one)
+    $: if (roomHeight) {
+        redrawPager();
+    }
     $: roomHeight = contentHeight - SHEET_TOP_MARGIN - counterBottom - COUNTER_HEIGHT - 8;
 
     function getSheetRatio(item: PDFCanvasItem) {
@@ -140,7 +148,9 @@
     }
     function getSheetSize(item: PDFCanvasItem, availableHeight: number) {
         const ratio = getSheetRatio(item);
-        const width = Math.min(screenWidthDips - SHEET_SIDE_MARGIN, availableHeight * ratio);
+        // landscape: the page has half of the width
+        const pageAreaWidth = $isLandscape ? screenHeightDips / 2 : screenWidthDips;
+        const width = Math.min(pageAreaWidth - SHEET_SIDE_MARGIN, availableHeight * ratio);
         return { width, height: width / ratio };
     }
     // the margin is in points on the paper: it scales with the sheet
@@ -220,6 +230,7 @@
     function toggleBlackWhite() {
         updateOption('color', color === 'black_white' ? 'color' : 'black_white');
     }
+    $: layoutModified = isPDFLayoutModified($optionsStore);
     function resetLayout() {
         optionsStore.update((state) => ({ ...state, ...Object.fromEntries(PDF_LAYOUT_KEYS.map((key) => [key, DEFAULT_PDF_OPTIONS[key]])) }));
         refresh();
@@ -273,26 +284,26 @@
     );
     // the button is created extended and `expanded` only starts a (later) animation: with the sheet open at the start it is an icon at once
     function onEditFabLoaded(event: EventData) {
-        if (adjusting && event.object instanceof View) {
+        if (sheetOpen && event.object instanceof View) {
             event.object.nativeViewProtected?.setExtended?.(false);
         }
     }
     function onFabHolderLoaded(event: EventData) {
         if (event.object instanceof View) {
-            event.object.translateY = adjusting ? -LAYOUT_SHEET_HEIGHT : 0;
+            event.object.translateY = sheetOpen ? -LAYOUT_SHEET_HEIGHT : 0;
         }
     }
     // a paper which is shown after the sheet opened, or which the layout changed: it is at the fit of the sheet, or as it is
     function syncPaperViews() {
-        getPaperViews().forEach(({ item, view }) => setPageFit(view, adjusting ? getFitFor(item) : undefined));
+        getPaperViews().forEach(({ item, view }) => setPageFit(view, sheetOpen ? getFitFor(item) : undefined));
     }
     function onPaperLoaded(item: PDFCanvasItem, event: EventData) {
         if (event.object instanceof View) {
-            setPageFit(event.object, adjusting ? getFitFor(item) : undefined);
+            setPageFit(event.object, sheetOpen ? getFitFor(item) : undefined);
         }
     }
     // the sheet follows its steps: the gesture too, so this is where it opens and closes
-    function onSheetStep(event: { value: number }) {
+    function onSheetStep(event) {
         adjusting = event.value > 0;
     }
     function closeLayout() {
@@ -310,7 +321,7 @@
         closeLayout();
     }
     // the papers change of size with the layout and the pager makes new ones: they follow
-    $: if (adjusting) {
+    $: if (sheetOpen) {
         void [paper_size, orientation, items_per_page, currentPagerIndex, roomHeight, contentHeight];
         setTimeout(syncPaperViews, 50);
     }
@@ -399,7 +410,7 @@
     ];
     $: hasSheets = !error && items.length > 0;
     $: bottomItems =
-        __IOS__ && hasSheets
+        __IOS__ && hasSheets && !$isLandscape
             ? [{ icon: appIcon('tune'), onTap: showLayout }, { spacer: true }, { text: lc(saveFunction ? 'save' : 'export'), prominent: true, color: colorPrimary, onTap: exportPDF }]
             : [];
     // not pure white at night; the theme colors change with the theme
@@ -421,14 +432,19 @@
                 prominent={color === 'black_white'}
                 text={lc('black_white')}
                 on:tap={toggleBlackWhite} />
+            {#if $isLandscape}
+                <!-- landscape: the panel has no header, its reset and the export are in the bar -->
+                <appBarItem {...{ isEnabled: layoutModified }} ios.position="right" text={lc('reset')} on:tap={resetLayout} />
+                <appBarItem ios.position="right" prominent={true} text={lc(saveFunction ? 'save' : 'export')} on:tap={exportPDF} />
+            {/if}
             {#if !saveFunction}
                 <appBarItem icon={appIcon('more')} ios.position="right" menu={moreMenu} text={lc('more_options')} />
             {/if}
         {/if}
     </appBar>
-    <bottomsheet bind:this={sheet} scrollViewId="layoutScroll" stepIndex={LAYOUT_OPEN_STEP_INDEX} steps={LAYOUT_SHEET_STEPS} {translationFunction} on:animated={updateBottomInset} on:layoutChanged={onSheetLayout} on:stepIndexChange={onSheetStep}>
+    <PageSheetLayout bind:sheet scrollViewId="layoutScroll" stepIndex={LAYOUT_OPEN_STEP_INDEX} steps={LAYOUT_SHEET_STEPS} {translationFunction} on:animated={updateBottomInset} on:layoutChanged={onSheetLayout} on:stepIndexChange={onSheetStep}>
         <!-- an absolute layout measures its children by their content: the page body fills it -->
-        <gridlayout bind:this={pageContent} height="100%" rows="*" width="100%" on:layoutChanged={onContentLayout}>
+        <gridlayout slot="content" bind:this={pageContent} height="100%" rows="*" width="100%" on:layoutChanged={onContentLayout}>
             {#if hasSheets}
                 <pager
                     bind:this={pager}
@@ -492,11 +508,11 @@
                     {/if}
                 </stacklayout>
             {/if}
-            {#if hasSheets && items.length > 1 && !adjusting && !snackVisible}
+            {#if hasSheets && items.length > 1 && !sheetOpen && !snackVisible}
                 <PageCounter marginBottom={counterBottom} text={`${currentPagerIndex + 1} / ${items.length}`} />
             {/if}
         </gridlayout>
-        <PersistentSheetFrame height={LAYOUT_SHEET_HEIGHT + bottomInset} rows="auto" shadow={adjusting} width={sheetWidth}>
+        <PersistentSheetFrame slot="sheet" height={$isLandscape ? '100%' : LAYOUT_SHEET_HEIGHT + bottomInset} panel={$isLandscape} rows={$isLandscape ? '*' : 'auto'} shadow={sheetOpen} width={$isLandscape ? '100%' : sheetWidth}>
             <PDFLayoutSheet
                 hasOCRText={hasOCRText}
                 inline={true}
@@ -507,18 +523,19 @@
                 {optionsStore}
                 row={1}
                 scrollId="layoutScroll"
-                sheetHeight={LAYOUT_LIST_HEIGHT + bottomInset} />
+                showHeader={!$isLandscape}
+                sheetHeight={$isLandscape ? '100%' : LAYOUT_LIST_HEIGHT + bottomInset} />
         </PersistentSheetFrame>
-    </bottomsheet>
+    </PageSheetLayout>
     <appPageOverlay>
-        {#if __ANDROID__ && hasSheets}
+        {#if __ANDROID__ && hasSheets && !$isLandscape}
             <stacklayout bind:this={fabHolder} class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal" on:loaded={onFabHolderLoaded}>
                 <uibutton class="addFab" {...{ src: appIcon('tune') }} variant="contained" visibility={adjusting ? 'collapsed' : 'visible'} on:tap={showLayout} />
                 <uifloatingactionbutton
                     class="editFab"
                     backgroundColor={colorPrimary}
                     color={colorOnPrimary}
-                    expanded={!adjusting}
+                    expanded={!sheetOpen}
                     src={appIcon(saveFunction ? 'check' : 'export')}
                     text={lc(saveFunction ? 'save' : 'export')}
                     on:loaded={onEditFabLoaded}

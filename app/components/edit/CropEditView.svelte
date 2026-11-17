@@ -9,7 +9,7 @@
     import { ImportImageData } from '~/models/OCRDocument';
     import { appIcon } from '~/utils/appIcons';
     import { hapticImpact } from '~/utils/haptics';
-    import { colors, windowInset } from '~/variables';
+    import { colors, isLandscape, windowInset } from '~/variables';
     let { colorPrimary } = $colors;
     // technique for only specific properties to get updated on store change
     $: ({ colorPrimary } = $colors);
@@ -77,33 +77,44 @@
     }
 
     // iOS: the tools at the left, the main action at the right. Android: a dark floating toolbar with the tools, the main action is in the top bar
-    $: bottomItems = __IOS__
-        ? [{ text: lc('full_image'), enabled: !isFullImage, onTap: resetCrop }, { spacer: true }, { text: lc('save'), prominent: true, color: colorPrimary, onTap: onRecropTapFinish }]
-        : [
-              { text: lc('undo'), icon: appIcon('undo'), onTap: onUndo },
-              { text: lc('redo'), icon: appIcon('redo'), onTap: onRedo },
-              { text: lc('full_image'), icon: appIcon('full_image'), onTap: resetCrop }
-          ];
+    // landscape: the tools are in the bar, the room of the toolbar and of the hint goes to the image
+    $: bottomItems = getBottomItems($isLandscape, isFullImage);
+    function getBottomItems(landscape: boolean, fullImage: boolean) {
+        if (landscape) {
+            return [];
+        }
+        return __IOS__
+            ? [{ text: lc('full_image'), enabled: !fullImage, onTap: resetCrop }, { spacer: true }, { text: lc('save'), prominent: true, color: colorPrimary, onTap: onRecropTapFinish }]
+            : [
+                  { text: lc('undo'), icon: appIcon('undo'), onTap: onUndo },
+                  { text: lc('redo'), icon: appIcon('redo'), onTap: onRedo },
+                  { text: lc('full_image'), icon: appIcon('full_image'), onTap: resetCrop }
+              ];
+    }
 </script>
 
 <frame id="cropFrame">
     <appPage id="cropEdit" backgroundColor={screenColor} statusBarStyle={isEInk ? 'light' : 'dark'}>
-        <appBar {bottomItems} android:backgroundColor={screenColor} android:bottomBarBackgroundColor="#2B2D33" android:bottomBarColor={textColor} color={textColor} iosIconRenderingMode="alwaysTemplate" size="small" title={__ANDROID__ ? lc('crop') : ''}>
+        <appBar {bottomItems} android:backgroundColor={screenColor} android:bottomBarBackgroundColor="#2B2D33" android:bottomBarColor={textColor} color={textColor} iosIconRenderingMode="alwaysTemplate" size="small" subtitle={$isLandscape ? lc('crop_edit_doc') : undefined} title={__ANDROID__ || $isLandscape ? lc('crop') : ''}>
             {#if __ANDROID__}
                 <navigationButton {...{ 'android.systemIcon': 'ic_menu_close_clear_cancel' }} on:tap={onClose} />
             {:else}
                 <appBarItem icon={appIcon('close')} text={lc('close')} on:tap={onClose} />
             {/if}
-            {#if __IOS__}
+            {#if __IOS__ || $isLandscape}
                 <appBarItem {...{ isEnabled: cropItem?.undos.length > 0 }} icon={appIcon('undo')} ios.position="right" text={lc('undo')} on:tap={onUndo} />
                 <appBarItem {...{ isEnabled: cropItem?.redos.length > 0 }} icon={appIcon('redo')} ios.position="right" text={lc('redo')} on:tap={onRedo} />
-            {:else}
-                <appBarItem text={lc('save')} on:tap={onRecropTapFinish} />
+            {/if}
+            {#if $isLandscape}
+                <appBarItem {...{ isEnabled: !isFullImage }} icon={appIcon('full_image')} ios.position="right" text={lc('full_image')} on:tap={resetCrop} />
+            {/if}
+            {#if __ANDROID__ || $isLandscape}
+                <appBarItem ios.position="right" prominent={true} text={lc('save')} on:tap={onRecropTapFinish} />
             {/if}
         </appBar>
-        <gridlayout class="pageContent" backgroundColor={screenColor} paddingTop={8} rows="*,auto" android:paddingBottom={$windowInset.bottom + 96}>
+        <gridlayout class="pageContent" backgroundColor={screenColor} paddingTop={8} rows="*,auto" android:paddingBottom={$isLandscape ? $windowInset.bottom : $windowInset.bottom + 96}>
             <CropView bind:this={cropView} {...cropItem ? cropItem : null} {quads} bind:quadChanged on:dragging={onDragging} on:undosChanged={onUndosChanged} />
-            <label bind:this={hint} color={hintColor} fontSize={__IOS__ ? 15 : 14} height={40} marginBottom={__IOS__ ? 8 : 0} marginTop={8} row={1} text={lc('crop_edit_doc')} textAlignment="center" textWrap={true} verticalTextAlignment="center" />
+            <label bind:this={hint} color={hintColor} fontSize={__IOS__ ? 15 : 14} height={40} marginBottom={__IOS__ ? 8 : 0} marginTop={8} row={1} text={lc('crop_edit_doc')} textAlignment="center" textWrap={true} verticalTextAlignment="center" visibility={$isLandscape ? 'collapsed' : 'visible'} />
         </gridlayout>
     </appPage>
 </frame>

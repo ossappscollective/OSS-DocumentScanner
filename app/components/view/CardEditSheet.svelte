@@ -12,7 +12,9 @@
     import { appIcon } from '~/utils/appIcons';
     import { formatExtraValue, getExtraFields } from '~/utils/extraFields';
     import { pickColor } from '~/utils/ui';
-    import { colors } from '~/variables';
+    import { colors, isLandscape } from '~/variables';
+    // landscape: the form does not stretch over the whole screen
+    const EDIT_SHEET_LANDSCAPE_WIDTH = 560;
     import FormTextField from '~/components/common/FormTextField.svelte';
     import CardEditCodeRow from '~/components/view/CardEditCodeRow.svelte';
     import CardEditDeleteButton from '~/components/view/CardEditDeleteButton.svelte';
@@ -156,7 +158,7 @@
     }
 </script>
 
-<gesturerootview bind:this={rootView} rows="auto,*">
+<gesturerootview bind:this={rootView} horizontalAlignment="center" rows="auto,*" width={$isLandscape ? EDIT_SHEET_LANDSCAPE_WIDTH : undefined}>
     {#if fieldForm}
         <svelte:component this={fieldForm.ExtraFieldPicker} editing={!!fieldForm.field} name={fieldForm.field?.name} onClose={onFieldFormClose} rowSpan={2} {...fieldForm.field?.extra || {}} />
     {/if}
