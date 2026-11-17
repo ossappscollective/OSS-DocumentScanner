@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Color } from '@nativescript/core';
     import { PKPass, PKPassField, PKPassStyle, PKPassType } from '~/models/PKPass';
-    import { colors, fontScale, windowInset } from '~/variables';
+    import { colors, fontScale, isLandscape, windowInset } from '~/variables';
     import { qrcodeService } from '~/services/qrcode';
     import { getBarcodeSVG, getFieldTextAlignment, getPKPassColors, getTransitIcon } from '~/utils/pkpass';
     import { lang, lc } from '~/helpers/locale';
@@ -10,8 +10,11 @@
     import { OCRDocument } from '~/models/OCRDocument';
     import { openLink } from '~/utils/ui';
     import PKPassFieldLabel from '~/components/pkpass/PKPassFieldLabel.svelte';
+    import PKPassHeaderFields from '~/components/pkpass/PKPassHeaderFields.svelte';
 
     const FIELD_LINE_HEIGHT = 16;
+    // landscape: the barcode has the room left by the fields, not half of the width
+    const BARCODE_LANDSCAPE_WIDTH = 180;
     const stars = (count: number) => Array(count).fill('*').join(',');
 
     export let pkpass: PKPass;
@@ -22,6 +25,8 @@
     /** room for the toolbar over the bottom of the page */
     export let bottomPadding = 0;
     export let barcodeSvg: string = null;
+    /** the logo and the name of the organization: not when the bar of the page has them */
+    export let showLogo = true;
 
     $: ({ colorOnSurface, colorSurface, colorSurfaceContainerHigh } = $colors);
 
@@ -98,7 +103,7 @@
     {#if stripImage && passType === PKPassType.ESpass}
         <image noRatioEnforce={true} opacity={0.3} rowSpan={4} src={stripImage} stretch="aspectFill" width="100%" />
     {/if}
-    <stacklayout padding="16" row={0}>
+    <stacklayout padding="16" row={0} visibility={showLogo ? 'visible' : 'collapsed'}>
         <gridlayout columns="auto,*,auto,auto">
             <!-- Logo (max 160x50 points per Apple spec) -->
             {#if logoImage}
@@ -126,22 +131,7 @@
 
             <!-- Header fields -->
             {#if headerFieldsCount > 0}
-                <gridlayout col={2} columns={stars(headerFieldsCount)} marginBottom={16}>
-                    {#each structure.headerFields as field, index}
-                        <label col={index} paddingLeft={index !== 0 ? 10 : 0} selectable={true} textAlignment={getFieldTextAlignment(field, 'right')}>
-                            <cspan
-                                color={labelColor}
-                                fontSize={13 * $fontScale}
-                                fontWeight="500"
-                                lineHeight={FIELD_LINE_HEIGHT}
-                                text={renderFieldLabel(field)}
-                                verticalTextAlignment="top"
-                                visibility={field.label ? 'visible' : 'hidden'}
-                            />
-                            <cspan color={foregroundColor} fontSize={17 * $fontScale} fontWeight="500" text={renderFieldValue(field)} />
-                        </label>
-                    {/each}
-                </gridlayout>
+                <PKPassHeaderFields col={2} fields={structure.headerFields} {foregroundColor} {labelColor} {pkpass} marginBottom={16} />
             {/if}
         </gridlayout>
 
@@ -158,14 +148,19 @@
 
     <!-- Main content -->
     <scrollview row={2}>
-        <stacklayout padding="16 16 {16 + bottomPadding} 16">
+        <!-- landscape: the fields on the left, the barcode on the right -->
+        <gridlayout columns={$isLandscape ? '*,auto' : '*'} padding="16 16 {16 + bottomPadding} 16" rows="auto,auto,auto,auto,auto,auto,auto,auto,auto,auto">
+            <!-- the header fields have no top bar when the logo is elsewhere -->
+            {#if !showLogo && headerFieldsCount > 0}
+                <PKPassHeaderFields fields={structure.headerFields} {foregroundColor} {labelColor} marginBottom={16} {pkpass} row={0} />
+            {/if}
             <!-- Primary fields -->
             {#if primaryFieldsCount > 0}
                 <!-- Strip image behind primary fields (variable dimensions per Apple spec) -->
 
                 {#if passStyle === PKPassStyle.BoardingPass && transitIcon && primaryFieldsCount === 2}
                     <!-- Boarding pass with transit icon between two primary fields -->
-                    <gridlayout columns="*,auto,*" marginBottom={16}>
+                    <gridlayout columns="*,auto,*" marginBottom={16} row={1}>
                         <!-- Left primary field (departure) -->
                         <PKPassFieldLabel
                             col={0}
@@ -207,7 +202,7 @@
                     </gridlayout>
                 {:else}
                     <!-- Default primary fields layout (no transit icon or different field count) -->
-                    <gridlayout columns={stars(primaryFieldsCount)} marginBottom={16}>
+                    <gridlayout columns={stars(primaryFieldsCount)} marginBottom={16} row={1}>
                         {#if stripImage && passType === PKPassType.PKPass}
                             <image colSpan={primaryFieldsCount} noRatioEnforce={true} opacity={0.5} src={stripImage} stretch="aspectFill" width="100%" />
                         {/if}
@@ -231,7 +226,7 @@
 
             <!-- Secondary fields -->
             {#if secondaryFieldsCount > 0}
-                <gridlayout columns={stars(secondaryFieldsCount)} marginTop={16}>
+                <gridlayout columns={stars(secondaryFieldsCount)} marginTop={16} row={2}>
                     {#each structure.secondaryFields as field, index}
                         <PKPassFieldLabel
                             col={index}
@@ -250,7 +245,7 @@
 
             <!-- Auxiliary fields -->
             {#if auxiliaryFieldsCount > 0}
-                <gridlayout columns={stars(auxiliaryFieldsCount)} marginTop={16}>
+                <gridlayout columns={stars(auxiliaryFieldsCount)} marginTop={16} row={3}>
                     {#each structure.auxiliaryFields as field, index}
                         <PKPassFieldLabel
                             col={index}
@@ -269,7 +264,7 @@
 
             <!-- Footer image if available (286x15 points per Apple spec) -->
             {#if footerImage && passType === PKPassType.PKPass}
-                <image height={15} margin={8} row={3} src={footerImage} stretch="aspectFill" width="100%" />
+                <image height={15} margin={8} row={4} src={footerImage} stretch="aspectFill" width="100%" />
             {/if}
 
             <!-- Barcode -->
@@ -277,12 +272,17 @@
                 <stacklayout
                     backgroundColor={foregroundColor && new Color(foregroundColor).getBrightness() < 145 ? '#ffffff' : 'transparent'}
                     borderRadius={4}
+                    col={$isLandscape ? 1 : 0}
                     horizontalAlignment="center"
-                    marginTop={24}
+                    marginLeft={$isLandscape ? 24 : 0}
+                    marginTop={$isLandscape ? 0 : 24}
                     padding={8}
+                    row={$isLandscape ? 0 : 5}
+                    rowSpan={$isLandscape ? 5 : 1}
+                    verticalAlignment={$isLandscape ? 'top' : 'stretch'}
                     on:tap={onQRCodeTap}
                 >
-                    <svgview src={barcodeSvg} stretch="aspectFit" width="50%" />
+                    <svgview src={barcodeSvg} stretch="aspectFit" width={$isLandscape ? BARCODE_LANDSCAPE_WIDTH : '50%'} />
                     {#if primaryBarcode?.altText}
                         <label color={foregroundColor} fontSize="12" marginTop="8" selectable={true} text={primaryBarcode.altText} textAlignment="center" />
                     {/if}
@@ -291,12 +291,12 @@
 
             <!-- Footer image if available (286x15 points per Apple spec) -->
             {#if footerImage && passType === PKPassType.ESpass}
-                <image margin={8} row={3} src={footerImage} stretch="aspectFill" width="100%" />
+                <image margin={8} row={6} src={footerImage} stretch="aspectFill" width="100%" />
             {/if}
 
             <!-- Back fields (additional info) -->
             {#if includeBackFields && structure?.backFields && structure.backFields.length > 0}
-                <stacklayout marginTop={24}>
+                <stacklayout colSpan={$isLandscape ? 2 : 1} marginTop={24} row={7}>
                     <label color={labelColor} fontSize={18 * $fontScale} fontWeight="bold" marginBottom="12" text={lc('additional_information')} />
                     {#each structure.backFields as field}
                         <label color={foregroundColor} marginBottom={12} selectable={true} on:linkTap={onLinkTap}>
@@ -317,8 +317,10 @@
                     color={pkpass.isExpired() ? '#ff5252' : colorOnSurface}
                     fontSize={15 * $fontScale}
                     fontWeight="bold"
+                    colSpan={$isLandscape ? 2 : 1}
                     marginTop={16}
                     padding={12}
+                    row={8}
                     text={pkpass.isExpired() ? lc('pkpass_expired') : lc('pkpass_expires_at', new Date(passData.expirationDate).toLocaleDateString())}
                     textAlignment="center"
                 />
@@ -331,12 +333,14 @@
                     color="#ffffff"
                     fontSize={15 * $fontScale}
                     fontWeight="bold"
+                    colSpan={$isLandscape ? 2 : 1}
                     marginTop={8}
                     padding={12}
+                    row={9}
                     text={lc('pkpass_voided')}
                     textAlignment="center"
                 />
             {/if}
-        </stacklayout>
+        </gridlayout>
     </scrollview>
 </gridlayout>
