@@ -19,7 +19,7 @@
     import { updateRowPositions } from '~/utils/groupedRows';
     import { StorageSizes, computeStorageSizes } from '~/utils/originals';
     import { deleteDocumentsWithConfirm, deleteOriginalImages, goToDocumentView } from '~/utils/ui';
-    import { colors, windowInset } from '~/variables';
+    import { colors, isLandscape, windowInset } from '~/variables';
 
     interface StorageItem extends Item {
         sizes?: StorageSizes;
@@ -167,7 +167,7 @@
         scrollBehavior="lift"
         android:scrollBehavior="none"
         scrollTargetId="storageCollectionView"
-        size={__IOS__ ? 'large' : 'medium'}
+        size={$isLandscape ? 'small' : __IOS__ ? 'large' : 'medium'}
         ios:translucent={true}
         title={nbSelected > 0 ? lcp('selected', nbSelected) : lc('documents_storage')}
     >

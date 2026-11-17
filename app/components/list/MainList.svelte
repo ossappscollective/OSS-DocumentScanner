@@ -1261,7 +1261,7 @@
         searchPlacement="integrated"
         {bottomItems}
         formattedTitle={selecting || __IOS__ ? null : folderTitle}
-        size={folder && __IOS__ ? 'large' : 'small'}
+        size={folder && __IOS__ && !$isLandscape ? 'large' : 'small'}
         subtitle={folder && nbSelected === 0 ? lcp('documents_count', folder.count) : null}
         titleAlignment="leading"
         ios:translucent={true}

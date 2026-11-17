@@ -86,7 +86,7 @@
     import { restoreSettings } from '~/utils/settings.android';
     import { createView, getNameFormatHTMLArgs, hideLoading, openLink, showLoading, showSnack } from '~/utils/ui';
     import { restartApp, toggleQuickSetting } from '~/utils/utils';
-    import { colors, fontScale, fonts, hasCamera } from '~/variables';
+    import { colors, fontScale, fonts, hasCamera, isLandscape } from '~/variables';
     import OCRSettingsBottomSheet from '~/components/ocr/OCRSettingsBottomSheet.svelte';
     import BaseSettingsPage, { getStoreSetting } from '@shared/components/BaseSettingsPage.svelte';
     import AppPageRoot from '~/components/common/AppPageRoot.svelte';
@@ -1012,7 +1012,7 @@
         searchHint={lc('search')}
         searchMode="collapsible"
         searchPlacement="integrated"
-        size={__IOS__ ? 'large' : 'small'}
+        size={__IOS__ && !$isLandscape ? 'large' : 'small'}
         title={title || $slc('settings.title')}
         ios:translucent={true}
         on:searchChange={onSearchChange}
