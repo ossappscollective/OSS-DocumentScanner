@@ -1,4 +1,4 @@
-import { Color, Observable, PageTransition, SharedTransition } from '@nativescript/core';
+import { Color, Observable } from '@nativescript/core';
 import { navigate, showModal } from '@shared/utils/svelte/ui';
 import { QRCodeSingleData, detectQRCodeFromFile, generateQRCodeImage, getSVGFromQRCode } from 'plugin-nativeprocessor';
 import { OCRDocument, OCRPage } from '~/models/OCRDocument';
@@ -105,17 +105,6 @@ export class QRCodeService extends Observable {
         const component = (await import('~/components/FullScreenImageViewer.svelte')).default;
         navigate({
             page: component,
-            transition:
-                __ANDROID__ && !CARD_APP
-                    ? SharedTransition.custom(new PageTransition(300, undefined, 10), {
-                          //   pageStart: {
-                          //       sharedTransitionTags: {
-                          //           [`document_${document.id}_${item.page.id}`]: {}
-                          //       }
-                          //   }
-                      })
-                    : undefined,
-            // transition: { name: 'slideLeft', duration: 300, curve: 'easeOut' },
             props: {
                 refreshOnOrientationChange: false,
                 useSVG: true,

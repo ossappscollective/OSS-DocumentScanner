@@ -51,7 +51,9 @@
     // the layout sheet: a grabber and the list of the options
     const LAYOUT_LIST_HEIGHT = Math.round(screenHeightDips * 0.4);
     const LAYOUT_SHEET_HEIGHT = SHEET_GRABBER_HEIGHT + LAYOUT_LIST_HEIGHT;
-    const LAYOUT_SHEET_STEPS = [0, LAYOUT_SHEET_HEIGHT];
+    // closed, half open (the pages are larger), open
+    const LAYOUT_SHEET_STEPS = [0, Math.round(LAYOUT_SHEET_HEIGHT / 2), LAYOUT_SHEET_HEIGHT];
+    const LAYOUT_OPEN_STEP_INDEX = LAYOUT_SHEET_STEPS.length - 1;
     // the page keeps this much room between its bottom and the sheet
     const SHEET_PAGE_MARGIN = 32;
 </script>
@@ -301,7 +303,7 @@
             closeLayout();
             return;
         }
-        sheet?.nativeView?.animateStepIndex(1);
+        sheet?.nativeView?.animateStepIndex(LAYOUT_OPEN_STEP_INDEX);
     }
     // nothing to lay out: the sheet leaves
     $: if (error) {
@@ -424,7 +426,7 @@
             {/if}
         {/if}
     </appBar>
-    <bottomsheet bind:this={sheet} scrollViewId="layoutScroll" stepIndex={1} steps={LAYOUT_SHEET_STEPS} {translationFunction} on:animated={updateBottomInset} on:layoutChanged={onSheetLayout} on:stepIndexChange={onSheetStep}>
+    <bottomsheet bind:this={sheet} scrollViewId="layoutScroll" stepIndex={LAYOUT_OPEN_STEP_INDEX} steps={LAYOUT_SHEET_STEPS} {translationFunction} on:animated={updateBottomInset} on:layoutChanged={onSheetLayout} on:stepIndexChange={onSheetStep}>
         <!-- an absolute layout measures its children by their content: the page body fills it -->
         <gridlayout bind:this={pageContent} height="100%" rows="*" width="100%" on:layoutChanged={onContentLayout}>
             {#if hasSheets}

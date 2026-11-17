@@ -2,7 +2,7 @@
 <resources
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-    <style name="AppThemeBase" parent="Theme.Material3.DynamicColors.DayNight.NoActionBar">
+    <style name="AppThemeBase" parent="Theme.Material3Expressive.DynamicColors.DayNight.NoActionBar">
         <!-- <item name="android:windowDrawsSystemBarBackgrounds">true</item> -->
         <!-- <item name="android:windowTranslucentNavigation">true</item> -->
         <item name="android:windowLightNavigationBar">true</item>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getInfoPill, getPaperEdge, getSyncDots, getSyncedServices, getTileRadius, isAutoName } from './documentCell';
+import { getInfoPill, getSyncDots, getSyncedServices, getTileRadius, isAutoName } from './documentCell';
 
 describe('isAutoName', () => {
     it('is true without a name', () => {
@@ -74,17 +74,5 @@ describe('getSyncedServices', () => {
     });
     it('has nothing for a document synced nowhere', () => {
         expect(getSyncedServices(0, services, masks, defaultColors)).toEqual([]);
-    });
-});
-
-describe('getPaperEdge', () => {
-    it('is a soft shadow on iOS', () => {
-        expect(getPaperEdge(true, false, '#C4C6D0')).toEqual({ boxShadow: '0 2 10 #0000006C' });
-    });
-    it('is a 1 outline on Android', () => {
-        expect(getPaperEdge(false, false, '#C4C6D0')).toEqual({ borderColor: '#C4C6D0', borderWidth: 1 });
-    });
-    it('is a 1 outline on e-ink, whatever the platform', () => {
-        expect(getPaperEdge(true, true, '#000000')).toEqual({ borderColor: '#000000', borderWidth: 1 });
     });
 });

@@ -17,7 +17,7 @@
     import CardRowPass from '~/components/list/CardRowPass.svelte';
     import CardRowPhoto from '~/components/list/CardRowPhoto.svelte';
     import CardRowTile from '~/components/list/CardRowTile.svelte';
-    import CardTile from '~/components/list/CardTile.svelte';
+    import CardTile, { tileRadius } from '~/components/list/CardTile.svelte';
     import CardTileFace from '~/components/list/CardTileFace.svelte';
     import { DocFolder, OCRDocument } from '~/models/OCRDocument';
     import {
@@ -335,13 +335,13 @@
                 on:tap={() => onItemTap(item)}
                 on:longPress={(e) => onItemLongPress(item, e)}
             >
-                <PKPassCardCell {item} {itemWidth} layout="cardholder" pkpass={item.doc.pages[0]?.pkpass} />
+                <PKPassCardCell {item} {itemWidth} borderRadius={tileRadius} layout="cardholder" pkpass={item.doc.pages[0]?.pkpass} />
             </CardTile>
         </absolutelayout>
     </Template>
     <Template key="pkpass_full" let:item>
         <CardTile height={itemRowHeight} {item} layout="full" {nbColumns} syncColors={getSyncColors(item)} {syncEnabled} on:tap={() => onItemTap(item)} on:longPress={(e) => onItemLongPress(item, e)}>
-            <PKPassCardCell {item} {itemWidth} layout="full" pkpass={item.doc.pages[0]?.pkpass} />
+            <PKPassCardCell {item} {itemWidth} borderRadius={tileRadius} layout="full" pkpass={item.doc.pages[0]?.pkpass} />
         </CardTile>
     </Template>
     <Template key="pkpass_columns" let:item>
@@ -355,7 +355,7 @@
             on:tap={() => onItemTap(item)}
             on:longPress={(e) => onItemLongPress(item, e)}
         >
-            <PKPassCardCell {item} {itemWidth} layout="columns" pkpass={item.doc.pages[0]?.pkpass} />
+            <PKPassCardCell {item} {itemWidth} borderRadius={tileRadius} layout="columns" pkpass={item.doc.pages[0]?.pkpass} />
         </CardTile>
     </Template>
     <Template key="pkpass_list" let:item>

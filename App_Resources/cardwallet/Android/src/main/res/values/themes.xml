@@ -14,7 +14,7 @@
     </style>
     <style name="LaunchScreenTheme" parent="LaunchScreenThemeBase"></style>
 
-    <style name="AppThemeBase" parent="Theme.Material3.DynamicColors.DayNight.NoActionBar">
+    <style name="AppThemeBase" parent="Theme.Material3Expressive.DynamicColors.DayNight.NoActionBar">
     </style>
     <style name="AppTheme" parent="AppThemeBase">
         <item name="bottomSheetDialogTheme">@style/ThemeOverlay.App.BottomSheetDialog</item>

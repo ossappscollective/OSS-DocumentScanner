@@ -523,7 +523,7 @@
             { spacer: true },
             { text: lc('adjust'), icon: appIcon('tune'), onTap: showAdjustments },
             // the text found in the page
-            ...(hasOCRData ? [{ text: lc('ocr'), icon: appIcon('ocr'), onTap: showCurrentOCRData }] : []),
+            ...(hasOCRData ? [{ text: lc('ocr'), icon: appIcon('show_ocr'), onTap: showCurrentOCRData }] : []),
             // what to look for in the page
             ...(CARD_APP
                 ? [
@@ -536,7 +536,7 @@
                           ]
                       }
                   ]
-                : [{ text: lc('ocr_document'), icon: appIcon('search'), onTap: showOCRSettings }]),
+                : [{ text: lc('ocr_document'), icon: appIcon('ocr'), onTap: showOCRSettings }]),
             { spacer: true }
         ];
     }

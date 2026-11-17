@@ -21,9 +21,7 @@ import {
     GridLayout,
     ImageSource,
     ObservableArray,
-    PageTransition,
     Screen,
-    SharedTransition,
     Utils,
     View,
     knownFolders,
@@ -1721,7 +1719,7 @@ export async function showMatrixLevelPopover({ anchor, currentValue, item, onCha
         onChange
     });
 }
-export async function goToDocumentView(doc: OCRDocument, useTransition = true) {
+export async function goToDocumentView(doc: OCRDocument) {
     // DEV_LOG && console.log('goToDocumentView');
     if (CARD_APP) {
         const page = (await import('~/components/view/CardView.svelte')).default;
@@ -1735,14 +1733,13 @@ export async function goToDocumentView(doc: OCRDocument, useTransition = true) {
         const page = (await import('~/components/view/DocumentView.svelte')).default;
         return navigate({
             page,
-            transition: __ANDROID__ && useTransition ? SharedTransition.custom(new PageTransition(300, null, 10)) : null,
             props: {
                 document: doc
             }
         });
     }
 }
-export async function goToFolderView(folder: DocFolder, useTransition = true) {
+export async function goToFolderView(folder: DocFolder) {
     if (CARD_APP) {
         const page = (await import('~/components/list/CardsList.svelte')).default;
         return navigate({
@@ -1755,7 +1752,6 @@ export async function goToFolderView(folder: DocFolder, useTransition = true) {
         const page = (await import('~/components/list/DocumentsList.svelte')).default;
         return navigate({
             page,
-            transition: __ANDROID__ && useTransition ? SharedTransition.custom(new PageTransition(300, null, 10)) : null,
             props: {
                 folder
             }
@@ -1983,7 +1979,7 @@ export async function goToDocumentAfterScan(document?: OCRDocument, oldPagesNumb
             }
         });
     } else if (canGoToView) {
-        return goToDocumentView(document, false);
+        return goToDocumentView(document);
     }
 }
 

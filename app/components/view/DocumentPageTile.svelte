@@ -6,7 +6,6 @@
     import { isEInk } from '~/helpers/theme';
     import type { OCRPage } from '~/models/OCRDocument';
     import { appIcon } from '~/utils/appIcons';
-    import { getPaperEdge } from '~/utils/documentCell';
     import { colors } from '~/variables';
 
     export let page: OCRPage;
@@ -20,20 +19,20 @@
     $: ({ colorOutlineVariant } = $colors);
 </script>
 
-<!-- a sheet of paper: white holder with the edge of a page (shadow on iOS, outline on Android), the whole page is shown in it (aspect fit): the number and the text mark are over it -->
+<!-- a sheet of paper: white holder with the edge of a page (1 outline), the whole page is shown in it (aspect fit): the number and the text mark are over it -->
 <gridlayout {height} width="100%" {...$$restProps}>
     <gridlayout
         backgroundColor={isEInk ? null : '#FFFFFF'}
         borderRadius={radius}
         margin={6}
-        {...getPaperEdge(__IOS__, isEInk, colorOutlineVariant)}
+        borderColor={colorOutlineVariant}
+        borderWidth={1}
         scaleX={selected ? 0.95 : 1}
         scaleY={selected ? 0.95 : 1}
         on:tap
         on:longPress>
         <RotableImageView
             id="imageView"
-            borderRadius={radius}
             decodeWidth={Utils.layout.toDevicePixels(width)}
             fadeDuration={100}
             item={page}

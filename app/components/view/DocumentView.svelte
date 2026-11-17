@@ -6,7 +6,7 @@
     import { Img } from '@nativescript-community/ui-image';
     import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
     import { type MenuItem, showMenu } from '@nativescript-community/ui-menu';
-    import { AnimationDefinition, Application, ApplicationSettings, EventData, Page, PageTransition, SharedTransition, StackLayout, View } from '@nativescript/core';
+    import { AnimationDefinition, Application, ApplicationSettings, EventData, Page, StackLayout, View } from '@nativescript/core';
     import { AndroidActivityBackPressedEventData } from '@nativescript/core/application';
     import { showError } from '@shared/utils/showError';
     import { goBack, navigate, showModal } from '@shared/utils/svelte/ui';
@@ -70,7 +70,7 @@
 
 <script lang="ts">
     // technique for only specific properties to get updated on store change
-    $: ({ colorBackground, colorError, colorOnBackground, colorOnPrimaryContainer, colorOnSurfaceVariant, colorPrimaryContainer } = $colors);
+    $: ({ colorBackground, colorError, colorOnBackground, colorOnPrimaryContainer, colorPrimaryContainer } = $colors);
 
     export let document: OCRDocument;
     export let transitionOnBack = true;
@@ -271,16 +271,6 @@
                 const index = items.findIndex((p) => p.page === item.page);
                 navigate({
                     page: PdfEdit,
-                    transition:
-                        __ANDROID__ && !CARD_APP
-                            ? SharedTransition.custom(new PageTransition(300, undefined, 10), {
-                                  pageStart: {
-                                      sharedTransitionTags: {
-                                          [`document_${document.id}_${item.page.id}`]: {}
-                                      }
-                                  }
-                              })
-                            : undefined,
                     props: {
                         document,
                         startPageIndex: index
@@ -605,8 +595,9 @@
         iosIconRenderingMode="alwaysTemplate"
         scrollBehavior="lift"
         scrollTargetId="documentPages"
-        size="small"
-        title={nbSelected > 0 ? lcp('selected', nbSelected) : ''}
+        size="large"
+        subtitle={nbSelected === 0 ? subtitle : null}
+        title={nbSelected > 0 ? lcp('selected', nbSelected) : title}
         titleAlignment="leading"
         ios:translucent={true}>
         {#if __ANDROID__}
@@ -627,11 +618,6 @@
         {/if}
     </appBar>
     <gridlayout class="pageContent" rows="auto,auto,*">
-        <!-- the title zone is under the bar, like the card view: bold name, then the date and the details -->
-        <label margin="4 16 8 16" textWrap={true} visibility={nbSelected > 0 ? 'collapsed' : 'visible'}>
-            <span color={colorOnBackground} fontSize={__IOS__ ? 32 : 28} fontWeight="bold" text={title} />
-            <span color={colorOnSurfaceVariant} fontSize={13} text={'\n' + subtitle} />
-        </label>
         <wraplayout margin="0 16 4 16" row={1} visibility={nbSelected === 0 && services.length ? 'visible' : 'collapsed'}>
             {#each services as service (service.type)}
                 <uisurface class="cardChip" height={24} margin="0 6 6 0">
@@ -666,8 +652,10 @@
                     on:longPress={() => toggleSelection(item)} />
             </Template>
         </collectionview>
+    </gridlayout>
+    <appPageOverlay>
         {#if __ANDROID__ && nbSelected === 0}
-            <stacklayout bind:this={fabHolder} class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal" row={2}>
+            <stacklayout bind:this={fabHolder} class="fabHolder" marginBottom={Math.min(60, $windowInset.bottom)} orientation="horizontal">
                 <uibutton class="addFab" {...{ src: appIcon('export') }} variant="contained" verticalAlignment="center" on:tap={showExportMenu} />
                 <uifloatingactionbutton
                     class="scanFab"
@@ -680,5 +668,5 @@
                     on:longPress={() => addPages(true)} />
             </stacklayout>
         {/if}
-    </gridlayout>
+    </appPageOverlay>
 </appPage>

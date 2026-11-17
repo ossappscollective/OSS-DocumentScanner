@@ -163,3 +163,28 @@ describe('OCRService installed models', () => {
         expect(JSON.parse(ApplicationSettings.getString('tesseract_data_fast'))).toEqual([]);
     });
 });
+
+describe('OCRService languages', () => {
+    it('has no language when there is none', () => {
+        ocrService.languages = '';
+        expect(ocrService.languagesArray).toEqual([]);
+    });
+
+    it('adds a language to an empty list without a leading separator', () => {
+        ocrService.languages = '';
+        ocrService.addLanguages('jpn');
+        expect(ocrService.languages).toBe('jpn');
+    });
+
+    it('drops the empty language of a saved value', async () => {
+        ApplicationSettings.setString('tesseract_languages', '+jpn');
+        await ocrService.start('eng');
+        expect(ocrService.languages).toBe('jpn');
+    });
+
+    it('uses the default language when the saved value is empty', async () => {
+        ApplicationSettings.setString('tesseract_languages', '');
+        await ocrService.start('eng');
+        expect(ocrService.languages).toBe('eng');
+    });
+});

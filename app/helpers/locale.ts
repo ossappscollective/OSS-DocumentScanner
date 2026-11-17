@@ -8,6 +8,7 @@ import { derived, get, writable } from 'svelte/store';
 import { prefs } from '@shared/services/preferences';
 import { showError } from '@shared/utils/showError';
 import { createGlobalEventListener, globalObservable } from '@shared/utils/svelte/ui';
+import { toTesseractLanguage } from '~/utils/iso3';
 import { showAlertOptionSelect } from '~/utils/ui';
 
 import { ALERT_OPTION_MAX_HEIGHT, DEFAULT_LOCALE, SETTINGS_LANGUAGE } from '~/utils/constants';
@@ -158,7 +159,7 @@ export function getLocaleDisplayName(locale?, canReturnEmpty = false) {
     }
 }
 export function getCurrentISO3Language() {
-    return getISO3Language(lang);
+    return toTesseractLanguage(getISO3Language(lang), lang);
 }
 async function internalSelectLanguage() {
     // try {
