@@ -1,11 +1,29 @@
 import type { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-import type { Readable } from 'svelte/store';
+import { get, type Readable } from 'svelte/store';
 import { CollectionView } from '@nativescript-community/ui-collectionview';
 import { CoreTypes, type View, type ViewBase } from '@nativescript/core';
+import { nextIconRotation } from '~/utils/cameraOrientation';
+import { orientationDegrees } from '~/variables';
 
 function slideRow(view: View, selecting: boolean, shift: number) {
     view.translateX = selecting ? -shift : shift;
     view.animate({ translate: { x: 0, y: 0 }, duration: 150, curve: CoreTypes.AnimationCurve.cubicBezier(0.2, 0.9, 0.3, 1.15) });
+}
+
+/** keeps the view upright while the device turns: the layout stays as is, only the view rotates around its center */
+export function counterRotate(node: NativeViewElementNode<View>) {
+    let rotation = nextIconRotation(0, get(orientationDegrees));
+    if (node.nativeView) {
+        node.nativeView.rotate = rotation;
+    }
+    const unsubscribe = orientationDegrees.subscribe((degrees) => {
+        const next = nextIconRotation(rotation, degrees);
+        if (next !== rotation) {
+            rotation = next;
+            node.nativeView?.animate({ rotate: rotation, duration: 250 });
+        }
+    });
+    return { destroy: unsubscribe };
 }
 
 /** the row is laid out for the current selection mode: when it changes, the content slides from where it was (`shift`) instead of jumping */

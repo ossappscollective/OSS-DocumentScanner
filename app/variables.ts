@@ -47,9 +47,6 @@ export const startOnCam = ApplicationSettings.getBoolean(SETTINGS_START_ON_CAM, 
 
 export const hasCamera = writable(true);
 
-export const orientationDegrees = writable(0);
-export const shouldListenForSensorOrientation = writable(false);
-
 export const folderBackgroundColor = writable(DEFAULT_DRAW_FOLDERS_BACKGROUND);
 prefs.on(`key:${SETTINGS_DRAW_FOLDERS_BACKGROUND}`, () => {
     const newValue = ApplicationSettings.getBoolean(SETTINGS_DRAW_FOLDERS_BACKGROUND, DEFAULT_DRAW_FOLDERS_BACKGROUND);

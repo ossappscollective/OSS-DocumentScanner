@@ -10773,7 +10773,7 @@ __metadata:
     "@nativescript-community/ui-menu": "npm:1.6.3"
     "@nativescript-community/ui-pager": "npm:14.2.0"
     "@nativescript-community/ui-pager-indicator": "npm:14.2.0"
-    "@nativescript-community/ui-persistent-bottomsheet": "npm:0.1.16"
+    "@nativescript-community/ui-persistent-bottomsheet": "npm:0.1.17"
     "@nativescript-community/ui-popover": "npm:0.1.22"
     "@nativescript-community/ui-progress": "npm:1.6.3"
     "@nativescript-community/ui-segmentedbar": "npm:1.6.3"
