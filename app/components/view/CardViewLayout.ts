@@ -1,7 +1,12 @@
 import { CARD_RATIO } from '~/utils/constants';
 
 export const CODE_ZONE_HEIGHT = 270;
-export const FILMSTRIP_HEIGHT = 60;
+// the thumbnails of the pages have the ratio of the pages: cards are wide
+export const FILMSTRIP_CELL_MARGIN = 4;
+export const FILMSTRIP_COL_WIDTH = CARD_APP ? 76 : 48;
+// the thumbnails of cards are small: slightly rounded corners, like the thumbnails of the iOS Photos viewer
+export const FILMSTRIP_THUMBNAIL_RADIUS = CARD_APP ? 3 : 6;
+export const FILMSTRIP_HEIGHT = CARD_APP ? Math.round((FILMSTRIP_COL_WIDTH - 2 * FILMSTRIP_CELL_MARGIN) * CARD_RATIO) + 2 * FILMSTRIP_CELL_MARGIN : 60;
 // room under the photo for its shadow
 export const PHOTO_SHADOW_ROOM = 12;
 export const PEEK_WIDTH = 44;
@@ -71,4 +76,14 @@ export function getCardViewLayout({ bleed, hasImages, hasQRCodes, landscape, mul
         qrZoneHeight,
         qrZoneWidth: landscape ? Math.min(qrZoneHeight - codeIndicatorHeight + CODE_CARD_EXTRA_WIDTH + (multipleQR ? 2 * PEEK_WIDTH : 0), paneWidth) : undefined
     };
+}
+
+/**
+ * The strip of thumbnails, like the one of the iOS Photos viewer: thumbnails which all fit are centered and the strip does not scroll,
+ * else it scrolls and its padding lets the first and the last thumbnail reach the center
+ */
+export function getFilmstripLayout(count: number, paneWidth: number) {
+    const scrollable = count * FILMSTRIP_COL_WIDTH > paneWidth;
+    const padding = Math.max(0, scrollable ? (paneWidth - FILMSTRIP_COL_WIDTH) / 2 : (paneWidth - count * FILMSTRIP_COL_WIDTH) / 2);
+    return { padding, scrollable };
 }

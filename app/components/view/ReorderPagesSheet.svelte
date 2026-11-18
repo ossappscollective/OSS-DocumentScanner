@@ -10,6 +10,7 @@
     import { lc } from '~/helpers/locale';
     import type { OCRPage } from '~/models/OCRDocument';
     import { appIcon } from '~/utils/appIcons';
+    import { PAGE_THUMBNAIL_HEIGHT, PAGE_THUMBNAIL_WIDTH } from '~/utils/constants';
     import { colors, windowInset } from '~/variables';
 
     $: ({ colorOnSurface, colorOnSurfaceVariant, colorSurfaceContainerLow } = $colors);
@@ -55,7 +56,15 @@
     <collectionview bind:this={collectionView} items={rows} reorderEnabled={true} row={1} rowHeight={72} on:itemReordered={onItemReordered}>
         <Template let:item>
             <gridlayout backgroundColor={colorSurfaceContainerLow} columns="auto,*,auto" height={72} padding="0 0 0 16" on:longPress={(event) => startDragging(item, event)}>
-                <RotableImageView borderRadius={6} decodeWidth={Utils.layout.toDevicePixels(40)} height={56} item={item.page} stretch="aspectFill" verticalAlignment="center" width={40} />
+                <RotableImageView
+                    borderRadius={6}
+                    decodeWidth={Utils.layout.toDevicePixels(PAGE_THUMBNAIL_WIDTH)}
+                    height={PAGE_THUMBNAIL_HEIGHT}
+                    item={item.page}
+                    stretch="aspectFill"
+                    verticalAlignment="center"
+                    width={PAGE_THUMBNAIL_WIDTH}
+                />
                 <label col={1} color={colorOnSurface} fontSize={16} marginLeft={12} text={lc('page') + ' ' + item.number} verticalAlignment="center" />
                 <!-- the handle starts the drag as soon as it is touched -->
                 <gridlayout col={2} width={56} on:touch={(event) => onHandleTouch(item, event)}>
