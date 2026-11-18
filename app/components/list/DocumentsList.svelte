@@ -15,6 +15,7 @@
     import { DOCUMENT_TILE_RATIO } from '~/utils/constants';
     import { getTileRadius } from '~/utils/documentCell';
     import { importImageFromCamera } from '~/utils/ui';
+    import { getHorizontalInsets } from '~/utils/safeArea';
     import { colors, hasCamera, isLandscape, screenHeightDips, screenWidthDips, windowInset } from '~/variables';
     import MainList, { Item } from './MainList.svelte';
 
@@ -49,7 +50,7 @@
     // a list in landscape is a grid: a row would be too wide
     $: asList = viewStyle === 'condensed' && !$isLandscape;
     $: contentPadding = asList ? 0 : gridPadding;
-    $: itemWidth = (($isLandscape ? screenHeightDips : screenWidthDips) - $windowInset.left - $windowInset.right - 2 * contentPadding) / $nbColumns - 2 * rowMargin;
+    $: itemWidth = (($isLandscape ? screenHeightDips : screenWidthDips) - getHorizontalInsets($windowInset) - 2 * contentPadding) / $nbColumns - 2 * rowMargin;
     $: tileRadius = getTileRadius(itemWidth, itemWidth * DOCUMENT_TILE_RATIO);
     // the tiles size themselves from their width: the rows are measured again when it changes
     $: if (itemWidth) {
@@ -128,16 +129,10 @@
     bind:getSyncColors
     bind:documents
     bind:folderItems
-    bind:collectionView>
+    bind:collectionView
+>
     <Template key="grid" let:item>
-        <DocumentTile
-            {item}
-            radius={tileRadius}
-            syncColors={getSyncColors(item)}
-            {syncEnabled}
-            width={itemWidth}
-            on:tap={() => onItemTap(item)}
-            on:longPress={(e) => onItemLongPress(item, e)} />
+        <DocumentTile {item} radius={tileRadius} syncColors={getSyncColors(item)} {syncEnabled} width={itemWidth} on:tap={() => onItemTap(item)} on:longPress={(e) => onItemLongPress(item, e)} />
     </Template>
     <Template key="list" let:item>
         <DocumentRow height={LIST_ROW_HEIGHT} {item} {selectionMode} syncColors={getSyncColors(item)} {syncEnabled} on:tap={() => onItemTap(item)} on:longPress={(e) => onItemLongPress(item, e)} />
@@ -154,7 +149,8 @@
                 src={appIcon('camera')}
                 text={lc('scan')}
                 on:tap={throttle(() => onStartCam(), 500)}
-                on:longPress={() => onStartCam(true)} />
+                on:longPress={() => onStartCam(true)}
+            />
         {/if}
     </stacklayout>
 </MainList>

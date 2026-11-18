@@ -597,7 +597,15 @@
         }
     }
     // let shown = false;
+    function onNavigatedFrom() {
+        covered = true;
+    }
     async function onNavigatedTo(e: NavigatedData) {
+        covered = false;
+        if (refreshPending) {
+            refreshPending = false;
+            refreshLists();
+        }
         // shown = true;
         DEV_LOG && console.log('onNavigatedTo', e.isBackNavigation, sortOrder);
         if (!e.isBackNavigation) {
@@ -917,9 +925,19 @@
             showError(error);
         }
     }
-    export const refreshCollectionView = debounce(() => {
+    // a page under another one is not laid out: refreshing its lists then (an orientation change...) breaks them when it comes back, they refresh when it is shown
+    let covered = false;
+    let refreshPending = false;
+    function refreshLists() {
         foldersCollectionView?.nativeView?.refresh();
         collectionView?.nativeView?.refresh();
+    }
+    export const refreshCollectionView = debounce(() => {
+        if (covered) {
+            refreshPending = true;
+            return;
+        }
+        refreshLists();
     }, 10);
     export const refreshVisibleItems = () => {
         foldersCollectionView?.nativeView?.refreshVisibleItems();
@@ -1246,7 +1264,7 @@
     });
 </script>
 
-<appPage bind:this={page} id="documentList" on:navigatedTo={onNavigatedTo}>
+<appPage bind:this={page} id="documentList" on:navigatedFrom={onNavigatedFrom} on:navigatedTo={onNavigatedTo}>
     <appBar
         bind:this={appBar}
         android:backgroundColor={selecting ? colorPrimaryContainer : folderAccent?.container}
