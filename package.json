@@ -140,6 +140,7 @@
     "packageManager": "yarn@4.18.1",
     "resolutions": {
         "@akylas/nativescript": "portal:../NativeScript/dist/packages/core",
+        "@nativescript-community/ui-appbar": "portal:../ui-native-components/packages/ui-appbar",
         "@nativescript-community/ui-persistent-bottomsheet": "portal:../ui-persistent-bottomsheet/packages/ui-persistent-bottomsheet",
         "@akylas/nativescript-webpack": "file:/Volumes/dev/nativescript/NativeScript/packages/webpack5/akylas-nativescript-webpack-5.0.41.tgz"
     }

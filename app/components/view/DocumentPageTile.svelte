@@ -6,13 +6,13 @@
     import { isEInk } from '~/helpers/theme';
     import type { OCRPage } from '~/models/OCRDocument';
     import { appIcon } from '~/utils/appIcons';
+    import { DOCUMENT_TILE_RATIO } from '~/utils/constants';
     import { colors } from '~/variables';
 
     export let page: OCRPage;
     export let documentId: string;
     export let index: number;
     export let selected: boolean;
-    export let height: number;
     export let width: number;
     export let radius: number;
 
@@ -20,7 +20,7 @@
 </script>
 
 <!-- a sheet of paper: white holder with the edge of a page (1 outline), the whole page is shown in it (aspect fit): the number and the text mark are over it -->
-<gridlayout {height} width="100%" {...$$restProps}>
+<gridlayout width="100%" {...$$restProps}>
     <gridlayout
         backgroundColor={isEInk ? null : '#FFFFFF'}
         borderRadius={radius}
@@ -33,6 +33,7 @@
         on:longPress>
         <RotableImageView
             id="imageView"
+            aspectRatio={1 / DOCUMENT_TILE_RATIO}
             decodeWidth={Utils.layout.toDevicePixels(width)}
             fadeDuration={100}
             item={page}

@@ -9,11 +9,11 @@
     import { Item } from '~/components/list/MainList.svelte';
     import { isEInk } from '~/helpers/theme';
     import { appIcon } from '~/utils/appIcons';
+    import { DOCUMENT_TILE_RATIO } from '~/utils/constants';
     import { getInfoPill, isAutoName } from '~/utils/documentCell';
     import { colors } from '~/variables';
 
     export let item: Item;
-    export let height: number;
     export let width: number;
     export let radius: number;
     export let syncEnabled: boolean;
@@ -29,7 +29,7 @@
 </script>
 
 <!-- the document is the whole tile, with the edge of a page: the chips are over it, never beside it -->
-<gridlayout {height} width="100%" {...$$restProps}>
+<gridlayout width="100%" {...$$restProps}>
     <gridlayout
         backgroundColor={isEInk ? null : (page?.colors?.[1] ?? colorSurfaceContainerHigh)}
         borderRadius={radius}
@@ -42,6 +42,7 @@
         on:longPress>
         <RotableImageView
             id="imageView"
+            aspectRatio={1 / DOCUMENT_TILE_RATIO}
             decodeWidth={Utils.layout.toDevicePixels(width)}
             document={item.doc}
             fadeDuration={100}

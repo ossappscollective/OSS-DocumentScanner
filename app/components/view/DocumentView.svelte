@@ -89,7 +89,6 @@
     $: nbColumns = updateColumns($isLandscape);
     $: colWidth = 100 / nbColumns + '%';
     $: itemWidth = (($isLandscape ? screenHeightDips : screenWidthDips) - $windowInset.left - $windowInset.right - 2 * columnsPadding) / nbColumns - 2 * rowMargin;
-    $: tileHeight = itemWidth * DOCUMENT_TILE_RATIO + 2 * rowMargin;
     $: tileRadius = getTileRadius(itemWidth, itemWidth * DOCUMENT_TILE_RATIO);
 
     const onNbColumnsPreferenceChanged = () => (nbColumns = updateColumns($isLandscape));
@@ -595,7 +594,7 @@
         iosIconRenderingMode="alwaysTemplate"
         scrollBehavior="lift"
         scrollTargetId="documentPages"
-        size="large"
+        size={$isLandscape ? 'small' : 'large'}
         subtitle={nbSelected === 0 ? subtitle : null}
         title={nbSelected > 0 ? lcp('selected', nbSelected) : title}
         titleAlignment="leading"
@@ -637,12 +636,10 @@
             paddingBottom={Math.max($windowInset.bottom, 88)}
             paddingLeft={columnsPadding}
             paddingRight={columnsPadding}
-            row={2}
-            rowHeight={tileHeight}>
+            row={2}>
             <Template let:item>
                 <DocumentPageTile
                     documentId={document.id}
-                    height={tileHeight}
                     index={item.index}
                     page={item.page}
                     radius={tileRadius}

@@ -20,7 +20,7 @@ __metadata:
 
 "@akylas/nativescript-app-tools@file:tools::locator=root-workspace-0b6124%40workspace%3A.":
   version: 1.0.0
-  resolution: "@akylas/nativescript-app-tools@file:tools#tools::hash=9e6a90&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@akylas/nativescript-app-tools@file:tools#tools::hash=bb4310&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@dotenvx/dotenvx": "npm:1.51.4"
     "@nativescript-community/fontmin": "npm:0.9.11"
@@ -74,7 +74,7 @@ __metadata:
     typescript: "npm:5.9.3"
     typescript-eslint: "npm:8.53.0"
     webpack-bundle-analyzer: "npm:4.10.2"
-  checksum: 10/2bc1df43edc8e3de8187e35fa3ca99f5907fa8874ff3facfd6ceed096dc06acf3d9946f46e167757f118f734211370937be6b7c09d2bd9c29cd78a344d599284
+  checksum: 10/fd2e4c0573288cb7e8edd57993dc14a063106674bbf10ea16d465d4b67854589c3364888d265e813e2a42d8a221a75619e85587a0a9a4734a69f29cfed4855cd
   languageName: node
   linkType: hard
 
@@ -1586,15 +1586,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-appbar@npm:1.6.3":
-  version: 1.6.3
-  resolution: "@nativescript-community/ui-appbar@npm:1.6.3"
+"@nativescript-community/ui-appbar@portal:../ui-native-components/packages/ui-appbar::locator=root-workspace-0b6124%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@nativescript-community/ui-appbar@portal:../ui-native-components/packages/ui-appbar::locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
-    "@nativescript-community/ui-core": "npm:^1.6.3"
-    "@nativescript-community/ui-menu": "npm:^1.6.3"
-  checksum: 10/b981a74dd14a6873c3717b27a2c7ac7b8223d4049514e6201996a29a474caff205c5be49a15f714b2cd6fe0b304cc0bbb78777b20c0bdf65e5ee727b5b5293ea
+    "@nativescript-community/ui-core": "npm:^1.6.0"
+    "@nativescript-community/ui-menu": "npm:^1.6.0"
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "@nativescript-community/ui-bottomsheet@npm:1.6.3":
   version: 1.6.3
@@ -1670,7 +1669,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-core@npm:1.6.3, @nativescript-community/ui-core@npm:^1.6.3":
+"@nativescript-community/ui-core@npm:1.6.3, @nativescript-community/ui-core@npm:^1.6.0, @nativescript-community/ui-core@npm:^1.6.3":
   version: 1.6.3
   resolution: "@nativescript-community/ui-core@npm:1.6.3"
   dependencies:
@@ -1762,7 +1761,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-menu@npm:1.6.3, @nativescript-community/ui-menu@npm:^1.6.3":
+"@nativescript-community/ui-menu@npm:1.6.3, @nativescript-community/ui-menu@npm:^1.6.0":
   version: 1.6.3
   resolution: "@nativescript-community/ui-menu@npm:1.6.3"
   dependencies:

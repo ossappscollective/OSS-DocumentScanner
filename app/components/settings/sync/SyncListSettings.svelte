@@ -21,7 +21,7 @@
     import { WebdavDataSyncOptions } from '~/services/sync/webdav/WebdavDataSyncService';
     import { getDirectoryName, hideLoading, requestNotificationPermission } from '~/utils/ui';
     import { getSettingsRowProps } from '~/utils/settingsRows';
-    import { colors, fontScale, fonts, windowInset } from '~/variables';
+    import { colors, fontScale, fonts, isLandscape, windowInset } from '~/variables';
     type Item = BaseSyncServiceOptions & { title?: string; description?: string; syncColor?: string };
     // the pages of the services have a native app bar, which needs a frame in a modal
     const showModal = (options: { page: unknown; fullscreen: boolean; props: Record<string, unknown> }): Promise<any> =>
@@ -261,7 +261,7 @@
         iosIconRenderingMode="alwaysTemplate"
         scrollBehavior="lift"
         scrollTargetId="syncCollectionView"
-        size={__IOS__ ? 'large' : 'small'}
+        size={__IOS__ && !$isLandscape ? 'large' : 'small'}
         {title}
         ios:translucent={true}>
         {#if __ANDROID__}

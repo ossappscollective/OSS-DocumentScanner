@@ -50,9 +50,9 @@
     $: asList = viewStyle === 'condensed' && !$isLandscape;
     $: contentPadding = asList ? 0 : gridPadding;
     $: itemWidth = (($isLandscape ? screenHeightDips : screenWidthDips) - $windowInset.left - $windowInset.right - 2 * contentPadding) / $nbColumns - 2 * rowMargin;
-    $: tileHeight = itemWidth * DOCUMENT_TILE_RATIO + 2 * rowMargin;
     $: tileRadius = getTileRadius(itemWidth, itemWidth * DOCUMENT_TILE_RATIO);
-    $: if (tileHeight) {
+    // the tiles size themselves from their width: the rows are measured again when it changes
+    $: if (itemWidth) {
         refreshCollectionView?.();
     }
 
@@ -131,7 +131,6 @@
     bind:collectionView>
     <Template key="grid" let:item>
         <DocumentTile
-            height={tileHeight}
             {item}
             radius={tileRadius}
             syncColors={getSyncColors(item)}
