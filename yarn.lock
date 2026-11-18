@@ -20,7 +20,7 @@ __metadata:
 
 "@akylas/nativescript-app-tools@file:tools::locator=root-workspace-0b6124%40workspace%3A.":
   version: 1.0.0
-  resolution: "@akylas/nativescript-app-tools@file:tools#tools::hash=bb4310&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@akylas/nativescript-app-tools@file:tools#tools::hash=e84cbf&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@dotenvx/dotenvx": "npm:1.51.4"
     "@nativescript-community/fontmin": "npm:0.9.11"
@@ -74,7 +74,7 @@ __metadata:
     typescript: "npm:5.9.3"
     typescript-eslint: "npm:8.53.0"
     webpack-bundle-analyzer: "npm:4.10.2"
-  checksum: 10/fd2e4c0573288cb7e8edd57993dc14a063106674bbf10ea16d465d4b67854589c3364888d265e813e2a42d8a221a75619e85587a0a9a4734a69f29cfed4855cd
+  checksum: 10/e424eda4902a7eb72f8b1f93f3c53509b3338321b5f1a49aaef789efe35be5237c94b03991d52e11eb94dec1b61de62ede9b193f25d5453972e6c0532fd08a2c
   languageName: node
   linkType: hard
 
@@ -1614,10 +1614,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-cameraview@npm:*, @nativescript-community/ui-cameraview@npm:0.8.0":
+"@nativescript-community/ui-cameraview@npm:*":
   version: 0.8.0
   resolution: "@nativescript-community/ui-cameraview@npm:0.8.0"
   checksum: 10/c584625994e59f11b33a239bec571545a8d99087f06c5c461b0d1fa82567fc547fbea6bb914d7c4526903d3a683f80e7382d41f83eac928c10c2e282aa8cab0c
+  languageName: node
+  linkType: hard
+
+"@nativescript-community/ui-cameraview@npm:0.9.0":
+  version: 0.9.0
+  resolution: "@nativescript-community/ui-cameraview@npm:0.9.0"
+  checksum: 10/5bec3b9d39307a0ae1af36391c7d1c2e824fbe4f79d28c5867bd1013f6e8bb5afdf792b2ad9c63c5ae13fa945f672aaa104a09b7d60b9a207e7b4a46166c754d
   languageName: node
   linkType: hard
 
@@ -1660,14 +1667,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-collectionview@npm:6.1.3, @nativescript-community/ui-collectionview@npm:^6.1.3":
-  version: 6.1.3
-  resolution: "@nativescript-community/ui-collectionview@npm:6.1.3"
+"@nativescript-community/ui-collectionview@portal:../ui-collectionview/packages/collectionview::locator=root-workspace-0b6124%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@nativescript-community/ui-collectionview@portal:../ui-collectionview/packages/collectionview::locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@nativescript-community/arraybuffers": "npm:^1.1.5"
-  checksum: 10/ed410daa716ddb22adb6aceb268e7bc286135278007ec90bae63c47887bcd2c6d636af8ec86ab0672a3c4be4ddae6fa17fd4a3dd5532669360ebb7270e4061f5
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "@nativescript-community/ui-core@npm:1.6.3, @nativescript-community/ui-core@npm:^1.6.0, @nativescript-community/ui-core@npm:^1.6.3":
   version: 1.6.3
@@ -1777,12 +1783,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nativescript-community/ui-pager@npm:14.2.0":
-  version: 14.2.0
-  resolution: "@nativescript-community/ui-pager@npm:14.2.0"
-  checksum: 10/ec7905186040d47240e2094a5530be93c22c787fc8f8b0fa69d9fb39cd68813c37c937e63a0ff3a697f0b513a5eb268376afe7e8c25d99f185235801bb5addd1
+"@nativescript-community/ui-pager@portal:../ui-pager/packages/ui-pager::locator=root-workspace-0b6124%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@nativescript-community/ui-pager@portal:../ui-pager/packages/ui-pager::locator=root-workspace-0b6124%40workspace%3A."
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "@nativescript-community/ui-persistent-bottomsheet@portal:../ui-persistent-bottomsheet/packages/ui-persistent-bottomsheet::locator=root-workspace-0b6124%40workspace%3A.":
   version: 0.0.0-use.local
@@ -10754,7 +10759,7 @@ __metadata:
     "@nativescript-community/ui-appbar": "npm:1.6.3"
     "@nativescript-community/ui-bottomsheet": "npm:1.6.3"
     "@nativescript-community/ui-button": "npm:1.6.3"
-    "@nativescript-community/ui-cameraview": "npm:0.8.0"
+    "@nativescript-community/ui-cameraview": "npm:0.9.0"
     "@nativescript-community/ui-canvas": "npm:4.6.57"
     "@nativescript-community/ui-canvaslabel": "npm:1.2.60"
     "@nativescript-community/ui-checkbox": "npm:1.6.3"
