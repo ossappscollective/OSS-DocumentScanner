@@ -52,7 +52,7 @@
     /** edits one page: each change goes to the callbacks and the default settings are left alone */
     export let pageMode = false;
     /** the height of the sheet (dip) when it has a single detent: the list is as tall as the sheet, so it scrolls inside it */
-    export let sheetHeight: number = undefined;
+    export let sheetHeight: number | string = undefined;
     /** transforms several pages: a header with Cancel and Apply, the values are returned when the sheet closes, the default settings are left alone */
     export let applyMode = false;
     export let showTransforms = true;
@@ -345,7 +345,7 @@
 </script>
 
 <SheetRoot
-    height={__ANDROID__ && sheetHeight && !inline ? sheetHeight - 28 : sheetHeight}
+    height={__ANDROID__ && typeof sheetHeight === 'number' && !inline ? sheetHeight - 28 : sheetHeight}
     {inline}
     rows={applyMode ? 'auto,*' : '*'}
     {...(__IOS__ ? { backgroundColor: inline ? undefined : glass ? 'transparent' : colorBackground } : { padding: applyMode ? '0' : '10 10 0 10' })}

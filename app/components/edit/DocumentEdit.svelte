@@ -16,6 +16,7 @@
     import { onDestroy, onMount } from 'svelte';
     import { Writable } from 'svelte/store';
     import PageCounter from '~/components/common/PageCounter.svelte';
+    import PageSheetLayout from '~/components/common/PageSheetLayout.svelte';
     import PersistentSheetFrame, { SHEET_GRABBER_HEIGHT } from '~/components/common/PersistentSheetFrame.svelte';
     import RotableImageView from '~/components/common/RotableImageView.svelte';
     import SheetHeader from '~/components/common/SheetHeader.svelte';
@@ -41,7 +42,7 @@
         showOCRData,
         showSnack
     } from '~/utils/ui';
-    import { colors, screenHeightDips, windowInset } from '~/variables';
+    import { colors, isLandscape, screenHeightDips, windowInset } from '~/variables';
 
     // technique for only specific properties to get updated on store change
     $: ({ colorOnBackground } = $colors);
@@ -65,6 +66,8 @@
     let updatingTransform = false;
     const FLOATING_TOOLBAR_OFFSET = 80;
     let adjusting = false;
+    // landscape: the adjustments are a panel on the side, the pages do not move for a sheet
+    $: sheetOpen = adjusting && !$isLandscape;
     // the adjust sheet is a persistent sheet of the page: a grabber, a header, the list of the adjustments, and the room of the bottom toolbar under them.
     // The pager keeps its width: each page scales and moves with the sheet (so the neighbors stay seen), and the pages stay interactive
     const SHEET_HEADER_HEIGHT = 64;
@@ -130,15 +133,15 @@
     );
     // a page which is shown after the sheet opened, or which the pager reuses: it is at the fit of the sheet, or as it is
     function syncPageViews() {
-        getPageViews().forEach(({ item, view }) => setPageFit(view, adjusting ? getFitFor(item) : undefined));
+        getPageViews().forEach(({ item, view }) => setPageFit(view, sheetOpen ? getFitFor(item) : undefined));
     }
     function onPageViewLoaded(item: OCRPage, event: EventData) {
         if (event.object instanceof View) {
-            setPageFit(event.object, adjusting ? getFitFor(item) : undefined);
+            setPageFit(event.object, sheetOpen ? getFitFor(item) : undefined);
         }
     }
     // the sheet follows its steps: the gesture too, so this is where it opens and closes
-    function onSheetStep(event: { value: number }) {
+    function onSheetStep(event) {
         adjusting = event.value > 0;
         if (adjusting) {
             sheetShown = true;
@@ -155,6 +158,10 @@
         }
     }
     function closeAdjustments() {
+        if ($isLandscape) {
+            adjusting = false;
+            return;
+        }
         sheet?.nativeView?.animateStepIndex(0);
     }
 
@@ -218,7 +225,7 @@
     function onSelectedIndex(event) {
         currentIndex = event.object.selectedIndex;
         // the pager creates the next pages while it moves: they get their fit once they are there
-        if (adjusting) {
+        if (sheetOpen) {
             setTimeout(syncPageViews, 50);
         }
 
@@ -357,6 +364,10 @@
     function showAdjustments() {
         if (adjusting) {
             closeAdjustments();
+            return;
+        }
+        if ($isLandscape) {
+            adjusting = true;
             return;
         }
         toolbarHidden = true;
@@ -514,38 +525,53 @@
     function getMoreMenu(): MenuItem[] {
         return [{ title: lc('delete_page'), icon: appIcon('delete'), destructive: true, onSelect: deleteCurrentPage }];
     }
-    function getBottomItems(canCrop: boolean, hasOCRData: boolean) {
+    // the actions on the page, by group: the bottom toolbar in portrait, the app bar in landscape
+    interface EditTool {
+        id: string;
+        text: string;
+        icon: string;
+        onTap?: () => void;
+        menu?: MenuItem[];
+    }
+    function getEditTools(canCrop: boolean, hasOCRData: boolean): EditTool[][] {
         return [
-            { spacer: true },
-            ...(canCrop ? [{ text: lc('crop'), icon: appIcon('crop'), onTap: cropEdit }, { spacer: true }] : []),
-            { text: lc('rotate_left'), icon: appIcon('rotate_left'), onTap: rotateImageLeft },
-            { text: lc('rotate_right'), icon: appIcon('rotate_right'), onTap: rotateImageRight },
-            { spacer: true },
-            { text: lc('adjust'), icon: appIcon('tune'), onTap: showAdjustments },
-            // the text found in the page
-            ...(hasOCRData ? [{ text: lc('ocr'), icon: appIcon('show_ocr'), onTap: showCurrentOCRData }] : []),
-            // what to look for in the page
-            ...(CARD_APP
-                ? [
-                      {
-                          text: lc('detect'),
-                          icon: appIcon('search'),
-                          menu: [
-                              { title: lc('ocr_document'), icon: appIcon('ocr'), onSelect: showOCRSettings },
-                              { title: lc('detect_qrcode'), icon: appIcon('qrcode'), onSelect: detectQRCode }
-                          ]
-                      }
-                  ]
-                : [{ text: lc('ocr_document'), icon: appIcon('ocr'), onTap: showOCRSettings }]),
-            { spacer: true }
+            ...(canCrop ? [[{ id: 'crop', text: lc('crop'), icon: appIcon('crop'), onTap: cropEdit }]] : []),
+            [
+                { id: 'rotate_left', text: lc('rotate_left'), icon: appIcon('rotate_left'), onTap: rotateImageLeft },
+                { id: 'rotate_right', text: lc('rotate_right'), icon: appIcon('rotate_right'), onTap: rotateImageRight }
+            ],
+            [
+                { id: 'adjust', text: lc('adjust'), icon: appIcon('tune'), onTap: showAdjustments },
+                // the text found in the page
+                ...(hasOCRData ? [{ id: 'ocr', text: lc('ocr'), icon: appIcon('show_ocr'), onTap: showCurrentOCRData }] : []),
+                // what to look for in the page
+                ...(CARD_APP
+                    ? [
+                          {
+                              id: 'detect',
+                              text: lc('detect'),
+                              icon: appIcon('search'),
+                              menu: [
+                                  { title: lc('ocr_document'), icon: appIcon('ocr'), onSelect: showOCRSettings },
+                                  { title: lc('detect_qrcode'), icon: appIcon('qrcode'), onSelect: detectQRCode }
+                              ]
+                          }
+                      ]
+                    : [{ id: 'ocr_document', text: lc('ocr_document'), icon: appIcon('ocr'), onTap: showOCRSettings }])
+            ]
         ];
+    }
+    function getBottomItems(tools: EditTool[][]) {
+        return [{ spacer: true }, ...tools.flatMap((group) => [...group.map(({ id, ...item }) => item), { spacer: true }])];
     }
     // the current page only: no PDF
     $: exportMenu = getExportMenu({ document, pages: [{ page: currentItem, document }], pdf: false });
     $: moreMenu = getMoreMenu();
     // the toolbar leaves its place to the sheet
     let toolbarHidden = false;
-    $: bottomItems = toolbarHidden ? [] : getBottomItems(!!currentItem?.sourceImagePath, !!currentItemOCRData);
+    $: editTools = getEditTools(!!currentItem?.sourceImagePath, !!currentItemOCRData);
+    // landscape: the tools are in the bar
+    $: bottomItems = toolbarHidden || $isLandscape ? [] : getBottomItems(editTools);
 </script>
 
 <appPage bind:this={page} id="pdfEdit">
@@ -553,13 +579,18 @@
         {#if __ANDROID__}
             <navigationButton {...{ 'android.systemIcon': 'ic_menu_back' }} on:tap={() => goBack()} />
         {/if}
+        {#if $isLandscape}
+            {#each editTools.flat() as tool (tool.id)}
+                <appBarItem icon={tool.icon} ios.position="right" menu={tool.menu} prominent={tool.id === 'adjust' && adjusting} text={tool.text} on:tap={tool.onTap} />
+            {/each}
+        {/if}
         <appBarItem icon={appIcon('export')} ios.position="right" menu={exportMenu} text={lc('export')} />
         <appBarItem icon={appIcon('more')} ios.position="right" menu={moreMenu} />
     </appBar>
-    <bottomsheet bind:this={sheet} {steps} scrollViewId="adjustList" {translationFunction} on:animated={onSheetAnimated} on:layoutChanged={onSheetLayout} on:stepIndexChange={onSheetStep}>
+    <PageSheetLayout bind:sheet panelOpen={adjusting} {steps} scrollViewId="adjustList" stepIndex={adjusting ? 1 : 0} {translationFunction} on:animated={onSheetAnimated} on:layoutChanged={onSheetLayout} on:stepIndexChange={onSheetStep}>
         <!-- an absolute layout measures its children by their content: the page fills it -->
-        <gridlayout android:paddingBottom={FLOATING_TOOLBAR_OFFSET + $windowInset.bottom} height="100%" rows="*,auto" width="100%">
-            <pager bind:this={pager} {items} rowSpan={2} selectedIndex={startPageIndex} transformers="zoomOut" on:loaded={allowSwipeBack} on:selectedIndexChange={onSelectedIndex}>
+        <gridlayout slot="content" android:paddingBottom={$isLandscape ? 0 : FLOATING_TOOLBAR_OFFSET + $windowInset.bottom} height="100%" rows="*,auto" width="100%">
+            <pager bind:this={pager} {items} rowSpan={2} selectedIndex={currentIndex} transformers="zoomOut" on:loaded={allowSwipeBack} on:selectedIndexChange={onSelectedIndex}>
                 <Template let:item>
                     <gridlayout width="100%">
                         <!-- the page scales and moves in this one: the pager transformer owns the scale of the page view -->
@@ -573,9 +604,11 @@
                 <PageCounter marginBottom={12} row={1} text={`${currentIndex + 1} / ${items.length}`} />
             {/if}
         </gridlayout>
-        <PersistentSheetFrame height={sheetHeight + bottomInset} opacity={sheetShown ? 1 : 0} rows="auto,auto" shadow={adjusting} width={sheetWidth}>
-            <!-- the quick way to close it: the sheet is not modal, the page stays in use -->
-            <SheetHeader doneText={lc('done')} onDone={closeAdjustments} row={1} showCancel={false} title={lc('adjust')} />
+        <PersistentSheetFrame slot="sheet" height={$isLandscape ? '100%' : sheetHeight + bottomInset} opacity={sheetShown || $isLandscape ? 1 : 0} panel={$isLandscape} rows={$isLandscape ? 'auto,*' : 'auto,auto'} shadow={adjusting} width={$isLandscape ? '100%' : sheetWidth}>
+            {#if !$isLandscape}
+                <!-- the quick way to close it: the sheet is not modal, the page stays in use. In landscape the button of the bar closes it -->
+                <SheetHeader doneText={lc('done')} onDone={closeAdjustments} row={1} showCancel={false} title={lc('adjust')} />
+            {/if}
             <AdjustSheet
                 brightness={typeof currentItem?.brightness === 'number' ? currentItem.brightness : DEFAULT_BRIGHTNESS}
                 cameraOptionsStore={null}
@@ -591,9 +624,9 @@
                 previewSrc={currentItem?.imagePath}
                 row={2}
                 {bottomInset}
-                sheetHeight={ADJUST_LIST_HEIGHT + bottomInset}
+                sheetHeight={$isLandscape ? '100%' : ADJUST_LIST_HEIGHT + bottomInset}
                 showTransforms={hasOriginalImage(currentItem)}
                 transforms={[...(transforms ?? [])]} />
         </PersistentSheetFrame>
-    </bottomsheet>
+    </PageSheetLayout>
 </appPage>

@@ -8,6 +8,7 @@
     import { OCRData } from 'plugin-nativeprocessor';
     import { tick } from 'svelte';
     import { writable } from 'svelte/store';
+    import PageSheetLayout from '~/components/common/PageSheetLayout.svelte';
     import PersistentSheetFrame from '~/components/common/PersistentSheetFrame.svelte';
     import SheetHeader from '~/components/common/SheetHeader.svelte';
     import OCRPageView from '~/components/ocr/OCRPageView.svelte';
@@ -20,7 +21,7 @@
     import { appIcon } from '~/utils/appIcons';
     import { getIOSBottomInset } from '~/utils/safeArea';
     import { copyOCRToClipboard } from '~/utils/ui';
-    import { colors, screenHeightDips, windowInset } from '~/variables';
+    import { actionBarHeight, colors, isLandscape, screenHeightDips, windowInset } from '~/variables';
 
     let { colorBackground, colorOnBackground, colorPrimary } = $colors;
     // technique for only specific properties to get updated on store change
@@ -63,13 +64,16 @@
     let sheet: NativeViewElementNode<PersistentBottomSheet>;
     let textView: NativeViewElementNode<any>;
     let stepIndex = START_STEP_INDEX;
+    function onStepIndexChange(event) {
+        stepIndex = event.value;
+    }
     // the text is read (and selected) until the user asks to edit it
     let editing = false;
     let currentIndex = startIndex;
     const viewState = writable<OCRViewState>({ page: items[startIndex]?.pageIndex, block: -1, showText: false, version: 0 });
 
     // the textview fills the sheet at its full step: below it the bottom is out of the screen, the text scrolls up to what is shown
-    $: hiddenHeight = sheetHeight - steps[stepIndex];
+    $: hiddenHeight = $isLandscape ? 0 : sheetHeight - steps[stepIndex];
     $: text = texts[currentIndex];
     $: dirty = texts.some((value, index) => value !== items[index].ocrData.text);
 
@@ -228,25 +232,31 @@
         <appBarItem icon={appIcon('ocr_overlay')} ios.position="right" text={lc('ocr_show_text_on_image')} on:tap={toggleShowTextOnImage} />
         <appBarItem icon={appIcon('copy')} ios.position="right" text={lc('copy')} on:tap={copyText} />
         <appBarItem {...{ isEnabled: dirty }} icon={appIcon('save')} ios.position="right" text={lc('save')} on:tap={saveEdit} />
+        {#if $isLandscape}
+            <!-- landscape: the panel has no header, its action is in the bar -->
+            <appBarItem ios.position="right" prominent={editing} text={editing ? lc('done') : lc('edit')} on:tap={toggleEditing} />
+        {/if}
     </appBar>
-    <bottomsheet
-        bind:this={sheet}
+    <PageSheetLayout
+        bind:sheet
         scrollAtAnyStep={true}
         scrollViewId="ocrText"
         stepIndex={START_STEP_INDEX}
         {steps}
         on:animated={revealSelection}
-        on:stepIndexChange={(event) => (stepIndex = event.value)}>
-        <gridlayout class="pageContent" height="100%" width="100%">
-            <pager {items} selectedIndex={startIndex} on:selectedIndexChange={onSelectedIndex}>
+        on:stepIndexChange={onStepIndexChange}>
+        <gridlayout slot="content" class="pageContent" height="100%" width="100%">
+            <pager {items} selectedIndex={currentIndex} on:selectedIndexChange={onSelectedIndex}>
                 <Template let:item>
                     <OCRPageView {item} state={viewState} on:blockSelected={onBlockSelected} />
                 </Template>
             </pager>
         </gridlayout>
-        <PersistentSheetFrame height={sheetHeight} rows="auto,*" width="100%">
-            <!-- the title and the button say if the text is read or edited -->
-            <SheetHeader doneText={editing ? lc('done') : lc('edit')} onDone={toggleEditing} row={1} showCancel={false} title={editing ? lc('ocr_text_editing') : lc('ocr_text')} />
+        <PersistentSheetFrame slot="sheet" height={$isLandscape ? '100%' : sheetHeight} panel={$isLandscape} rows="auto,*" width="100%">
+            {#if !$isLandscape}
+                <!-- the title and the button say if the text is read or edited -->
+                <SheetHeader doneText={editing ? lc('done') : lc('edit')} onDone={toggleEditing} row={1} showCancel={false} title={editing ? lc('ocr_text_editing') : lc('ocr_text')} />
+            {/if}
             <textview
                 id="ocrText"
                 bind:this={textView}
@@ -258,6 +268,7 @@
                 marginBottom={hiddenHeight}
                 paddingLeft={16}
                 paddingRight={16}
+                paddingTop={$isLandscape ? $actionBarHeight + $windowInset.top : 0}
                 row={2}
                 {text}
                 variant="none"
@@ -265,5 +276,5 @@
                 on:textChange={(e) => onTextChange(e.value)}
             />
         </PersistentSheetFrame>
-    </bottomsheet>
+    </PageSheetLayout>
 </appPage>
