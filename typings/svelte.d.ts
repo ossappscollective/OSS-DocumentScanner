@@ -3,4 +3,10 @@ declare namespace svelteNative.JSX {
         'on:redo'?: (args) => void;
         'on:undo'?: (args) => void;
     }
+    interface ImageAttributes {
+        alwaysFade?: boolean;
+    }
+    interface ScrollViewAttributes {
+        clipToBounds?: boolean;
+    }
 }

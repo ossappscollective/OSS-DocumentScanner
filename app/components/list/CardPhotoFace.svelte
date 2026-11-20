@@ -14,7 +14,7 @@
     export let itemWidth: number;
     export let layout: string;
     export let alwaysShowNames: boolean;
-    export let stripHeight: number;
+    export let stripHeight: number = undefined;
 
     $: ({ colorBackground } = $colors);
 

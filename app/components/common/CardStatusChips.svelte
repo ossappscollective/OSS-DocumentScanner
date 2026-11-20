@@ -5,9 +5,9 @@
     import { lc } from '~/helpers/locale';
     import { type CardStatus, formatShortDate, getCardStatus } from '~/utils/cardStatus';
 
-    export let extra: DocumentExtra;
+    export let extra: DocumentExtra = undefined;
     /** the status of a card which does not keep it in its extra (a pass) */
-    export let status: CardStatus[];
+    export let status: CardStatus[] = undefined;
     export let tint: string = null;
     /** the color of the card under a tinted chip */
     export let background: string = null;

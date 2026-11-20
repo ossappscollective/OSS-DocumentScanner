@@ -11,19 +11,19 @@
     /** a text view (a value which can take several lines) instead of a single line */
     export let multiline = false;
     // the placement in the parent, the other attributes (keyboardType, editable, error...) are the ones of the field
-    export let margin: string;
-    export let col: number;
-    export let colSpan: number;
-    export let row: number;
+    export let margin: string = undefined;
+    export let col: number = undefined;
+    export let colSpan: number = undefined;
+    export let row: number = undefined;
     let { colorOnSurfaceVariant } = $colors;
     $: ({ colorOnSurfaceVariant } = $colors);
 
     /** the native events (the plain forwarded svelte events are typed as DOM events) */
-    export let onChange: (event: PropertyChangeData) => void;
-    export let onTap: (event: EventData) => void;
+    export let onChange: (event: PropertyChangeData) => void = undefined;
+    export let onTap: (event: EventData) => void = undefined;
     /** an icon button inside the end of the field (a menu of values...) */
-    export let trailingIcon: string;
-    export let onTrailingTap: (view: View) => void;
+    export let trailingIcon: string = undefined;
+    export let onTrailingTap: (view: View) => void = undefined;
 
     $: hasValue = !!text?.length;
     $: containerMargin = margin ?? (__IOS__ ? '0 0 8 0' : '4 0');

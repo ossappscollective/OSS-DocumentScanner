@@ -19,7 +19,7 @@
     export let syncEnabled: boolean;
     export let layout: string;
     export let syncColors: string[];
-    export let stripHeight: number;
+    export let stripHeight: number = undefined;
 
     $: ({ colorBackground, colorPrimary } = $colors);
 
