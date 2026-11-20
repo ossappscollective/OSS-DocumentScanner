@@ -191,7 +191,7 @@
     "document_need_updated_app": "o documento \"%1$s\" foi criado com uma versão mais recente do aplicativo. Atualize antes de importar esse documento",
     "document_not_detected_margin": "sem margem de documento",
     "document_not_detected_margin_desc": "se nenhum documento for encontrado, os cantos serão ajustados ao tamanho da imagem com uma ligeira margem",
-    "documents": "documentos",
+    "documents": "Documentos",
     "documents_count_one": "%1$s documentos",
     "documents_count_other": "%1$s documentos",
     "documents_settings": "configurações de documentos",
