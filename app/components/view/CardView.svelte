@@ -82,6 +82,7 @@
 </script>
 
 <script lang="ts">
+    /* eslint-disable svelte/infinite-reactive-loop -- reactive statements only build menus whose closures update nbSelected, never run in them */
     import CardViewEmpty from '~/components/view/CardViewEmpty.svelte';
 
     $: ({ colorBackground, colorError, colorOnBackground, colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary, colorSurface, colorSurfaceContainerLow } = $colors);
@@ -211,15 +212,16 @@
     const pages = document.getObservablePages();
     let items = pages.map<Item>((page, index) => ({ selected: false, page, document, current: index === 0 }));
     $: detailsContainerProps = __ANDROID__ ? {} : { backgroundColor: colorSurface, borderRadius: 16 };
-    $: getDetailRowProps = (index: number, count: number) =>
-        __ANDROID__
+    function getDetailRowProps(index: number, count: number, colorRow: string, colorBorder: string) {
+        return __ANDROID__
             ? {
-                  backgroundColor: colorSurfaceContainerLow,
+                  backgroundColor: colorRow,
                   borderRadius: count === 1 ? 28 : index === 0 ? '28 28 6 6' : index === count - 1 ? '6 6 28 28' : 6,
                   marginTop: index > 0 ? 2 : 0,
                   padding: '12 20 12 20'
               }
-            : { borderTopColor: colorOutlineVariant, borderTopWidth: index > 0 ? 0.5 : 0, padding: '10 16 10 16' };
+            : { borderTopColor: colorBorder, borderTopWidth: index > 0 ? 0.5 : 0, padding: '10 16 10 16' };
+    }
 
     async function updateQRCodes(updateList = true) {
         try {
@@ -827,7 +829,7 @@
         const items = kind === 'photo' ? photos : kind === 'code' ? codes : [{ separator: true, title: lc('add_photo') }, ...photos, { separator: true, title: lc('add_code') }, ...codes];
         return items.map((item) => (item.separator ? item : { ...item, onSelect: () => runAddOption(item.id as string) }));
     }
-    $: addMenu = getAddMenu();
+    const addMenu = getAddMenu();
     function showAddMenu(kind: 'code' | 'photo', anchor: View) {
         return showMenu({ anchor, items: getAddMenu(kind) });
     }
@@ -949,15 +951,14 @@
         {bottomItems}
         android:backgroundColor={isPKPassDocument ? passColors.backgroundColor : accent.container}
         color={isPKPassDocument ? passColors.foregroundColor : backdropTextColor}
-        transitionDuration={TRANSITION_DURATION}
         iosIconRenderingMode="alwaysTemplate"
-        ios:translucent={!isPKPassDocument}
         scrollBehavior="lift"
         scrollTargetId="cardScroll"
         size={__IOS__ && !isPKPassDocument && !$isLandscape ? 'large' : 'small'}
         subtitle={($isLandscape || (__IOS__ && !isPKPassDocument)) && nbSelected === 0 ? dayjs(document.createdDate).format('LL') : null}
         title={nbSelected > 0 ? lcp('selected', nbSelected) : $isLandscape || (__IOS__ && !isPKPassDocument) || (__ANDROID__ && titleScrolled) ? document.name : ''}
-    >
+        transitionDuration={TRANSITION_DURATION}
+        ios:translucent={!isPKPassDocument}>
         {#if __ANDROID__}
             <navigationButton {...{ 'android.systemIcon': nbSelected > 0 ? 'ic_menu_close_clear_cancel' : 'ic_menu_back' }} on:tap={nbSelected > 0 ? unselectAll : onGoBack} />
         {/if}
@@ -1012,8 +1013,7 @@
         class="pageContent"
         backgroundColor={isPKPassDocument ? passColors.backgroundColor : __IOS__ && cardColor ? accent.container : colorBackground}
         backgroundImage={heroGradient}
-        on:layoutChanged={onPageLayout}
-    >
+        on:layoutChanged={onPageLayout}>
         {#if __IOS__ && backdropImage}
             <image
                 alwaysFade={true}
@@ -1024,8 +1024,7 @@
                 isUserInteractionEnabled={false}
                 opacity={isDarkTheme() ? 0.7 : 1}
                 src={backdropImage}
-                stretch="aspectFill"
-            />
+                stretch="aspectFill" />
         {/if}
         {#if CARD_APP && isPKPassDocument}
             <!-- the app bar pads its scroll target for the bottom toolbar: this empty one keeps it off the pager, so the pages go under the toolbar -->
@@ -1041,19 +1040,17 @@
             <!-- landscape: the zones are made when the page is measured, a pager does not follow the sizes which change after it was made (Android) -->
             <scrollview id="cardScroll" clipToBounds={bleed === 0} on:scroll={onCardScroll}>
                 <gridlayout
-                    paddingBottom={__ANDROID__ ? Math.max($windowInset.bottom, BOTTOM_BUTTON_OFFSET) : details.length ? 32 : 0}
                     clipToBounds={false}
                     columns={twoColumns ? '*,*' : '*'}
-                    rows="auto,auto,auto"
-                >
+                    paddingBottom={__ANDROID__ ? Math.max($windowInset.bottom, BOTTOM_BUTTON_OFFSET) : details.length ? 32 : 0}
+                    rows="auto,auto,auto">
                     <label
                         col={twoColumns ? 1 : 0}
                         color={backdropTextColor}
                         fontSize={15}
                         margin="0 16 8 16"
                         text={dayjs(document.createdDate).format('LL')}
-                        visibility={showDateUnderTitle && !$isLandscape ? 'visible' : 'collapsed'}
-                    />
+                        visibility={showDateUnderTitle && !$isLandscape ? 'visible' : 'collapsed'} />
                     {#if __ANDROID__ && !$isLandscape}
                         <gridlayout backgroundColor={accent.container} borderRadius="0 0 40 12" col={0} columns="*,auto" padding="0 20 {hasHero ? plateOverlap + 20 : 24} 20" rows="auto">
                             <label margin="8 0 0 0" maxLines={4} textWrap={true}>
@@ -1074,8 +1071,7 @@
                                 verticalAlignment="top"
                                 verticalTextAlignment="center"
                                 visibility={hasCustomName ? 'visible' : 'collapsed'}
-                                width={48}
-                            />
+                                width={48} />
                         </gridlayout>
                     {/if}
                     <gridlayout
@@ -1086,8 +1082,7 @@
                         marginTop={zonesOverlap}
                         row={twoColumns ? 0 : 1}
                         rowSpan={twoColumns ? 3 : 1}
-                        rows="auto,auto"
-                    >
+                        rows="auto,auto">
                         {#if hasQRCodes}
                             <gridlayout
                                 {...{ iosOverflowSafeArea: false }}
@@ -1096,8 +1091,7 @@
                                 margin={qrZoneMargin}
                                 row={0}
                                 rows="*,auto"
-                                width={qrZoneWidth ?? '100%'}
-                            >
+                                width={qrZoneWidth ?? '100%'}>
                                 <pager
                                     bind:this={qrPager}
                                     id="qrPager"
@@ -1105,8 +1099,7 @@
                                     peaking={multipleQR ? PEEK_WIDTH : 0}
                                     selectedIndex={currentQRCodeIndex}
                                     spacing={12}
-                                    on:selectedIndexChange={onSelectedIndex}
-                                >
+                                    on:selectedIndexChange={onSelectedIndex}>
                                     <Template let:item>
                                         <gridlayout
                                             backgroundColor="white"
@@ -1115,8 +1108,7 @@
                                             margin={qrCardMargin}
                                             padding="20"
                                             rows="*,auto"
-                                            on:tap={onQRCodeTap}
-                                        >
+                                            on:tap={onQRCodeTap}>
                                             <svgview src={item.svg} stretch="aspectFit" />
                                             <label
                                                 color="black"
@@ -1131,8 +1123,7 @@
                                                 selectable={true}
                                                 text={item.text}
                                                 textAlignment="center"
-                                                textWrap={true}
-                                            />
+                                                textWrap={true} />
                                         </gridlayout>
                                     </Template>
                                 </pager>
@@ -1145,8 +1136,7 @@
                                         pagerViewId="qrPager"
                                         row={1}
                                         selectedColor={colorOnSurface}
-                                        type="worm"
-                                    />
+                                        type="worm" />
                                 {/if}
                             </gridlayout>
                         {/if}
@@ -1157,13 +1147,12 @@
                                         bind:this={pager}
                                         id="imagesPager"
                                         {items}
-                                        selectedIndex={currentImageIndex}
                                         margin={photosPagerMargin}
                                         peaking={photoPeaking}
                                         preserveIndexOnItemsChange={true}
+                                        selectedIndex={currentImageIndex}
                                         spacing={12}
-                                        on:selectedIndexChange={onImagesPagerIndex}
-                                    >
+                                        on:selectedIndexChange={onImagesPagerIndex}>
                                         <Template let:item>
                                             <gridlayout
                                                 backgroundColor={getPhotoBackground(item.page)}
@@ -1174,8 +1163,7 @@
                                                 visibility={item.page.imagePath ? 'visible' : 'collapsed'}
                                                 on:loaded={(e) => registerImageMenu(e, item)}
                                                 on:longPress={() => onImageLongPress(item)}
-                                                on:tap={() => onPhotoTap(item)}
-                                            >
+                                                on:tap={() => onPhotoTap(item)}>
                                                 <RotableImageView
                                                     id="imageView"
                                                     aspectRatio={1 / CARD_RATIO}
@@ -1183,8 +1171,7 @@
                                                     decodeWidth={screenWidthDips}
                                                     item={item.page}
                                                     sharedTransitionTag={`document_${document.id}_${item.page.id}`}
-                                                    stretch="aspectFill"
-                                                />
+                                                    stretch="aspectFill" />
                                                 <!-- the light edge of a card, at the top only -->
                                                 <gridlayout backgroundColor="#FFFFFF66" height={1} isUserInteractionEnabled={false} margin="0 14" verticalAlignment="top" />
                                                 <uibutton
@@ -1198,8 +1185,7 @@
                                                     verticalAlignment="bottom"
                                                     width={36}
                                                     {...{ src: appIcon('edit') }}
-                                                    on:tap={() => editPage(item.page)}
-                                                />
+                                                    on:tap={() => editPage(item.page)} />
                                             </gridlayout>
                                         </Template>
                                     </pager>
@@ -1210,16 +1196,15 @@
                                     ios:autoReloadItemOnLayout={true}
                                     colWidth={FILMSTRIP_COL_WIDTH}
                                     height={FILMSTRIP_HEIGHT}
+                                    isScrollEnabled={filmstrip.scrollable}
                                     {items}
                                     margin="8 0 8 0"
                                     orientation="horizontal"
-                                    isScrollEnabled={filmstrip.scrollable}
                                     paddingLeft={filmstrip.padding}
                                     paddingRight={filmstrip.padding}
                                     row={1}
                                     rowHeight={FILMSTRIP_HEIGHT}
-                                    visibility={multiplePhotos ? 'visible' : 'collapsed'}
-                                >
+                                    visibility={multiplePhotos ? 'visible' : 'collapsed'}>
                                     <Template let:index let:item>
                                         <gridlayout
                                             class="cardItemTemplate"
@@ -1228,29 +1213,25 @@
                                             margin={FILMSTRIP_CELL_MARGIN}
                                             rippleColor={colorSurface}
                                             on:tap={() => onItemTap(item)}
-                                            on:longPress={() => toggleSelection(item)}
-                                        >
+                                            on:longPress={() => toggleSelection(item)}>
                                             <!-- the content is what is scaled: the cell itself keeps its size and its touch handlers -->
                                             <gridlayout
                                                 class={item.current ? 'thumbnailCurrent' : 'thumbnail'}
                                                 backgroundColor={getItemBackgroundColor(item)}
-                                                borderRadius={FILMSTRIP_THUMBNAIL_RADIUS}
-                                            >
+                                                borderRadius={FILMSTRIP_THUMBNAIL_RADIUS}>
                                                 <RotableImageView
                                                     id="imageView"
                                                     borderRadius={FILMSTRIP_THUMBNAIL_RADIUS}
                                                     decodeWidth={FILMSTRIP_COL_WIDTH}
                                                     item={item.page}
                                                     stretch="aspectFill"
-                                                    width="100%"
-                                                />
+                                                    width="100%" />
                                                 <gridlayout class="thumbnailScrim" backgroundColor="#00000066" borderRadius={FILMSTRIP_THUMBNAIL_RADIUS} isUserInteractionEnabled={false} />
                                                 <gridlayout
                                                     backgroundColor="#0000004D"
                                                     borderRadius={FILMSTRIP_THUMBNAIL_RADIUS}
                                                     isUserInteractionEnabled={false}
-                                                    visibility={item.selected ? 'visible' : 'hidden'}
-                                                >
+                                                    visibility={item.selected ? 'visible' : 'hidden'}>
                                                     <label
                                                         backgroundColor={colorPrimary}
                                                         borderColor="white"
@@ -1266,8 +1247,7 @@
                                                         textAlignment="center"
                                                         verticalAlignment="bottom"
                                                         verticalTextAlignment="center"
-                                                        width={20}
-                                                    />
+                                                        width={20} />
                                                 </gridlayout>
                                             </gridlayout>
                                         </gridlayout>
@@ -1284,10 +1264,14 @@
                             row={twoColumns ? 0 : 2}
                             verticalAlignment="top"
                             width={$isLandscape && !twoColumns ? DETAILS_LANDSCAPE_WIDTH : undefined}
-                            {...detailsContainerProps}
-                        >
+                            {...detailsContainerProps}>
                             {#each details as detail, index (detail.name)}
-                                <label linkColor={colorOnSurface} {...{ linkUnderline: false }} selectable={true} textWrap={true} {...getDetailRowProps(index, details.length)}>
+                                <label
+                                    linkColor={colorOnSurface}
+                                    {...{ linkUnderline: false }}
+                                    selectable={true}
+                                    textWrap={true}
+                                    {...getDetailRowProps(index, details.length, colorSurfaceContainerLow, colorOutlineVariant)}>
                                     <span color={colorOnSurfaceVariant} fontSize={13} text={detail.name} />
                                     <span color={colorOnSurface} fontSize={17} text={'\n' + formatExtraValue(detail.extra)} />
                                 </label>
@@ -1311,8 +1295,7 @@
                         color={passColors.backgroundColor}
                         src={appIcon('export')}
                         text={lc('export')}
-                        on:tap={showExportMenu}
-                    />
+                        on:tap={showExportMenu} />
                 {:else}
                     {#if canBeExportedToPDF}
                         <uibutton class="addFab" backgroundColor={accent.container} color={accent.accent} {...{ src: appIcon('export') }} variant="contained" on:tap={showExportMenu} />

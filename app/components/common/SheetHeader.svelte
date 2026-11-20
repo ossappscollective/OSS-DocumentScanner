@@ -4,16 +4,16 @@
     import { colors } from '~/variables';
 
     export let title: string;
-    export let doneText: string = undefined;
+    export let doneText: string;
     export let doneEnabled = true;
-    export let onCancel: () => void = undefined;
-    export let onDone: () => void = undefined;
+    export let onCancel: () => void;
+    export let onDone: () => void;
     /** an icon action next to the done action (add a field...) */
-    export let actionIcon: string = undefined;
-    export let actionLabel: string = undefined;
-    export let onAction: () => void = undefined;
+    export let actionIcon: string;
+    export let actionLabel: string;
+    export let onAction: () => void;
     /** the action is a text button (reset...) instead of an icon */
-    export let actionText: string = undefined;
+    export let actionText: string;
     export let actionEnabled = true;
     /** a sheet which applies every change at once has no Cancel: iOS keeps the room so that the title stays centered */
     export let showCancel = true;
@@ -40,16 +40,15 @@
         android:color={actionText ? colorPrimary : undefined}
         android:fontSize={actionText ? 14 : 28}
         android:height={actionText ? 40 : undefined}
+        isEnabled={actionEnabled}
         marginRight={4}
         android:variant="text"
         ios:variant="glass"
-        isEnabled={actionEnabled}
         opacity={actionEnabled ? 1 : 0.45}
         text={actionText}
         visibility={actionIcon || actionText ? 'visible' : 'collapsed'}
         {...{ src: actionIcon }}
-        on:tap={onAction}
-    />
+        on:tap={onAction} />
     <uibutton
         col={3}
         color={doneColor}
@@ -61,6 +60,5 @@
         android:variant="text"
         ios:variant="contained"
         visibility={doneText ? 'visible' : 'collapsed'}
-        on:tap={onDone}
-    />
+        on:tap={onDone} />
 </gridlayout>

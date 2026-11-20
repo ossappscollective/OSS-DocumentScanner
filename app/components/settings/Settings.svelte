@@ -991,7 +991,6 @@
     getItemProps={getRowProps}
     getLeftIconProps={getIconProps}
     groupRows={true}
-    sectionHeaderClass="settingsSectionHeader"
     {onCheckBox}
     onItemLongPress={(item, event) => onLongPress(item.id, event)}
     onItemTap={onTap}
@@ -999,6 +998,7 @@
     pageComponent={AppPageRoot}
     {searchEnabled}
     {searchItemsProvider}
+    sectionHeaderClass="settingsSectionHeader"
     title={title || $slc('settings.title')}
     bind:refresh>
     <appBar
@@ -1008,10 +1008,10 @@
         iosIconRenderingMode="alwaysTemplate"
         scrollBehavior="lift"
         scrollTargetId="settingsCollectionView"
-        searchable={searchEnabled}
         searchHint={lc('search')}
         searchMode="collapsible"
         searchPlacement="integrated"
+        searchable={searchEnabled}
         size={__IOS__ && !$isLandscape ? 'large' : 'small'}
         title={title || $slc('settings.title')}
         ios:translucent={true}

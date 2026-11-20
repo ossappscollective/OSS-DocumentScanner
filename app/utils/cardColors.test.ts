@@ -85,7 +85,7 @@ describe('getChipColors', () => {
     });
 
     it('is the wash of the tint over the background', () => {
-        const { r, g, b } = rgb(getChipColors('#000000', '#ffffff', 102).backgroundColor);
+        const { b, g, r } = rgb(getChipColors('#000000', '#ffffff', 102).backgroundColor);
         expect([r, g, b]).toEqual([153, 153, 153]);
     });
 

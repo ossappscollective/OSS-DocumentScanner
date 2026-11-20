@@ -23,10 +23,10 @@
 <gridlayout width="100%" {...$$restProps}>
     <gridlayout
         backgroundColor={isEInk ? null : '#FFFFFF'}
-        borderRadius={radius}
-        margin={6}
         borderColor={colorOutlineVariant}
+        borderRadius={radius}
         borderWidth={1}
+        margin={6}
         scaleX={selected ? 0.95 : 1}
         scaleY={selected ? 0.95 : 1}
         on:tap

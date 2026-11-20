@@ -15,5 +15,4 @@
     verticalAlignment="bottom"
     verticalTextAlignment="center"
     on:longPress
-    {...$$restProps}
-/>
+    {...$$restProps} />

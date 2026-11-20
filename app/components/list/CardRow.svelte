@@ -18,7 +18,7 @@
 
     $: ({ colorOnSurface, colorOnSurfaceVariant, colorPrimary } = $colors);
 
-    $: ({ page, hasImage, hasCode, label, cardColor } = getCardDisplay(item));
+    $: ({ cardColor, hasCode, hasImage, label, page } = getCardDisplay(item));
     $: tile = getTileColors(cardColor, colorPrimary);
     $: status = pkPassCell && page?.pkpass ? getPKPassStatus(page.pkpass, lang, 'list') : undefined;
     $: subtitle = pkPassCell ? '' : hasImage ? lcp('photos_count', item.doc.pages.length) : '';
@@ -26,13 +26,7 @@
 
 <!-- the content of the thumbnail is the slot: a photo, a tile or a pass each have their own template -->
 <GroupedRow dividerInset={108} {height} {item} {selectionMode} {...$$restProps} on:tap on:longPress>
-    <gridlayout
-        backgroundColor={pkPassCell ? (page?.pkpass?.passData?.backgroundColor ?? tile.fill) : hasImage ? null : tile.fill}
-        borderRadius={11}
-        height={60}
-        verticalAlignment="center"
-        width={96}
-    >
+    <gridlayout backgroundColor={pkPassCell ? (page?.pkpass?.passData?.backgroundColor ?? tile.fill) : hasImage ? null : tile.fill} borderRadius={11} height={60} verticalAlignment="center" width={96}>
         <slot />
     </gridlayout>
     <gridlayout col={1} margin="0 12" rows="auto,auto" verticalAlignment="center">
@@ -45,9 +39,8 @@
                 size={16}
                 src={appIcon('qrcode')}
                 verticalAlignment="center"
-                visibility={hasCode && hasImage ? 'visible' : 'collapsed'}
-            />
-            <CardStatusChips extra={item.doc.extra} {status} marginLeft={subtitle || (hasCode && hasImage) ? 8 : 0} verticalAlignment="center" />
+                visibility={hasCode && hasImage ? 'visible' : 'collapsed'} />
+            <CardStatusChips extra={item.doc.extra} marginLeft={subtitle || (hasCode && hasImage) ? 8 : 0} {status} verticalAlignment="center" />
             <slot name="chips" hasLeading={!!subtitle || (hasCode && hasImage) || status?.length > 0} />
         </stacklayout>
     </gridlayout>

@@ -23,7 +23,7 @@ import { OCRData } from 'plugin-nativeprocessor';
  *       based on whether it's on the same line as the next anchor.
  */
 export function updateOCRBlocks(ocrData: OCRData, updatedText: string): OCRData {
-    const { text: originalText, blocks } = ocrData;
+    const { blocks, text: originalText } = ocrData;
     if (blocks.length === 0) return { ...ocrData, text: updatedText };
 
     // ── 1. Locate each block's span in originalText ──────────────────────────────

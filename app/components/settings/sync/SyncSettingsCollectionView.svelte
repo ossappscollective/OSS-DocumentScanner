@@ -222,8 +222,7 @@
         <ListItemAutoSize
             item={{ subtitle: lc('sync_service_color_desc'), title: lc('color') }}
             {...getRowProps({ ...item, description: lc('sync_service_color_desc') })}
-            on:tap={(event) => changeColor(item, event)}
-        >
+            on:tap={(event) => changeColor(item, event)}>
             <absolutelayout backgroundColor={$store.color} borderColor={colorOutline} borderRadius="50%" borderWidth={2} col={1} height={40} marginLeft={10} width={40} />
         </ListItemAutoSize>
     </Template>

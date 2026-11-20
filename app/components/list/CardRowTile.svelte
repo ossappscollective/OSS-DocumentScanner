@@ -9,7 +9,7 @@
     export let item: Item;
 
     $: ({ colorPrimary } = $colors);
-    $: ({ label, cardColor, hasCode } = getCardDisplay(item));
+    $: ({ cardColor, hasCode, label } = getCardDisplay(item));
     $: tile = getTileColors(cardColor, colorPrimary);
 </script>
 

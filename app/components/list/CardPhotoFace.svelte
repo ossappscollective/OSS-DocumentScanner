@@ -14,12 +14,12 @@
     export let itemWidth: number;
     export let layout: string;
     export let alwaysShowNames: boolean;
-    export let stripHeight: number = undefined;
+    export let stripHeight: number;
 
     $: ({ colorBackground } = $colors);
 
     $: stacked = layout === 'cardholder' || layout === 'full';
-    $: ({ hasCode, autoName, label, page } = getCardDisplay(item));
+    $: ({ autoName, hasCode, label, page } = getCardDisplay(item));
     // the color of the image, as on the tile behind it: the icons take the readable color over it
     $: iconColor = getTileColors(page.extra?.color ?? page.colors?.[1], colorBackground).text;
     // the icons share the bottom row of a columns tile with the title chip
@@ -38,8 +38,7 @@
     fadeDuration={100}
     item={item.doc.pages[0]}
     sharedTransitionTag="document_{item.doc.id}_{item.doc.pages[0].id}"
-    stretch="aspectFill"
-/>
+    stretch="aspectFill" />
 <!-- the title chip and the chips never share a row: the title is on top and the chips at the bottom of the strip seen above the next card (stacked), the other way around otherwise -->
 <gridlayout columns="*,auto,auto" height={stripHeight} rows="auto,*" verticalAlignment={stripHeight ? 'top' : 'stretch'}>
     <CardChip
@@ -54,8 +53,7 @@
         text={label}
         tint={chipTextColor}
         verticalAlignment={stacked ? 'top' : 'bottom'}
-        visibility={showLabel ? 'visible' : 'collapsed'}
-    />
+        visibility={showLabel ? 'visible' : 'collapsed'} />
     <CardStatusChips col={1} extra={item.doc.extra} margin={8} row={stacked ? 1 : 0} verticalAlignment={stacked ? 'bottom' : 'top'} />
     <CardBadges code={hasCode} col={2} color={iconColor} favorite={item.doc.favorite === 1} margin="8 12 6 0" row={1} verticalAlignment="bottom" />
 </gridlayout>

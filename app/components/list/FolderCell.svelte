@@ -40,8 +40,7 @@
     {...corners}
     {...$$restProps}
     on:tap
-    on:longPress
->
+    on:longPress>
     <gridlayout columns={tile ? 'auto,*' : 'auto,*,auto,auto'} paddingLeft={tile ? 0 : markerWidth} use:selectionTransition={{ selectionMode, shift: tile ? 0 : 36 }}>
         <gridlayout backgroundColor={iconBackground.hex} borderRadius={iconSize / 2} height={iconSize} verticalAlignment="center" width={iconSize}>
             <CardIcon color={iconColor} horizontalAlignment="center" size={20} src={appIcon('folder_outline')} verticalAlignment="center" />
@@ -59,21 +58,19 @@
                 size={16}
                 src={appIcon('chevron')}
                 verticalAlignment="center"
-                visibility={$selectionMode || __ANDROID__ ? 'collapsed' : 'visible'}
-            />
+                visibility={$selectionMode || __ANDROID__ ? 'collapsed' : 'visible'} />
         {/if}
     </gridlayout>
     {#if tile}
         <SelectedIndicator horizontalAlignment="right" margin={2} selected={item.selected} verticalAlignment="top" />
     {:else}
-        <RowSelectionMarker marginLeft={0} {selectionMode} selected={item.selected} />
+        <RowSelectionMarker marginLeft={0} selected={item.selected} {selectionMode} />
         <gridlayout
             backgroundColor={colorOutlineVariant}
             height={0.5}
             marginLeft={46 + markerWidth}
             marginRight={-14}
             verticalAlignment="bottom"
-            visibility={__IOS__ && (item.position === 'first' || item.position === 'middle') ? 'visible' : 'collapsed'}
-        />
+            visibility={__IOS__ && (item.position === 'first' || item.position === 'middle') ? 'visible' : 'collapsed'} />
     {/if}
 </gridlayout>

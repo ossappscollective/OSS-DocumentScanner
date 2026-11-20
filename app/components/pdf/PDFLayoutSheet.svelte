@@ -37,9 +37,9 @@
     /** the header (title, reset, done): the panel of the landscape has these in the bar of the page */
     export let showHeader = true;
     /** the persistent sheet closes itself with this */
-    export let onClose: () => void = undefined;
+    export let onClose: () => void;
     /** the id of the scroll view, for the persistent sheet to hand the scrolling over to it */
-    export let scrollId: string = undefined;
+    export let scrollId: string;
 
     // the content is one row of a collection view: the persistent sheet hands the scrolling over to a view which supports `isScrollEnabled`, the scroll view of the core does not on Android
     // its row is bound to the state: a cell shows what its item says, so the item is set again with each change of the options
@@ -103,7 +103,12 @@
 </script>
 
 <!-- Android: the grabber of the modal sheet pushes the content down by 28 inside the detent -->
-<SheetRoot height={__ANDROID__ && !inline && typeof sheetHeight === 'number' ? sheetHeight - 28 : sheetHeight} {inline} rows="auto,*" {...__IOS__ && !inline ? { backgroundColor: glass ? 'transparent' : colorBackground } : {}} {...$$restProps}>
+<SheetRoot
+    height={__ANDROID__ && !inline && typeof sheetHeight === 'number' ? sheetHeight - 28 : sheetHeight}
+    {inline}
+    rows="auto,*"
+    {...__IOS__ && !inline ? { backgroundColor: glass ? 'transparent' : colorBackground } : {}}
+    {...$$restProps}>
     {#if showHeader}
         <SheetHeader actionEnabled={modified} actionText={lc('reset')} doneText={inline ? lc('done') : undefined} onAction={onReset} onDone={onClose} showCancel={false} title={lc('page_layout')} />
     {/if}
@@ -115,7 +120,16 @@
                     <gridlayout columns="*,auto,auto" padding="12 14" on:tap={showPaperMenu}>
                         <label color={textColor} fontSize={17} text={lc('paper_size')} verticalAlignment="center" />
                         <label col={1} color={secondaryColor} fontSize={15} text={PDF_OPTIONS.paper_size[paper_size].name} verticalAlignment="center" />
-                        <uibutton col={2} color={secondaryColor} height={20} isUserInteractionEnabled={false} padding={0} variant="text" verticalAlignment="center" width={20} {...{ src: appIcon('chevron') }} />
+                        <uibutton
+                            col={2}
+                            color={secondaryColor}
+                            height={20}
+                            isUserInteractionEnabled={false}
+                            padding={0}
+                            variant="text"
+                            verticalAlignment="center"
+                            width={20}
+                            {...{ src: appIcon('chevron') }} />
                     </gridlayout>
                     <!-- the paper is the page itself: the other options do not apply -->
                     <stacklayout isUserInteractionEnabled={!fullSize} opacity={fullSize ? 0.45 : 1}>
@@ -192,7 +206,13 @@
                     <label color={secondaryColor} fontSize={__IOS__ ? 13 : 12} margin="8 32 0 32" text={lc('pdf_layout_full_hint')} textWrap={true} />
                 {/if}
                 {#if hasOCRText}
-                    <gridlayout backgroundColor={groupColor} borderRadius={GROUP_RADIUS} columns="*,auto" margin="8 16 0 16" padding="7 14" on:tap={() => onSwitchRowTap('draw_ocr_text', !draw_ocr_text)}>
+                    <gridlayout
+                        backgroundColor={groupColor}
+                        borderRadius={GROUP_RADIUS}
+                        columns="*,auto"
+                        margin="8 16 0 16"
+                        padding="7 14"
+                        on:tap={() => onSwitchRowTap('draw_ocr_text', !draw_ocr_text)}>
                         <stacklayout verticalAlignment="center">
                             <label color={textColor} fontSize={17} text={lc('draw_ocr_text')} />
                             <label color={secondaryColor} fontSize={13} text={lc('pdf_ocr_text_desc')} />

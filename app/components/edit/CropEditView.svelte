@@ -95,7 +95,16 @@
 
 <frame id="cropFrame">
     <appPage id="cropEdit" backgroundColor={screenColor} statusBarStyle={isEInk ? 'light' : 'dark'}>
-        <appBar {bottomItems} android:backgroundColor={screenColor} android:bottomBarBackgroundColor="#2B2D33" android:bottomBarColor={textColor} color={textColor} iosIconRenderingMode="alwaysTemplate" size="small" subtitle={$isLandscape ? lc('crop_edit_doc') : undefined} title={__ANDROID__ || $isLandscape ? lc('crop') : ''}>
+        <appBar
+            {bottomItems}
+            android:backgroundColor={screenColor}
+            android:bottomBarBackgroundColor="#2B2D33"
+            android:bottomBarColor={textColor}
+            color={textColor}
+            iosIconRenderingMode="alwaysTemplate"
+            size="small"
+            subtitle={$isLandscape ? lc('crop_edit_doc') : undefined}
+            title={__ANDROID__ || $isLandscape ? lc('crop') : ''}>
             {#if __ANDROID__}
                 <navigationButton {...{ 'android.systemIcon': 'ic_menu_close_clear_cancel' }} on:tap={onClose} />
             {:else}
@@ -114,7 +123,19 @@
         </appBar>
         <gridlayout class="pageContent" backgroundColor={screenColor} paddingTop={8} rows="*,auto" android:paddingBottom={$isLandscape ? $windowInset.bottom : $windowInset.bottom + 96}>
             <CropView bind:this={cropView} {...cropItem ? cropItem : null} {quads} bind:quadChanged on:dragging={onDragging} on:undosChanged={onUndosChanged} />
-            <label bind:this={hint} color={hintColor} fontSize={__IOS__ ? 15 : 14} height={40} marginBottom={__IOS__ ? 8 : 0} marginTop={8} row={1} text={lc('crop_edit_doc')} textAlignment="center" textWrap={true} verticalTextAlignment="center" visibility={$isLandscape ? 'collapsed' : 'visible'} />
+            <label
+                bind:this={hint}
+                color={hintColor}
+                fontSize={__IOS__ ? 15 : 14}
+                height={40}
+                marginBottom={__IOS__ ? 8 : 0}
+                marginTop={8}
+                row={1}
+                text={lc('crop_edit_doc')}
+                textAlignment="center"
+                textWrap={true}
+                verticalTextAlignment="center"
+                visibility={$isLandscape ? 'collapsed' : 'visible'} />
         </gridlayout>
     </appPage>
 </frame>

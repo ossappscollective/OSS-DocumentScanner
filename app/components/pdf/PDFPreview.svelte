@@ -442,9 +442,17 @@
             {/if}
         {/if}
     </appBar>
-    <PageSheetLayout bind:sheet scrollViewId="layoutScroll" stepIndex={LAYOUT_OPEN_STEP_INDEX} steps={LAYOUT_SHEET_STEPS} {translationFunction} on:animated={updateBottomInset} on:layoutChanged={onSheetLayout} on:stepIndexChange={onSheetStep}>
+    <PageSheetLayout
+        scrollViewId="layoutScroll"
+        stepIndex={LAYOUT_OPEN_STEP_INDEX}
+        steps={LAYOUT_SHEET_STEPS}
+        {translationFunction}
+        bind:sheet
+        on:animated={updateBottomInset}
+        on:layoutChanged={onSheetLayout}
+        on:stepIndexChange={onSheetStep}>
         <!-- an absolute layout measures its children by their content: the page body fills it -->
-        <gridlayout slot="content" bind:this={pageContent} height="100%" rows="*" width="100%" on:layoutChanged={onContentLayout}>
+        <gridlayout bind:this={pageContent} slot="content" height="100%" rows="*" width="100%" on:layoutChanged={onContentLayout}>
             {#if hasSheets}
                 <pager
                     bind:this={pager}
@@ -498,7 +506,14 @@
                             width={40}
                             {...{ src: appIcon(error ? 'error' : 'pdf') }} />
                     </gridlayout>
-                    <label color={colorOnBackground} fontSize={22} fontWeight="bold" marginTop={24} text={lc(error ? 'pdf_preview_error' : 'pdf_preview_empty')} textAlignment="center" textWrap={true} />
+                    <label
+                        color={colorOnBackground}
+                        fontSize={22}
+                        fontWeight="bold"
+                        marginTop={24}
+                        text={lc(error ? 'pdf_preview_error' : 'pdf_preview_empty')}
+                        textAlignment="center"
+                        textWrap={true} />
                     <label color={colorOnSurfaceVariant} fontSize={15} marginTop={8} text={error || lc('pdf_preview_empty_desc')} textAlignment="center" textWrap={true} />
                     {#if error}
                         <uibutton marginTop={24} text={lc('retry')} variant="contained" on:tap={refresh} />
@@ -512,9 +527,15 @@
                 <PageCounter marginBottom={counterBottom} text={`${currentPagerIndex + 1} / ${items.length}`} />
             {/if}
         </gridlayout>
-        <PersistentSheetFrame slot="sheet" height={$isLandscape ? '100%' : LAYOUT_SHEET_HEIGHT + bottomInset} panel={$isLandscape} rows={$isLandscape ? '*' : 'auto'} shadow={sheetOpen} width={$isLandscape ? '100%' : sheetWidth}>
+        <PersistentSheetFrame
+            slot="sheet"
+            height={$isLandscape ? '100%' : LAYOUT_SHEET_HEIGHT + bottomInset}
+            panel={$isLandscape}
+            rows={$isLandscape ? '*' : 'auto'}
+            shadow={sheetOpen}
+            width={$isLandscape ? '100%' : sheetWidth}>
             <PDFLayoutSheet
-                hasOCRText={hasOCRText}
+                {hasOCRText}
                 inline={true}
                 onChange={updateOption}
                 onClose={closeLayout}
@@ -523,8 +544,8 @@
                 {optionsStore}
                 row={1}
                 scrollId="layoutScroll"
-                showHeader={!$isLandscape}
-                sheetHeight={$isLandscape ? '100%' : LAYOUT_LIST_HEIGHT + bottomInset} />
+                sheetHeight={$isLandscape ? '100%' : LAYOUT_LIST_HEIGHT + bottomInset}
+                showHeader={!$isLandscape} />
         </PersistentSheetFrame>
     </PageSheetLayout>
     <appPageOverlay>

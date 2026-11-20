@@ -8,7 +8,7 @@
     $: ({ colorBackground, colorOutlineVariant, colorSurfaceContainerLow } = $colors);
 
     export let height: number | string;
-    export let width: number | string = undefined;
+    export let width: number | string;
     /** the rows under the grabber */
     export let rows: string;
     export let shadow = true;
@@ -25,8 +25,8 @@
     borderTopRightRadius={panel ? 0 : __IOS__ ? 26 : 28}
     boxShadow={__IOS__ && shadow && !panel ? '0 -3 10 #00000072' : undefined}
     {height}
-    {opacity}
     horizontalAlignment="left"
+    {opacity}
     rows={`${panel ? 0 : SHEET_GRABBER_HEIGHT},${rows}`}
     {width}>
     <absolutelayout backgroundColor={colorOutlineVariant} borderRadius={2.5} height={5} horizontalAlignment="center" marginTop={10} visibility={panel ? 'collapsed' : 'visible'} width={36} />

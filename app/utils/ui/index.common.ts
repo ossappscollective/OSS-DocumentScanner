@@ -11,22 +11,7 @@ import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
 import { MDCAlertControlerOptions, PromptOptions, confirm, prompt } from '@nativescript-community/ui-dialogs';
 import { HorizontalPosition, PopoverOptions, VerticalPosition } from '@nativescript-community/ui-popover';
 import { closePopover, showPopover } from '@nativescript-community/ui-popover/svelte';
-import {
-    Animation,
-    AnimationDefinition,
-    Application,
-    ApplicationSettings,
-    Color,
-    File,
-    GridLayout,
-    ImageSource,
-    ObservableArray,
-    Screen,
-    Utils,
-    View,
-    knownFolders,
-    path
-} from '@nativescript/core';
+import { Animation, AnimationDefinition, Application, ApplicationSettings, Color, File, GridLayout, ImageSource, ObservableArray, Screen, Utils, View, knownFolders, path } from '@nativescript/core';
 import { ConfirmOptions } from '@nativescript/core/ui/dialogs/dialogs-common';
 import { SDK_VERSION, copyToClipboard, openFile } from '@nativescript/core/utils';
 import { create as createImagePicker } from '@nativescript/imagepicker';
@@ -92,7 +77,6 @@ import {
     SETTINGS_ALWAYS_PROMPT_CROP_EDIT,
     SETTINGS_CROP_ENABLED,
     SETTINGS_DEFAULT_BRIGHTNESS,
-    SHEET_PAN_SOFT_INPUT_MODE,
     SETTINGS_DEFAULT_COLORMATRIX,
     SETTINGS_DEFAULT_COLORTYPE,
     SETTINGS_DEFAULT_CONTRAST,
@@ -102,6 +86,7 @@ import {
     SETTINGS_TRANSFORM_BATCH_SIZE,
     SETTINGS_TRASH_ENABLED,
     SETTINGS_TRASH_REMEMBERED_DELETE_MODE,
+    SHEET_PAN_SOFT_INPUT_MODE,
     TRANSFORMS_SPLIT,
     TRANSFORM_BATCH_SIZE,
     USE_SYSTEM_CAMERA,
@@ -582,21 +567,21 @@ export async function showSettings(props?) {
 export async function askPDFExportOptions({ filename, folder, showFilename }: { filename?: string; folder: string; showFilename: boolean }) {
     const view = (await import('~/components/common/ExportPDFOptionsSheet.svelte')).default;
     const defaultOptions = getPDFDefaultExportOptions();
-    return (await showBottomSheet({
+    return showBottomSheet({
         view,
         skipCollapsedState: true,
         windowSoftInputMode: SHEET_PAN_SOFT_INPUT_MODE,
         props: { filename, folder, jpegQuality: defaultOptions.jpegQuality, password: defaultOptions.password, showFilename }
-    })) as { filename?: string; folder: string; jpegQuality: number; password: string } | undefined;
+    });
 }
 
 export async function showPDFPopoverMenu({
+    action,
     anchor,
     document,
     documents,
     pages,
-    popoverOptions,
-    action
+    popoverOptions
 }: {
     pages: { page: OCRPage; document: OCRDocument }[];
     document?: OCRDocument;
@@ -1265,7 +1250,17 @@ export async function showImagePopoverMenu(pages: { page: OCRPage; document: OCR
  * The sections: PDF, then the passes and the images, then the settings. An item which does not apply is not there.
  * `pdf: false` is for the page edit (the menu is about the current page).
  */
-export function getExportMenu({ document, documents, pages, pdf = true }: { pages: { page: OCRPage; document: OCRDocument }[]; document?: OCRDocument; documents?: OCRDocument[]; pdf?: boolean }): MenuItem[] {
+export function getExportMenu({
+    document,
+    documents,
+    pages,
+    pdf = true
+}: {
+    pages: { page: OCRPage; document: OCRDocument }[];
+    document?: OCRDocument;
+    documents?: OCRDocument[];
+    pdf?: boolean;
+}): MenuItem[] {
     const allDocuments = documents ?? (document ? [document] : []);
     const hasImages = pages.some((p) => p.page?.imagePath);
     const hasPass = CARD_APP && pages.some((p) => p.page?.pkpass);
@@ -1591,7 +1586,16 @@ export async function transformPages({ documents, pages }: { documents?: OCRDocu
             view,
             detents: [sheetHeight],
             keepStatusBarStyle: true,
-            props: { sheetHeight, applyMode: true, transforms: [], colorType: DEFAULT_COLORTYPE, colorMatrix: null, brightness: DEFAULT_BRIGHTNESS, contrast: DEFAULT_CONTRAST, cameraOptionsStore: null }
+            props: {
+                sheetHeight,
+                applyMode: true,
+                transforms: [],
+                colorType: DEFAULT_COLORTYPE,
+                colorMatrix: null,
+                brightness: DEFAULT_BRIGHTNESS,
+                contrast: DEFAULT_CONTRAST,
+                cameraOptionsStore: null
+            }
         });
         if (updateOptions) {
             // await showLoading(lc('computing'));

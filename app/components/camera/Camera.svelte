@@ -698,15 +698,23 @@
                 {zoom}
                 on:cameraOpen={onCameraOpen}
                 on:zoom={onZoom}
-                on:tap={focusCamera}
-            />
+                on:tap={focusCamera} />
             <cropview bind:this={cropView} colors={[colorPrimary]} fillAlpha={120} height="100%" isUserInteractionEnabled={false} {stretch} strokeWidth={3} width="100%" />
             <absolutelayout bind:this={focusRing} borderColor="white" borderRadius={35} borderWidth={1.5} height={70} opacity={0} width={70} />
         </absolutelayout>
 
         <gridlayout columns="auto,*,auto" marginLeft={12} marginRight={12} marginTop={8} android:marginTop={8 + $windowInset.top}>
             {#if !startOnCam}
-                <uibutton class="overlayIconButton" accessibilityLabel={lc('close')} color="white" height={44} variant={overlayButtonVariant} width={44} {...{ src: appIcon('close') }} on:tap={() => onGoBack()} use:counterRotate />
+                <uibutton
+                    class="overlayIconButton"
+                    accessibilityLabel={lc('close')}
+                    color="white"
+                    height={44}
+                    variant={overlayButtonVariant}
+                    width={44}
+                    {...{ src: appIcon('close') }}
+                    on:tap={() => onGoBack()}
+                    use:counterRotate />
             {/if}
             <stacklayout col={2} orientation="horizontal">
                 <uibutton
@@ -720,7 +728,17 @@
                     {...{ src: appIcon(torchEnabled ? 'torch' : (FLASH_ICON_IDS[flashMode] ?? 'flash_off')) }}
                     on:tap={showFlashMenu}
                     use:counterRotate />
-                <uibutton class="overlayIconButton" accessibilityLabel={lc('toggle_camera')} color="white" height={44} margin={4} variant={overlayButtonVariant} width={44} {...{ src: appIcon('switch_camera') }} on:tap={toggleCamera} use:counterRotate />
+                <uibutton
+                    class="overlayIconButton"
+                    accessibilityLabel={lc('toggle_camera')}
+                    color="white"
+                    height={44}
+                    margin={4}
+                    variant={overlayButtonVariant}
+                    width={44}
+                    {...{ src: appIcon('switch_camera') }}
+                    on:tap={toggleCamera}
+                    use:counterRotate />
                 <uibutton
                     class="overlayIconButton"
                     accessibilityLabel={startOnCam ? lc('more_options') : lc('camera_settings')}
@@ -743,8 +761,7 @@
             row={1}
             verticalAlignment="bottom"
             visibility={(maxZoom !== 1 || minZoom !== 1) && maxZoom !== minZoom ? 'visible' : 'collapsed'}
-            width="70%"
-        >
+            width="70%">
             <slider
                 colSpan={3}
                 maxValue={ZOOM_SLIDER_STEPS}
@@ -767,8 +784,7 @@
                 textAlignment="center"
                 verticalTextAlignment="center"
                 width={40}
-                use:counterRotate
-            />
+                use:counterRotate />
         </gridlayout>
 
         <label
@@ -810,8 +826,7 @@
                         decodeWidth={Utils.layout.toDevicePixels(48)}
                         imageRotation={lastPage?.rotation ?? 0}
                         src={lastPage?.imagePath}
-                        stretch="aspectFill"
-                    />
+                        stretch="aspectFill" />
                     <label
                         backgroundColor={colorPrimary}
                         borderRadius={9}
@@ -830,7 +845,15 @@
 
             <gridlayout col={1} height={70} horizontalAlignment="center" opacity={takingPicture ? 0.6 : 1} verticalAlignment="center" width={70}>
                 <canvasView bind:this={takPictureBtnCanvas} class:infinite-rotate={autoScan} on:draw={drawTakePictureBtnBorder}> </canvasView>
-                <gridlayout backgroundColor="white" borderRadius={27} height={54} horizontalAlignment="center" rippleColor="black" width={54} on:tap={() => takePicture()} on:longPress={() => toggleAutoScan()} />
+                <gridlayout
+                    backgroundColor="white"
+                    borderRadius={27}
+                    height={54}
+                    horizontalAlignment="center"
+                    rippleColor="black"
+                    width={54}
+                    on:tap={() => takePicture()}
+                    on:longPress={() => toggleAutoScan()} />
             </gridlayout>
 
             <uibutton

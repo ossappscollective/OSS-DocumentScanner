@@ -52,14 +52,14 @@
     /** edits one page: each change goes to the callbacks and the default settings are left alone */
     export let pageMode = false;
     /** the height of the sheet (dip) when it has a single detent: the list is as tall as the sheet, so it scrolls inside it */
-    export let sheetHeight: number | string = undefined;
+    export let sheetHeight: number | string;
     /** transforms several pages: a header with Cancel and Apply, the values are returned when the sheet closes, the default settings are left alone */
     export let applyMode = false;
     export let showTransforms = true;
     /** the content of a persistent sheet of the page, not of a modal sheet */
     export let inline = false;
     /** the id of the list, for the persistent sheet to hand the scrolling over to it */
-    export let listId: string = undefined;
+    export let listId: string;
     /** iOS: the sheet goes under the safe area: the list scrolls above it */
     export let bottomInset = 0;
     /** the image the filters are drawn on: the page being edited, else a sample */
@@ -348,15 +348,22 @@
     height={__ANDROID__ && typeof sheetHeight === 'number' && !inline ? sheetHeight - 28 : sheetHeight}
     {inline}
     rows={applyMode ? 'auto,*' : '*'}
-    {...(__IOS__ ? { backgroundColor: inline ? undefined : glass ? 'transparent' : colorBackground } : { padding: applyMode ? '0' : '10 10 0 10' })}
+    {...__IOS__ ? { backgroundColor: inline ? undefined : glass ? 'transparent' : colorBackground } : { padding: applyMode ? '0' : '10 10 0 10' }}
     {...$$restProps}
     on:closedBottomSheet={onCloseBottomSheet}>
     {#if applyMode}
-        <SheetHeader actionIcon={appIcon('restore')} actionLabel={lc('reset')} doneText={lc('apply')} onAction={resetTransforms} onCancel={() => closeBottomSheet(undefined)} onDone={applyTransforms} title={lc('transform_images')} />
+        <SheetHeader
+            actionIcon={appIcon('restore')}
+            actionLabel={lc('reset')}
+            doneText={lc('apply')}
+            onAction={resetTransforms}
+            onCancel={() => closeBottomSheet(undefined)}
+            onDone={applyTransforms}
+            title={lc('transform_images')} />
     {/if}
-    <collectionview bind:this={listView} id={listId} row={applyMode ? 1 : 0} paddingBottom={inline || __ANDROID__ ? $windowInset.bottom + bottomInset : 0} {itemTemplateSelector} items={listItems}>
+    <collectionview bind:this={listView} id={listId} {itemTemplateSelector} items={listItems} paddingBottom={inline || __ANDROID__ ? $windowInset.bottom + bottomInset : 0} row={applyMode ? 1 : 0}>
         <Template key="sectionheader" let:item>
-            <label color={secondaryColor} text={__IOS__ ? item.title.toUpperCase() : item.title} {...(__IOS__ ? { fontSize: 13, margin: '20 32 6 32' } : { class: 'sectionHeader' })} />
+            <label color={secondaryColor} text={__IOS__ ? item.title.toUpperCase() : item.title} {...__IOS__ ? { fontSize: 13, margin: '20 32 6 32' } : { class: 'sectionHeader' }} />
         </Template>
 
         <Template key="option" let:item>

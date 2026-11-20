@@ -12,7 +12,7 @@ export function applyMixins(derivedCtor: any, baseCtors: any[]) {
     });
 }
 
-export function EventEmitter<T extends new (...args: any[]) => {}>(constructor: T) {
+export function EventEmitter<T extends new (...args: any[]) => object>(constructor: T) {
     return class extends constructor {
         _observable: Observable;
 
@@ -25,10 +25,10 @@ export function EventEmitter<T extends new (...args: any[]) => {}>(constructor: 
             // this.removeEventListener = this._observable.removeEventListener;
             // this.addEventListener = this._observable.addEventListener;
         }
-        addEventListener(eventNames: string, callback?: any, thisArg?: Object) {
+        addEventListener(eventNames: string, callback?: any, thisArg?: object) {
             return this._observable.addEventListener(eventNames, callback, thisArg);
         }
-        removeEventListener(eventNames: string, callback?: any, thisArg?: Object) {
+        removeEventListener(eventNames: string, callback?: any, thisArg?: object) {
             return this._observable.removeEventListener(eventNames, callback, thisArg);
         }
         on(eventNames: string, callback: (data: EventData) => void, thisArg?: any) {

@@ -87,8 +87,7 @@
         src={src || getImageSrc(item)}
         {stretch}
         {...$$restProps}
-        on:rotateAnimated={(e) => rotateToRotation(e.rotation, true)}
-    />
+        on:rotateAnimated={(e) => rotateToRotation(e.rotation, true)} />
 {:else}
     <image
         bind:this={SVImageView}
@@ -100,6 +99,5 @@
         src={src || getImageSrc(item)}
         {stretch}
         {...$$restProps}
-        on:rotateAnimated={(e) => rotateToRotation(e.rotation, true)}
-    />
+        on:rotateAnimated={(e) => rotateToRotation(e.rotation, true)} />
 {/if}

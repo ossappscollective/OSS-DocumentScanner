@@ -8,17 +8,17 @@
 
     export let item: Item;
     export let layout: string;
-    export let stripHeight: number = undefined;
+    export let stripHeight: number;
 
     $: ({ colorPrimary } = $colors);
     $: stacked = layout === 'cardholder' || layout === 'full';
-    $: ({ hasCode, hasStatus, label, cardColor } = getCardDisplay(item));
+    $: ({ cardColor, hasCode, hasStatus, label } = getCardDisplay(item));
     $: tile = getTileColors(cardColor, colorPrimary);
 </script>
 
 {#if stacked}
     <!-- only the strip above the next card is seen: the title (it shrinks to fit) with the chips at its right, the icons always on the line below -->
-    <gridlayout height={stripHeight} columns="*,auto" verticalAlignment="top">
+    <gridlayout columns="*,auto" height={stripHeight} verticalAlignment="top">
         <label
             autoFontSize={true}
             color={tile.text}
@@ -32,8 +32,7 @@
             minFontSize={14}
             text={label}
             textAlignment="left"
-            verticalAlignment="top"
-        />
+            verticalAlignment="top" />
         <stacklayout col={1} margin="14 10 0 0" verticalAlignment="top">
             <CardStatusChips background={tile.fill} extra={item.doc.extra} horizontalAlignment="right" tint={tile.text} />
             <CardBadges code={hasCode} color={tile.text} favorite={item.doc.favorite === 1} horizontalAlignment="right" marginTop={hasStatus ? 6 : 30} opacity={0.75} />
@@ -58,8 +57,7 @@
             rowSpan={hasStatus ? 1 : 2}
             text={label}
             textAlignment="center"
-            verticalAlignment="center"
-        />
+            verticalAlignment="center" />
         <CardBadges code={hasCode} color={tile.text} favorite={item.doc.favorite === 1} horizontalAlignment="right" margin={10} opacity={0.75} row={1} verticalAlignment="bottom" />
     </gridlayout>
 {/if}

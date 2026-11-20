@@ -33,15 +33,7 @@
     import { hasOriginalImage } from '~/utils/originals';
     import { createPageSheetTranslation, getPageFit, setPageFit } from '~/utils/pageSheet';
     import { getIOSBottomInset, getIOSViewBottomInset, measureWidth } from '~/utils/safeArea';
-    import {
-        detectOCROnPage,
-        hideLoading,
-        onBackButton,
-        getExportMenu,
-        showLoading,
-        showOCRData,
-        showSnack
-    } from '~/utils/ui';
+    import { detectOCROnPage, getExportMenu, hideLoading, onBackButton, showLoading, showOCRData, showSnack } from '~/utils/ui';
     import { colors, isLandscape, screenHeightDips, windowInset } from '~/variables';
 
     // technique for only specific properties to get updated on store change
@@ -566,7 +558,7 @@
     }
     // the current page only: no PDF
     $: exportMenu = getExportMenu({ document, pages: [{ page: currentItem, document }], pdf: false });
-    $: moreMenu = getMoreMenu();
+    const moreMenu = getMoreMenu();
     // the toolbar leaves its place to the sheet
     let toolbarHidden = false;
     $: editTools = getEditTools(!!currentItem?.sourceImagePath, !!currentItemOCRData);
@@ -587,7 +579,16 @@
         <appBarItem icon={appIcon('export')} ios.position="right" menu={exportMenu} text={lc('export')} />
         <appBarItem icon={appIcon('more')} ios.position="right" menu={moreMenu} />
     </appBar>
-    <PageSheetLayout bind:sheet panelOpen={adjusting} {steps} scrollViewId="adjustList" stepIndex={adjusting ? 1 : 0} {translationFunction} on:animated={onSheetAnimated} on:layoutChanged={onSheetLayout} on:stepIndexChange={onSheetStep}>
+    <PageSheetLayout
+        panelOpen={adjusting}
+        scrollViewId="adjustList"
+        stepIndex={adjusting ? 1 : 0}
+        {steps}
+        {translationFunction}
+        bind:sheet
+        on:animated={onSheetAnimated}
+        on:layoutChanged={onSheetLayout}
+        on:stepIndexChange={onSheetStep}>
         <!-- an absolute layout measures its children by their content: the page fills it -->
         <gridlayout slot="content" android:paddingBottom={$isLandscape ? 0 : FLOATING_TOOLBAR_OFFSET + $windowInset.bottom} height="100%" rows="*,auto" width="100%">
             <pager bind:this={pager} {items} rowSpan={2} selectedIndex={currentIndex} transformers="zoomOut" on:loaded={allowSwipeBack} on:selectedIndexChange={onSelectedIndex}>
@@ -604,12 +605,20 @@
                 <PageCounter marginBottom={12} row={1} text={`${currentIndex + 1} / ${items.length}`} />
             {/if}
         </gridlayout>
-        <PersistentSheetFrame slot="sheet" height={$isLandscape ? '100%' : sheetHeight + bottomInset} opacity={sheetShown || $isLandscape ? 1 : 0} panel={$isLandscape} rows={$isLandscape ? 'auto,*' : 'auto,auto'} shadow={adjusting} width={$isLandscape ? '100%' : sheetWidth}>
+        <PersistentSheetFrame
+            slot="sheet"
+            height={$isLandscape ? '100%' : sheetHeight + bottomInset}
+            opacity={sheetShown || $isLandscape ? 1 : 0}
+            panel={$isLandscape}
+            rows={$isLandscape ? 'auto,*' : 'auto,auto'}
+            shadow={adjusting}
+            width={$isLandscape ? '100%' : sheetWidth}>
             {#if !$isLandscape}
                 <!-- the quick way to close it: the sheet is not modal, the page stays in use. In landscape the button of the bar closes it -->
                 <SheetHeader doneText={lc('done')} onDone={closeAdjustments} row={1} showCancel={false} title={lc('adjust')} />
             {/if}
             <AdjustSheet
+                {bottomInset}
                 brightness={typeof currentItem?.brightness === 'number' ? currentItem.brightness : DEFAULT_BRIGHTNESS}
                 cameraOptionsStore={null}
                 colorMatrix={currentItem?.colorMatrix}
@@ -623,7 +632,6 @@
                 pageMode={true}
                 previewSrc={currentItem?.imagePath}
                 row={2}
-                {bottomInset}
                 sheetHeight={$isLandscape ? '100%' : ADJUST_LIST_HEIGHT + bottomInset}
                 showTransforms={hasOriginalImage(currentItem)}
                 transforms={[...(transforms ?? [])]} />

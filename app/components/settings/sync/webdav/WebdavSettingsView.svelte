@@ -87,9 +87,9 @@
         keyboardType="url"
         label={lc('server_address')}
         margin={fieldMargin}
+        onChange={(event) => ($store.remoteURL = event.value)}
         returnKeyType="next"
-        text={$store.remoteURL}
-        onChange={(event) => ($store.remoteURL = event.value)} />
+        text={$store.remoteURL} />
     <ListItemAutoSize item={{ title: lc('authentication'), rightValue: (authType || AuthType.Password).toUpperCase() }} {...authRowProps} on:tap={selectAuthentication} />
     {#if authType === AuthType.Token}
         <FormTextField
@@ -97,28 +97,28 @@
             autocorrect={false}
             label={lc('token')}
             margin={fieldMargin}
+            onChange={(event) => ($store.token = event.value)}
             returnKeyType="next"
-            text={$store.token}
-            onChange={(event) => ($store.token = event.value)} />
+            text={$store.token} />
     {:else if (authType || AuthType.Password) === AuthType.Password}
         <FormTextField
             autocapitalizationType="none"
             autocorrect={false}
             label={lc('username')}
             margin={fieldMargin}
+            onChange={(event) => ($store.username = event.value)}
             returnKeyType="next"
-            text={$store.username}
-            onChange={(event) => ($store.username = event.value)} />
+            text={$store.username} />
         <FormTextField
             autocapitalizationType="none"
             autocorrect={false}
             hint={lc('password_not_saved')}
             label={lc('password')}
             margin={fieldMargin}
+            onChange={(event) => ($store.password = event.value)}
             returnKeyType="next"
             secure={true}
-            text={$store.password}
-            onChange={(event) => ($store.password = event.value)} />
+            text={$store.password} />
     {/if}
     <TestConnectionButton success={testConnectionSuccess} {testing} on:tap={testConnection} />
     <RemoteFolderField {store} on:returnPress={testConnection} />
