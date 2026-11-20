@@ -4,16 +4,16 @@
     import { colors } from '~/variables';
 
     export let title: string;
-    export let doneText: string;
+    export let doneText: string = undefined;
     export let doneEnabled = true;
-    export let onCancel: () => void;
-    export let onDone: () => void;
+    export let onCancel: () => void = undefined;
+    export let onDone: () => void = undefined;
     /** an icon action next to the done action (add a field...) */
-    export let actionIcon: string;
-    export let actionLabel: string;
-    export let onAction: () => void;
+    export let actionIcon: string = undefined;
+    export let actionLabel: string = undefined;
+    export let onAction: () => void = undefined;
     /** the action is a text button (reset...) instead of an icon */
-    export let actionText: string;
+    export let actionText: string = undefined;
     export let actionEnabled = true;
     /** a sheet which applies every change at once has no Cancel: iOS keeps the room so that the title stays centered */
     export let showCancel = true;

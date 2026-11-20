@@ -8,7 +8,7 @@
 
     export let item: Item;
     export let layout: string;
-    export let stripHeight: number;
+    export let stripHeight: number = undefined;
 
     $: ({ colorPrimary } = $colors);
     $: stacked = layout === 'cardholder' || layout === 'full';

@@ -94,8 +94,8 @@
         setOption('items_per_page', Math.max(ITEMS_MIN, Math.min(ITEMS_MAX, items_per_page + delta)));
     }
     // iOS 26: UIKit hides what scrolls under the toolbar behind a blur and a line: the list is seen scrolling behind the buttons
-    function hideScrollEdgeEffect(event: { object: View }) {
-        const scrollView = __IOS__ ? event.object.nativeViewProtected : null;
+    function hideScrollEdgeEffect(event: EventData) {
+        const scrollView = __IOS__ && event.object instanceof View ? event.object.nativeViewProtected : null;
         if (scrollView?.bottomEdgeEffect) {
             scrollView.bottomEdgeEffect.hidden = true;
         }

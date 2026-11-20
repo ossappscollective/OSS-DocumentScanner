@@ -149,7 +149,7 @@
         }
     }
     // the native view applies `editable` after it is loaded
-    function onTextViewLoaded(event: { object: any }) {
+    function onTextViewLoaded(event: { object?: any }) {
         makeSelectable(event.object);
         setTimeout(() => makeSelectable(), 500);
     }

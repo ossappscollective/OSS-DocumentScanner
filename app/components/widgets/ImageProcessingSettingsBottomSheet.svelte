@@ -59,7 +59,7 @@
     /** the content of a persistent sheet of the page, not of a modal sheet */
     export let inline = false;
     /** the id of the list, for the persistent sheet to hand the scrolling over to it */
-    export let listId: string;
+    export let listId: string = undefined;
     /** iOS: the sheet goes under the safe area: the list scrolls above it */
     export let bottomInset = 0;
     /** the image the filters are drawn on: the page being edited, else a sample */
