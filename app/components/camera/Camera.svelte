@@ -179,7 +179,9 @@
             setNativeProperty(autoScanHandler, 'enabled', enabled);
         }
     }
+    const CAPTURE_TIMEOUT = 10000;
     async function takePicture(autoScan = false) {
+        let captureTimer: ReturnType<typeof setTimeout>;
         try {
             DEV_LOG && console.log('takePicture', takingPicture, cameraOpened);
             if (takingPicture || !cameraOpened) {
@@ -197,17 +199,23 @@
             await showLoading(lc('capturing'));
             // on Android we the capture will directly save the image to a temp directory
             // but thus maxWidth / maxHeight is ignored
-            const { image } = await cameraView.nativeView.takePicture({
-                savePhotoToDisk: __ANDROID__,
-                pictureSize: pictureSize as any,
-                storageLocation: 'file:' + knownFolders.temp().path,
-                fileName: `capture_${Date.now()}.${compressQuality}`,
-                flashMode: actualFlashMode,
-                // the screen is locked in portrait: the capture must follow the device
-                targetRotation: __ANDROID__ ? toSurfaceRotation($orientationDegrees) : undefined
-                // maxWidth: 10500,
-                // maxHeight: 10500
-            });
+            // the native capture can never call back: without a timeout the loading dialog stays up forever
+            const { image } = await Promise.race([
+                cameraView.nativeView.takePicture({
+                    savePhotoToDisk: __ANDROID__,
+                    pictureSize: pictureSize as any,
+                    storageLocation: 'file:' + knownFolders.temp().path,
+                    fileName: `capture_${Date.now()}.${compressQuality}`,
+                    flashMode: actualFlashMode,
+                    // the screen is locked in portrait: the capture must follow the device
+                    targetRotation: __ANDROID__ ? toSurfaceRotation($orientationDegrees) : undefined
+                    // maxWidth: 10500,
+                    // maxHeight: 10500
+                }),
+                new Promise<never>((_resolve, reject) => {
+                    captureTimer = setTimeout(() => reject(new Error(lc('capture_timeout'))), CAPTURE_TIMEOUT);
+                })
+            ]).finally(() => clearTimeout(captureTimer));
             const didAdd = await processAndAddImage(image, autoScan, onlyForOCR);
             DEV_LOG && console.log('takePicture got image', batchMode, !!image, !!didAdd, Date.now() - start, 'ms');
             if (didAdd) {
