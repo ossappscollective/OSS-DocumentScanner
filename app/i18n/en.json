@@ -93,6 +93,7 @@
     "camera_settings": "camera settings",
     "camera_view_size": "view size",
     "cancel": "cancel",
+    "capture_timeout": "The camera did not return a photo, try again",
     "capturing": "capturing",
     "card_empty_help": "add a code, a photo or a detail",
     "card_empty_title": "nothing on this card yet",
