@@ -93,6 +93,7 @@
     "camera_settings": "configurações da câmera",
     "camera_view_size": "tamanho de exibição",
     "cancel": "cancelar",
+    "capture_timeout": "A câmera não repassou a foto, tente novamente",
     "capturing": "capturando",
     "card_empty_help": "adicionar um código, uma foto ou um detalhe",
     "card_empty_title": "ainda não há nada neste cartão",
