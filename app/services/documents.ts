@@ -802,11 +802,11 @@ export class DocumentRepository extends BaseRepository<OCRDocument, Document> {
         return result;
     }
     async findDocuments({
+        fields = ['*'],
         filter,
         folder,
         omitThoseWithFolders = false,
-        order = 'id DESC',
-        fields = ['*']
+        order = 'id DESC'
     }: { filter?: string; folder?: DocFolder; omitThoseWithFolders?: boolean; order?: string; fields?: string[] } = {}) {
         // Build the secondary sort expression. All columns are on the Document alias "d".
         const secondaryOrder = `d.${order}`;
