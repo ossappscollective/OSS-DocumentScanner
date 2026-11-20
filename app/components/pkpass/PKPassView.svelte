@@ -95,8 +95,7 @@
     margin={fullscreen ? 0 : 16}
     marginBottom={fullscreen ? 0 : $windowInset.bottom + 16}
     rows="auto,auto,*,auto"
-    {...$$restProps}
->
+    {...$$restProps}>
     {#if backgroundImage && passStyle === PKPassStyle.EventTicket}
         <image height="100%" opacity="0.3" rowSpan={4} src={backgroundImage} stretch="aspectFill" />
     {/if}
@@ -125,13 +124,12 @@
                     selectable={true}
                     text={orgName}
                     verticalAlignment="center"
-                    width={120}
-                />
+                    width={120} />
             {/if}
 
             <!-- Header fields -->
             {#if headerFieldsCount > 0}
-                <PKPassHeaderFields col={2} fields={structure.headerFields} {foregroundColor} {labelColor} {pkpass} marginBottom={16} />
+                <PKPassHeaderFields col={2} fields={structure.headerFields} {foregroundColor} {labelColor} marginBottom={16} {pkpass} />
             {/if}
         </gridlayout>
 
@@ -142,8 +140,7 @@
             selectable={true}
             text={passData.organizationName}
             textAlignment="center"
-            visibility={passData.logoText !== passData.organizationName ? 'visible' : 'collapsed'}
-        />
+            visibility={passData.logoText !== passData.organizationName ? 'visible' : 'collapsed'} />
     </stacklayout>
 
     <!-- Main content -->
@@ -171,8 +168,7 @@
                             value={renderFieldValue(structure.primaryFields[0])}
                             valueColor={foregroundColor}
                             valueSize={32}
-                            valueWeight="bold"
-                        />
+                            valueWeight="bold" />
 
                         <!-- Transit icon in center -->
                         <label
@@ -184,8 +180,7 @@
                             marginRight={16}
                             text={transitIcon}
                             textAlignment="center"
-                            verticalAlignment="center"
-                        />
+                            verticalAlignment="center" />
 
                         <!-- Right primary field (arrival) -->
                         <PKPassFieldLabel
@@ -197,8 +192,7 @@
                             value={renderFieldValue(structure.primaryFields[1])}
                             valueColor={foregroundColor}
                             valueSize={32}
-                            valueWeight="bold"
-                        />
+                            valueWeight="bold" />
                     </gridlayout>
                 {:else}
                     <!-- Default primary fields layout (no transit icon or different field count) -->
@@ -217,8 +211,7 @@
                                 value={renderFieldValue(field)}
                                 valueColor={foregroundColor}
                                 valueSize={32}
-                                valueWeight="bold"
-                            />
+                                valueWeight="bold" />
                         {/each}
                     </gridlayout>
                 {/if}
@@ -237,8 +230,7 @@
                             textAlignment={getFieldTextAlignment(field)}
                             value={renderFieldValue(field)}
                             valueColor={foregroundColor}
-                            valueSize={18}
-                        />
+                            valueSize={18} />
                     {/each}
                 </gridlayout>
             {/if}
@@ -256,8 +248,7 @@
                             textAlignment={getFieldTextAlignment(field)}
                             value={renderFieldValue(field)}
                             valueColor={foregroundColor}
-                            valueSize={14}
-                        />
+                            valueSize={14} />
                     {/each}
                 </gridlayout>
             {/if}
@@ -280,8 +271,7 @@
                     row={$isLandscape ? 0 : 5}
                     rowSpan={$isLandscape ? 5 : 1}
                     verticalAlignment={$isLandscape ? 'top' : 'stretch'}
-                    on:tap={onQRCodeTap}
-                >
+                    on:tap={onQRCodeTap}>
                     <svgview src={barcodeSvg} stretch="aspectFit" width={$isLandscape ? BARCODE_LANDSCAPE_WIDTH : '50%'} />
                     {#if primaryBarcode?.altText}
                         <label color={foregroundColor} fontSize="12" marginTop="8" selectable={true} text={primaryBarcode.altText} textAlignment="center" />
@@ -314,32 +304,30 @@
                 <label
                     backgroundColor={colorSurfaceContainerHigh}
                     borderRadius={8}
+                    colSpan={$isLandscape ? 2 : 1}
                     color={pkpass.isExpired() ? '#ff5252' : colorOnSurface}
                     fontSize={15 * $fontScale}
                     fontWeight="bold"
-                    colSpan={$isLandscape ? 2 : 1}
                     marginTop={16}
                     padding={12}
                     row={8}
                     text={pkpass.isExpired() ? lc('pkpass_expired') : lc('pkpass_expires_at', new Date(passData.expirationDate).toLocaleDateString())}
-                    textAlignment="center"
-                />
+                    textAlignment="center" />
             {/if}
 
             {#if pkpass.isVoided()}
                 <label
                     backgroundColor="#ff5252"
                     borderRadius={8}
+                    colSpan={$isLandscape ? 2 : 1}
                     color="#ffffff"
                     fontSize={15 * $fontScale}
                     fontWeight="bold"
-                    colSpan={$isLandscape ? 2 : 1}
                     marginTop={8}
                     padding={12}
                     row={9}
                     text={lc('pkpass_voided')}
-                    textAlignment="center"
-                />
+                    textAlignment="center" />
             {/if}
         </gridlayout>
     </scrollview>

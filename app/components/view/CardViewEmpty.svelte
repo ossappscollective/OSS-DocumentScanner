@@ -21,8 +21,7 @@
         backgroundColor={accent.container}
         marginBottom={$isLandscape ? 0 : 18}
         marginRight={$isLandscape ? 24 : 0}
-        verticalAlignment={$isLandscape ? 'center' : 'stretch'}
-    >
+        verticalAlignment={$isLandscape ? 'center' : 'stretch'}>
         <CardIcon color={accent.accent} horizontalAlignment="center" size={40} src={appIcon('wallet')} verticalAlignment="center" />
     </uisurface>
     <!-- landscape: the icon on the left, the text and the buttons on its right -->
@@ -33,15 +32,14 @@
         </label>
         <stacklayout horizontalAlignment={$isLandscape ? 'left' : 'center'} orientation={$isLandscape ? 'horizontal' : 'vertical'}>
             <uibutton
-                height={44}
                 backgroundColor={accent.accent}
                 color={accent.onAccent}
+                height={44}
                 horizontalAlignment="center"
                 marginTop={$isLandscape ? 12 : 20}
                 text={lc('add_code')}
                 variant="contained"
-                on:tap={(event) => event.object instanceof View && onAddCode(event.object)}
-            />
+                on:tap={(event) => event.object instanceof View && onAddCode(event.object)} />
             <uibutton
                 backgroundColor={__IOS__ ? accent.accent + '33' : accent.container}
                 color={accent.accent}
@@ -50,18 +48,16 @@
                 marginTop={$isLandscape ? 12 : 8}
                 text={lc('add_photo')}
                 variant="flat"
-                on:tap={(event) => event.object instanceof View && onAddPhoto(event.object)}
-            />
+                on:tap={(event) => event.object instanceof View && onAddPhoto(event.object)} />
             <uibutton
-                height={44}
                 color={accent.accent}
+                height={44}
                 horizontalAlignment="center"
                 marginLeft={$isLandscape ? 4 : 0}
                 marginTop={$isLandscape ? 12 : 4}
                 text={lc('add_detail')}
                 variant="text"
-                on:tap={onAddDetail}
-            />
+                on:tap={onAddDetail} />
         </stacklayout>
     </stacklayout>
 </stacklayout>

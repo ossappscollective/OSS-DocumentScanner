@@ -60,57 +60,57 @@
 
 <stacklayout padding="4 0 4 0">
     <FormTextField
-        margin="4 16 4 16"
         autocapitalizationType="none"
         keyboardType="url"
         label={lc('server_address')}
-        returnKeyType="next"
-        text={$store.serverUrl}
+        margin="4 16 4 16"
         onChange={(event) => {
             $store.serverUrl = event.value;
             testConnectionSuccess = 0;
-        }} />
+        }}
+        returnKeyType="next"
+        text={$store.serverUrl} />
 
     <label fontSize={12} margin="2 16 6 18" opacity={0.7} text={lc('paperless_token_hint')} textWrap={true} />
 
     <FormTextField
-        margin="4 16 4 16"
         autocapitalizationType="none"
         autocorrect={false}
         label={lc('api_token')}
-        returnKeyType="next"
-        text={$store.token}
+        margin="4 16 4 16"
         onChange={(event) => {
             $store.token = event.value;
             testConnectionSuccess = 0;
-        }} />
+        }}
+        returnKeyType="next"
+        text={$store.token} />
 
     <label fontSize={12} margin="6 16 2 18" opacity={0.7} text={lc('or')} />
 
     <FormTextField
-        margin="4 16 4 16"
         autocapitalizationType="none"
         autocorrect={false}
         label={lc('username')}
-        returnKeyType="next"
-        text={$store.username}
+        margin="4 16 4 16"
         onChange={(event) => {
             $store.username = event.value;
             testConnectionSuccess = 0;
-        }} />
+        }}
+        returnKeyType="next"
+        text={$store.username} />
     <FormTextField
-        margin="4 16 4 16"
         autocapitalizationType="none"
         autocorrect={false}
         hint={lc('password_not_saved')}
         label={lc('password')}
-        returnKeyType="done"
-        secure={true}
-        text={$store.password}
+        margin="4 16 4 16"
         onChange={(event) => {
             $store.password = event.value;
             testConnectionSuccess = 0;
-        }} />
+        }}
+        returnKeyType="done"
+        secure={true}
+        text={$store.password} />
 
     <TestConnectionButton success={testConnectionSuccess} {testing} on:tap={testConnection} />
 </stacklayout>

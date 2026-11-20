@@ -63,8 +63,7 @@
                     item={item.page}
                     stretch="aspectFill"
                     verticalAlignment="center"
-                    width={PAGE_THUMBNAIL_WIDTH}
-                />
+                    width={PAGE_THUMBNAIL_WIDTH} />
                 <label col={1} color={colorOnSurface} fontSize={16} marginLeft={12} text={lc('page') + ' ' + item.number} verticalAlignment="center" />
                 <!-- the handle starts the drag as soon as it is touched -->
                 <gridlayout col={2} width={56} on:touch={(event) => onHandleTouch(item, event)}>

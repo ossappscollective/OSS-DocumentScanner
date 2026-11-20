@@ -34,19 +34,17 @@
         rippleColor={colorOnSurface}
         verticalAlignment="bottom"
         on:tap
-        on:longPress
-    >
+        on:longPress>
         <gridlayout columns="auto,*,auto" paddingLeft={markerWidth} use:selectionTransition={{ selectionMode }}>
             <slot />
         </gridlayout>
-        <RowSelectionMarker {selectionMode} selected={item.selected} />
+        <RowSelectionMarker selected={item.selected} {selectionMode} />
         <gridlayout
             backgroundColor={colorOutlineVariant}
             height={0.5}
             marginLeft={dividerInset + markerWidth}
             marginRight={-12}
             verticalAlignment="bottom"
-            visibility={__IOS__ && (item.position === 'first' || item.position === 'middle') ? 'visible' : 'collapsed'}
-        />
+            visibility={__IOS__ && (item.position === 'first' || item.position === 'middle') ? 'visible' : 'collapsed'} />
     </gridlayout>
 </gridlayout>

@@ -19,11 +19,11 @@
     export let syncEnabled: boolean;
     export let layout: string;
     export let syncColors: string[];
-    export let stripHeight: number = undefined;
+    export let stripHeight: number;
 
     $: ({ colorBackground, colorPrimary } = $colors);
 
-    $: ({ page, hasImage, cardColor } = getCardDisplay(item));
+    $: ({ cardColor, hasImage, page } = getCardDisplay(item));
     $: tile = getTileColors(cardColor, colorPrimary);
 
     function getItemHolderParams(layout, nbColumns, tileFill: string, selected: boolean) {

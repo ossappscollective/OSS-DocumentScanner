@@ -10,7 +10,7 @@
     export let valueColor: string;
     export let labelSize: number;
     export let valueSize: number;
-    export let valueWeight: string = undefined;
+    export let valueWeight: string;
 </script>
 
 <label selectable={true} {...$$restProps}>

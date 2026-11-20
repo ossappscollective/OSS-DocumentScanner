@@ -121,13 +121,7 @@
 
 <script lang="ts">
     // technique for only specific properties to get updated on store change
-    $: ({
-        colorError,
-        colorOnBackground,
-        colorOnSurfaceVariant,
-        colorPrimary,
-        colorPrimaryContainer
-    } = $colors);
+    $: ({ colorError, colorOnBackground, colorOnSurfaceVariant, colorPrimary, colorPrimaryContainer } = $colors);
 
     let folders: DocFolder[] = [];
     export let collectionViewOptions = {};
@@ -919,7 +913,7 @@
     async function syncDocuments() {
         try {
             if (syncEnabled) {
-                await syncService.syncDocuments({ bothWays: true, force: true });
+                syncService.syncDocuments({ bothWays: true, force: true });
             }
         } catch (error) {
             showError(error);
@@ -1269,25 +1263,24 @@
         bind:this={appBar}
         android:backgroundColor={selecting ? colorPrimaryContainer : folderAccent?.container}
         ios:backgroundColor={selecting ? undefined : folderAccent?.accent}
+        class="listAppBar"
+        {bottomItems}
         color={colorOnBackground}
+        formattedTitle={selecting || __IOS__ ? null : folderTitle}
         iosIconRenderingMode="alwaysTemplate"
         scrollBehavior="lift"
-        searchable={!isTrash && !onlyForImport && nbSelected === 0}
         scrollTargetId="documentsCollectionView"
         searchHint={lc('search')}
         searchMode={folder && __ANDROID__ ? 'collapsible' : 'inline'}
         searchPlacement="integrated"
-        {bottomItems}
-        formattedTitle={selecting || __IOS__ ? null : folderTitle}
+        searchable={!isTrash && !onlyForImport && nbSelected === 0}
         size={folder && __IOS__ && !$isLandscape ? 'large' : 'small'}
         subtitle={folder && nbSelected === 0 ? lcp('documents_count', folder.count) : null}
+        title={selecting ? lp('selected', nbSelected) : (__IOS__ && !folder) || isTrash ? title : folder?.name}
         titleAlignment="leading"
         ios:translucent={true}
-        class="listAppBar"
-        title={selecting ? lp('selected', nbSelected) : (__IOS__ && !folder) || isTrash ? title : folder?.name}
         on:searchChange={onSearchChange}
-        on:searchCancel={onSearchCancel}
-    >
+        on:searchCancel={onSearchCancel}>
         {#if __ANDROID__}
             <appBarSearchField><textfield backgroundColor="transparent" floating={false} fontSize={16} hint={lc('search')} returnKeyType="search" variant="none" /></appBarSearchField>
         {/if}
@@ -1305,33 +1298,31 @@
     <gridlayout class="pageContent" rows="auto,auto,*">
         <slot name="abovecollectionview" />
         <collectionView
-            id="documentsCollectionView"
             bind:this={collectionView}
+            id="documentsCollectionView"
             {colWidth}
-            on:itemLoading={onCollectionViewItemLoading}
-            ios:animateItemUpdate={false}
-            ios:autoReloadItemOnLayout={true}
             itemTemplateSelector={(item) => itemTemplateSelector(viewStyle, item)}
             items={documents}
-            android:marginTop={selectionBarGap}
             paddingBottom={__IOS__ ? 16 : Math.max($windowInset.bottom, BOTTOM_BUTTON_OFFSET)}
             paddingLeft={contentPadding}
             paddingRight={contentPadding}
             row={2}
             spanSize={itemTemplateSpanSize}
-            {...collectionViewOptions}
-        >
+            on:itemLoading={onCollectionViewItemLoading}
+            ios:animateItemUpdate={false}
+            ios:autoReloadItemOnLayout={true}
+            android:marginTop={selectionBarGap}
+            {...collectionViewOptions}>
             <Template key="folder" let:item>
                 <FolderCell
-                    {selectionMode}
                     name={folder ? item.folder.name.replace(folder.name + '/', '') : item.folder.name}
                     {item}
                     marginLeft={folderMargin}
                     marginRight={folderMargin}
+                    {selectionMode}
                     tile={false}
                     on:longPress={() => onItemLongPress(item)}
-                    on:tap={() => onItemTap(item)}
-                />
+                    on:tap={() => onItemTap(item)} />
             </Template>
             <Template key="folders" let:item>
                 <collectionView
@@ -1343,17 +1334,15 @@
                     paddingLeft={Math.max(0, folderMargin - 4)}
                     row={1}
                     visibility={folders?.length ? 'visible' : 'collapsed'}
-                    on:itemLoading={onCollectionViewItemLoading}
-                >
+                    on:itemLoading={onCollectionViewItemLoading}>
                     <Template let:item>
                         <FolderCell
-                            {selectionMode}
                             name={folder ? item.folder.name.replace(folder.name + '/', '') : item.folder.name}
                             {item}
                             margin={4}
+                            {selectionMode}
                             on:longPress={() => onItemLongPress(item)}
-                            on:tap={() => onItemTap(item)}
-                        />
+                            on:tap={() => onItemTap(item)} />
                     </Template>
                 </collectionView>
             </Template>
@@ -1368,8 +1357,7 @@
                 onScan={() => actions.find((action) => action.primary)?.onTap()}
                 row={2}
                 title={CARD_APP ? lc('no_card_yet_title') : lc('no_document_yet_title')}
-                verticalAlignment="center"
-            />
+                verticalAlignment="center" />
         {:else if showNoDocument}
             <flexlayout
                 flexDirection="column"
@@ -1380,8 +1368,7 @@
                 row={2}
                 verticalAlignment="center"
                 width="80%"
-                transition:fade={{ duration: 200 }}
-            >
+                transition:fade={{ duration: 200 }}>
                 <lottie
                     async={true}
                     autoPlay={PRODUCTION}
@@ -1389,16 +1376,14 @@
                     keyPathColors={lottieColors}
                     loop={true}
                     src="~/assets/lottie/scanning.lottie"
-                    visibility={isTrash ? 'collapsed' : 'visible'}
-                />
+                    visibility={isTrash ? 'collapsed' : 'visible'} />
                 <label
                     color={colorOnSurfaceVariant}
                     flexShrink={0}
                     fontSize={19}
                     text={searching ? lc('no_document_found') : isTrash ? lc('no_trashed_document') : lc('no_document_yet')}
                     textAlignment="center"
-                    textWrap={true}
-                />
+                    textWrap={true} />
             </flexlayout>
         {/if}
         {#if !onlyForImport && editingTitle}

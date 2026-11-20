@@ -33,6 +33,6 @@
     ]);
 </script>
 
-<SyncSettingsPage title={lc('data_sync_settings')} {items} {store} bind:updateItem {...$$restProps}>
+<SyncSettingsPage {items} {store} title={lc('data_sync_settings')} bind:updateItem {...$$restProps}>
     <slot />
 </SyncSettingsPage>

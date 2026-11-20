@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CARD_RATIO } from '~/utils/constants';
-import { CODE_ZONE_HEIGHT, FILMSTRIP_COL_WIDTH, FILMSTRIP_HEIGHT, PHOTO_INSET, PHOTO_SHADOW_ROOM, PEEK_WIDTH, getCardViewLayout, getFilmstripLayout } from './CardViewLayout';
+import { CODE_ZONE_HEIGHT, FILMSTRIP_COL_WIDTH, FILMSTRIP_HEIGHT, PEEK_WIDTH, PHOTO_INSET, PHOTO_SHADOW_ROOM, getCardViewLayout, getFilmstripLayout } from './CardViewLayout';
 
 const base = { bleed: 0, sideBySide: false, landscape: false, hasQRCodes: false, hasImages: true, multiplePhotos: false, multipleQR: false, paneWidth: 400, pageHeight: 800 };
 

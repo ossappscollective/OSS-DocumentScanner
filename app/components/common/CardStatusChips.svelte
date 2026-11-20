@@ -5,9 +5,9 @@
     import { lc } from '~/helpers/locale';
     import { type CardStatus, formatShortDate, getCardStatus } from '~/utils/cardStatus';
 
-    export let extra: DocumentExtra = undefined;
+    export let extra: DocumentExtra;
     /** the status of a card which does not keep it in its extra (a pass) */
-    export let status: CardStatus[] = undefined;
+    export let status: CardStatus[];
     export let tint: string = null;
     /** the color of the card under a tinted chip */
     export let background: string = null;
@@ -20,15 +20,14 @@
 <!-- the structure of a cell is fixed: only the visibility and the texts change -->
 <stacklayout horizontalAlignment="left" orientation="horizontal" visibility={statuses.length ? 'visible' : 'collapsed'} {...$$restProps}>
     <CardStatusChip
+        {background}
         horizontalAlignment="left"
         text={expiration?.kind === 'expired' ? lc('expired') : lc('expires_on_date', expiration?.kind === 'expiring' ? formatShortDate(expiration.timestamp) : '')}
-        {background}
         {tint}
         tone={expiration?.kind === 'expired' ? 'alert' : 'warning'}
         verticalAlignment="middle"
-        visibility={expiration ? 'visible' : 'collapsed'}
-    />
+        visibility={expiration ? 'visible' : 'collapsed'} />
     {#each [0, 1, 2] as index (index)}
-        <CardChip {background} {tint} marginLeft={expiration || index > 0 ? 6 : 0} text={values[index] ?? ''} verticalAlignment="middle" visibility={values[index] ? 'visible' : 'collapsed'} />
+        <CardChip {background} marginLeft={expiration || index > 0 ? 6 : 0} text={values[index] ?? ''} {tint} verticalAlignment="middle" visibility={values[index] ? 'visible' : 'collapsed'} />
     {/each}
 </stacklayout>

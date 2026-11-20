@@ -87,8 +87,7 @@
             <ListItemAutoSize
                 item={{ title: item.moduleName, subtitle: item.moduleUrl }}
                 {...getSettingsRowProps({ ...item, description: item.moduleUrl }, rowColors, __IOS__)}
-                on:tap={() => onTap(item)}
-            />
+                on:tap={() => onTap(item)} />
         </Template>
     </collectionView>
 </gesturerootview>

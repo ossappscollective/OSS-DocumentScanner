@@ -63,11 +63,27 @@
                             <RotableImageView borderRadius={10} decodeWidth={160} height={56} item={item.page} stretch="aspectFill" verticalAlignment="center" width={88} />
                         {:else}
                             <gridlayout backgroundColor={colorSecondaryContainer} borderRadius={10} height={56} verticalAlignment="center" width={88}>
-                                <uibutton color={colorOnSurfaceVariant} height={44} horizontalAlignment="center" isUserInteractionEnabled={false} variant="text" verticalAlignment="center" width={44} {...{ src: appIcon('qrcode') }} />
+                                <uibutton
+                                    color={colorOnSurfaceVariant}
+                                    height={44}
+                                    horizontalAlignment="center"
+                                    isUserInteractionEnabled={false}
+                                    variant="text"
+                                    verticalAlignment="center"
+                                    width={44}
+                                    {...{ src: appIcon('qrcode') }} />
                             </gridlayout>
                         {/if}
                         <label col={1} color={colorOnSurface} fontSize={17} marginLeft={16} text={`${lc('page')} ${item.position + 1}`} verticalAlignment="center" />
-                        <uibutton col={2} color={colorOnSurfaceVariant} height={44} isUserInteractionEnabled={false} variant="text" verticalAlignment="center" width={44} {...{ src: appIcon('reorder') }} />
+                        <uibutton
+                            col={2}
+                            color={colorOnSurfaceVariant}
+                            height={44}
+                            isUserInteractionEnabled={false}
+                            variant="text"
+                            verticalAlignment="center"
+                            width={44}
+                            {...{ src: appIcon('reorder') }} />
                     </gridlayout>
                 </Template>
             </collectionview>

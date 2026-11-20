@@ -30,6 +30,7 @@
 </script>
 
 <script lang="ts">
+    /* eslint-disable svelte/infinite-reactive-loop -- reactive statements only build menus whose closures update nbSelected, never run in them */
     let { colorError, colorOnBackground, colorPrimaryContainer } = $colors;
     $: ({ colorError, colorOnBackground, colorPrimaryContainer } = $colors);
 
@@ -169,8 +170,7 @@
         scrollTargetId="storageCollectionView"
         size={$isLandscape ? 'small' : __IOS__ ? 'large' : 'medium'}
         ios:translucent={true}
-        title={nbSelected > 0 ? lcp('selected', nbSelected) : lc('documents_storage')}
-    >
+        title={nbSelected > 0 ? lcp('selected', nbSelected) : lc('documents_storage')}>
         {#if __ANDROID__}
             <navigationButton {...{ 'android.systemIcon': nbSelected > 0 ? 'ic_menu_close_clear_cancel' : 'ic_menu_back' }} on:tap={nbSelected > 0 ? unselectAll : () => goBack()} />
         {/if}
@@ -191,8 +191,7 @@
             ios:autoReloadItemOnLayout={true}
             itemTemplateSelector={templateSelector}
             {items}
-            android:paddingBottom={$windowInset.bottom}
-        >
+            android:paddingBottom={$windowInset.bottom}>
             <Template key="overview">
                 <StorageOverview {nbDocuments} {totals} />
             </Template>
@@ -202,19 +201,19 @@
             <Template key="tile" let:item>
                 <CardRow height={ROW_HEIGHT} {item} {selectionMode} on:tap={() => onItemTap(item)} on:longPress={() => onItemLongPress(item)}>
                     <CardRowTile {item} />
-                    <StorageChips slot="chips" let:hasLeading {hasLeading} sizes={item.sizes} />
+                    <StorageChips slot="chips" {hasLeading} sizes={item.sizes} let:hasLeading />
                 </CardRow>
             </Template>
             <Template key="photo" let:item>
                 <CardRow height={ROW_HEIGHT} {item} {selectionMode} on:tap={() => onItemTap(item)} on:longPress={() => onItemLongPress(item)}>
                     <CardRowPhoto {item} />
-                    <StorageChips slot="chips" let:hasLeading {hasLeading} sizes={item.sizes} />
+                    <StorageChips slot="chips" {hasLeading} sizes={item.sizes} let:hasLeading />
                 </CardRow>
             </Template>
             <Template key="pkpass" let:item>
                 <CardRow height={ROW_HEIGHT} {item} pkPassCell={true} {selectionMode} on:tap={() => onItemTap(item)} on:longPress={() => onItemLongPress(item)}>
                     <CardRowPass {item} />
-                    <StorageChips slot="chips" let:hasLeading {hasLeading} sizes={item.sizes} />
+                    <StorageChips slot="chips" {hasLeading} sizes={item.sizes} let:hasLeading />
                 </CardRow>
             </Template>
         </collectionview>

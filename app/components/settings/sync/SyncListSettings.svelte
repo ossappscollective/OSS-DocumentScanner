@@ -270,7 +270,7 @@
         <appBarItem icon={appIcon('add')} ios.position="right" menu={addMenu} text={lc('add')} />
     </appBar>
     <gridlayout class="pageContent">
-        <collectionview id="syncCollectionView" bind:this={collectionView} {items} android:paddingBottom={$windowInset.bottom}>
+        <collectionview bind:this={collectionView} id="syncCollectionView" {items} android:paddingBottom={$windowInset.bottom}>
             <Template let:item>
                 <swipemenu
                     gestureHandlerOptions={{
@@ -281,8 +281,7 @@
                     rightSwipeDistance={0}
                     rows="*"
                     startingSide={item.startingSide}
-                    translationFunction={drawerTranslationFunction}
-                >
+                    translationFunction={drawerTranslationFunction}>
                     <ListItemAutoSize
                         borderLeftColor={getSyncColor(item)}
                         borderLeftWidth={5}
@@ -292,8 +291,7 @@
                         prop:mainContent
                         showBottomLine={false}
                         {...getRowProps(item)}
-                        on:tap={(event) => onItemTap(item, event)}
-                    >
+                        on:tap={(event) => onItemTap(item, event)}>
                         <label
                             col={0}
                             color={item.iconColor || colorOnSurface}
@@ -302,8 +300,7 @@
                             paddingLeft="8"
                             text={item.icon}
                             verticalAlignment="center"
-                            width={(item.iconFontSize || 24) * 2}
-                        />
+                            width={(item.iconFontSize || 24) * 2} />
                     </ListItemAutoSize>
                     <label
                         class="mdi"
@@ -316,8 +313,7 @@
                         textAlignment="center"
                         verticalTextAlignment="middle"
                         width={80}
-                        on:tap={(e) => deleteService(item)}
-                    />
+                        on:tap={(e) => deleteService(item)} />
                 </swipemenu>
             </Template>
         </collectionview>

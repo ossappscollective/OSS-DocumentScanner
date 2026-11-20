@@ -76,7 +76,12 @@
     <stacklayout backgroundColor={colorSurfaceContainerLow} margin="0 16 0 16" padding="12 16 12 16" {...getRowCorners('only', __IOS__)}>
         <gridlayout columns="*,auto" rows="auto">
             <label color={colorOnSurface} fontSize={__IOS__ ? 17 : 16} text={isAuthenticated ? lc('authenticated') : lc('not_authenticated')} textWrap={true} verticalAlignment="center" />
-            <uibutton col={1} text={isAuthenticated ? lc('re_authenticate') : lc('authenticate')} variant={isAuthenticated ? 'outline' : 'contained'} verticalAlignment="center" on:tap={authenticate} />
+            <uibutton
+                col={1}
+                text={isAuthenticated ? lc('re_authenticate') : lc('authenticate')}
+                variant={isAuthenticated ? 'outline' : 'contained'}
+                verticalAlignment="center"
+                on:tap={authenticate} />
         </gridlayout>
 
         <gridlayout columns="auto,auto,*" marginTop={8} visibility={isAuthenticated ? 'visible' : 'collapsed'}>
@@ -89,8 +94,7 @@
                 marginLeft={8}
                 text={testConnectionSuccess > 0 ? 'mdi-check-circle' : 'mdi-alert-circle'}
                 verticalAlignment="center"
-                visibility={testConnectionSuccess !== 0 ? 'visible' : 'collapse'}
-            />
+                visibility={testConnectionSuccess !== 0 ? 'visible' : 'collapse'} />
             <uibutton col={2} horizontalAlignment="right" text={lc('test_connection')} variant="outline" on:tap={testConnectionAction} />
         </gridlayout>
     </stacklayout>

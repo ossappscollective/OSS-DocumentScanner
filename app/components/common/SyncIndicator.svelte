@@ -24,4 +24,4 @@
     }
 </script>
 
-<canvasview id="SyncIndicator" bind:this={canvas} height={size} verticalAlignment="bottom" visibility={visible ? 'visible' : 'hidden'} width="100%" {...$$restProps} on:draw={onDraw} />
+<canvasview bind:this={canvas} id="SyncIndicator" height={size} verticalAlignment="bottom" visibility={visible ? 'visible' : 'hidden'} width="100%" {...$$restProps} on:draw={onDraw} />

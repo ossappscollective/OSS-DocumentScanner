@@ -26,5 +26,4 @@
     padding={tint ? '0 10' : '0 8'}
     {text}
     verticalTextAlignment="middle"
-    {...$$restProps}
-/>
+    {...$$restProps} />

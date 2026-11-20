@@ -18,11 +18,11 @@
 <script lang="ts">
     export let editing = false;
     /** the form is shown inside another sheet instead of its own: called with the result (undefined when cancelled) */
-    export let onClose: (result?: any) => void = undefined;
+    export let onClose: (result?: any) => void;
     export let name = null;
     export let value = null;
     export let type: ExtraFieldType = ExtraFieldType.Date;
-    export let kind: string = undefined;
+    export let kind: string;
     let currentTime = value ? dayjs(value) : dayjs();
     let currentValue = value;
     let currentName = name;
@@ -146,7 +146,7 @@
         <!-- the usual names are in a menu: each shows its type -->
         <FormTextField label={lc('name')} onTrailingTap={showNames} trailingIcon={appIcon('chevron_down')} bind:text={currentName} />
         <!-- the type is one of 3 values: a segmented control, not a drop down -->
-        <segmentedbar margin={tMargin} selectedIndex={types.indexOf(currentType)} bind:this={typesBar} on:selectedIndexChanged={onTypeChanged}>
+        <segmentedbar bind:this={typesBar} margin={tMargin} selectedIndex={types.indexOf(currentType)} on:selectedIndexChanged={onTypeChanged}>
             {#each types as type (type)}
                 <segmentedbaritem title={lc(type)} />
             {/each}
@@ -158,9 +158,8 @@
             label={lc('value')}
             minHeight={currentType === ExtraFieldType.Date ? 48 : 84}
             multiline={true}
-            text={currentType === ExtraFieldType.Date ? formatDate(currentTime, 'LL') : currentValue}
             onChange={(e) => currentType !== ExtraFieldType.Date && (currentValue = e.value)}
             onTap={currentType === ExtraFieldType.Date ? selectDate : undefined}
-        />
+            text={currentType === ExtraFieldType.Date ? formatDate(currentTime, 'LL') : currentValue} />
     </stacklayout>
 </gesturerootview>

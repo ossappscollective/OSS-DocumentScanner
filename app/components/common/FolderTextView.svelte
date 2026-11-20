@@ -27,4 +27,14 @@
     }
 </script>
 
-<FormTextField editable={false} hint={lc('folder_sync_desc')} label={lc('folder')} margin="4 16 16 16" showLabel={false} {...$$restProps} text={getDirectoryActualName(text)} trailingIcon={appIcon('folder')} onTap={selectFolder} onTrailingTap={selectFolder} />
+<FormTextField
+    editable={false}
+    hint={lc('folder_sync_desc')}
+    label={lc('folder')}
+    margin="4 16 16 16"
+    showLabel={false}
+    {...$$restProps}
+    onTap={selectFolder}
+    onTrailingTap={selectFolder}
+    text={getDirectoryActualName(text)}
+    trailingIcon={appIcon('folder')} />

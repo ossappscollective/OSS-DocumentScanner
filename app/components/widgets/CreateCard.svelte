@@ -94,8 +94,8 @@
     <SheetHeader doneEnabled={name?.length > 0} doneText={lc('add')} onCancel={close} onDone={add} title={lc('create')} />
     <gridlayout columns="*,auto" padding="0 16 16 16" row={1} rows="auto,auto,auto,auto,auto,auto">
         <FormTextField colSpan={2} label={lc('name')} bind:text={name} />
-        <FormTextField colSpan={2} keyboardType={getBarcodeInputRule(codeFormat).numeric ? 'number' : undefined} label={lc('barcode')} row={1} text={code} onChange={onCodeTextChange} />
-        <FormTextField colSpan={2} editable={false} label={lc('barcode_type')} row={2} text={codeFormat} textTransform="uppercase" onTap={(e) => selectBarcodeFormat(e)} />
+        <FormTextField colSpan={2} keyboardType={getBarcodeInputRule(codeFormat).numeric ? 'number' : undefined} label={lc('barcode')} onChange={onCodeTextChange} row={1} text={code} />
+        <FormTextField colSpan={2} editable={false} label={lc('barcode_type')} onTap={(e) => selectBarcodeFormat(e)} row={2} text={codeFormat} textTransform="uppercase" />
         <gridlayout class="formRow" colSpan={2} columns="*,auto" row={3} on:tap={changeColor}>
             <label color={colorOnBackground} fontSize={17} margin="0 4" text={lc('color')} verticalAlignment="center" />
             <absolutelayout backgroundColor={color} borderColor={colorOutline} borderRadius="50%" borderWidth={2} col={1} height={40} verticalAlignment="center" width={40} />
@@ -109,7 +109,6 @@
             text={lc('invalid')}
             textAlignment="center"
             verticalAlignment="center"
-            visibility={code?.length && !validCode ? 'visible' : 'collapse'}
-        />
+            visibility={code?.length && !validCode ? 'visible' : 'collapse'} />
     </gridlayout>
 </gesturerootview>

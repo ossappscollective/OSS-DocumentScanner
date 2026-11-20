@@ -63,7 +63,7 @@ describe('OCRService.downloadLanguages', () => {
 
     it('stores the model at its final path once fully downloaded', async () => {
         mockResponse({ contentLength: 1000 });
-        const { promise, progresses } = await download();
+        const { progresses, promise } = await download();
         await promise;
         expect(File.fromPath(DESTINATION).size).toBe(1000);
         expect(ocrService.mDownloadedLanguages).toContain('jpn');
@@ -72,7 +72,7 @@ describe('OCRService.downloadLanguages', () => {
 
     it('never reports a negative progress when the server sends no content length', async () => {
         mockResponse({ contentLength: -1, totalReported: -1, writtenSize: 1000 });
-        const { promise, progresses } = await download();
+        const { progresses, promise } = await download();
         await promise;
         expect(progresses.every((progress) => progress >= 0)).toBe(true);
     });

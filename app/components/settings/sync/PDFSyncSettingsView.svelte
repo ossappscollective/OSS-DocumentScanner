@@ -31,7 +31,7 @@
     function updatePDFOption(option: keyof PDFExportBaseOptions, value: any) {
         try {
             clearCheckboxTimer();
-            //@ts-ignore
+            // @ts-expect-error the union of option types resolves to never
             $store.exportOptions[option] = value;
             dispatch('update');
         } catch (error) {
@@ -81,8 +81,7 @@
         margin="0 4 5 0"
         text={PDF_OPTIONS['orientation'][$store.exportOptions.orientation].name}
         {variant}
-        on:tap={(e) => selectPDFOption('orientation', e)}
-    />
+        on:tap={(e) => selectPDFOption('orientation', e)} />
     <textfield
         col={1}
         editable={false}
@@ -90,8 +89,7 @@
         margin="0 0 5 4"
         text={PDF_OPTIONS['paper_size'][$store.exportOptions.paper_size].name}
         {variant}
-        on:tap={(e) => selectPDFOption('paper_size', e)}
-    />
+        on:tap={(e) => selectPDFOption('paper_size', e)} />
 
     <textfield editable={false} hint={lc('color')} margin="5 4 5 0" row={1} text={PDF_OPTIONS['color'][$store.exportOptions.color].name} {variant} on:tap={(e) => selectPDFOption('color', e)} />
     <textfield
@@ -102,8 +100,7 @@
         row={1}
         text={PDF_OPTIONS['items_per_page'][$store.exportOptions.items_per_page].name}
         {variant}
-        on:tap={(e) => selectPDFOption('items_per_page', e, parseInt)}
-    />
+        on:tap={(e) => selectPDFOption('items_per_page', e, parseInt)} />
     <textfield editable={false} hint={lc('page_padding')} margin="5 4 5 0" row={2} text={$store.exportOptions.page_padding} {variant} on:tap={(e) => selectSilderPDFOption('page_padding', e)} />
     <stacklayout col={1} margin="5 0 5 4" orientation="horizontal" row={2}>
         <checkbox id="checkbox" checked={$store.exportOptions.draw_ocr_text} verticalAlignment="center" on:checkedChange={(e) => updatePDFOption('draw_ocr_text', e.value)} ios:margin={14} />
@@ -122,6 +119,5 @@
         secure={true}
         text={$store.exportOptions.password}
         {variant}
-        on:textChange={(e) => updatePDFOption('password', e['value'])}
-    />
+        on:textChange={(e) => updatePDFOption('password', e['value'])} />
 </gridlayout>

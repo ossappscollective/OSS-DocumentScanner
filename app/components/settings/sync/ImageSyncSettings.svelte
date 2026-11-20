@@ -68,6 +68,6 @@
     ]);
 </script>
 
-<SyncSettingsPage title={lc('image_sync_settings')} {items} {store} bind:updateItem {...$$restProps}>
+<SyncSettingsPage {items} {store} title={lc('image_sync_settings')} bind:updateItem {...$$restProps}>
     <slot />
 </SyncSettingsPage>

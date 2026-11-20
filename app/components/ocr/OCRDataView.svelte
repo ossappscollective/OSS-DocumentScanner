@@ -222,8 +222,7 @@
         size="small"
         title={items.length > 1 ? `${currentIndex + 1} / ${items.length}` : ''}
         translucent={true}
-        android:backgroundColor="transparent"
-    >
+        android:backgroundColor="transparent">
         {#if __ANDROID__}
             <navigationButton {...{ 'android.systemIcon': 'ic_menu_close_clear_cancel' }} on:tap={close} />
         {:else}
@@ -237,14 +236,7 @@
             <appBarItem ios.position="right" prominent={editing} text={editing ? lc('done') : lc('edit')} on:tap={toggleEditing} />
         {/if}
     </appBar>
-    <PageSheetLayout
-        bind:sheet
-        scrollAtAnyStep={true}
-        scrollViewId="ocrText"
-        stepIndex={START_STEP_INDEX}
-        {steps}
-        on:animated={revealSelection}
-        on:stepIndexChange={onStepIndexChange}>
+    <PageSheetLayout scrollAtAnyStep={true} scrollViewId="ocrText" stepIndex={START_STEP_INDEX} {steps} bind:sheet on:animated={revealSelection} on:stepIndexChange={onStepIndexChange}>
         <gridlayout slot="content" class="pageContent" height="100%" width="100%">
             <pager {items} selectedIndex={currentIndex} on:selectedIndexChange={onSelectedIndex}>
                 <Template let:item>
@@ -258,8 +250,8 @@
                 <SheetHeader doneText={editing ? lc('done') : lc('edit')} onDone={toggleEditing} row={1} showCancel={false} title={editing ? lc('ocr_text_editing') : lc('ocr_text')} />
             {/if}
             <textview
-                id="ocrText"
                 bind:this={textView}
+                id="ocrText"
                 backgroundColor={editing ? new Color(colorPrimary).setAlpha(25).hex : 'transparent'}
                 color={colorOnBackground}
                 editable={editing}
@@ -273,8 +265,7 @@
                 {text}
                 variant="none"
                 on:loaded={onTextViewLoaded}
-                on:textChange={(e) => onTextChange(e.value)}
-            />
+                on:textChange={(e) => onTextChange(e.value)} />
         </PersistentSheetFrame>
     </PageSheetLayout>
 </appPage>

@@ -191,7 +191,7 @@
     "document_need_updated_app": "dokument „%1$s” został utworzony przy użyciu nowszej wersji aplikacji. Proszę dokonać aktualizacji przed zaimportowaniem tego dokumentu",
     "document_not_detected_margin": "brak marginesu dokumentu",
     "document_not_detected_margin_desc": "jeśli nie zostanie znaleziony żaden dokument, narożniki zostaną ustawione na rozmiar obrazu z niewielkim marginesem",
-    "documents": "dokumenty",
+    "documents": "Dokumenty",
     "documents_count_one": "Dokumenty: %1$s",
     "documents_count_other": "Dokumenty: %1$s",
     "documents_settings": "ustawienia dokumentów",

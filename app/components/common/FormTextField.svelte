@@ -11,19 +11,19 @@
     /** a text view (a value which can take several lines) instead of a single line */
     export let multiline = false;
     // the placement in the parent, the other attributes (keyboardType, editable, error...) are the ones of the field
-    export let margin: string = undefined;
-    export let col: number = undefined;
-    export let colSpan: number = undefined;
-    export let row: number = undefined;
+    export let margin: string;
+    export let col: number;
+    export let colSpan: number;
+    export let row: number;
     let { colorOnSurfaceVariant } = $colors;
     $: ({ colorOnSurfaceVariant } = $colors);
 
     /** the native events (the plain forwarded svelte events are typed as DOM events) */
-    export let onChange: (event: PropertyChangeData) => void = undefined;
-    export let onTap: (event: EventData) => void = undefined;
+    export let onChange: (event: PropertyChangeData) => void;
+    export let onTap: (event: EventData) => void;
     /** an icon button inside the end of the field (a menu of values...) */
-    export let trailingIcon: string = undefined;
-    export let onTrailingTap: (view: View) => void = undefined;
+    export let trailingIcon: string;
+    export let onTrailingTap: (view: View) => void;
 
     $: hasValue = !!text?.length;
     $: containerMargin = margin ?? (__IOS__ ? '0 0 8 0' : '4 0');
@@ -70,7 +70,15 @@
     types or focuses, fields are 8 apart (72 pitch). Android: the native outlined field floats its hint on the outline.
 -->
 <stacklayout {col} {colSpan} margin={containerMargin} {row}>
-    <label color={colorOnSurfaceVariant} fontSize={11} height={14} ios:marginBottom={2} ios:marginLeft={16} opacity={hasValue ? 1 : 0} text={label} visibility={__IOS__ && showLabel ? 'visible' : 'collapsed'} />
+    <label
+        color={colorOnSurfaceVariant}
+        fontSize={11}
+        height={14}
+        ios:marginBottom={2}
+        ios:marginLeft={16}
+        opacity={hasValue ? 1 : 0}
+        text={label}
+        visibility={__IOS__ && showLabel ? 'visible' : 'collapsed'} />
     <gridlayout>
         {#if multiline}
             <textview accessibilityLabel={label} hint={label} {text} variant="outline" {...$$restProps} on:textChange={track} use:tap={onTap} />
@@ -85,8 +93,7 @@
                 {...$$restProps}
                 on:returnPress
                 on:textChange={track}
-                use:tap={onTap}
-            />
+                use:tap={onTap} />
         {/if}
         {#if trailingIcon}
             <uibutton
@@ -99,8 +106,7 @@
                 verticalAlignment="center"
                 width={48}
                 {...{ src: trailingIcon }}
-                on:tap={trailingTap}
-            />
+                on:tap={trailingTap} />
         {/if}
     </gridlayout>
 </stacklayout>

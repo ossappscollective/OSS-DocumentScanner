@@ -54,8 +54,7 @@
     marginTop={8}
     {...$$restProps}
     on:layoutChanged={onLayoutChanged}
-    transition:slide={{ duration: 200 }}
->
+    transition:slide={{ duration: 200 }}>
     <stacklayout col={hasOverflow ? 1 : 0} horizontalAlignment="center" orientation="horizontal">
         {#each visibleOptions as option, index}
             {@const color = typeof option.color === 'function' ? option['color'](options) : option.color}

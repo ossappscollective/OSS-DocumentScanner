@@ -18,7 +18,6 @@
     verticalAlignment="center"
     visibility={$selectionMode ? 'visible' : 'hidden'}
     width={24}
-    {...$$restProps}
->
+    {...$$restProps}>
     <label color={colorOnPrimary} fontFamily={$fonts.mdi} fontSize={14} text="mdi-check" textAlignment="center" verticalAlignment="center" visibility={selected ? 'visible' : 'hidden'} />
 </gridlayout>

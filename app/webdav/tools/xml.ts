@@ -60,6 +60,6 @@ function namespace<T extends NamespaceObject>(obj: T, ns: string): T {
     return copy;
 }
 
-export function parseGenericResponse(xml: string): Object {
+export function parseGenericResponse(xml: string): object {
     return getParser().parse(xml);
 }
