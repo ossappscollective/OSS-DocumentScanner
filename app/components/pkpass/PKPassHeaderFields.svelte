@@ -28,8 +28,7 @@
                 lineHeight={FIELD_LINE_HEIGHT}
                 text={renderFieldLabel(field)}
                 verticalTextAlignment="top"
-                visibility={field.label ? 'visible' : 'hidden'}
-            />
+                visibility={field.label ? 'visible' : 'hidden'} />
             <cspan color={foregroundColor} fontSize={17 * $fontScale} fontWeight="500" text={pkpass.formatFieldValue(field, lang)} />
         </label>
     {/each}

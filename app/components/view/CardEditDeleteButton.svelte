@@ -17,5 +17,4 @@
     width={44}
     {...$$restProps}
     {...{ src: appIcon('delete') }}
-    on:tap
-/>
+    on:tap />

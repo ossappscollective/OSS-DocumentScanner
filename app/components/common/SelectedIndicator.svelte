@@ -22,5 +22,4 @@
     verticalTextAlignment="center"
     visibility={selected ? 'visible' : 'hidden'}
     width={26}
-    {...$$restProps}
-/>
+    {...$$restProps} />

@@ -133,7 +133,7 @@
         canvas.save();
         canvas.concat(drawMatrix);
         item.ocrData.blocks.forEach((block, index) => {
-            const { x, y, width, height } = block.box;
+            const { height, width, x, y } = block.box;
             const selected = $state.page === item.pageIndex && index === $state.block;
             fillPaint.color = new Color(colorPrimary).setAlpha(selected ? 110 : 40).hex;
             canvas.drawRect(x, y, x + width, y + height, fillPaint);
@@ -147,7 +147,7 @@
 
     // the lines of a block fill its box: the size comes from the height of a line, and shrinks when the widest line is too wide
     function drawBlockText(canvas: Canvas, block: OCRData['blocks'][number], selected: boolean) {
-        const { x, y, width, height } = block.box;
+        const { height, width, x, y } = block.box;
         const lines = block.text.split('\n');
         const lineHeight = height / lines.length;
         fillPaint.color = new Color(visualState).setAlpha(selected ? 235 : 200).hex;
@@ -196,7 +196,6 @@
         stretch="aspectFit"
         on:loaded={onZoomImageLoaded}
         on:touch={onTouch}
-        on:transformChanged={onTransformChanged}
-    />
+        on:transformChanged={onTransformChanged} />
     <canvasview bind:this={canvasView} isUserInteractionEnabled={false} on:draw={onCanvasDraw} on:layoutChanged={() => canvasView?.nativeView?.invalidate()} />
 </gridlayout>

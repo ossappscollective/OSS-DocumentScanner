@@ -1,5 +1,5 @@
 <script lang="ts">
-    export let id: string = undefined;
+    export let id: string;
 </script>
 
 <appPage {id}>

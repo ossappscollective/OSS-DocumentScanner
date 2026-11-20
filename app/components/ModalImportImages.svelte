@@ -112,8 +112,7 @@
             variant="text"
             verticalAlignment="center"
             visibility={currentIndex > 0 ? 'visible' : 'hidden'}
-            on:tap={() => changePage(-1)}
-        />
+            on:tap={() => changePage(-1)} />
         <label col={1} color={textColor} fontSize={13} row={3} text={lc('crop_edit_doc')} textAlignment="center" textWrap={true} verticalAlignment="center" />
         <uibutton
             class="icon-btn"
@@ -127,8 +126,7 @@
             variant="text"
             verticalAlignment="center"
             visibility={currentIndex < items.length - 1 ? 'visible' : 'hidden'}
-            on:tap={() => changePage(1)}
-        />
+            on:tap={() => changePage(1)} />
         <uibutton class="fab" colSpan={3} elevation={0} horizontalAlignment="center" row={4} text="mdi-check" variant="text" on:tap={onTapFinish} />
         <uibutton
             class="icon-btn"
@@ -140,8 +138,7 @@
             text="mdi-arrow-expand-all"
             variant="text"
             verticalAlignment="center"
-            on:tap={resetCrop}
-        />
+            on:tap={resetCrop} />
         <CActionBar backgroundColor="transparent" buttonsDefaultVisualState={visualState} colSpan={3} modalWindow={true} {onGoBack} title={null}>
             <uibutton class="actionBarButton" defaultVisualState={visualState} isEnabled={currentItem?.undos.length > 0} text="mdi-undo" variant="text" on:tap={onUndo} />
             <uibutton class="actionBarButton" defaultVisualState={visualState} isEnabled={currentItem?.redos.length > 0} text="mdi-redo" variant="text" on:tap={onRedo} />

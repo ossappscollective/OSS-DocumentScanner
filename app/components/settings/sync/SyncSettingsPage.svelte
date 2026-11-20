@@ -45,7 +45,7 @@
 </script>
 
 <appPage bind:this={page} {...$$restProps}>
-    <SyncSettingsBar {title} onSave={save} />
+    <SyncSettingsBar onSave={save} {title} />
     <gridlayout class="pageContent">
         <SyncSettingsCollectionView id="syncSettingsCollectionView" {items} bind:store bind:updateItem>
             <slot />

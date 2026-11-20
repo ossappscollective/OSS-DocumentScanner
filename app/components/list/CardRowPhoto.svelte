@@ -14,5 +14,4 @@
     fadeDuration={100}
     item={item.doc.pages[0]}
     sharedTransitionTag="document_{item.doc.id}_{item.doc.pages[0].id}"
-    stretch="aspectFill"
-/>
+    stretch="aspectFill" />

@@ -1,5 +1,5 @@
 import type { NativeViewElementNode } from '@nativescript-community/svelte-native/dom';
-import { get, type Readable } from 'svelte/store';
+import { type Readable, get } from 'svelte/store';
 import { CollectionView } from '@nativescript-community/ui-collectionview';
 import { CoreTypes, type View, type ViewBase } from '@nativescript/core';
 import { nextIconRotation } from '~/utils/cameraOrientation';

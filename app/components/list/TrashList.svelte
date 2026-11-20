@@ -84,8 +84,7 @@
     bind:onItemTap
     bind:onItemLongPress
     bind:documents
-    bind:collectionView
->
+    bind:collectionView>
     <Template let:item>
         <canvasview
             class="card"
@@ -93,8 +92,7 @@
             height={getItemRowHeight(viewStyle) * $fontScale}
             on:tap={() => onItemTap(item)}
             on:longPress={(e) => onItemLongPress(item, e)}
-            on:draw={(e) => onCanvasDraw(item, e)}
-        >
+            on:draw={(e) => onCanvasDraw(item, e)}>
             <RotableImageView
                 id="imageView"
                 borderRadius={12}
@@ -106,8 +104,7 @@
                 marginTop={getImageMargin(viewStyle)}
                 sharedTransitionTag={`document_${item.doc.id}_${item.doc.pages[0]?.id}`}
                 stretch="aspectFill"
-                width={getItemImageHeight(viewStyle) * $fontScale}
-            />
+                width={getItemImageHeight(viewStyle) * $fontScale} />
             <SelectedIndicator horizontalAlignment="left" margin={10} selected={item.selected} />
             <PageIndicator horizontalAlignment="right" margin={10} scale={$fontScale} text={item.doc.pages.length} />
         </canvasview>

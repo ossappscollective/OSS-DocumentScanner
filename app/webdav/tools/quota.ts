@@ -6,7 +6,7 @@ export function parseQuota(result: DAVResult): DiskQuota | null {
         const [responseItem] = result.multistatus.response;
         const {
             propstat: {
-                prop: { 'quota-used-bytes': quotaUsed, 'quota-available-bytes': quotaAvail }
+                prop: { 'quota-available-bytes': quotaAvail, 'quota-used-bytes': quotaUsed }
             }
         } = responseItem;
         return typeof quotaUsed !== 'undefined' && typeof quotaAvail !== 'undefined'

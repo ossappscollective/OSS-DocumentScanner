@@ -10,7 +10,14 @@
     const close = () => closeModal(undefined);
 </script>
 
-<appBar color={colorOnBackground} iosIconRenderingMode="alwaysTemplate" scrollBehavior="lift" scrollTargetId="syncSettingsCollectionView" size={__IOS__ && !$isLandscape ? 'large' : 'small'} {title} ios:translucent={true}>
+<appBar
+    color={colorOnBackground}
+    iosIconRenderingMode="alwaysTemplate"
+    scrollBehavior="lift"
+    scrollTargetId="syncSettingsCollectionView"
+    size={__IOS__ && !$isLandscape ? 'large' : 'small'}
+    {title}
+    ios:translucent={true}>
     {#if __ANDROID__}
         <navigationButton {...{ 'android.systemIcon': 'ic_menu_close_clear_cancel' }} on:tap={close} />
     {:else}

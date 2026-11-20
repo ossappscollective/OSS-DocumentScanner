@@ -25,4 +25,3 @@ export function hapticImpact() {
 export function isReduceMotion() {
     return __IOS__ ? UIAccessibilityIsReduceMotionEnabled() : false;
 }
-

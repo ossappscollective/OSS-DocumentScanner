@@ -1783,7 +1783,7 @@ function getPassDates(pass: PKPass) {
 export function getPKPassStatus(pass: PKPass, lang: string, layout: PKPassStatusLayout, now: Dayjs = dayjs()) {
     const result: CardStatus[] = [];
     const dated = DATED_STYLES.includes(pass.getPassStyle());
-    const { start, end } = getPassDates(pass);
+    const { end, start } = getPassDates(pass);
     const state = pass.isVoided() ? 'expired' : Number.isFinite(end) ? getExpirationState(end, now) : null;
     if (state === 'expired' || (state && !dated)) {
         result.push({ kind: state, timestamp: Number.isFinite(end) ? end : now.valueOf() });

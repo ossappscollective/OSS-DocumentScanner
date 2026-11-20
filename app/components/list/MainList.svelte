@@ -913,7 +913,7 @@
     async function syncDocuments() {
         try {
             if (syncEnabled) {
-                await syncService.syncDocuments({ bothWays: true, force: true });
+                syncService.syncDocuments({ bothWays: true, force: true });
             }
         } catch (error) {
             showError(error);

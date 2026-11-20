@@ -176,7 +176,9 @@
     const optionsMenu: MenuItem[] = [{ title: lc('delete_empty_folders'), icon: appIcon('delete'), onSelect: deleteEmptyFolders }];
     // Android: the actions are in the top bar while selecting, iOS: in the bottom toolbar
     $: selectionOptions = nbSelected > 0 ? getSelectionToolbarOptions() : [];
-    $: bottomItems = __IOS__ ? selectionOptions.flatMap((option) => [{ spacer: true }, { text: option.name, icon: appIcon(option.id), color: option.color, onTap: () => handleSelectionAction(option) }]) : [];
+    $: bottomItems = __IOS__
+        ? selectionOptions.flatMap((option) => [{ spacer: true }, { text: option.name, icon: appIcon(option.id), color: option.color, onTap: () => handleSelectionAction(option) }])
+        : [];
 
     function refreshCollectionView() {
         collectionView?.nativeView?.refresh();
@@ -212,9 +214,9 @@
         {/if}
     </appBar>
     <gridlayout class="pageContent" rows="*">
-        <collectionview id="folderCollectionView" bind:this={collectionView} {items} android:paddingBottom={$windowInset.bottom}>
+        <collectionview bind:this={collectionView} id="folderCollectionView" {items} android:paddingBottom={$windowInset.bottom}>
             <Template let:item>
-                <FolderCell {selectionMode} {item} marginLeft={16} marginRight={16} name={item.folder.name} tile={false} on:tap={() => onItemTap(item)} />
+                <FolderCell name={item.folder.name} {item} marginLeft={16} marginRight={16} {selectionMode} tile={false} on:tap={() => onItemTap(item)} />
             </Template>
         </collectionview>
         <label horizontalAlignment="center" text={lc('no_folder')} verticalAlignment="middle" visibility={items.length ? 'collapse' : 'visible'} />

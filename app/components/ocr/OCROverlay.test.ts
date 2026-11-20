@@ -125,6 +125,6 @@ describe('getAndroidFullMatrix', () => {
         // rotated clockwise by 90: x' = -0.45 * y + 1080, y' = 0.45 * x
         const matrix = getAndroidFullMatrix({ ...base, values: [0, -0.45, 1080, 0.45, 0, 0, 0, 0, 1] });
         expectPoint(matrix, 0, 0, [1080 / 2.625, 0]);
-        expectPoint(matrix, 1240, 0, [1080 / 2.625, 1240 * (2400 / 1240) * 0.45 / 2.625]);
+        expectPoint(matrix, 1240, 0, [1080 / 2.625, (1240 * (2400 / 1240) * 0.45) / 2.625]);
     });
 });

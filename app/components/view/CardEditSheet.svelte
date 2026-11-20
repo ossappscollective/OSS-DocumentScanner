@@ -44,13 +44,13 @@
 
     let name = document.name;
     let color: string = typeof document.extra?.color === 'string' ? document.extra.color : null;
-    let codes: CodeRow[] = [];
+    const codes: CodeRow[] = [];
     document.pages.forEach((page, pageIndex) => {
         (page.qrcode || []).forEach((qrcode) => {
             codes.push({ pageIndex, original: qrcode, text: qrcode.text, removed: false });
         });
     });
-    let fields: FieldRow[] = getExtraFields(document.extra).map(({ name: key, extra }) => ({ key, name: key, extra: { ...extra }, removed: false }));
+    const fields: FieldRow[] = getExtraFields(document.extra).map(({ extra, name: key }) => ({ key, name: key, extra: { ...extra }, removed: false }));
 
     // the rows are built again when the structure changes, never when a text is typed: the text fields keep their focus
     let listItems: any[] = [];
@@ -160,10 +160,9 @@
 
 <gesturerootview bind:this={rootView} horizontalAlignment="center" rows="auto,*" width={$isLandscape ? EDIT_SHEET_LANDSCAPE_WIDTH : undefined}>
     {#if fieldForm}
-        <svelte:component this={fieldForm.ExtraFieldPicker} editing={!!fieldForm.field} name={fieldForm.field?.name} onClose={onFieldFormClose} rowSpan={2} {...fieldForm.field?.extra || {}} />
+        <svelte:component this={fieldForm.ExtraFieldPicker} name={fieldForm.field?.name} editing={!!fieldForm.field} onClose={onFieldFormClose} rowSpan={2} {...fieldForm.field?.extra || {}} />
     {/if}
     <SheetHeader
-        visibility={fieldForm ? 'collapse' : 'visible'}
         actionIcon={appIcon('add')}
         actionLabel={lc('add_extra_field')}
         doneText={lc('save')}
@@ -171,8 +170,8 @@
         onCancel={() => close(false)}
         onDone={save}
         title={lc('edit')}
-    />
-    <collectionview bind:this={collectionView} row={1} {itemTemplateSelector} items={listItems} paddingBottom={24} visibility={fieldForm ? 'collapse' : 'visible'}>
+        visibility={fieldForm ? 'collapse' : 'visible'} />
+    <collectionview bind:this={collectionView} {itemTemplateSelector} items={listItems} paddingBottom={24} row={1} visibility={fieldForm ? 'collapse' : 'visible'}>
         <Template key="name" let:item>
             <FormTextField id="nameField" label={lc('name')} margin="0 16 8 16" bind:text={name} />
         </Template>
@@ -197,12 +196,11 @@
                 <FormTextField
                     editable={false}
                     label={item.field.name}
+                    margin="0 0 8 0"
                     minHeight={48}
                     multiline={true}
-                    margin="0 0 8 0"
-                    text={formatExtraValue(item.field.extra) + ''}
                     onTap={() => editField(item.field)}
-                />
+                    text={formatExtraValue(item.field.extra) + ''} />
                 <CardEditDeleteButton col={1} on:tap={() => removeField(item.field)} />
             </gridlayout>
         </Template>

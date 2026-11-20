@@ -70,6 +70,7 @@
 </script>
 
 <script lang="ts">
+    /* eslint-disable svelte/infinite-reactive-loop -- reactive statements only build menus whose closures update nbSelected, never run in them */
     // technique for only specific properties to get updated on store change
     $: ({ colorBackground, colorError, colorOnBackground, colorOnPrimaryContainer, colorPrimaryContainer } = $colors);
 
@@ -599,8 +600,7 @@
         subtitle={nbSelected === 0 ? subtitle : null}
         title={nbSelected > 0 ? lcp('selected', nbSelected) : title}
         titleAlignment="leading"
-        ios:translucent={true}
-    >
+        ios:translucent={true}>
         {#if __ANDROID__}
             <navigationButton {...{ 'android.systemIcon': nbSelected > 0 ? 'ic_menu_close_clear_cancel' : 'ic_menu_back' }} on:tap={nbSelected > 0 ? unselectAll : onGoBack} />
         {/if}
@@ -638,8 +638,7 @@
             paddingBottom={Math.max($windowInset.bottom, 88)}
             paddingLeft={columnsPadding}
             paddingRight={columnsPadding}
-            row={2}
-        >
+            row={2}>
             <Template let:item>
                 <DocumentPageTile
                     documentId={document.id}
@@ -649,8 +648,7 @@
                     selected={item.selected}
                     width={itemWidth}
                     on:tap={() => onItemTap(item)}
-                    on:longPress={() => toggleSelection(item)}
-                />
+                    on:longPress={() => toggleSelection(item)} />
             </Template>
         </collectionview>
     </gridlayout>
@@ -666,8 +664,7 @@
                     src={appIcon($hasCamera ? 'camera' : 'add')}
                     text={lc('add')}
                     on:tap={(event) => ($hasCamera ? addPages() : showMenuAbove(event, addMenu))}
-                    on:longPress={() => addPages(true)}
-                />
+                    on:longPress={() => addPages(true)} />
             </stacklayout>
         {/if}
     </appPageOverlay>

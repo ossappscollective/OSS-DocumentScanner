@@ -14,9 +14,9 @@
     hint={lc('remote_folder_desc')}
     label={lc('remote_folder')}
     margin="4 16 16 16"
+    onChange={(event) => ($store.remoteFolder = event.value)}
     returnKeyType="done"
     showLabel={false}
     text={$store.remoteFolder}
     trailingIcon={appIcon('folder')}
-    onChange={(event) => ($store.remoteFolder = event.value)}
     on:returnPress />

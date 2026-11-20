@@ -76,7 +76,7 @@
     ]);
 </script>
 
-<SyncSettingsPage title={lc('pdf_sync_settings')} {items} {store} bind:updateItem {...$$restProps}>
+<SyncSettingsPage {items} {store} title={lc('pdf_sync_settings')} bind:updateItem {...$$restProps}>
     <slot />
     <Template key="pdfoptions" let:item>
         <PDFSyncSettingsView {store} on:uppdate={() => updateItem({ type: 'pdfoptions' }, 'type')} />

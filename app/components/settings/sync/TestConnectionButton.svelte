@@ -16,7 +16,6 @@
         text={success < 0 ? lc('failed') : success > 0 ? lc('successful') : lc('test')}
         verticalAlignment="middle"
         visibility={testing ? 'hidden' : 'visible'}
-        on:tap
-    />
+        on:tap />
     <activityindicator busy={testing} height={20} horizontalAlignment="center" verticalAlignment="middle" visibility={testing ? 'visible' : 'hidden'} />
 </gridlayout>

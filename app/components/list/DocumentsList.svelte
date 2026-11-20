@@ -129,8 +129,7 @@
     bind:getSyncColors
     bind:documents
     bind:folderItems
-    bind:collectionView
->
+    bind:collectionView>
     <Template key="grid" let:item>
         <DocumentTile {item} radius={tileRadius} syncColors={getSyncColors(item)} {syncEnabled} width={itemWidth} on:tap={() => onItemTap(item)} on:longPress={(e) => onItemLongPress(item, e)} />
     </Template>
@@ -149,8 +148,7 @@
                 src={appIcon('camera')}
                 text={lc('scan')}
                 on:tap={throttle(() => onStartCam(), 500)}
-                on:longPress={() => onStartCam(true)}
-            />
+                on:longPress={() => onStartCam(true)} />
         {/if}
     </stacklayout>
 </MainList>

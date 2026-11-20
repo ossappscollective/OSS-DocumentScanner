@@ -50,8 +50,7 @@
                 src={url}
                 userAgent="Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Mobile Safari/537.36"
                 on:loadFinished={onLoadFinished}
-                on:loadStarted={onLoadStarted}
-            />
+                on:loadStarted={onLoadStarted} />
             <activityindicator busy={loading} visibility={loading ? 'visible' : 'collapse'} />
         </gridlayout>
         <CActionBar canGoBack={false} modalWindow={true} title={lc('authentication')}>

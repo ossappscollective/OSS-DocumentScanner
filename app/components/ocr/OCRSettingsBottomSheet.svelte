@@ -163,8 +163,7 @@
                         columns="*,auto"
                         margin={`${index === 0 ? 0 : __IOS__ ? 1 : 2} 16 0 16`}
                         padding="8 8 8 16"
-                        {...getRowCorners(getModelPosition(index, installedModels.length), __IOS__)}
-                    >
+                        {...getRowCorners(getModelPosition(index, installedModels.length), __IOS__)}>
                         <label color={colorOnSurface} fontSize={14} textWrap={true} verticalAlignment="middle">
                             <span text={localizedLanguage(model.language, OCRLanguages)} />
                             <span color={colorOnSurfaceVariant} text={`\n${lc(model.dataType)} · ${filesize(model.size, { output: 'string' })}`} />

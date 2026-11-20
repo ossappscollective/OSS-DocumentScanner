@@ -67,8 +67,7 @@
             transformers="zoomOut"
             on:loaded={allowSwipeBack}
             on:selectedIndexChange={onSelectedIndex}
-            android:marginTop={$windowInset.top}
-        >
+            android:marginTop={$windowInset.top}>
             <Template let:item>
                 <gridlayout rows="*,auto" width="100%">
                     <RotableImageView id="imageView" {imageFunctionArg} {item} margin={item.margin} sharedTransitionTag={item.sharedTransitionTag} zoomable={true} />
@@ -85,8 +84,7 @@
                         text={item.subtitle}
                         textAlignment="center"
                         verticalAlignment="bottom"
-                        visibility={item.subtitle ? 'visible' : 'hidden'}
-                    />
+                        visibility={item.subtitle ? 'visible' : 'hidden'} />
                 </gridlayout>
             </Template>
             <Template key="svg" let:item>
@@ -97,8 +95,7 @@
                         scaleY={item.scale ?? 1}
                         sharedTransitionTag={item.sharedTransitionTag}
                         src={item.svg}
-                        stretch={item.stretch ?? 'aspectFit'}
-                    />
+                        stretch={item.stretch ?? 'aspectFit'} />
                     <label
                         color={labelColor}
                         fontSize={30}
@@ -111,8 +108,7 @@
                         text={item.subtitle}
                         textAlignment="center"
                         verticalAlignment="bottom"
-                        visibility={item.subtitle ? 'visible' : 'hidden'}
-                    />
+                        visibility={item.subtitle ? 'visible' : 'hidden'} />
                 </gridlayout>
             </Template>
         </pager>
@@ -160,7 +156,15 @@
         {/if}
 
         <gridlayout columns="auto,*,auto,auto" margin="8 12 0 12" android:marginTop={8 + $windowInset.top} verticalAlignment="top">
-            <uibutton class="overlayIconButton" accessibilityLabel={lc('close')} color={labelColor} height={44} variant={overlayButtonVariant} width={44} {...{ src: appIcon('close') }} on:tap={() => goBack()} />
+            <uibutton
+                class="overlayIconButton"
+                accessibilityLabel={lc('close')}
+                color={labelColor}
+                height={44}
+                variant={overlayButtonVariant}
+                width={44}
+                {...{ src: appIcon('close') }}
+                on:tap={() => goBack()} />
             {#if onOCR && images[currentIndex]?.ocrData}
                 <uibutton
                     class="overlayIconButton"
