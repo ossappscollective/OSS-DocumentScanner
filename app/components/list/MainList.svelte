@@ -36,6 +36,7 @@
     import type { MenuItem } from '@nativescript-community/ui-menu';
     import { appIcon } from '~/utils/appIcons';
     import { type RowPosition, updateRowPositions } from '~/utils/groupedRows';
+    import type { Item } from '~/components/list/Item';
     import CardsEmpty from '~/components/list/CardsEmpty.svelte';
     import FolderCell from '~/components/list/FolderCell.svelte';
     import { optionsToMenuItems } from '~/utils/appMenu';
@@ -109,14 +110,7 @@
 
     type Subscription = [Pick<Observable, 'on' | 'off'>, string, (event: any) => void];
 
-    export interface Item {
-        type?: string;
-        doc?: OCRDocument;
-        folder?: DocFolder;
-        selected: boolean;
-        startingSide?: string;
-        position?: RowPosition;
-    }
+    export type { Item };
 </script>
 
 <script lang="ts">
