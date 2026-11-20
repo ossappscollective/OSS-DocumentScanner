@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import type { Item } from '~/components/list/MainList.svelte';
+import type { Item } from '~/components/list/Item';
 import { documentHasPKPassData } from '~/utils/pkpass';
 import { pickCardColor } from '~/utils/cardColors';
 import { lc } from '~/helpers/locale';
