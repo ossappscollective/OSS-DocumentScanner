@@ -17,7 +17,7 @@
 </script>
 
 {#if stacked}
-    <!-- only the strip above the next card is seen: the title (it shrinks to fit) with the chips at its right, the icons always on the line below -->
+    <!-- only the strip above the next card is seen: the title (it shrinks to fit) with the chips and the icons at its right, on one row -->
     <gridlayout columns="*,auto" height={stripHeight} verticalAlignment="top">
         <label
             autoFontSize={true}
@@ -33,15 +33,15 @@
             text={label}
             textAlignment="left"
             verticalAlignment="top" />
-        <stacklayout col={1} margin="14 10 0 0" verticalAlignment="top">
-            <CardStatusChips background={tile.fill} extra={item.doc.extra} horizontalAlignment="right" tint={tile.text} />
-            <CardBadges code={hasCode} color={tile.text} favorite={item.doc.favorite === 1} horizontalAlignment="right" marginTop={hasStatus ? 6 : 30} opacity={0.75} />
+        <stacklayout col={1} margin="8 10 0 0" orientation="horizontal" verticalAlignment="top">
+            <CardStatusChips extra={item.doc.extra} horizontalAlignment="right" reversed verticalAlignment="center" />
+            <CardBadges code={hasCode} color={tile.text} favorite={item.doc.favorite === 1} marginLeft={hasStatus ? 8 : 0} opacity={0.75} verticalAlignment="center" />
         </stacklayout>
     </gridlayout>
 {:else}
     <!-- the chips have their own row above the title: they never cover it -->
     <gridlayout rows="auto,*">
-        <CardStatusChips background={tile.fill} extra={item.doc.extra} horizontalAlignment="right" margin="8 8 0 8" tint={tile.text} verticalAlignment="top" />
+        <CardStatusChips extra={item.doc.extra} horizontalAlignment="right" margin="8 8 0 8" reversed verticalAlignment="top" />
         <label
             autoFontSize={true}
             color={tile.text}

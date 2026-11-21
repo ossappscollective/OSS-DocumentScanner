@@ -39,21 +39,21 @@
     item={item.doc.pages[0]}
     sharedTransitionTag="document_{item.doc.id}_{item.doc.pages[0].id}"
     stretch="aspectFill" />
-<!-- the title chip and the chips never share a row: the title is on top and the chips at the bottom of the strip seen above the next card (stacked), the other way around otherwise -->
+<!-- stacked, only the strip above the next card is seen: one row, the title chip then the chips and the icons at its right. Otherwise the title chip is at the bottom, the chips at the top and the icons at the bottom right -->
 <gridlayout columns="*,auto,auto" height={stripHeight} rows="auto,*" verticalAlignment={stripHeight ? 'top' : 'stretch'}>
     <CardChip
-        colSpan={3}
+        colSpan={stacked ? 1 : 3}
         fill={chipBackground}
         fontWeight={autoName ? '500' : '600'}
         horizontalAlignment="left"
         margin={8}
         marginLeft={stacked && item.selected ? 40 : 8}
-        marginRight={stacked ? 8 : iconsWidth + 8}
+        marginRight={stacked ? 0 : iconsWidth + 8}
         row={stacked ? 0 : 1}
         text={label}
         tint={chipTextColor}
         verticalAlignment={stacked ? 'top' : 'bottom'}
         visibility={showLabel ? 'visible' : 'collapsed'} />
-    <CardStatusChips col={1} extra={item.doc.extra} margin={8} row={stacked ? 1 : 0} verticalAlignment={stacked ? 'bottom' : 'top'} />
-    <CardBadges code={hasCode} col={2} color={iconColor} favorite={item.doc.favorite === 1} margin="8 12 6 0" row={1} verticalAlignment="bottom" />
+    <CardStatusChips col={1} colSpan={stacked ? 1 : 2} extra={item.doc.extra} horizontalAlignment="right" margin={8} reversed row={0} verticalAlignment="top" />
+    <CardBadges code={hasCode} col={2} color={iconColor} favorite={item.doc.favorite === 1} horizontalAlignment="right" margin={stacked ? '8 12 0 0' : '8 12 6 0'} row={stacked ? 0 : 1} verticalAlignment={stacked ? 'top' : 'bottom'} />
 </gridlayout>

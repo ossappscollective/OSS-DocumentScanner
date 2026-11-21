@@ -1,27 +1,25 @@
 <script lang="ts">
     import CardIcon from '~/components/common/CardIcon.svelte';
-    import { getChipColors, getChipWash } from '~/utils/cardColors';
+    import { getChipWash } from '~/utils/cardColors';
     import { colors } from '~/variables';
 
     export let text: string = null;
     export let icon: string = null;
     export let fontWeight: any = '600';
     export let tint: string = null;
-    /** the color of the card under a tinted chip: the chip is then solid, so it can cover data */
-    export let background: string = null;
-    /** the exact fill of a tinted chip, as is (a semi-transparent color over a photo): `background` is then ignored */
+    /** the exact fill of a tinted chip, as is (a semi-transparent color over a photo) */
     export let fill: string = null;
     let { colorOnPrimaryContainer, colorOnSurface } = $colors;
     $: ({ colorOnPrimaryContainer, colorOnSurface } = $colors);
     $: color = __IOS__ ? colorOnSurface : colorOnPrimaryContainer;
-    $: tinted = tint ? (fill ? { backgroundColor: fill, color: tint } : background ? getChipColors(tint, background) : { backgroundColor: getChipWash(tint), color: tint }) : null;
+    $: tinted = tint ? { backgroundColor: fill ?? getChipWash(tint), color: tint } : null;
 </script>
 
 {#if tint}
-    <!-- on a tile the chip is a wash of the tile text color: it fades into its card -->
-    <gridlayout backgroundColor={tinted.backgroundColor} borderRadius={12} columns="auto,auto" height={24} minWidth={24} padding={text ? '0 10' : '0 6'} verticalAlignment="middle" {...$$restProps}>
-        <CardIcon color={tinted.color} horizontalAlignment="center" marginRight={text && icon ? 4 : 0} size={14} src={icon} verticalAlignment="center" visibility={icon ? 'visible' : 'collapsed'} />
-        <label col={1} color={tinted.color} fontSize={12} {fontWeight} lineBreak="end" maxLines={1} {text} verticalAlignment="center" visibility={text ? 'visible' : 'collapsed'} />
+    <!-- as big as the cardChip surface below, with the fill and text color given -->
+    <gridlayout backgroundColor={tinted.backgroundColor} borderRadius={11} columns="auto,auto" height={22} minWidth={22} padding={text ? '0 8' : '0 5'} verticalAlignment="middle" {...$$restProps}>
+        <CardIcon color={tinted.color} horizontalAlignment="center" marginRight={text && icon ? 4 : 0} size={12} src={icon} verticalAlignment="center" visibility={icon ? 'visible' : 'collapsed'} />
+        <label col={1} color={tinted.color} fontSize={11} {fontWeight} lineBreak="end" maxLines={1} {text} verticalAlignment="center" visibility={text ? 'visible' : 'collapsed'} />
     </gridlayout>
 {:else}
     <!-- glass on iOS, tonal on Android (see the cardChip class): legible on any image -->

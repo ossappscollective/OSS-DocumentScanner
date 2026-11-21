@@ -66,36 +66,13 @@
 
     <!-- Content container with proper padding -->
     <gridlayout padding={12 * scaleFactor} rows={`auto,${pkpass?.getPassStyle() === PKPassStyle.BoardingPass ? '*' : 'auto'},auto,auto`}>
-        <!-- Top row: Logo/Icon + Name (limited width) + Important right-side data -->
+        <!-- Top row: the important header fields at the left, the logo at the right: the status chips of the list are at the top right, over the logo and not over the data -->
         <gridlayout columns="auto,*,auto" marginBottom={5 * scaleFactor} row={0}>
-            <!-- Left: Logo (max 80px scaled) or Icon (20px scaled) + Name -->
-            <stacklayout col={0} orientation="horizontal" verticalAlignment="center">
-                <!-- Logo takes priority (Apple spec: max 160x50, scaled to 80px width max for card) -->
-                <!-- Icon (Apple spec: 29x29, scaled to ~20px for card) + Name -->
-                <image
-                    height={(logoImage ? 40 : 20) * scaleFactor}
-                    marginRight={(logoImage ? 8 : 6) * scaleFactor}
-                    src={logoImage || iconImage}
-                    stretch="aspectFit"
-                    verticalAlignment="center"
-                    visibility={logoImage || iconImage ? 'visible' : 'collapse'}
-                    width={(logoImage ? 80 : 20) * scaleFactor} />
-                <label
-                    color={foregroundColor}
-                    fontSize={14 * scaleFactor}
-                    fontWeight="bold"
-                    maxLines={1}
-                    text={orgName}
-                    verticalAlignment="center"
-                    visibility={!logoImage ? 'visible' : 'collapse'}
-                    width={120 * scaleFactor} />
-            </stacklayout>
-
-            <!-- Right: Important data (header fields like gate, seat, date) -->
-            <gridlayout col={2} columns={stars(headerFields.length)} marginBottom={10 * scaleFactor} visibility={headerFields.length > 0 ? 'visible' : 'collapsed'}>
+            <!-- Left: Important data (header fields like gate, seat, date) -->
+            <gridlayout col={0} columns={stars(headerFields.length)} marginBottom={10 * scaleFactor} visibility={headerFields.length > 0 ? 'visible' : 'collapsed'}>
                 {#each { length: 4 } as _, index (index)}
                     {@const field = structure?.headerFields?.[index]}
-                    <label col={index} maxLines={2} paddingLeft={index !== 0 ? 12 * scaleFactor : 0} textAlignment={getFieldTextAlignment(field, 'right')} visibility={field ? 'visible' : 'collapsed'}>
+                    <label col={index} maxLines={2} paddingRight={index !== headerFields.length - 1 ? 12 * scaleFactor : 0} textAlignment={getFieldTextAlignment(field, 'left')} visibility={field ? 'visible' : 'collapsed'}>
                         <cspan
                             color={labelColor}
                             fontSize={10 * scaleFactor}
@@ -107,6 +84,30 @@
                     </label>
                 {/each}
             </gridlayout>
+
+            <!-- Right: Logo (max 80px scaled) or Icon (20px scaled) + Name -->
+            <stacklayout col={2} orientation="horizontal" verticalAlignment="top">
+                <!-- Logo takes priority (Apple spec: max 160x50, scaled to 80px width max for card) -->
+                <!-- Icon (Apple spec: 29x29, scaled to ~20px for card) + Name -->
+                <image
+                    height={(logoImage ? 40 : 20) * scaleFactor}
+                    marginLeft={(logoImage ? 8 : 6) * scaleFactor}
+                    src={logoImage || iconImage}
+                    stretch="aspectFit"
+                    verticalAlignment="center"
+                    visibility={logoImage || iconImage ? 'visible' : 'collapse'}
+                    width={(logoImage ? 80 : 20) * scaleFactor} />
+                <label
+                    color={foregroundColor}
+                    fontSize={14 * scaleFactor}
+                    fontWeight="bold"
+                    maxLines={1}
+                    text={orgName}
+                    textAlignment="right"
+                    verticalAlignment="center"
+                    visibility={!logoImage ? 'visible' : 'collapse'}
+                    width={120 * scaleFactor} />
+            </stacklayout>
         </gridlayout>
 
         <!-- Middle row: Primary fields + Transit icon (for boarding passes) -->
@@ -166,12 +167,6 @@
             </gridlayout>
         {/each}
     </gridlayout>
-    <!-- like the other cards: at the top, an expired pass at the right over its data -->
-    <CardStatusChips
-        background={backgroundColor}
-        horizontalAlignment={status.some((current) => current.kind === 'expired') ? 'right' : 'center'}
-        margin={8}
-        {status}
-        tint={foregroundColor}
-        verticalAlignment="top" />
+    <!-- like the other cards: the chips at the top right -->
+    <CardStatusChips horizontalAlignment="right" margin={8} reversed {status} verticalAlignment="top" />
 </gridlayout>
