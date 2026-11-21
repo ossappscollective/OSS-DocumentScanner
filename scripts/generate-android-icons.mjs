@@ -14,7 +14,7 @@ if (!svgFolder || !existsSync(svgFolder)) {
 const source = readFileSync(join(root, 'app/utils/appIcons.ts'), 'utf8');
 const androidIcons = source.slice(source.indexOf('const ANDROID_ICONS'), source.indexOf('} satisfies'));
 const names = [...new Set([...androidIcons.matchAll(/: '([a-z0-9-]+)'/g)].map((match) => match[1]))];
-const folders = ['documentscanner', 'cardwallet'].map((flavor) => join(root, 'App_Resources', flavor, 'Android/src/main/res/drawable'));
+const folder = join(root, 'plugin-shared/platforms/android/res/drawable');
 
 names.forEach((name) => {
     const svg = readFileSync(join(svgFolder, `${name}.svg`), 'utf8');
@@ -34,9 +34,7 @@ names.forEach((name) => {
         android:pathData="${pathData}" />
 </vector>
 `;
-    folders.forEach((folder) => {
-        mkdirSync(folder, { recursive: true });
-        writeFileSync(join(folder, `ic_mdi_${name.replace(/-/g, '_')}.xml`), xml);
-    });
+    mkdirSync(folder, { recursive: true });
+    writeFileSync(join(folder, `ic_mdi_${name.replace(/-/g, '_')}.xml`), xml);
 });
-console.log(`${names.length} icons written to ${folders.length} flavors`);
+console.log(`${names.length} icons written to ${folder}`);
