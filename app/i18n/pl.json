@@ -93,6 +93,7 @@
     "camera_settings": "Ustawienia aparatu",
     "camera_view_size": "rozmiar widoku",
     "cancel": "anuluj",
+    "capture_timeout": "Aparat nie zwrócił zdjęcia, spróbuj ponownie",
     "capturing": "przechwytywanie",
     "card_empty_help": "dodaj kod, zdjęcie lub szczegóły",
     "card_empty_title": "na tej karcie jeszcze nic nie ma",
