@@ -67,7 +67,7 @@
         "@nativescript-community/ui-appbar": "1.6.5",
         "@nativescript-community/ui-bottomsheet": "1.6.5",
         "@nativescript-community/ui-button": "1.6.5",
-        "@nativescript-community/ui-cameraview": "0.9.0",
+        "@nativescript-community/ui-cameraview": "0.9.1",
         "@nativescript-community/ui-canvas": "4.6.57",
         "@nativescript-community/ui-canvaslabel": "1.2.60",
         "@nativescript-community/ui-checkbox": "1.6.5",
@@ -137,13 +137,5 @@
         "./plugin-nativeprocessor",
         "./webpdfviewer"
     ],
-    "packageManager": "yarn@4.18.1",
-    "resolutions": {
-        "@akylas/nativescript": "portal:../NativeScript/dist/packages/core",
-        "@nativescript-community/ui-collectionview": "portal:../ui-collectionview/packages/collectionview",
-        "@nativescript-community/ui-appbar": "portal:../ui-native-components/packages/ui-appbar",
-        "@nativescript-community/ui-dialogs": "portal:../ui-native-components/packages/ui-dialogs",
-        "@nativescript-community/ui-pager": "portal:../ui-pager/packages/ui-pager",
-        "@nativescript-community/ui-persistent-bottomsheet": "portal:../ui-persistent-bottomsheet/packages/ui-persistent-bottomsheet"
-    }
+    "packageManager": "yarn@4.18.1"
 }
