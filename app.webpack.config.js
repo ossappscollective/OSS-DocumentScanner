@@ -485,13 +485,6 @@ module.exports = (env, params = {}) => {
                 })
             );
         }
-        config.plugins.push(
-            new webpack.NormalModuleReplacementPlugin(/action-bar$/, (resource) => {
-                if (resource.context.match(nativescriptReplace)) {
-                    resource.request = '@shared/shims/action-bar';
-                }
-            })
-        );
     }
     // save as long as we dont use calc in css
     config.plugins.push(new webpack.IgnorePlugin({ resourceRegExp: /reduce-css-calc$/ }));
