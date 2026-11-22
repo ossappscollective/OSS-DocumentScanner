@@ -33,6 +33,7 @@
     import { BOTTOM_BUTTON_OFFSET, CARD_RATIO, DOCUMENT_NAME_FORMAT, QRCODE_RESIZE_THRESHOLD, SETTINGS_DOCUMENT_NAME_FORMAT, SHEET_PAN_SOFT_INPUT_MODE } from '~/utils/constants';
     import { appIcon } from '~/utils/appIcons';
     import { optionsToMenuItems } from '~/utils/appMenu';
+    import { allowSwipeBack } from '~/utils/swipeBack';
     import { getCardAccent, pickCardColor } from '~/utils/cardColors';
     import { getSelectedPages, subscribeDocumentEvents } from '~/utils/documentView';
     import { formatExtraValue, getExtraFields } from '~/utils/extraFields';
@@ -169,7 +170,7 @@
     // (a property which goes from a value to nothing is not reset on iOS and makes a native crash for an alignment on Android: they always have one)
     $: photoCardProps = $isLandscape
         ? { horizontalAlignment: 'center' as const, height: photoCardHeight, width: photoCardWidth }
-        : { horizontalAlignment: 'stretch' as const, height: photoCardHeight, width: '100%' };
+        : { horizontalAlignment: 'stretch' as const, height: photoCardHeight, width: 'auto' };
     $: filmstrip = getFilmstripLayout(nbImages, paneWidth);
     $: hasHero = hasQRCodes || hasImages;
     $: isEmptyCard = !hasHero && !details.length && !isPKPassDocument;
@@ -1029,7 +1030,7 @@
         {#if CARD_APP && isPKPassDocument}
             <!-- the app bar pads its scroll target for the bottom toolbar: this empty one keeps it off the pager, so the pages go under the toolbar -->
             <scrollview id="cardScroll" height={0} />
-            <pager bind:this={pager} items={document.pages} transformers="zoomOut" on:selectedIndexChange={onSelectedIndex}>
+            <pager bind:this={pager} items={document.pages} transformers="zoomOut" on:loaded={allowSwipeBack} on:selectedIndexChange={onSelectedIndex}>
                 <Template let:item>
                     <stacklayout padding="0">
                         <PKPassView bottomPadding={$windowInset.bottom + FLOATING_TOOLBAR_OFFSET} {document} fullscreen={true} pkpass={item.pkpass} showLogo={false} />
@@ -1099,6 +1100,7 @@
                                     peaking={multipleQR ? PEEK_WIDTH : 0}
                                     selectedIndex={currentQRCodeIndex}
                                     spacing={12}
+                                    on:loaded={allowSwipeBack}
                                     on:selectedIndexChange={onSelectedIndex}>
                                     <Template let:item>
                                         <gridlayout
@@ -1152,6 +1154,7 @@
                                         preserveIndexOnItemsChange={true}
                                         selectedIndex={currentImageIndex}
                                         spacing={12}
+                                        on:loaded={allowSwipeBack}
                                         on:selectedIndexChange={onImagesPagerIndex}>
                                         <Template let:item>
                                             <gridlayout

@@ -611,7 +611,6 @@
             opacity={sheetShown || $isLandscape ? 1 : 0}
             panel={$isLandscape}
             rows={$isLandscape ? 'auto,*' : 'auto,auto'}
-            shadow={adjusting}
             width={$isLandscape ? '100%' : sheetWidth}>
             {#if !$isLandscape}
                 <!-- the quick way to close it: the sheet is not modal, the page stays in use. In landscape the button of the bar closes it -->
