@@ -169,7 +169,7 @@
     // (a property which goes from a value to nothing is not reset on iOS and makes a native crash for an alignment on Android: they always have one)
     $: photoCardProps = $isLandscape
         ? { horizontalAlignment: 'center' as const, height: photoCardHeight, width: photoCardWidth }
-        : { horizontalAlignment: 'stretch' as const, height: photoCardHeight, width: '100%' };
+        : { horizontalAlignment: 'stretch' as const, height: photoCardHeight, width: 'auto' };
     $: filmstrip = getFilmstripLayout(nbImages, paneWidth);
     $: hasHero = hasQRCodes || hasImages;
     $: isEmptyCard = !hasHero && !details.length && !isPKPassDocument;
