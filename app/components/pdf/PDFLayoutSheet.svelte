@@ -20,7 +20,7 @@
     $: textColor = glass ? 'white' : colorOnSurface;
     $: secondaryColor = glass ? '#ffffffad' : colorOnSurfaceVariant;
     $: separatorColor = glass ? '#ffffff38' : colorOutlineVariant;
-    $: groupColor = glass ? '#ffffff24' : colorSurface;
+    $: groupColor = glass ? '#ffffff24' : __IOS__ && inline ? colorBackground : colorSurface;
     $: tonalColor = glass ? '#ffffff2e' : colorSurfaceContainerHigh;
 
     export let optionsStore: Writable<PDFExportBaseOptions>;

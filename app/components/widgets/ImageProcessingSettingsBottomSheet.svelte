@@ -45,7 +45,8 @@
     $: textColor = glass ? 'white' : colorOnSurface;
     $: secondaryColor = glass ? '#ffffff99' : colorOnSurfaceVariant;
     $: separatorColor = glass ? '#ffffff33' : colorOutlineVariant;
-    $: groupColor = glass ? '#ffffff1f' : colorSurface;
+    // iOS: the persistent sheet is a system surface, its groups are the grouped background
+    $: groupColor = glass ? '#ffffff1f' : __IOS__ && inline ? colorBackground : colorSurface;
     $: ({ colorBackground, colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary, colorSurface } = $colors);
 
     export let showCameraSettings = false;

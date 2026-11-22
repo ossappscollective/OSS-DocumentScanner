@@ -532,7 +532,6 @@
             height={$isLandscape ? '100%' : LAYOUT_SHEET_HEIGHT + bottomInset}
             panel={$isLandscape}
             rows={$isLandscape ? '*' : 'auto'}
-            shadow={sheetOpen}
             width={$isLandscape ? '100%' : sheetWidth}>
             <PDFLayoutSheet
                 {hasOCRText}
