@@ -182,7 +182,8 @@ export default class PDFCanvas {
             height: toDrawHeight * scale,
             sourceWidth: imageWidth,
             sourceHeight: imageHeight,
-            jpegQuality: options.jpegQuality,
+            // 0 means no compression: undefined skips the JPEG re-encode (iOS would use quality 0 = worst)
+            jpegQuality: options.jpegQuality || undefined,
             resizeThreshold: options.imageSizeThreshold
         });
 
