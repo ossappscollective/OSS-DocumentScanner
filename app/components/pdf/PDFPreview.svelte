@@ -29,6 +29,7 @@
     import { getPageColorMatrix } from '~/utils/matrix';
     import { createPageSheetTranslation, getPageFit, setPageFit } from '~/utils/pageSheet';
     import { getIOSBottomInset, getIOSViewBottomInset, measureWidth } from '~/utils/safeArea';
+    import { allowSwipeBack } from '~/utils/swipeBack';
     import { askPDFExportOptions, hideLoading, requestStoragePermission, showLoading, showSettings, showSnack } from '~/utils/ui';
     import { colors, isLandscape, screenHeightDips, screenWidthDips, windowInset } from '~/variables';
 
@@ -464,6 +465,7 @@
                     peaking={PAGER_PEAKING}
                     preserveIndexOnItemsChange={true}
                     selectedIndex={currentPagerIndex}
+                    on:loaded={allowSwipeBack}
                     on:selectedIndexChange={onPageIndexChanged}>
                     {#each { length: 6 } as _, i (i)}
                         <Template key={`${i + 1}`} let:item>
