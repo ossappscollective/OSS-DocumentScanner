@@ -169,8 +169,10 @@
 
             return state;
         });
-        listView?.nativeView?.refreshVisibleItems();
     }
+
+    // the camera also updates the store itself once it has reopened
+    $: $cameraOptionsStore && listView?.nativeView?.refreshVisibleItems();
 
     const OPTIONS: any[] = showCameraSettings
         ? [
@@ -229,7 +231,7 @@
                 title: item.options[key].name,
                 checked: key === currentValue,
                 onSelect: () => {
-                    if (item.id === 'pictureSize') {
+                    if (item.id === 'pictureSize' || item.id === 'aspectRatio') {
                         ApplicationSettings.setBoolean(SETTINGS_CAMERA_USER_DEFINED_RESOLUTION, true);
                     }
                     updateCameraOption(item.id, key, item.options[key]);

@@ -61,7 +61,6 @@
     $: DEV_LOG && console.log('cameraOptions', JSON.stringify($cameraOptionsStore));
     const cropEnabled = ApplicationSettings.getBoolean(SETTINGS_CROP_ENABLED, CROP_ENABLED);
     const frontMirrored = ApplicationSettings.getBoolean(SETTINGS_FONT_CAM_MIRRORED, DEFAULT_FONT_CAM_MIRRORED);
-    const usingUserDefinedCameraResolution = ApplicationSettings.getBoolean(SETTINGS_CAMERA_USER_DEFINED_RESOLUTION, false);
     cameraOptionsStore.subscribe((newValue) => {
         ApplicationSettings.setString(SETTINGS_CAMERA_SETTINGS, JSON.stringify(newValue));
     });
@@ -653,7 +652,10 @@
             DEV_LOG && console.log('onCameraOpen', minZoom, maxZoom, zoom);
             if (__ANDROID__) {
                 // the user defined one, else the highest resolution
-                const resolution = usingUserDefinedCameraResolution ? cameraView.nativeView.getCurrentResolutionInfo() : cameraView.nativeView.getAllAvailablePictureSizes()[0];
+                // read live: the user can set it while the camera is open
+                const resolution = ApplicationSettings.getBoolean(SETTINGS_CAMERA_USER_DEFINED_RESOLUTION, false)
+                    ? cameraView.nativeView.getCurrentResolutionInfo()
+                    : cameraView.nativeView.getAllAvailablePictureSizes()[0];
                 if (resolution) {
                     cameraOptionsStore.update((state) => {
                         state['aspectRatio'] = resolution.aspectRatio;
