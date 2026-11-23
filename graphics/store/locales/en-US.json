@@ -1,0 +1,162 @@
+{
+  "apps": {
+    "documentscanner": {
+      "feature": {
+        "name": "OSS Document Scanner",
+        "tagline": "Scan, search and organize your documents. Free and open source."
+      },
+      "slides": {
+        "documents": {
+          "title": "All your documents,\n*one tap* away",
+          "subtitle": "Folders, tags and instant search",
+          "chips": [
+            "Folders",
+            "Tags",
+            "Favorites"
+          ]
+        },
+        "crop": {
+          "title": "Edges found\n*automatically*",
+          "subtitle": "Crop and straighten in seconds",
+          "chips": [
+            "Auto detect",
+            "Drag to adjust"
+          ]
+        },
+        "enhance": {
+          "title": "Crisp, *clean* scans",
+          "subtitle": "Filters, brightness and contrast",
+          "chips": [
+            "Filters",
+            "Brightness",
+            "Contrast"
+          ]
+        },
+        "search": {
+          "title": "*Search* inside\nyour documents",
+          "subtitle": "Built-in text recognition, even offline",
+          "chips": [
+            "Accent-insensitive",
+            "Offline OCR"
+          ]
+        },
+        "ocr": {
+          "title": "Grab the *text*\nfrom any page",
+          "subtitle": "Select, copy and share recognized text",
+          "chips": [
+            "Select",
+            "Copy"
+          ]
+        },
+        "pages": {
+          "title": "*Multi-page*\ndocuments",
+          "subtitle": "Reorder, rotate and edit every page",
+          "chips": [
+            "Reorder",
+            "Rotate",
+            "Add pages"
+          ]
+        },
+        "sync": {
+          "title": "*Sync* on every\ndevice you own",
+          "subtitle": "Your files, your servers, your choice",
+          "chips": [
+            "WebDAV",
+            "Google Drive",
+            "OneDrive",
+            "Nextcloud",
+            "Paperless-ngx"
+          ]
+        },
+        "dark": {
+          "title": "Light or *dark*,\nyour choice",
+          "subtitle": "Looks great day and night",
+          "chips": [
+            "Light",
+            "Dark"
+          ]
+        }
+      }
+    },
+    "cardwallet": {
+      "feature": {
+        "name": "OSS Card Wallet",
+        "tagline": "All your cards and passes in one private place. Free and open source."
+      },
+      "slides": {
+        "cards": {
+          "title": "All your *cards*\nin one place",
+          "subtitle": "Loyalty, membership, transit and more",
+          "chips": [
+            "Loyalty",
+            "Memberships",
+            "Transit"
+          ]
+        },
+        "sides": {
+          "title": "*Front* and back",
+          "subtitle": "Keep both sides of every card",
+          "chips": [
+            "Front",
+            "Back"
+          ]
+        },
+        "barcode": {
+          "title": "Always *scannable*",
+          "subtitle": "Big, bright full-screen codes",
+          "chips": [
+            "QR",
+            "EAN",
+            "PDF417"
+          ]
+        },
+        "pass": {
+          "title": "*Passes* included",
+          "subtitle": "Boarding passes, tickets and coupons",
+          "chips": [
+            "Boarding passes",
+            "Tickets",
+            "Coupons"
+          ]
+        },
+        "status": {
+          "title": "Never miss\nan *expiry*",
+          "subtitle": "Balances and expiration dates at a glance",
+          "chips": [
+            "Expiry",
+            "Balance",
+            "Favorites"
+          ]
+        },
+        "wallet": {
+          "title": "Your *wallet*,\nneatly stacked",
+          "subtitle": "Pick the view you like best",
+          "chips": [
+            "Card holder",
+            "Full",
+            "Columns"
+          ]
+        },
+        "sync": {
+          "title": "*Sync* on every\ndevice you own",
+          "subtitle": "Your files, your servers, your choice",
+          "chips": [
+            "WebDAV",
+            "Google Drive",
+            "OneDrive",
+            "Nextcloud",
+            "Paperless-ngx"
+          ]
+        },
+        "dark": {
+          "title": "Light or *dark*,\nyour choice",
+          "subtitle": "Looks great day and night",
+          "chips": [
+            "Light",
+            "Dark"
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+# a boarding pass. env: TILE_POINT (first search result)
+appId: com.akylas.cardwallet
+env:
+  APP_ID: com.akylas.cardwallet
+  READY: Blue Shield.*
+---
+- runFlow: lib/start.yaml
+- runFlow:
+    file: lib/search.yaml
+    env:
+      QUERY: boarding
+- tapOn:
+    point: ${TILE_POINT}
+- waitForAnimationToEnd
+- takeScreenshot: pass
+- takeScreenshot: _end

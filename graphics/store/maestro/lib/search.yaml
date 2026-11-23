@@ -1,0 +1,19 @@
+# types a query in the search field and shows the results. env: QUERY
+appId: ${APP_ID}
+---
+- tapOn: "(?i)^search$|^recherche$"
+- inputText: ${QUERY}
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - pressKey: Enter
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - hideKeyboard
+- extendedWaitUntil:
+    notVisible: Health.*
+    timeout: 8000
+- waitForAnimationToEnd

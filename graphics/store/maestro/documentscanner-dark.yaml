@@ -1,0 +1,9 @@
+# same page as `documents`, to run with the device in dark mode (scripts/capture.mjs switches it)
+appId: com.akylas.documentscanner
+env:
+  APP_ID: com.akylas.documentscanner
+  READY: Lisbon trip.*
+---
+- runFlow: lib/start.yaml
+- takeScreenshot: dark
+- takeScreenshot: _end

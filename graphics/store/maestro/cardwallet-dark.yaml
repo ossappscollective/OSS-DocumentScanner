@@ -1,0 +1,9 @@
+# same page as `cards`, to run with the device in dark mode (scripts/capture.mjs switches it)
+appId: com.akylas.cardwallet
+env:
+  APP_ID: com.akylas.cardwallet
+  READY: Blue Shield.*
+---
+- runFlow: lib/start.yaml
+- takeScreenshot: dark
+- takeScreenshot: _end

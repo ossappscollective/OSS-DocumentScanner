@@ -1,0 +1,19 @@
+# a code in full screen. env: TILE_POINT (first search result), CODE_POINT (the code of the card)
+appId: com.akylas.cardwallet
+env:
+  APP_ID: com.akylas.cardwallet
+  READY: Blue Shield.*
+---
+- runFlow: lib/start.yaml
+- runFlow:
+    file: lib/search.yaml
+    env:
+      QUERY: velo
+- tapOn:
+    point: ${TILE_POINT}
+- waitForAnimationToEnd
+- tapOn:
+    point: ${CODE_POINT}
+- waitForAnimationToEnd
+- takeScreenshot: barcode
+- takeScreenshot: _end
