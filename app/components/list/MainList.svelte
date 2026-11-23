@@ -29,6 +29,7 @@
     import { OptionType } from '@shared/components/OptionSelect.svelte';
     import { prefs } from '@shared/services/preferences';
     import { showError } from '@shared/utils/showError';
+    import { showSnack } from '@shared/utils/ui';
     import { closeModal, fade, goBack, navigate } from '@shared/utils/svelte/ui';
     import { onDestroy, onMount } from 'svelte';
     import { type Writable, writable } from 'svelte/store';
@@ -56,6 +57,7 @@
         FolderUpdatedEventData,
         documentsService
     } from '~/services/documents';
+    import { buildFolderName } from '~/services/folderUtils';
     import { syncService, syncServicesStore } from '~/services/sync';
     import { SERVICES_SYNC_COLOR, SERVICES_SYNC_MASK } from '~/services/sync/types';
     import { getSyncedServices } from '~/utils/documentCell';
@@ -1107,6 +1109,20 @@
         }
     }
 
+    const createFolder = tryCatchFunction(async () => {
+        const result = await promptForText({ title: lc('new_folder'), hintText: lc('name') });
+        const name = result.result ? buildFolderName(folder?.name, result.text ?? '') : null;
+        if (!name) {
+            return;
+        }
+        // a new folder is empty: it would not show without the setting
+        if (!ApplicationSettings.getBoolean(SETTINGS_SHOW_EMPTY_FOLDERS, DEFAULT_SHOW_EMPTY_FOLDERS)) {
+            ApplicationSettings.setBoolean(SETTINGS_SHOW_EMPTY_FOLDERS, true);
+            showSnack({ message: lc('empty_folders_shown') });
+        }
+        await documentsService.createFolder(name);
+    });
+
     async function setFolderColor() {
         try {
             const color = await pickColor(folder.color || colorPrimary, { anchor: page?.nativeView });
@@ -1186,10 +1202,11 @@
             ]
           : [];
     $: trashMenuItems = !isTrash && trashEnabled ? [{ title: lc('open_trash'), icon: appIcon('trash'), onSelect: openTrash }] : [];
+    const newFolderMenuItem: MenuItem = { title: lc('new_folder'), icon: appIcon('new_folder'), onSelect: createFolder };
     let iosMenu: MenuItem[];
-    $: iosMenu = [{ title: lc('view_style'), icon: appIcon('view_style'), items: getIOSViewStyleItems(viewStyle, folderViewStyle, sortOrder) }, ...trashMenuItems];
+    $: iosMenu = [{ title: lc('view_style'), icon: appIcon('view_style'), items: getIOSViewStyleItems(viewStyle, folderViewStyle, sortOrder) }, newFolderMenuItem, ...trashMenuItems];
     let optionsMenu: MenuItem[];
-    $: optionsMenu = [...trashMenuItems, { title: lc('preferences'), icon: appIcon('settings'), onSelect: openPreferences }];
+    $: optionsMenu = [newFolderMenuItem, ...trashMenuItems, { title: lc('preferences'), icon: appIcon('settings'), onSelect: openPreferences }];
 
     function onSearchChange(event: { text: string }) {
         const query = event.text?.toLowerCase();
@@ -1219,6 +1236,7 @@
     } else if (folder) {
         appBarItems = [
             ...(__IOS__ && plusMenu.length > 1 ? [{ key: 'add', icon: appIcon('add'), ...iosRight, menu: plusMenu, text: lc('add') }] : []),
+            { key: 'new_folder', icon: appIcon('new_folder'), ...iosRight, text: lc('new_folder'), onTap: createFolder },
             { key: 'color', icon: appIcon('color'), ...iosRight, text: lc('color'), onTap: setFolderColor }
         ];
     } else if (__IOS__) {

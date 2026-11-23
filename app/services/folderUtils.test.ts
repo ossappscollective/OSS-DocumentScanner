@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { type FolderLike, collectFoldersToDelete, filterEmptyFolders, folderAncestorNames, isFolderDescendant, missingFolderAncestors, normalizeRemoteFolders } from './folderUtils';
+import { type FolderLike, buildFolderName, collectFoldersToDelete, filterEmptyFolders, folderAncestorNames, isFolderDescendant, missingFolderAncestors, normalizeRemoteFolders } from './folderUtils';
 
 // Folders are tags whose hierarchy only exists in the name ("work/2024"), so
 // deleting a folder must take its descendants with it — and nothing else.
@@ -106,5 +106,27 @@ describe('normalizeRemoteFolders', () => {
         const newer = { ...stored, name: 'work2', modifiedDate: 20 };
         expect(normalizeRemoteFolders([JSON.stringify(stored), newer])).toEqual({ folders: [newer], changed: true });
         expect(normalizeRemoteFolders([newer, JSON.stringify(stored)])).toEqual({ folders: [newer], changed: true });
+    });
+});
+
+describe('buildFolderName', () => {
+    it('uses the input as is at the root', () => {
+        expect(buildFolderName(undefined, 'work')).toBe('work');
+    });
+
+    it('prefixes the parent folder', () => {
+        expect(buildFolderName('work', '2024')).toBe('work/2024');
+        expect(buildFolderName('work', 'q1/week1')).toBe('work/q1/week1');
+    });
+
+    it('drops empty segments and surrounding spaces', () => {
+        expect(buildFolderName(undefined, ' /a//b/ ')).toBe('a/b');
+        expect(buildFolderName('work', 'a / b')).toBe('work/a/b');
+    });
+
+    it('rejects a name without any segment', () => {
+        expect(buildFolderName(undefined, '')).toBeNull();
+        expect(buildFolderName('work', '  ')).toBeNull();
+        expect(buildFolderName('work', '/')).toBeNull();
     });
 });
