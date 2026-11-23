@@ -1,0 +1,258 @@
+{
+  "fastlane": "fastlane/metadata",
+  "apps": {
+    "documentscanner": {
+      "id": "com.akylas.documentscanner",
+      "icon": "graphics/icon.png",
+      "theme": {
+        "accent": "#FFE08A",
+        "font": "Outfit",
+        "titleWeight": "800"
+      },
+      "feature": {
+        "slides": [
+          "documents",
+          "enhance",
+          "search"
+        ],
+        "bg": [
+          "#10B981",
+          "#047857"
+        ]
+      },
+      "slides": [
+        {
+          "id": "documents",
+          "bg": [
+            "#10B981",
+            "#047857"
+          ]
+        },
+        {
+          "id": "crop",
+          "bg": [
+            "#14B8A6",
+            "#0F766E"
+          ]
+        },
+        {
+          "id": "enhance",
+          "bg": [
+            "#06B6D4",
+            "#0E7490"
+          ]
+        },
+        {
+          "id": "search",
+          "bg": [
+            "#0EA5E9",
+            "#1D4ED8"
+          ]
+        },
+        {
+          "id": "ocr",
+          "bg": [
+            "#6366F1",
+            "#4338CA"
+          ]
+        },
+        {
+          "id": "pages",
+          "bg": [
+            "#22C55E",
+            "#15803D"
+          ]
+        },
+        {
+          "id": "sync",
+          "layout": "sync",
+          "raw": "documents",
+          "raw2": "dark",
+          "bg": [
+            "#F59E0B",
+            "#B45309"
+          ],
+          "icons": [
+            "server",
+            "googledrive",
+            "onedrive",
+            "nextcloud",
+            "paperlessngx"
+          ]
+        },
+        {
+          "id": "dark",
+          "layout": "duo",
+          "raw2": "documents",
+          "bg": [
+            "#1E293B",
+            "#064E3B"
+          ],
+          "icons": [
+            "sun",
+            "moon"
+          ]
+        }
+      ],
+      "capture": {
+        "flows": {
+          "*": [
+            "documentscanner.yaml"
+          ]
+        },
+        "dark": "documentscanner-dark.yaml",
+        "points": {
+          "ios-phone": {
+            "PAGE_POINT": "26%,29%",
+            "RESULT_POINT": "25%,15%"
+          },
+          "ios-tablet": {
+            "PAGE_POINT": "14%,24%",
+            "RESULT_POINT": "25%,22%"
+          },
+          "android-phone": {
+            "PAGE_POINT": "26%,29%",
+            "RESULT_POINT": "30%,20%"
+          },
+          "android-tablet": {
+            "PAGE_POINT": "26%,29%",
+            "RESULT_POINT": "28%,27%"
+          }
+        }
+      }
+    },
+    "cardwallet": {
+      "id": "com.akylas.cardwallet",
+      "icon": "graphics/icon_cardwallet.png",
+      "theme": {
+        "accent": "#FFE08A",
+        "font": "Outfit",
+        "titleWeight": "800"
+      },
+      "feature": {
+        "slides": [
+          "cards",
+          "pass",
+          "barcode"
+        ],
+        "bg": [
+          "#F43F5E",
+          "#9D174D"
+        ]
+      },
+      "slides": [
+        {
+          "id": "cards",
+          "bg": [
+            "#F43F5E",
+            "#9D174D"
+          ]
+        },
+        {
+          "id": "sides",
+          "layout": "duo",
+          "raw": "sides_back",
+          "raw2": "sides",
+          "bg": [
+            "#EC4899",
+            "#7E22CE"
+          ]
+        },
+        {
+          "id": "barcode",
+          "bg": [
+            "#A855F7",
+            "#4338CA"
+          ]
+        },
+        {
+          "id": "pass",
+          "bg": [
+            "#6366F1",
+            "#1D4ED8"
+          ]
+        },
+        {
+          "id": "status",
+          "bg": [
+            "#3B82F6",
+            "#0E7490"
+          ]
+        },
+        {
+          "id": "wallet",
+          "bg": [
+            "#14B8A6",
+            "#0F766E"
+          ]
+        },
+        {
+          "id": "sync",
+          "layout": "sync",
+          "raw": "cards",
+          "raw2": "dark",
+          "bg": [
+            "#F97316",
+            "#BE123C"
+          ],
+          "icons": [
+            "server",
+            "googledrive",
+            "onedrive",
+            "nextcloud",
+            "paperlessngx"
+          ]
+        },
+        {
+          "id": "dark",
+          "layout": "duo",
+          "raw2": "cards",
+          "bg": [
+            "#4C1D95",
+            "#0F172A"
+          ],
+          "icons": [
+            "sun",
+            "moon"
+          ]
+        }
+      ],
+      "capture": {
+        "flows": {
+          "*": [
+            "cardwallet.yaml",
+            "cardwallet-pass.yaml",
+            "cardwallet-barcode.yaml"
+          ],
+          "ios-tablet": [
+            "cardwallet.yaml",
+            "cardwallet-pass.yaml"
+          ],
+          "android-tablet": [
+            "cardwallet.yaml"
+          ]
+        },
+        "dark": "cardwallet-dark.yaml",
+        "points": {
+          "ios-phone": {
+            "THUMB_BACK": "57%,77%",
+            "TILE_POINT": "30%,11%",
+            "CODE_POINT": "50%,40%"
+          },
+          "ios-tablet": {
+            "THUMB_BACK": "57%,86%",
+            "TILE_POINT": "30%,11%"
+          },
+          "android-phone": {
+            "THUMB_BACK": "59%,83%",
+            "TILE_POINT": "25%,17%",
+            "CODE_POINT": "50%,40%"
+          },
+          "android-tablet": {
+            "THUMB_BACK": "55%,76%"
+          }
+        }
+      }
+    }
+  }
+}

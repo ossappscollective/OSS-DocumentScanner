@@ -1,0 +1,162 @@
+{
+  "apps": {
+    "documentscanner": {
+      "feature": {
+        "name": "OSS Document Scanner",
+        "tagline": "Scannez, recherchez et organisez vos documents. Gratuit et open source."
+      },
+      "slides": {
+        "documents": {
+          "title": "Tous vos documents,\n*en un geste*",
+          "subtitle": "Dossiers, étiquettes et recherche instantanée",
+          "chips": [
+            "Dossiers",
+            "Étiquettes",
+            "Favoris"
+          ]
+        },
+        "crop": {
+          "title": "Bords détectés\n*automatiquement*",
+          "subtitle": "Recadrez et redressez en quelques secondes",
+          "chips": [
+            "Détection auto",
+            "Ajustement manuel"
+          ]
+        },
+        "enhance": {
+          "title": "Des scans *nets*\net propres",
+          "subtitle": "Filtres, luminosité et contraste",
+          "chips": [
+            "Filtres",
+            "Luminosité",
+            "Contraste"
+          ]
+        },
+        "search": {
+          "title": "*Cherchez* dans\nvos documents",
+          "subtitle": "Reconnaissance de texte intégrée, même hors ligne",
+          "chips": [
+            "Sans accents",
+            "OCR hors ligne"
+          ]
+        },
+        "ocr": {
+          "title": "Récupérez le *texte*\nde chaque page",
+          "subtitle": "Sélectionnez, copiez et partagez le texte reconnu",
+          "chips": [
+            "Sélection",
+            "Copie"
+          ]
+        },
+        "pages": {
+          "title": "Documents\n*multi-pages*",
+          "subtitle": "Réorganisez, pivotez et modifiez chaque page",
+          "chips": [
+            "Réordonner",
+            "Pivoter",
+            "Ajouter"
+          ]
+        },
+        "sync": {
+          "title": "*Synchronisez* tous\nvos appareils",
+          "subtitle": "Vos fichiers, vos serveurs, votre choix",
+          "chips": [
+            "WebDAV",
+            "Google Drive",
+            "OneDrive",
+            "Nextcloud",
+            "Paperless-ngx"
+          ]
+        },
+        "dark": {
+          "title": "Clair ou *sombre*,\nà vous de choisir",
+          "subtitle": "Superbe de jour comme de nuit",
+          "chips": [
+            "Clair",
+            "Sombre"
+          ]
+        }
+      }
+    },
+    "cardwallet": {
+      "feature": {
+        "name": "OSS Card Wallet",
+        "tagline": "Toutes vos cartes et passes au même endroit, en privé. Gratuit et open source."
+      },
+      "slides": {
+        "cards": {
+          "title": "Toutes vos *cartes*\nau même endroit",
+          "subtitle": "Fidélité, adhésion, transport et plus",
+          "chips": [
+            "Fidélité",
+            "Adhésions",
+            "Transport"
+          ]
+        },
+        "sides": {
+          "title": "*Recto* et verso",
+          "subtitle": "Gardez les deux faces de chaque carte",
+          "chips": [
+            "Recto",
+            "Verso"
+          ]
+        },
+        "barcode": {
+          "title": "Toujours *scannable*",
+          "subtitle": "Codes grands et lumineux en plein écran",
+          "chips": [
+            "QR",
+            "EAN",
+            "PDF417"
+          ]
+        },
+        "pass": {
+          "title": "Passes *inclus*",
+          "subtitle": "Cartes d'embarquement, billets et coupons",
+          "chips": [
+            "Embarquement",
+            "Billets",
+            "Coupons"
+          ]
+        },
+        "status": {
+          "title": "N'oubliez plus\nune *échéance*",
+          "subtitle": "Soldes et dates d'expiration en un coup d'œil",
+          "chips": [
+            "Expiration",
+            "Solde",
+            "Favoris"
+          ]
+        },
+        "wallet": {
+          "title": "Votre *portefeuille*,\nbien rangé",
+          "subtitle": "Choisissez la vue qui vous plaît",
+          "chips": [
+            "Porte-cartes",
+            "Pleine",
+            "Colonnes"
+          ]
+        },
+        "sync": {
+          "title": "*Synchronisez* tous\nvos appareils",
+          "subtitle": "Vos fichiers, vos serveurs, votre choix",
+          "chips": [
+            "WebDAV",
+            "Google Drive",
+            "OneDrive",
+            "Nextcloud",
+            "Paperless-ngx"
+          ]
+        },
+        "dark": {
+          "title": "Clair ou *sombre*,\nà vous de choisir",
+          "subtitle": "Superbe de jour comme de nuit",
+          "chips": [
+            "Clair",
+            "Sombre"
+          ]
+        }
+      }
+    }
+  }
+}

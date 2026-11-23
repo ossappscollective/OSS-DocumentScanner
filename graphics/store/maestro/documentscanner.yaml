@@ -1,0 +1,60 @@
+# Store screens of OSS Document Scanner, needs the demo data of test_assets/demo.
+# env (set by scripts/capture.mjs): PAGE_POINT (first page of a document), RESULT_POINT (first search result)
+appId: com.akylas.documentscanner
+env:
+  APP_ID: com.akylas.documentscanner
+  READY: Lisbon trip.*
+---
+- runFlow: lib/start.yaml
+- takeScreenshot: documents
+
+# adjust, recognized text and crop of a page (each one from the home screen: nothing to close)
+- runFlow: lib/start.yaml
+- tapOn: Invoice INV-2026-0142
+- waitForAnimationToEnd
+- tapOn:
+    point: ${PAGE_POINT}
+- waitForAnimationToEnd
+- tapOn: "(?i)adjust|ajuster|réglages"
+- waitForAnimationToEnd
+- takeScreenshot: enhance
+
+- runFlow: lib/start.yaml
+- tapOn: Invoice INV-2026-0142
+- waitForAnimationToEnd
+- tapOn:
+    point: ${PAGE_POINT}
+- waitForAnimationToEnd
+- tapOn: "^OCR$"
+- waitForAnimationToEnd
+- takeScreenshot: ocr
+
+- runFlow: lib/start.yaml
+- tapOn: Invoice INV-2026-0142
+- waitForAnimationToEnd
+- tapOn:
+    point: ${PAGE_POINT}
+- waitForAnimationToEnd
+- tapOn: "(?i)crop|recadrer"
+- waitForAnimationToEnd
+- takeScreenshot: crop
+
+# search finds text inside the documents (accent insensitive)
+- runFlow: lib/start.yaml
+- runFlow:
+    file: lib/search.yaml
+    env:
+      QUERY: energie
+- takeScreenshot: search
+
+# a document with several pages
+- runFlow: lib/start.yaml
+- runFlow:
+    file: lib/search.yaml
+    env:
+      QUERY: handbook
+- tapOn:
+    point: ${RESULT_POINT}
+- waitForAnimationToEnd
+- takeScreenshot: pages
+- takeScreenshot: _end
