@@ -64,6 +64,7 @@
         DEFAULT_FOLDER_VIEW_STYLE,
         DEFAULT_NB_COLUMNS,
         DEFAULT_NB_COLUMNS_LANDSCAPE,
+        DEFAULT_SHOW_EMPTY_FOLDERS,
         DEFAULT_SORT_ORDER,
         DEFAULT_TRASH_ENABLED,
         DEFAULT_VIEW_STYLE,
@@ -83,6 +84,7 @@
         SETTINGS_FOLDER_VIEW_STYLE,
         SETTINGS_NB_COLUMNS,
         SETTINGS_NB_COLUMNS_LANDSCAPE,
+        SETTINGS_SHOW_EMPTY_FOLDERS,
         SETTINGS_SORT_ORDER,
         SETTINGS_TRASH_ENABLED,
         SETTINGS_VIEW_STYLE,
@@ -219,6 +221,8 @@
     const onNbColumnsPreferenceChanged = () => updateColumns($isLandscape);
     prefs.on(`key:${SETTINGS_NB_COLUMNS}`, onNbColumnsPreferenceChanged);
     prefs.on(`key:${SETTINGS_NB_COLUMNS_LANDSCAPE}`, onNbColumnsPreferenceChanged);
+    const onShowEmptyFoldersChanged = () => refreshFolders();
+    prefs.on(`key:${SETTINGS_SHOW_EMPTY_FOLDERS}`, onShowEmptyFoldersChanged);
 
     // Animate FAB visibility when selection changes
     $: if (fabHolder?.nativeView) {
@@ -273,10 +277,11 @@
     const refreshFolders = tryCatchFunction(async (filter: string = lastRefreshFilter, updateList = true) => {
         try {
             folders = filter?.length ? [] : await documentsService.folderRepository.findFolders(folder);
+            const showEmpty = ApplicationSettings.getBoolean(SETTINGS_SHOW_EMPTY_FOLDERS, DEFAULT_SHOW_EMPTY_FOLDERS);
             // DEV_LOG && console.log('folders', JSON.stringify(folders));
             folderItems = new ObservableArray(
                 folders
-                    .filter((f) => f.count > 0)
+                    .filter((f) => showEmpty || f.count > 0)
                     .map(
                         (folder) =>
                             ({
@@ -562,6 +567,7 @@
         DEV_LOG && console.log('MainList', 'onDestroy');
         prefs.off(`key:${SETTINGS_NB_COLUMNS}`, onNbColumnsPreferenceChanged);
         prefs.off(`key:${SETTINGS_NB_COLUMNS_LANDSCAPE}`, onNbColumnsPreferenceChanged);
+        prefs.off(`key:${SETTINGS_SHOW_EMPTY_FOLDERS}`, onShowEmptyFoldersChanged);
         unsubscribeSyncServices();
         subscriptions.forEach(([emitter, eventName, handler]) => emitter.off(eventName, handler));
     });

@@ -37,6 +37,7 @@
         DEFAULT_NB_COLUMNS_VIEW_LANDSCAPE,
         DEFAULT_OCR_COPY_USE_SPACE,
         DEFAULT_PDF_OPTIONS_STRING,
+        DEFAULT_SHOW_EMPTY_FOLDERS,
         DEFAULT_TRASH_ENABLED,
         DOCUMENT_NAME_FORMAT,
         DOCUMENT_NOT_DETECTED_MARGIN,
@@ -71,6 +72,7 @@
         SETTINGS_OCR_COPY_USE_SPACE,
         SETTINGS_QUICK_TOGGLE_ENABLED,
         SETTINGS_ROOT_DATA_FOLDER,
+        SETTINGS_SHOW_EMPTY_FOLDERS,
         SETTINGS_START_ON_CAM,
         SETTINGS_SYNC_ON_START,
         SETTINGS_TRANSFORM_BATCH_SIZE,
@@ -423,6 +425,7 @@
             case 'folders':
                 return [
                     switchItem(SETTINGS_DRAW_FOLDERS_BACKGROUND, DEFAULT_DRAW_FOLDERS_BACKGROUND, lc('folder_color_as_background'), lc('folder_color_as_background_desc')),
+                    switchItem(SETTINGS_SHOW_EMPTY_FOLDERS, DEFAULT_SHOW_EMPTY_FOLDERS, lc('show_empty_folders'), lc('show_empty_folders_desc')),
                     {
                         id: 'folder_management',
                         title: lc('manage_folders'),

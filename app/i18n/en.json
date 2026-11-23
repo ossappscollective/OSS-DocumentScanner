@@ -557,6 +557,8 @@
     "share_images": "share images",
     "share_passbooks": "share Passbooks",
     "share_pdf": "share PDF",
+    "show_empty_folders": "show empty folders",
+    "show_empty_folders_desc": "keep folders in the list even when they contain no document",
     "show_fullscreen_images": "fullscreen",
     "show_love": "If you like the project please share some love or even contribute",
     "show_ocr_text": "show detected text",
