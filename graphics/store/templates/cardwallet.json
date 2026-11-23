@@ -1,0 +1,4506 @@
+{
+ "formatVersion": 1,
+ "id": "cardwallet",
+ "name": "OSS Card Wallet",
+ "description": "Store screenshots and feature graphic of cardwallet",
+ "category": "screenshots",
+ "timestamp": "2026-01-01T00:00:00.000Z",
+ "projectData": [
+  {
+   "id": "cardwallet-cards",
+   "name": "cards",
+   "position": {
+    "x": 15,
+    "y": 15
+   },
+   "size": {
+    "width": 1206,
+    "height": 2622
+   },
+   "backgroundColor": "#9D174D",
+   "backgroundType": "gradient",
+   "backgroundGradient": {
+    "color1": "#F43F5E",
+    "color2": "#9D174D",
+    "angle": 165
+   },
+   "zoom": 1,
+   "elements": [
+    {
+     "id": "b0-s1",
+     "type": "shape",
+     "name": "Glow",
+     "position": {
+      "x": 241.2,
+      "y": -799.62
+     },
+     "size": {
+      "width": 1809,
+      "height": 1809
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 0.2,
+     "blur": 241
+    },
+    {
+     "id": "b0-s2",
+     "type": "shape",
+     "name": "Glow 2",
+     "position": {
+      "x": -603,
+      "y": 1434.3
+     },
+     "size": {
+      "width": 1327,
+      "height": 1327
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#F43F5E",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 0.5,
+     "blur": 193
+    },
+    {
+     "id": "b0-s3",
+     "type": "shape",
+     "name": "Bottom shade",
+     "position": {
+      "x": 0,
+      "y": 1625.64
+     },
+     "size": {
+      "width": 1206,
+      "height": 996
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#000000",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "fillGradient": {
+      "color1": "rgba(0,0,0,0)",
+      "color2": "rgba(0,0,0,0.3)",
+      "angle": 180
+     }
+    },
+    {
+     "id": "b0-t5",
+     "type": "text",
+     "name": "Title 1",
+     "position": {
+      "x": 60.3,
+      "y": 146.83
+     },
+     "size": {
+      "width": 1085,
+      "height": 151
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "All your cards",
+     "fontSize": 36.18,
+     "color": "#FFE08A",
+     "fontFamily": "Outfit",
+     "fontWeight": "800",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1.08,
+     "groupId": "b0-g4",
+     "groupName": "Headline"
+    },
+    {
+     "id": "b0-t6",
+     "type": "text",
+     "name": "Title 2",
+     "position": {
+      "x": 60.3,
+      "y": 281.9
+     },
+     "size": {
+      "width": 1085,
+      "height": 151
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "in one place",
+     "fontSize": 36.18,
+     "color": "#FFFFFF",
+     "fontFamily": "Outfit",
+     "fontWeight": "800",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1.08,
+     "groupId": "b0-g4",
+     "groupName": "Headline"
+    },
+    {
+     "id": "b0-t7",
+     "type": "text",
+     "name": "Subtitle",
+     "position": {
+      "x": 60.3,
+      "y": 429.04
+     },
+     "size": {
+      "width": 1085,
+      "height": 68
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "Loyalty, membership, transit and more",
+     "fontSize": 14.47,
+     "color": "rgba(255,255,255,0.9)",
+     "fontFamily": "Outfit",
+     "fontWeight": "500",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1.08,
+     "groupId": "b0-g4",
+     "groupName": "Headline"
+    },
+    {
+     "id": "b0-s9",
+     "type": "shape",
+     "name": "Pill 1",
+     "position": {
+      "x": 147.13,
+      "y": 553
+     },
+     "size": {
+      "width": 260,
+      "height": 75
+     },
+     "rotation": -2.2,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "borderRadius": 37.446299999999994,
+     "shadow": {
+      "x": 0,
+      "y": 10,
+      "blur": 24,
+      "color": "rgba(0,0,0,0.28)"
+     },
+     "groupId": "b0-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b0-s10",
+     "type": "shape",
+     "name": "Chip dot 1",
+     "position": {
+      "x": 171.61,
+      "y": 569.15
+     },
+     "size": {
+      "width": 49,
+      "height": 49
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#9D174D",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "groupId": "b0-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b0-s11",
+     "type": "shape",
+     "name": "Chip icon 1",
+     "position": {
+      "x": 180.41,
+      "y": 577.94
+     },
+     "size": {
+      "width": 31,
+      "height": 31
+     },
+     "rotation": -2.2,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b0-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b0-t12",
+     "type": "text",
+     "name": "Pill text 1",
+     "position": {
+      "x": 236.65,
+      "y": 567.61
+     },
+     "size": {
+      "width": 151,
+      "height": 46
+     },
+     "rotation": -2.2,
+     "scale": 1,
+     "content": "Loyalty",
+     "fontSize": 9.77,
+     "color": "#1B1B2F",
+     "fontFamily": "Outfit",
+     "fontWeight": "700",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1,
+     "groupId": "b0-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b0-s13",
+     "type": "shape",
+     "name": "Pill 2",
+     "position": {
+      "x": 433.68,
+      "y": 553
+     },
+     "size": {
+      "width": 339,
+      "height": 75
+     },
+     "rotation": 1.6,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "borderRadius": 37.446299999999994,
+     "shadow": {
+      "x": 0,
+      "y": 10,
+      "blur": 24,
+      "color": "rgba(0,0,0,0.28)"
+     },
+     "groupId": "b0-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b0-s14",
+     "type": "shape",
+     "name": "Chip dot 2",
+     "position": {
+      "x": 458.15,
+      "y": 562.66
+     },
+     "size": {
+      "width": 49,
+      "height": 49
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#9D174D",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "groupId": "b0-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b0-s15",
+     "type": "shape",
+     "name": "Chip icon 2",
+     "position": {
+      "x": 466.94,
+      "y": 571.45
+     },
+     "size": {
+      "width": 31,
+      "height": 31
+     },
+     "rotation": 1.6,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b0-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b0-t16",
+     "type": "text",
+     "name": "Pill text 2",
+     "position": {
+      "x": 523.21,
+      "y": 569.93
+     },
+     "size": {
+      "width": 230,
+      "height": 46
+     },
+     "rotation": 1.6,
+     "scale": 1,
+     "content": "Memberships",
+     "fontSize": 9.77,
+     "color": "#1B1B2F",
+     "fontFamily": "Outfit",
+     "fontWeight": "700",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1,
+     "groupId": "b0-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b0-s17",
+     "type": "shape",
+     "name": "Pill 3",
+     "position": {
+      "x": 798.37,
+      "y": 553
+     },
+     "size": {
+      "width": 260,
+      "height": 75
+     },
+     "rotation": -1.2,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "borderRadius": 37.446299999999994,
+     "shadow": {
+      "x": 0,
+      "y": 10,
+      "blur": 24,
+      "color": "rgba(0,0,0,0.28)"
+     },
+     "groupId": "b0-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b0-s18",
+     "type": "shape",
+     "name": "Chip dot 3",
+     "position": {
+      "x": 822.81,
+      "y": 567.73
+     },
+     "size": {
+      "width": 49,
+      "height": 49
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#9D174D",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "groupId": "b0-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b0-s19",
+     "type": "shape",
+     "name": "Chip icon 3",
+     "position": {
+      "x": 831.6,
+      "y": 576.52
+     },
+     "size": {
+      "width": 31,
+      "height": 31
+     },
+     "rotation": -1.2,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b0-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b0-t20",
+     "type": "text",
+     "name": "Pill text 3",
+     "position": {
+      "x": 887.91,
+      "y": 568.22
+     },
+     "size": {
+      "width": 151,
+      "height": 46
+     },
+     "rotation": -1.2,
+     "scale": 1,
+     "content": "Transit",
+     "fontSize": 9.77,
+     "color": "#1B1B2F",
+     "fontFamily": "Outfit",
+     "fontWeight": "700",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1,
+     "groupId": "b0-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b0-d21",
+     "type": "device",
+     "name": "Device",
+     "position": {
+      "x": 132.66,
+      "y": 680.33
+     },
+     "size": {
+      "width": 941,
+      "height": 2043.84
+     },
+     "rotation": 0,
+     "scale": 1,
+     "deviceType": "iphone-17-pro-max",
+     "styleType": "normal",
+     "frameColor": "#17171C",
+     "screenshotObjectFit": "cover",
+     "screenshotRect": {
+      "left": 0,
+      "top": 0,
+      "width": 100,
+      "height": 100
+     },
+     "shadow": {
+      "x": 0,
+      "y": 33,
+      "blur": 85,
+      "color": "rgba(0,0,0,0.42)"
+     }
+    }
+   ],
+   "localization": {
+    "baseLocale": "en-US",
+    "locales": [
+     {
+      "code": "en-US"
+     },
+     {
+      "code": "fr-FR"
+     }
+    ]
+   },
+   "localized": {
+    "fr-FR": {
+     "b0-t5": {
+      "content": "Toutes vos cartes"
+     },
+     "b0-t6": {
+      "content": "au même endroit"
+     },
+     "b0-t7": {
+      "content": "Fidélité, adhésion, transport et plus"
+     },
+     "b0-t12": {
+      "content": "Fidélité"
+     },
+     "b0-t16": {
+      "content": "Adhésions"
+     },
+     "b0-t20": {
+      "content": "Transport"
+     }
+    }
+   }
+  },
+  {
+   "id": "cardwallet-sides",
+   "name": "sides",
+   "position": {
+    "x": 1281,
+    "y": 15
+   },
+   "size": {
+    "width": 1206,
+    "height": 2622
+   },
+   "backgroundColor": "#7E22CE",
+   "backgroundType": "gradient",
+   "backgroundGradient": {
+    "color1": "#EC4899",
+    "color2": "#7E22CE",
+    "angle": 165
+   },
+   "zoom": 1,
+   "elements": [
+    {
+     "id": "b1-s1",
+     "type": "shape",
+     "name": "Glow",
+     "position": {
+      "x": -844.2,
+      "y": -117.9
+     },
+     "size": {
+      "width": 1809,
+      "height": 1809
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 0.2,
+     "blur": 241
+    },
+    {
+     "id": "b1-s2",
+     "type": "shape",
+     "name": "Glow 2",
+     "position": {
+      "x": 482.4,
+      "y": 1696.5
+     },
+     "size": {
+      "width": 1327,
+      "height": 1327
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#EC4899",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 0.5,
+     "blur": 193
+    },
+    {
+     "id": "b1-s3",
+     "type": "shape",
+     "name": "Bottom shade",
+     "position": {
+      "x": 0,
+      "y": 1625.64
+     },
+     "size": {
+      "width": 1206,
+      "height": 996
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#000000",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "fillGradient": {
+      "color1": "rgba(0,0,0,0)",
+      "color2": "rgba(0,0,0,0.3)",
+      "angle": 180
+     }
+    },
+    {
+     "id": "b1-t5",
+     "type": "text",
+     "name": "Title 1",
+     "position": {
+      "x": 60.3,
+      "y": 146.83
+     },
+     "size": {
+      "width": 1085,
+      "height": 151
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "Front and back",
+     "fontSize": 36.18,
+     "color": "#FFE08A",
+     "fontFamily": "Outfit",
+     "fontWeight": "800",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1.08,
+     "groupId": "b1-g4",
+     "groupName": "Headline"
+    },
+    {
+     "id": "b1-t6",
+     "type": "text",
+     "name": "Subtitle",
+     "position": {
+      "x": 60.3,
+      "y": 293.96
+     },
+     "size": {
+      "width": 1085,
+      "height": 68
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "Keep both sides of every card",
+     "fontSize": 14.47,
+     "color": "rgba(255,255,255,0.9)",
+     "fontFamily": "Outfit",
+     "fontWeight": "500",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1.08,
+     "groupId": "b1-g4",
+     "groupName": "Headline"
+    },
+    {
+     "id": "b1-s8",
+     "type": "shape",
+     "name": "Pill 1",
+     "position": {
+      "x": 378.32,
+      "y": 417.92
+     },
+     "size": {
+      "width": 221,
+      "height": 75
+     },
+     "rotation": -2.2,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "borderRadius": 37.446299999999994,
+     "shadow": {
+      "x": 0,
+      "y": 10,
+      "blur": 24,
+      "color": "rgba(0,0,0,0.28)"
+     },
+     "groupId": "b1-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b1-s9",
+     "type": "shape",
+     "name": "Chip dot 1",
+     "position": {
+      "x": 402.79,
+      "y": 433.32
+     },
+     "size": {
+      "width": 49,
+      "height": 49
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#7E22CE",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "groupId": "b1-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b1-s10",
+     "type": "shape",
+     "name": "Chip icon 1",
+     "position": {
+      "x": 411.58,
+      "y": 442.12
+     },
+     "size": {
+      "width": 31,
+      "height": 31
+     },
+     "rotation": -2.2,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b1-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b1-t11",
+     "type": "text",
+     "name": "Pill text 1",
+     "position": {
+      "x": 467.84,
+      "y": 432.54
+     },
+     "size": {
+      "width": 112,
+      "height": 46
+     },
+     "rotation": -2.2,
+     "scale": 1,
+     "content": "Front",
+     "fontSize": 9.77,
+     "color": "#1B1B2F",
+     "fontFamily": "Outfit",
+     "fontWeight": "700",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1,
+     "groupId": "b1-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b1-s12",
+     "type": "shape",
+     "name": "Pill 2",
+     "position": {
+      "x": 625.79,
+      "y": 417.92
+     },
+     "size": {
+      "width": 202,
+      "height": 75
+     },
+     "rotation": 1.6,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "borderRadius": 37.446299999999994,
+     "shadow": {
+      "x": 0,
+      "y": 10,
+      "blur": 24,
+      "color": "rgba(0,0,0,0.28)"
+     },
+     "groupId": "b1-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b1-s13",
+     "type": "shape",
+     "name": "Chip dot 2",
+     "position": {
+      "x": 650.24,
+      "y": 429.49
+     },
+     "size": {
+      "width": 49,
+      "height": 49
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#7E22CE",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "groupId": "b1-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b1-s14",
+     "type": "shape",
+     "name": "Chip icon 2",
+     "position": {
+      "x": 659.03,
+      "y": 438.29
+     },
+     "size": {
+      "width": 31,
+      "height": 31
+     },
+     "rotation": 1.6,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b1-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b1-t15",
+     "type": "text",
+     "name": "Pill text 2",
+     "position": {
+      "x": 715.33,
+      "y": 434.86
+     },
+     "size": {
+      "width": 93,
+      "height": 46
+     },
+     "rotation": 1.6,
+     "scale": 1,
+     "content": "Back",
+     "fontSize": 9.77,
+     "color": "#1B1B2F",
+     "fontFamily": "Outfit",
+     "fontWeight": "700",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1,
+     "groupId": "b1-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b1-d16",
+     "type": "device",
+     "name": "Device back",
+     "position": {
+      "x": 48.24,
+      "y": 728.8
+     },
+     "size": {
+      "width": 627,
+      "height": 1362.56
+     },
+     "rotation": 6,
+     "scale": 1,
+     "deviceType": "iphone-17-pro-max",
+     "styleType": "normal",
+     "frameColor": "#17171C",
+     "screenshotObjectFit": "cover",
+     "screenshotRect": {
+      "left": 0,
+      "top": 0,
+      "width": 100,
+      "height": 100
+     },
+     "shadow": {
+      "x": 0,
+      "y": 22,
+      "blur": 56,
+      "color": "rgba(0,0,0,0.42)"
+     }
+    },
+    {
+     "id": "b1-d17",
+     "type": "device",
+     "name": "Device front",
+     "position": {
+      "x": 518.58,
+      "y": 623.92
+     },
+     "size": {
+      "width": 627,
+      "height": 1362.56
+     },
+     "rotation": -5,
+     "scale": 1,
+     "deviceType": "iphone-17-pro-max",
+     "styleType": "normal",
+     "frameColor": "#17171C",
+     "screenshotObjectFit": "cover",
+     "screenshotRect": {
+      "left": 0,
+      "top": 0,
+      "width": 100,
+      "height": 100
+     },
+     "shadow": {
+      "x": 0,
+      "y": 22,
+      "blur": 56,
+      "color": "rgba(0,0,0,0.42)"
+     }
+    }
+   ],
+   "localization": {
+    "baseLocale": "en-US",
+    "locales": [
+     {
+      "code": "en-US"
+     },
+     {
+      "code": "fr-FR"
+     }
+    ]
+   },
+   "localized": {
+    "fr-FR": {
+     "b1-t5": {
+      "content": "Recto et verso"
+     },
+     "b1-t6": {
+      "content": "Gardez les deux faces de chaque carte"
+     },
+     "b1-t11": {
+      "content": "Recto"
+     },
+     "b1-t15": {
+      "content": "Verso"
+     }
+    }
+   }
+  },
+  {
+   "id": "cardwallet-barcode",
+   "name": "barcode",
+   "position": {
+    "x": 2547,
+    "y": 15
+   },
+   "size": {
+    "width": 1206,
+    "height": 2622
+   },
+   "backgroundColor": "#4338CA",
+   "backgroundType": "gradient",
+   "backgroundGradient": {
+    "color1": "#A855F7",
+    "color2": "#4338CA",
+    "angle": 165
+   },
+   "zoom": 1,
+   "elements": [
+    {
+     "id": "b2-s1",
+     "type": "shape",
+     "name": "Glow",
+     "position": {
+      "x": 180.9,
+      "y": 537.6
+     },
+     "size": {
+      "width": 1809,
+      "height": 1809
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 0.2,
+     "blur": 241
+    },
+    {
+     "id": "b2-s2",
+     "type": "shape",
+     "name": "Glow 2",
+     "position": {
+      "x": -542.7,
+      "y": 1696.5
+     },
+     "size": {
+      "width": 1327,
+      "height": 1327
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#A855F7",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 0.5,
+     "blur": 193
+    },
+    {
+     "id": "b2-s3",
+     "type": "shape",
+     "name": "Bottom shade",
+     "position": {
+      "x": 0,
+      "y": 1625.64
+     },
+     "size": {
+      "width": 1206,
+      "height": 996
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#000000",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "fillGradient": {
+      "color1": "rgba(0,0,0,0)",
+      "color2": "rgba(0,0,0,0.3)",
+      "angle": 180
+     }
+    },
+    {
+     "id": "b2-t5",
+     "type": "text",
+     "name": "Title 1",
+     "position": {
+      "x": 60.3,
+      "y": 146.83
+     },
+     "size": {
+      "width": 1085,
+      "height": 148
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "Always scannable",
+     "fontSize": 35.53,
+     "color": "#FFE08A",
+     "fontFamily": "Outfit",
+     "fontWeight": "800",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1.08,
+     "groupId": "b2-g4",
+     "groupName": "Headline"
+    },
+    {
+     "id": "b2-t6",
+     "type": "text",
+     "name": "Subtitle",
+     "position": {
+      "x": 60.3,
+      "y": 291.34
+     },
+     "size": {
+      "width": 1085,
+      "height": 68
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "Big, bright full-screen codes",
+     "fontSize": 14.47,
+     "color": "rgba(255,255,255,0.9)",
+     "fontFamily": "Outfit",
+     "fontWeight": "500",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1.08,
+     "groupId": "b2-g4",
+     "groupName": "Headline"
+    },
+    {
+     "id": "b2-s8",
+     "type": "shape",
+     "name": "Pill 1",
+     "position": {
+      "x": 283.89,
+      "y": 415.3
+     },
+     "size": {
+      "width": 163,
+      "height": 75
+     },
+     "rotation": -2.2,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "borderRadius": 37.446299999999994,
+     "shadow": {
+      "x": 0,
+      "y": 10,
+      "blur": 24,
+      "color": "rgba(0,0,0,0.28)"
+     },
+     "groupId": "b2-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b2-s9",
+     "type": "shape",
+     "name": "Chip dot 1",
+     "position": {
+      "x": 308.34,
+      "y": 429.57
+     },
+     "size": {
+      "width": 49,
+      "height": 49
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#4338CA",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "groupId": "b2-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b2-s10",
+     "type": "shape",
+     "name": "Chip icon 1",
+     "position": {
+      "x": 317.13,
+      "y": 438.36
+     },
+     "size": {
+      "width": 31,
+      "height": 31
+     },
+     "rotation": -2.2,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b2-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b2-t11",
+     "type": "text",
+     "name": "Pill text 1",
+     "position": {
+      "x": 373.41,
+      "y": 429.91
+     },
+     "size": {
+      "width": 54,
+      "height": 46
+     },
+     "rotation": -2.2,
+     "scale": 1,
+     "content": "QR",
+     "fontSize": 9.77,
+     "color": "#1B1B2F",
+     "fontFamily": "Outfit",
+     "fontWeight": "700",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1,
+     "groupId": "b2-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b2-s12",
+     "type": "shape",
+     "name": "Pill 2",
+     "position": {
+      "x": 472.75,
+      "y": 415.3
+     },
+     "size": {
+      "width": 182,
+      "height": 75
+     },
+     "rotation": 1.6,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "borderRadius": 37.446299999999994,
+     "shadow": {
+      "x": 0,
+      "y": 10,
+      "blur": 24,
+      "color": "rgba(0,0,0,0.28)"
+     },
+     "groupId": "b2-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b2-s13",
+     "type": "shape",
+     "name": "Chip dot 2",
+     "position": {
+      "x": 497.19,
+      "y": 427.14
+     },
+     "size": {
+      "width": 49,
+      "height": 49
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#4338CA",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "groupId": "b2-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b2-s14",
+     "type": "shape",
+     "name": "Chip icon 2",
+     "position": {
+      "x": 505.98,
+      "y": 435.93
+     },
+     "size": {
+      "width": 31,
+      "height": 31
+     },
+     "rotation": 1.6,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b2-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b2-t15",
+     "type": "text",
+     "name": "Pill text 2",
+     "position": {
+      "x": 562.28,
+      "y": 432.23
+     },
+     "size": {
+      "width": 73,
+      "height": 46
+     },
+     "rotation": 1.6,
+     "scale": 1,
+     "content": "EAN",
+     "fontSize": 9.77,
+     "color": "#1B1B2F",
+     "fontFamily": "Outfit",
+     "fontWeight": "700",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1,
+     "groupId": "b2-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b2-s16",
+     "type": "shape",
+     "name": "Pill 3",
+     "position": {
+      "x": 681.15,
+      "y": 415.3
+     },
+     "size": {
+      "width": 241,
+      "height": 75
+     },
+     "rotation": -1.2,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "borderRadius": 37.446299999999994,
+     "shadow": {
+      "x": 0,
+      "y": 10,
+      "blur": 24,
+      "color": "rgba(0,0,0,0.28)"
+     },
+     "groupId": "b2-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b2-s17",
+     "type": "shape",
+     "name": "Chip dot 3",
+     "position": {
+      "x": 705.59,
+      "y": 429.82
+     },
+     "size": {
+      "width": 49,
+      "height": 49
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#4338CA",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "groupId": "b2-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b2-s18",
+     "type": "shape",
+     "name": "Chip icon 3",
+     "position": {
+      "x": 714.38,
+      "y": 438.61
+     },
+     "size": {
+      "width": 31,
+      "height": 31
+     },
+     "rotation": -1.2,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b2-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b2-t19",
+     "type": "text",
+     "name": "Pill text 3",
+     "position": {
+      "x": 770.69,
+      "y": 430.52
+     },
+     "size": {
+      "width": 132,
+      "height": 46
+     },
+     "rotation": -1.2,
+     "scale": 1,
+     "content": "PDF417",
+     "fontSize": 9.77,
+     "color": "#1B1B2F",
+     "fontFamily": "Outfit",
+     "fontWeight": "700",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1,
+     "groupId": "b2-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b2-d20",
+     "type": "device",
+     "name": "Device",
+     "position": {
+      "x": 132.66,
+      "y": 542.63
+     },
+     "size": {
+      "width": 941,
+      "height": 2043.84
+     },
+     "rotation": 0,
+     "scale": 1,
+     "deviceType": "iphone-17-pro-max",
+     "styleType": "normal",
+     "frameColor": "#17171C",
+     "screenshotObjectFit": "cover",
+     "screenshotRect": {
+      "left": 0,
+      "top": 0,
+      "width": 100,
+      "height": 100
+     },
+     "shadow": {
+      "x": 0,
+      "y": 33,
+      "blur": 85,
+      "color": "rgba(0,0,0,0.42)"
+     }
+    }
+   ],
+   "localization": {
+    "baseLocale": "en-US",
+    "locales": [
+     {
+      "code": "en-US"
+     },
+     {
+      "code": "fr-FR"
+     }
+    ]
+   },
+   "localized": {
+    "fr-FR": {
+     "b2-t5": {
+      "content": "Toujours scannable"
+     },
+     "b2-t6": {
+      "content": "Codes grands et lumineux en plein écran"
+     },
+     "b2-t11": {
+      "content": "QR"
+     },
+     "b2-t15": {
+      "content": "EAN"
+     },
+     "b2-t19": {
+      "content": "PDF417"
+     }
+    }
+   }
+  },
+  {
+   "id": "cardwallet-pass",
+   "name": "pass",
+   "position": {
+    "x": 3813,
+    "y": 15
+   },
+   "size": {
+    "width": 1206,
+    "height": 2622
+   },
+   "backgroundColor": "#1D4ED8",
+   "backgroundType": "gradient",
+   "backgroundGradient": {
+    "color1": "#6366F1",
+    "color2": "#1D4ED8",
+    "angle": 165
+   },
+   "zoom": 1,
+   "elements": [
+    {
+     "id": "b3-s1",
+     "type": "shape",
+     "name": "Glow",
+     "position": {
+      "x": -783.9,
+      "y": -694.74
+     },
+     "size": {
+      "width": 1809,
+      "height": 1809
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 0.2,
+     "blur": 241
+    },
+    {
+     "id": "b3-s2",
+     "type": "shape",
+     "name": "Glow 2",
+     "position": {
+      "x": 422.1,
+      "y": 1434.3
+     },
+     "size": {
+      "width": 1327,
+      "height": 1327
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#6366F1",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 0.5,
+     "blur": 193
+    },
+    {
+     "id": "b3-s3",
+     "type": "shape",
+     "name": "Bottom shade",
+     "position": {
+      "x": 0,
+      "y": 1625.64
+     },
+     "size": {
+      "width": 1206,
+      "height": 996
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#000000",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "fillGradient": {
+      "color1": "rgba(0,0,0,0)",
+      "color2": "rgba(0,0,0,0.3)",
+      "angle": 180
+     }
+    },
+    {
+     "id": "b3-t5",
+     "type": "text",
+     "name": "Title 1",
+     "position": {
+      "x": 60.3,
+      "y": 146.83
+     },
+     "size": {
+      "width": 1085,
+      "height": 151
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "Passes included",
+     "fontSize": 36.18,
+     "color": "#FFE08A",
+     "fontFamily": "Outfit",
+     "fontWeight": "800",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1.08,
+     "groupId": "b3-g4",
+     "groupName": "Headline"
+    },
+    {
+     "id": "b3-t6",
+     "type": "text",
+     "name": "Subtitle",
+     "position": {
+      "x": 60.3,
+      "y": 293.96
+     },
+     "size": {
+      "width": 1085,
+      "height": 68
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "Boarding passes, tickets and coupons",
+     "fontSize": 14.47,
+     "color": "rgba(255,255,255,0.9)",
+     "fontFamily": "Outfit",
+     "fontWeight": "500",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1.08,
+     "groupId": "b3-g4",
+     "groupName": "Headline"
+    },
+    {
+     "id": "b3-s8",
+     "type": "shape",
+     "name": "Pill 1",
+     "position": {
+      "x": 108.06,
+      "y": 417.92
+     },
+     "size": {
+      "width": 417,
+      "height": 75
+     },
+     "rotation": -2.2,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "borderRadius": 37.446299999999994,
+     "shadow": {
+      "x": 0,
+      "y": 10,
+      "blur": 24,
+      "color": "rgba(0,0,0,0.28)"
+     },
+     "groupId": "b3-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b3-s9",
+     "type": "shape",
+     "name": "Chip dot 1",
+     "position": {
+      "x": 132.6,
+      "y": 437.07
+     },
+     "size": {
+      "width": 49,
+      "height": 49
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#1D4ED8",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "groupId": "b3-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b3-s10",
+     "type": "shape",
+     "name": "Chip icon 1",
+     "position": {
+      "x": 141.39,
+      "y": 445.87
+     },
+     "size": {
+      "width": 31,
+      "height": 31
+     },
+     "rotation": -2.2,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b3-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b3-t11",
+     "type": "text",
+     "name": "Pill text 1",
+     "position": {
+      "x": 197.58,
+      "y": 432.54
+     },
+     "size": {
+      "width": 308,
+      "height": 46
+     },
+     "rotation": -2.2,
+     "scale": 1,
+     "content": "Boarding passes",
+     "fontSize": 9.77,
+     "color": "#1B1B2F",
+     "fontFamily": "Outfit",
+     "fontWeight": "700",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1,
+     "groupId": "b3-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b3-s12",
+     "type": "shape",
+     "name": "Pill 2",
+     "position": {
+      "x": 550.9,
+      "y": 417.92
+     },
+     "size": {
+      "width": 260,
+      "height": 75
+     },
+     "rotation": 1.6,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "borderRadius": 37.446299999999994,
+     "shadow": {
+      "x": 0,
+      "y": 10,
+      "blur": 24,
+      "color": "rgba(0,0,0,0.28)"
+     },
+     "groupId": "b3-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b3-s13",
+     "type": "shape",
+     "name": "Chip dot 2",
+     "position": {
+      "x": 575.35,
+      "y": 428.68
+     },
+     "size": {
+      "width": 49,
+      "height": 49
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#1D4ED8",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "groupId": "b3-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b3-s14",
+     "type": "shape",
+     "name": "Chip icon 2",
+     "position": {
+      "x": 584.15,
+      "y": 437.47
+     },
+     "size": {
+      "width": 31,
+      "height": 31
+     },
+     "rotation": 1.6,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b3-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b3-t15",
+     "type": "text",
+     "name": "Pill text 2",
+     "position": {
+      "x": 640.43,
+      "y": 434.86
+     },
+     "size": {
+      "width": 151,
+      "height": 46
+     },
+     "rotation": 1.6,
+     "scale": 1,
+     "content": "Tickets",
+     "fontSize": 9.77,
+     "color": "#1B1B2F",
+     "fontFamily": "Outfit",
+     "fontWeight": "700",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1,
+     "groupId": "b3-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b3-s16",
+     "type": "shape",
+     "name": "Pill 3",
+     "position": {
+      "x": 837.45,
+      "y": 417.92
+     },
+     "size": {
+      "width": 260,
+      "height": 75
+     },
+     "rotation": -1.2,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "borderRadius": 37.446299999999994,
+     "shadow": {
+      "x": 0,
+      "y": 10,
+      "blur": 24,
+      "color": "rgba(0,0,0,0.28)"
+     },
+     "groupId": "b3-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b3-s17",
+     "type": "shape",
+     "name": "Chip dot 3",
+     "position": {
+      "x": 861.89,
+      "y": 432.65
+     },
+     "size": {
+      "width": 49,
+      "height": 49
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#1D4ED8",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "groupId": "b3-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b3-s18",
+     "type": "shape",
+     "name": "Chip icon 3",
+     "position": {
+      "x": 870.68,
+      "y": 441.45
+     },
+     "size": {
+      "width": 31,
+      "height": 31
+     },
+     "rotation": -1.2,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b3-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b3-t19",
+     "type": "text",
+     "name": "Pill text 3",
+     "position": {
+      "x": 926.98,
+      "y": 433.15
+     },
+     "size": {
+      "width": 151,
+      "height": 46
+     },
+     "rotation": -1.2,
+     "scale": 1,
+     "content": "Coupons",
+     "fontSize": 9.77,
+     "color": "#1B1B2F",
+     "fontFamily": "Outfit",
+     "fontWeight": "700",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1,
+     "groupId": "b3-g7",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b3-d20",
+     "type": "device",
+     "name": "Device",
+     "position": {
+      "x": 132.66,
+      "y": 545.26
+     },
+     "size": {
+      "width": 941,
+      "height": 2043.84
+     },
+     "rotation": 0,
+     "scale": 1,
+     "deviceType": "iphone-17-pro-max",
+     "styleType": "normal",
+     "frameColor": "#17171C",
+     "screenshotObjectFit": "cover",
+     "screenshotRect": {
+      "left": 0,
+      "top": 0,
+      "width": 100,
+      "height": 100
+     },
+     "shadow": {
+      "x": 0,
+      "y": 33,
+      "blur": 85,
+      "color": "rgba(0,0,0,0.42)"
+     }
+    }
+   ],
+   "localization": {
+    "baseLocale": "en-US",
+    "locales": [
+     {
+      "code": "en-US"
+     },
+     {
+      "code": "fr-FR"
+     }
+    ]
+   },
+   "localized": {
+    "fr-FR": {
+     "b3-t5": {
+      "content": "Passes inclus"
+     },
+     "b3-t6": {
+      "content": "Cartes d'embarquement, billets et coupons"
+     },
+     "b3-t11": {
+      "content": "Embarquement"
+     },
+     "b3-t15": {
+      "content": "Billets"
+     },
+     "b3-t19": {
+      "content": "Coupons"
+     }
+    }
+   }
+  },
+  {
+   "id": "cardwallet-status",
+   "name": "status",
+   "position": {
+    "x": 5079,
+    "y": 15
+   },
+   "size": {
+    "width": 1206,
+    "height": 2622
+   },
+   "backgroundColor": "#0E7490",
+   "backgroundType": "gradient",
+   "backgroundGradient": {
+    "color1": "#3B82F6",
+    "color2": "#0E7490",
+    "angle": 165
+   },
+   "zoom": 1,
+   "elements": [
+    {
+     "id": "b4-s1",
+     "type": "shape",
+     "name": "Glow",
+     "position": {
+      "x": 241.2,
+      "y": -799.62
+     },
+     "size": {
+      "width": 1809,
+      "height": 1809
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 0.2,
+     "blur": 241
+    },
+    {
+     "id": "b4-s2",
+     "type": "shape",
+     "name": "Glow 2",
+     "position": {
+      "x": -603,
+      "y": 1434.3
+     },
+     "size": {
+      "width": 1327,
+      "height": 1327
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#3B82F6",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 0.5,
+     "blur": 193
+    },
+    {
+     "id": "b4-s3",
+     "type": "shape",
+     "name": "Bottom shade",
+     "position": {
+      "x": 0,
+      "y": 1625.64
+     },
+     "size": {
+      "width": 1206,
+      "height": 996
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#000000",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "fillGradient": {
+      "color1": "rgba(0,0,0,0)",
+      "color2": "rgba(0,0,0,0.3)",
+      "angle": 180
+     }
+    },
+    {
+     "id": "b4-t5",
+     "type": "text",
+     "name": "Title 1",
+     "position": {
+      "x": 60.3,
+      "y": 146.83
+     },
+     "size": {
+      "width": 1085,
+      "height": 151
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "Never miss",
+     "fontSize": 36.18,
+     "color": "#FFFFFF",
+     "fontFamily": "Outfit",
+     "fontWeight": "800",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1.08,
+     "groupId": "b4-g4",
+     "groupName": "Headline"
+    },
+    {
+     "id": "b4-t6",
+     "type": "text",
+     "name": "Title 2",
+     "position": {
+      "x": 60.3,
+      "y": 281.9
+     },
+     "size": {
+      "width": 1085,
+      "height": 151
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "an expiry",
+     "fontSize": 36.18,
+     "color": "#FFE08A",
+     "fontFamily": "Outfit",
+     "fontWeight": "800",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1.08,
+     "groupId": "b4-g4",
+     "groupName": "Headline"
+    },
+    {
+     "id": "b4-t7",
+     "type": "text",
+     "name": "Subtitle",
+     "position": {
+      "x": 60.3,
+      "y": 429.04
+     },
+     "size": {
+      "width": 1085,
+      "height": 68
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "Balances and expiration dates at a glance",
+     "fontSize": 14.47,
+     "color": "rgba(255,255,255,0.9)",
+     "fontFamily": "Outfit",
+     "fontWeight": "500",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1.08,
+     "groupId": "b4-g4",
+     "groupName": "Headline"
+    },
+    {
+     "id": "b4-s9",
+     "type": "shape",
+     "name": "Pill 1",
+     "position": {
+      "x": 176.44,
+      "y": 553
+     },
+     "size": {
+      "width": 241,
+      "height": 75
+     },
+     "rotation": -2.2,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "borderRadius": 37.446299999999994,
+     "shadow": {
+      "x": 0,
+      "y": 10,
+      "blur": 24,
+      "color": "rgba(0,0,0,0.28)"
+     },
+     "groupId": "b4-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b4-s10",
+     "type": "shape",
+     "name": "Chip dot 1",
+     "position": {
+      "x": 200.91,
+      "y": 568.77
+     },
+     "size": {
+      "width": 49,
+      "height": 49
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#0E7490",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "groupId": "b4-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b4-s11",
+     "type": "shape",
+     "name": "Chip icon 1",
+     "position": {
+      "x": 209.7,
+      "y": 577.56
+     },
+     "size": {
+      "width": 31,
+      "height": 31
+     },
+     "rotation": -2.2,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b4-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b4-t12",
+     "type": "text",
+     "name": "Pill text 1",
+     "position": {
+      "x": 265.96,
+      "y": 567.61
+     },
+     "size": {
+      "width": 132,
+      "height": 46
+     },
+     "rotation": -2.2,
+     "scale": 1,
+     "content": "Expiry",
+     "fontSize": 9.77,
+     "color": "#1B1B2F",
+     "fontFamily": "Outfit",
+     "fontWeight": "700",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1,
+     "groupId": "b4-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b4-s13",
+     "type": "shape",
+     "name": "Pill 2",
+     "position": {
+      "x": 443.45,
+      "y": 553
+     },
+     "size": {
+      "width": 260,
+      "height": 75
+     },
+     "rotation": 1.6,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "borderRadius": 37.446299999999994,
+     "shadow": {
+      "x": 0,
+      "y": 10,
+      "blur": 24,
+      "color": "rgba(0,0,0,0.28)"
+     },
+     "groupId": "b4-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b4-s14",
+     "type": "shape",
+     "name": "Chip dot 2",
+     "position": {
+      "x": 467.9,
+      "y": 563.75
+     },
+     "size": {
+      "width": 49,
+      "height": 49
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#0E7490",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "groupId": "b4-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b4-s15",
+     "type": "shape",
+     "name": "Chip icon 2",
+     "position": {
+      "x": 476.69,
+      "y": 572.54
+     },
+     "size": {
+      "width": 31,
+      "height": 31
+     },
+     "rotation": 1.6,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b4-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b4-t16",
+     "type": "text",
+     "name": "Pill text 2",
+     "position": {
+      "x": 532.98,
+      "y": 569.93
+     },
+     "size": {
+      "width": 151,
+      "height": 46
+     },
+     "rotation": 1.6,
+     "scale": 1,
+     "content": "Balance",
+     "fontSize": 9.77,
+     "color": "#1B1B2F",
+     "fontFamily": "Outfit",
+     "fontWeight": "700",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1,
+     "groupId": "b4-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b4-s17",
+     "type": "shape",
+     "name": "Pill 3",
+     "position": {
+      "x": 729.99,
+      "y": 553
+     },
+     "size": {
+      "width": 300,
+      "height": 75
+     },
+     "rotation": -1.2,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "borderRadius": 37.446299999999994,
+     "shadow": {
+      "x": 0,
+      "y": 10,
+      "blur": 24,
+      "color": "rgba(0,0,0,0.28)"
+     },
+     "groupId": "b4-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b4-s18",
+     "type": "shape",
+     "name": "Chip dot 3",
+     "position": {
+      "x": 754.44,
+      "y": 568.13
+     },
+     "size": {
+      "width": 49,
+      "height": 49
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#0E7490",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "groupId": "b4-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b4-s19",
+     "type": "shape",
+     "name": "Chip icon 3",
+     "position": {
+      "x": 763.23,
+      "y": 576.93
+     },
+     "size": {
+      "width": 31,
+      "height": 31
+     },
+     "rotation": -1.2,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b4-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b4-t20",
+     "type": "text",
+     "name": "Pill text 3",
+     "position": {
+      "x": 819.53,
+      "y": 568.22
+     },
+     "size": {
+      "width": 190,
+      "height": 46
+     },
+     "rotation": -1.2,
+     "scale": 1,
+     "content": "Favorites",
+     "fontSize": 9.77,
+     "color": "#1B1B2F",
+     "fontFamily": "Outfit",
+     "fontWeight": "700",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1,
+     "groupId": "b4-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b4-d21",
+     "type": "device",
+     "name": "Device",
+     "position": {
+      "x": 132.66,
+      "y": 680.33
+     },
+     "size": {
+      "width": 941,
+      "height": 2043.84
+     },
+     "rotation": 0,
+     "scale": 1,
+     "deviceType": "iphone-17-pro-max",
+     "styleType": "normal",
+     "frameColor": "#17171C",
+     "screenshotObjectFit": "cover",
+     "screenshotRect": {
+      "left": 0,
+      "top": 0,
+      "width": 100,
+      "height": 100
+     },
+     "shadow": {
+      "x": 0,
+      "y": 33,
+      "blur": 85,
+      "color": "rgba(0,0,0,0.42)"
+     }
+    }
+   ],
+   "localization": {
+    "baseLocale": "en-US",
+    "locales": [
+     {
+      "code": "en-US"
+     },
+     {
+      "code": "fr-FR"
+     }
+    ]
+   },
+   "localized": {
+    "fr-FR": {
+     "b4-t5": {
+      "content": "N'oubliez plus"
+     },
+     "b4-t6": {
+      "content": "une échéance"
+     },
+     "b4-t7": {
+      "content": "Soldes et dates d'expiration en un coup d'œil"
+     },
+     "b4-t12": {
+      "content": "Expiration"
+     },
+     "b4-t16": {
+      "content": "Solde"
+     },
+     "b4-t20": {
+      "content": "Favoris"
+     }
+    }
+   }
+  },
+  {
+   "id": "cardwallet-wallet",
+   "name": "wallet",
+   "position": {
+    "x": 6345,
+    "y": 15
+   },
+   "size": {
+    "width": 1206,
+    "height": 2622
+   },
+   "backgroundColor": "#0F766E",
+   "backgroundType": "gradient",
+   "backgroundGradient": {
+    "color1": "#14B8A6",
+    "color2": "#0F766E",
+    "angle": 165
+   },
+   "zoom": 1,
+   "elements": [
+    {
+     "id": "b5-s1",
+     "type": "shape",
+     "name": "Glow",
+     "position": {
+      "x": -844.2,
+      "y": -117.9
+     },
+     "size": {
+      "width": 1809,
+      "height": 1809
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 0.2,
+     "blur": 241
+    },
+    {
+     "id": "b5-s2",
+     "type": "shape",
+     "name": "Glow 2",
+     "position": {
+      "x": 482.4,
+      "y": 1696.5
+     },
+     "size": {
+      "width": 1327,
+      "height": 1327
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#14B8A6",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 0.5,
+     "blur": 193
+    },
+    {
+     "id": "b5-s3",
+     "type": "shape",
+     "name": "Bottom shade",
+     "position": {
+      "x": 0,
+      "y": 1625.64
+     },
+     "size": {
+      "width": 1206,
+      "height": 996
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#000000",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "fillGradient": {
+      "color1": "rgba(0,0,0,0)",
+      "color2": "rgba(0,0,0,0.3)",
+      "angle": 180
+     }
+    },
+    {
+     "id": "b5-t5",
+     "type": "text",
+     "name": "Title 1",
+     "position": {
+      "x": 60.3,
+      "y": 146.83
+     },
+     "size": {
+      "width": 1085,
+      "height": 151
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "Your wallet,",
+     "fontSize": 36.18,
+     "color": "#FFE08A",
+     "fontFamily": "Outfit",
+     "fontWeight": "800",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1.08,
+     "groupId": "b5-g4",
+     "groupName": "Headline"
+    },
+    {
+     "id": "b5-t6",
+     "type": "text",
+     "name": "Title 2",
+     "position": {
+      "x": 60.3,
+      "y": 281.9
+     },
+     "size": {
+      "width": 1085,
+      "height": 151
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "neatly stacked",
+     "fontSize": 36.18,
+     "color": "#FFFFFF",
+     "fontFamily": "Outfit",
+     "fontWeight": "800",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1.08,
+     "groupId": "b5-g4",
+     "groupName": "Headline"
+    },
+    {
+     "id": "b5-t7",
+     "type": "text",
+     "name": "Subtitle",
+     "position": {
+      "x": 60.3,
+      "y": 429.04
+     },
+     "size": {
+      "width": 1085,
+      "height": 68
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "Pick the view you like best",
+     "fontSize": 14.47,
+     "color": "rgba(255,255,255,0.9)",
+     "fontFamily": "Outfit",
+     "fontWeight": "500",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1.08,
+     "groupId": "b5-g4",
+     "groupName": "Headline"
+    },
+    {
+     "id": "b5-s9",
+     "type": "shape",
+     "name": "Pill 1",
+     "position": {
+      "x": 176.44,
+      "y": 553
+     },
+     "size": {
+      "width": 339,
+      "height": 75
+     },
+     "rotation": -2.2,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "borderRadius": 37.446299999999994,
+     "shadow": {
+      "x": 0,
+      "y": 10,
+      "blur": 24,
+      "color": "rgba(0,0,0,0.28)"
+     },
+     "groupId": "b5-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b5-s10",
+     "type": "shape",
+     "name": "Chip dot 1",
+     "position": {
+      "x": 200.95,
+      "y": 570.65
+     },
+     "size": {
+      "width": 49,
+      "height": 49
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#0F766E",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "groupId": "b5-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b5-s11",
+     "type": "shape",
+     "name": "Chip icon 1",
+     "position": {
+      "x": 209.74,
+      "y": 579.44
+     },
+     "size": {
+      "width": 31,
+      "height": 31
+     },
+     "rotation": -2.2,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b5-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b5-t12",
+     "type": "text",
+     "name": "Pill text 1",
+     "position": {
+      "x": 265.96,
+      "y": 567.61
+     },
+     "size": {
+      "width": 230,
+      "height": 46
+     },
+     "rotation": -2.2,
+     "scale": 1,
+     "content": "Card holder",
+     "fontSize": 9.77,
+     "color": "#1B1B2F",
+     "fontFamily": "Outfit",
+     "fontWeight": "700",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1,
+     "groupId": "b5-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b5-s13",
+     "type": "shape",
+     "name": "Pill 2",
+     "position": {
+      "x": 541.13,
+      "y": 553
+     },
+     "size": {
+      "width": 202,
+      "height": 75
+     },
+     "rotation": 1.6,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "borderRadius": 37.446299999999994,
+     "shadow": {
+      "x": 0,
+      "y": 10,
+      "blur": 24,
+      "color": "rgba(0,0,0,0.28)"
+     },
+     "groupId": "b5-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b5-s14",
+     "type": "shape",
+     "name": "Chip dot 2",
+     "position": {
+      "x": 565.57,
+      "y": 564.57
+     },
+     "size": {
+      "width": 49,
+      "height": 49
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#0F766E",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "groupId": "b5-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b5-s15",
+     "type": "shape",
+     "name": "Chip icon 2",
+     "position": {
+      "x": 574.37,
+      "y": 573.36
+     },
+     "size": {
+      "width": 31,
+      "height": 31
+     },
+     "rotation": 1.6,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b5-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b5-t16",
+     "type": "text",
+     "name": "Pill text 2",
+     "position": {
+      "x": 630.66,
+      "y": 569.93
+     },
+     "size": {
+      "width": 93,
+      "height": 46
+     },
+     "rotation": 1.6,
+     "scale": 1,
+     "content": "Full",
+     "fontSize": 9.77,
+     "color": "#1B1B2F",
+     "fontFamily": "Outfit",
+     "fontWeight": "700",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1,
+     "groupId": "b5-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b5-s17",
+     "type": "shape",
+     "name": "Pill 3",
+     "position": {
+      "x": 769.07,
+      "y": 553
+     },
+     "size": {
+      "width": 260,
+      "height": 75
+     },
+     "rotation": -1.2,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "borderRadius": 37.446299999999994,
+     "shadow": {
+      "x": 0,
+      "y": 10,
+      "blur": 24,
+      "color": "rgba(0,0,0,0.28)"
+     },
+     "groupId": "b5-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b5-s18",
+     "type": "shape",
+     "name": "Chip dot 3",
+     "position": {
+      "x": 793.51,
+      "y": 567.73
+     },
+     "size": {
+      "width": 49,
+      "height": 49
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#0F766E",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "groupId": "b5-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b5-s19",
+     "type": "shape",
+     "name": "Chip icon 3",
+     "position": {
+      "x": 802.3,
+      "y": 576.52
+     },
+     "size": {
+      "width": 31,
+      "height": 31
+     },
+     "rotation": -1.2,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b5-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b5-t20",
+     "type": "text",
+     "name": "Pill text 3",
+     "position": {
+      "x": 858.6,
+      "y": 568.22
+     },
+     "size": {
+      "width": 151,
+      "height": 46
+     },
+     "rotation": -1.2,
+     "scale": 1,
+     "content": "Columns",
+     "fontSize": 9.77,
+     "color": "#1B1B2F",
+     "fontFamily": "Outfit",
+     "fontWeight": "700",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1,
+     "groupId": "b5-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b5-d21",
+     "type": "device",
+     "name": "Device",
+     "position": {
+      "x": 132.66,
+      "y": 680.33
+     },
+     "size": {
+      "width": 941,
+      "height": 2043.84
+     },
+     "rotation": 0,
+     "scale": 1,
+     "deviceType": "iphone-17-pro-max",
+     "styleType": "normal",
+     "frameColor": "#17171C",
+     "screenshotObjectFit": "cover",
+     "screenshotRect": {
+      "left": 0,
+      "top": 0,
+      "width": 100,
+      "height": 100
+     },
+     "shadow": {
+      "x": 0,
+      "y": 33,
+      "blur": 85,
+      "color": "rgba(0,0,0,0.42)"
+     }
+    }
+   ],
+   "localization": {
+    "baseLocale": "en-US",
+    "locales": [
+     {
+      "code": "en-US"
+     },
+     {
+      "code": "fr-FR"
+     }
+    ]
+   },
+   "localized": {
+    "fr-FR": {
+     "b5-t5": {
+      "content": "Votre portefeuille,"
+     },
+     "b5-t6": {
+      "content": "bien rangé"
+     },
+     "b5-t7": {
+      "content": "Choisissez la vue qui vous plaît"
+     },
+     "b5-t12": {
+      "content": "Porte-cartes"
+     },
+     "b5-t16": {
+      "content": "Pleine"
+     },
+     "b5-t20": {
+      "content": "Colonnes"
+     }
+    }
+   }
+  },
+  {
+   "id": "cardwallet-sync",
+   "name": "sync",
+   "position": {
+    "x": 7611,
+    "y": 15
+   },
+   "size": {
+    "width": 1206,
+    "height": 2622
+   },
+   "backgroundColor": "#BE123C",
+   "backgroundType": "gradient",
+   "backgroundGradient": {
+    "color1": "#F97316",
+    "color2": "#BE123C",
+    "angle": 165
+   },
+   "zoom": 1,
+   "elements": [
+    {
+     "id": "b6-s1",
+     "type": "shape",
+     "name": "Glow",
+     "position": {
+      "x": 180.9,
+      "y": 537.6
+     },
+     "size": {
+      "width": 1809,
+      "height": 1809
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 0.2,
+     "blur": 241
+    },
+    {
+     "id": "b6-s2",
+     "type": "shape",
+     "name": "Glow 2",
+     "position": {
+      "x": -542.7,
+      "y": 1696.5
+     },
+     "size": {
+      "width": 1327,
+      "height": 1327
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#F97316",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 0.5,
+     "blur": 193
+    },
+    {
+     "id": "b6-s3",
+     "type": "shape",
+     "name": "Bottom shade",
+     "position": {
+      "x": 0,
+      "y": 1625.64
+     },
+     "size": {
+      "width": 1206,
+      "height": 996
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#000000",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "fillGradient": {
+      "color1": "rgba(0,0,0,0)",
+      "color2": "rgba(0,0,0,0.3)",
+      "angle": 180
+     }
+    },
+    {
+     "id": "b6-t5",
+     "type": "text",
+     "name": "Title 1",
+     "position": {
+      "x": 60.3,
+      "y": 146.83
+     },
+     "size": {
+      "width": 1085,
+      "height": 151
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "Sync on every",
+     "fontSize": 36.18,
+     "color": "#FFE08A",
+     "fontFamily": "Outfit",
+     "fontWeight": "800",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1.08,
+     "groupId": "b6-g4",
+     "groupName": "Headline"
+    },
+    {
+     "id": "b6-t6",
+     "type": "text",
+     "name": "Title 2",
+     "position": {
+      "x": 60.3,
+      "y": 281.9
+     },
+     "size": {
+      "width": 1085,
+      "height": 151
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "device you own",
+     "fontSize": 36.18,
+     "color": "#FFFFFF",
+     "fontFamily": "Outfit",
+     "fontWeight": "800",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1.08,
+     "groupId": "b6-g4",
+     "groupName": "Headline"
+    },
+    {
+     "id": "b6-t7",
+     "type": "text",
+     "name": "Subtitle",
+     "position": {
+      "x": 60.3,
+      "y": 429.04
+     },
+     "size": {
+      "width": 1085,
+      "height": 68
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "Your files, your servers, your choice",
+     "fontSize": 14.47,
+     "color": "rgba(255,255,255,0.9)",
+     "fontFamily": "Outfit",
+     "fontWeight": "500",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1.08,
+     "groupId": "b6-g4",
+     "groupName": "Headline"
+    },
+    {
+     "id": "b6-s9",
+     "type": "shape",
+     "name": "Tile 1",
+     "position": {
+      "x": 63.92,
+      "y": 547.75
+     },
+     "size": {
+      "width": 191,
+      "height": 213
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "borderRadius": 45.731519999999996,
+     "shadow": {
+      "x": 0,
+      "y": 12,
+      "blur": 28,
+      "color": "rgba(0,0,0,0.3)"
+     },
+     "groupId": "b6-g8",
+     "groupName": "Services"
+    },
+    {
+     "id": "b6-s10",
+     "type": "shape",
+     "name": "Logo 1",
+     "position": {
+      "x": 105.84,
+      "y": 578.24
+     },
+     "size": {
+      "width": 107,
+      "height": 107
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#475569",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M20 13H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1v-6c0-.55-.45-1-1-1zM7 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM20 3H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1zM7 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b6-g8",
+     "groupName": "Services"
+    },
+    {
+     "id": "b6-t11",
+     "type": "text",
+     "name": "Tile text 1",
+     "position": {
+      "x": 44.86,
+      "y": 696.38
+     },
+     "size": {
+      "width": 229,
+      "height": 57
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "WebDAV",
+     "fontSize": 6.57,
+     "color": "#1B1B2F",
+     "fontFamily": "Outfit",
+     "fontWeight": "700",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1,
+     "groupId": "b6-g8",
+     "groupName": "Services"
+    },
+    {
+     "id": "b6-s12",
+     "type": "shape",
+     "name": "Tile 2",
+     "position": {
+      "x": 285.82,
+      "y": 547.75
+     },
+     "size": {
+      "width": 191,
+      "height": 213
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "borderRadius": 45.731519999999996,
+     "shadow": {
+      "x": 0,
+      "y": 12,
+      "blur": 28,
+      "color": "rgba(0,0,0,0.3)"
+     },
+     "groupId": "b6-g8",
+     "groupName": "Services"
+    },
+    {
+     "id": "b6-s13",
+     "type": "shape",
+     "name": "Logo 2",
+     "position": {
+      "x": 327.74,
+      "y": 578.24
+     },
+     "size": {
+      "width": 107,
+      "height": 107
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#4285F4",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M12.01 1.485c-2.082 0-3.754.02-3.743.047.01.02 1.708 3.001 3.774 6.62l3.76 6.574h3.76c2.081 0 3.753-.02 3.742-.047-.005-.02-1.708-3.001-3.775-6.62l-3.76-6.574zm-4.76 1.73a789.828 789.861 0 0 0-3.63 6.319L0 15.868l1.89 3.298 1.885 3.297 3.62-6.335 3.618-6.33-1.88-3.287C8.1 4.704 7.255 3.22 7.25 3.214zm2.259 12.653-.203.348c-.114.198-.96 1.672-1.88 3.287a423.93 423.948 0 0 1-1.698 2.97c-.01.026 3.24.042 7.222.042h7.244l1.796-3.157c.992-1.734 1.85-3.23 1.906-3.323l.104-.167h-7.249z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b6-g8",
+     "groupName": "Services"
+    },
+    {
+     "id": "b6-t14",
+     "type": "text",
+     "name": "Tile text 2",
+     "position": {
+      "x": 266.77,
+      "y": 696.38
+     },
+     "size": {
+      "width": 229,
+      "height": 57
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "Google Drive",
+     "fontSize": 6.57,
+     "color": "#1B1B2F",
+     "fontFamily": "Outfit",
+     "fontWeight": "700",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1,
+     "groupId": "b6-g8",
+     "groupName": "Services"
+    },
+    {
+     "id": "b6-s15",
+     "type": "shape",
+     "name": "Tile 3",
+     "position": {
+      "x": 507.73,
+      "y": 547.75
+     },
+     "size": {
+      "width": 191,
+      "height": 213
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "borderRadius": 45.731519999999996,
+     "shadow": {
+      "x": 0,
+      "y": 12,
+      "blur": 28,
+      "color": "rgba(0,0,0,0.3)"
+     },
+     "groupId": "b6-g8",
+     "groupName": "Services"
+    },
+    {
+     "id": "b6-s16",
+     "type": "shape",
+     "name": "Logo 3",
+     "position": {
+      "x": 549.65,
+      "y": 578.24
+     },
+     "size": {
+      "width": 107,
+      "height": 107
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#0078D4",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M19.453 9.95q.961.058 1.787.468.826.41 1.442 1.066.615.657.966 1.512.352.856.352 1.816 0 1.008-.387 1.893-.386.885-1.049 1.547-.662.662-1.546 1.049-.885.387-1.893.387H6q-1.242 0-2.332-.475-1.09-.475-1.904-1.29-.815-.814-1.29-1.903Q0 14.93 0 13.688q0-.985.31-1.887.311-.903.862-1.658.55-.756 1.324-1.325.774-.568 1.711-.861.434-.129.85-.187.416-.06.861-.082h.012q.515-.786 1.207-1.413.691-.627 1.5-1.066.808-.44 1.705-.668.896-.229 1.845-.229 1.278 0 2.456.417 1.177.416 2.144 1.16.967.744 1.658 1.78.692 1.038 1.008 2.28zm-7.265-4.137q-1.325 0-2.52.544-1.195.545-2.04 1.565.446.117.85.299.405.181.792.416l4.78 2.86 2.731-1.15q.27-.117.545-.204.276-.088.58-.147-.293-.937-.855-1.705-.563-.768-1.319-1.318-.755-.551-1.658-.856-.902-.304-1.886-.304zM2.414 16.395l9.914-4.184-3.832-2.297q-.586-.351-1.23-.539-.645-.188-1.325-.188-.914 0-1.722.364-.809.363-1.412.978-.604.616-.955 1.436-.352.82-.352 1.723 0 .703.234 1.423.235.721.68 1.284zm16.711 1.793q.563 0 1.078-.176.516-.176.961-.516l-7.23-4.324-10.301 4.336q.527.328 1.13.504.604.175 1.237.175zm3.012-1.852q.363-.727.363-1.523 0-.774-.293-1.407t-.791-1.072q-.498-.44-1.166-.68-.668-.24-1.406-.24-.422 0-.838.1t-.815.252q-.398.152-.785.334-.386.181-.761.345Z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b6-g8",
+     "groupName": "Services"
+    },
+    {
+     "id": "b6-t17",
+     "type": "text",
+     "name": "Tile text 3",
+     "position": {
+      "x": 488.67,
+      "y": 696.38
+     },
+     "size": {
+      "width": 229,
+      "height": 57
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "OneDrive",
+     "fontSize": 6.57,
+     "color": "#1B1B2F",
+     "fontFamily": "Outfit",
+     "fontWeight": "700",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1,
+     "groupId": "b6-g8",
+     "groupName": "Services"
+    },
+    {
+     "id": "b6-s18",
+     "type": "shape",
+     "name": "Tile 4",
+     "position": {
+      "x": 729.63,
+      "y": 547.75
+     },
+     "size": {
+      "width": 191,
+      "height": 213
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "borderRadius": 45.731519999999996,
+     "shadow": {
+      "x": 0,
+      "y": 12,
+      "blur": 28,
+      "color": "rgba(0,0,0,0.3)"
+     },
+     "groupId": "b6-g8",
+     "groupName": "Services"
+    },
+    {
+     "id": "b6-s19",
+     "type": "shape",
+     "name": "Logo 4",
+     "position": {
+      "x": 771.55,
+      "y": 578.24
+     },
+     "size": {
+      "width": 107,
+      "height": 107
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#0082C9",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M12.018 6.537c-2.5 0-4.6 1.712-5.241 4.015-.56-1.232-1.793-2.105-3.225-2.105A3.569 3.569 0 0 0 0 12a3.569 3.569 0 0 0 3.552 3.553c1.432 0 2.664-.874 3.224-2.106.641 2.304 2.742 4.016 5.242 4.016 2.487 0 4.576-1.693 5.231-3.977.569 1.21 1.783 2.067 3.198 2.067A3.568 3.568 0 0 0 24 12a3.569 3.569 0 0 0-3.553-3.553c-1.416 0-2.63.858-3.199 2.067-.654-2.284-2.743-3.978-5.23-3.977zm0 2.085c1.878 0 3.378 1.5 3.378 3.378 0 1.878-1.5 3.378-3.378 3.378A3.362 3.362 0 0 1 8.641 12c0-1.878 1.5-3.378 3.377-3.378zm-8.466 1.91c.822 0 1.467.645 1.467 1.468s-.644 1.467-1.467 1.468A1.452 1.452 0 0 1 2.085 12c0-.823.644-1.467 1.467-1.467zm16.895 0c.823 0 1.468.645 1.468 1.468s-.645 1.468-1.468 1.468A1.452 1.452 0 0 1 18.98 12c0-.823.644-1.467 1.467-1.467z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b6-g8",
+     "groupName": "Services"
+    },
+    {
+     "id": "b6-t20",
+     "type": "text",
+     "name": "Tile text 4",
+     "position": {
+      "x": 710.58,
+      "y": 696.38
+     },
+     "size": {
+      "width": 229,
+      "height": 57
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "Nextcloud",
+     "fontSize": 6.57,
+     "color": "#1B1B2F",
+     "fontFamily": "Outfit",
+     "fontWeight": "700",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1,
+     "groupId": "b6-g8",
+     "groupName": "Services"
+    },
+    {
+     "id": "b6-s21",
+     "type": "shape",
+     "name": "Tile 5",
+     "position": {
+      "x": 951.53,
+      "y": 547.75
+     },
+     "size": {
+      "width": 191,
+      "height": 213
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "borderRadius": 45.731519999999996,
+     "shadow": {
+      "x": 0,
+      "y": 12,
+      "blur": 28,
+      "color": "rgba(0,0,0,0.3)"
+     },
+     "groupId": "b6-g8",
+     "groupName": "Services"
+    },
+    {
+     "id": "b6-s22",
+     "type": "shape",
+     "name": "Logo 5",
+     "position": {
+      "x": 993.45,
+      "y": 578.24
+     },
+     "size": {
+      "width": 107,
+      "height": 107
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#17541F",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M6.338 23.028c-.117-.56-.353-1.678-.382-1.678-4.977-2.975-4.388-8.128-2.739-11.073.353 3.71 6.92 6.273 3.092 10.808-.03.059.177.765.353 1.413.766-1.296 1.915-2.856 1.856-3.004C3.806 8.01 18.53 7.126 21.592 0c1.385 6.89-.706 17.55-12.544 20.26-.06.03-2.15 3.71-2.238 3.74 0-.059-.884-.03-.766-.324.059-.177.177-.412.294-.648zm-.147-2.768c1.502-1.737-.265-4.712-1.325-5.683 1.796 3.092 1.679 4.888 1.325 5.683z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b6-g8",
+     "groupName": "Services"
+    },
+    {
+     "id": "b6-t23",
+     "type": "text",
+     "name": "Tile text 5",
+     "position": {
+      "x": 932.48,
+      "y": 696.38
+     },
+     "size": {
+      "width": 229,
+      "height": 57
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "Paperless-ngx",
+     "fontSize": 6.57,
+     "color": "#1B1B2F",
+     "fontFamily": "Outfit",
+     "fontWeight": "700",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1,
+     "groupId": "b6-g8",
+     "groupName": "Services"
+    },
+    {
+     "id": "b6-d24",
+     "type": "device",
+     "name": "Device back",
+     "position": {
+      "x": 48.24,
+      "y": 997.15
+     },
+     "size": {
+      "width": 627,
+      "height": 1362.56
+     },
+     "rotation": 6,
+     "scale": 1,
+     "deviceType": "iphone-17-pro-max",
+     "styleType": "normal",
+     "frameColor": "#17171C",
+     "screenshotObjectFit": "cover",
+     "screenshotRect": {
+      "left": 0,
+      "top": 0,
+      "width": 100,
+      "height": 100
+     },
+     "shadow": {
+      "x": 0,
+      "y": 22,
+      "blur": 56,
+      "color": "rgba(0,0,0,0.42)"
+     }
+    },
+    {
+     "id": "b6-d25",
+     "type": "device",
+     "name": "Device front",
+     "position": {
+      "x": 518.58,
+      "y": 892.27
+     },
+     "size": {
+      "width": 627,
+      "height": 1362.56
+     },
+     "rotation": -5,
+     "scale": 1,
+     "deviceType": "iphone-17-pro-max",
+     "styleType": "normal",
+     "frameColor": "#17171C",
+     "screenshotObjectFit": "cover",
+     "screenshotRect": {
+      "left": 0,
+      "top": 0,
+      "width": 100,
+      "height": 100
+     },
+     "shadow": {
+      "x": 0,
+      "y": 22,
+      "blur": 56,
+      "color": "rgba(0,0,0,0.42)"
+     }
+    },
+    {
+     "id": "b6-s27",
+     "type": "shape",
+     "name": "Sync ring",
+     "position": {
+      "x": 471.79,
+      "y": 1416.55
+     },
+     "size": {
+      "width": 262,
+      "height": 262
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 0.28,
+     "groupId": "b6-g26",
+     "groupName": "Sync badge"
+    },
+    {
+     "id": "b6-s28",
+     "type": "shape",
+     "name": "Sync badge",
+     "position": {
+      "x": 500.49,
+      "y": 1445.26
+     },
+     "size": {
+      "width": 205,
+      "height": 205
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "shadow": {
+      "x": 0,
+      "y": 14,
+      "blur": 30,
+      "color": "rgba(0,0,0,0.35)"
+     },
+     "groupId": "b6-g26",
+     "groupName": "Sync badge"
+    },
+    {
+     "id": "b6-s29",
+     "type": "shape",
+     "name": "Sync icon",
+     "position": {
+      "x": 539.44,
+      "y": 1484.21
+     },
+     "size": {
+      "width": 127,
+      "height": 127
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#BE123C",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b6-g26",
+     "groupName": "Sync badge"
+    }
+   ],
+   "localization": {
+    "baseLocale": "en-US",
+    "locales": [
+     {
+      "code": "en-US"
+     },
+     {
+      "code": "fr-FR"
+     }
+    ]
+   },
+   "localized": {
+    "fr-FR": {
+     "b6-t5": {
+      "content": "Synchronisez tous"
+     },
+     "b6-t6": {
+      "content": "vos appareils"
+     },
+     "b6-t7": {
+      "content": "Vos fichiers, vos serveurs, votre choix"
+     },
+     "b6-t11": {
+      "content": "WebDAV"
+     },
+     "b6-t14": {
+      "content": "Google Drive"
+     },
+     "b6-t17": {
+      "content": "OneDrive"
+     },
+     "b6-t20": {
+      "content": "Nextcloud"
+     },
+     "b6-t23": {
+      "content": "Paperless-ngx"
+     }
+    }
+   }
+  },
+  {
+   "id": "cardwallet-dark",
+   "name": "dark",
+   "position": {
+    "x": 8877,
+    "y": 15
+   },
+   "size": {
+    "width": 1206,
+    "height": 2622
+   },
+   "backgroundColor": "#0F172A",
+   "backgroundType": "gradient",
+   "backgroundGradient": {
+    "color1": "#4C1D95",
+    "color2": "#0F172A",
+    "angle": 165
+   },
+   "zoom": 1,
+   "elements": [
+    {
+     "id": "b7-s1",
+     "type": "shape",
+     "name": "Glow",
+     "position": {
+      "x": -783.9,
+      "y": -694.74
+     },
+     "size": {
+      "width": 1809,
+      "height": 1809
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 0.2,
+     "blur": 241
+    },
+    {
+     "id": "b7-s2",
+     "type": "shape",
+     "name": "Glow 2",
+     "position": {
+      "x": 422.1,
+      "y": 1434.3
+     },
+     "size": {
+      "width": 1327,
+      "height": 1327
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#4C1D95",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 0.5,
+     "blur": 193
+    },
+    {
+     "id": "b7-s3",
+     "type": "shape",
+     "name": "Bottom shade",
+     "position": {
+      "x": 0,
+      "y": 1625.64
+     },
+     "size": {
+      "width": 1206,
+      "height": 996
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#000000",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "fillGradient": {
+      "color1": "rgba(0,0,0,0)",
+      "color2": "rgba(0,0,0,0.3)",
+      "angle": 180
+     }
+    },
+    {
+     "id": "b7-t5",
+     "type": "text",
+     "name": "Title 1",
+     "position": {
+      "x": 60.3,
+      "y": 146.83
+     },
+     "size": {
+      "width": 1085,
+      "height": 151
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "Light or dark,",
+     "fontSize": 36.18,
+     "color": "#FFE08A",
+     "fontFamily": "Outfit",
+     "fontWeight": "800",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1.08,
+     "groupId": "b7-g4",
+     "groupName": "Headline"
+    },
+    {
+     "id": "b7-t6",
+     "type": "text",
+     "name": "Title 2",
+     "position": {
+      "x": 60.3,
+      "y": 281.9
+     },
+     "size": {
+      "width": 1085,
+      "height": 151
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "your choice",
+     "fontSize": 36.18,
+     "color": "#FFFFFF",
+     "fontFamily": "Outfit",
+     "fontWeight": "800",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1.08,
+     "groupId": "b7-g4",
+     "groupName": "Headline"
+    },
+    {
+     "id": "b7-t7",
+     "type": "text",
+     "name": "Subtitle",
+     "position": {
+      "x": 60.3,
+      "y": 429.04
+     },
+     "size": {
+      "width": 1085,
+      "height": 68
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "Looks great day and night",
+     "fontSize": 14.47,
+     "color": "rgba(255,255,255,0.9)",
+     "fontFamily": "Outfit",
+     "fontWeight": "500",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1.08,
+     "groupId": "b7-g4",
+     "groupName": "Headline"
+    },
+    {
+     "id": "b7-s9",
+     "type": "shape",
+     "name": "Pill 1",
+     "position": {
+      "x": 378.32,
+      "y": 553
+     },
+     "size": {
+      "width": 221,
+      "height": 75
+     },
+     "rotation": -2.2,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "borderRadius": 37.446299999999994,
+     "shadow": {
+      "x": 0,
+      "y": 10,
+      "blur": 24,
+      "color": "rgba(0,0,0,0.28)"
+     },
+     "groupId": "b7-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b7-s10",
+     "type": "shape",
+     "name": "Chip dot 1",
+     "position": {
+      "x": 402.79,
+      "y": 568.4
+     },
+     "size": {
+      "width": 49,
+      "height": 49
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#0F172A",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "groupId": "b7-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b7-s11",
+     "type": "shape",
+     "name": "Chip icon 1",
+     "position": {
+      "x": 411.58,
+      "y": 577.19
+     },
+     "size": {
+      "width": 31,
+      "height": 31
+     },
+     "rotation": -2.2,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 0 0 0-1.41l-1.06-1.06zm1.06-10.96a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b7-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b7-t12",
+     "type": "text",
+     "name": "Pill text 1",
+     "position": {
+      "x": 467.84,
+      "y": 567.61
+     },
+     "size": {
+      "width": 112,
+      "height": 46
+     },
+     "rotation": -2.2,
+     "scale": 1,
+     "content": "Light",
+     "fontSize": 9.77,
+     "color": "#1B1B2F",
+     "fontFamily": "Outfit",
+     "fontWeight": "700",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1,
+     "groupId": "b7-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b7-s13",
+     "type": "shape",
+     "name": "Pill 2",
+     "position": {
+      "x": 625.79,
+      "y": 553
+     },
+     "size": {
+      "width": 202,
+      "height": 75
+     },
+     "rotation": 1.6,
+     "scale": 1,
+     "shapeType": "rectangle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "borderRadius": 37.446299999999994,
+     "shadow": {
+      "x": 0,
+      "y": 10,
+      "blur": 24,
+      "color": "rgba(0,0,0,0.28)"
+     },
+     "groupId": "b7-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b7-s14",
+     "type": "shape",
+     "name": "Chip dot 2",
+     "position": {
+      "x": 650.24,
+      "y": 564.57
+     },
+     "size": {
+      "width": 49,
+      "height": 49
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#0F172A",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "groupId": "b7-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b7-s15",
+     "type": "shape",
+     "name": "Chip icon 2",
+     "position": {
+      "x": 659.03,
+      "y": 573.36
+     },
+     "size": {
+      "width": 31,
+      "height": 31
+     },
+     "rotation": 1.6,
+     "scale": 1,
+     "shapeType": "custom-svg",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 1,
+     "customPath": "M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z",
+     "specialProps": {
+      "viewBox": "0 0 24 24"
+     },
+     "groupId": "b7-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b7-t16",
+     "type": "text",
+     "name": "Pill text 2",
+     "position": {
+      "x": 715.33,
+      "y": 569.93
+     },
+     "size": {
+      "width": 93,
+      "height": 46
+     },
+     "rotation": 1.6,
+     "scale": 1,
+     "content": "Dark",
+     "fontSize": 9.77,
+     "color": "#1B1B2F",
+     "fontFamily": "Outfit",
+     "fontWeight": "700",
+     "fontStyle": "normal",
+     "textAlign": "center",
+     "lineHeight": 1,
+     "groupId": "b7-g8",
+     "groupName": "Chips 1"
+    },
+    {
+     "id": "b7-d17",
+     "type": "device",
+     "name": "Device back",
+     "position": {
+      "x": 48.24,
+      "y": 863.87
+     },
+     "size": {
+      "width": 627,
+      "height": 1362.56
+     },
+     "rotation": 6,
+     "scale": 1,
+     "deviceType": "iphone-17-pro-max",
+     "styleType": "normal",
+     "frameColor": "#17171C",
+     "screenshotObjectFit": "cover",
+     "screenshotRect": {
+      "left": 0,
+      "top": 0,
+      "width": 100,
+      "height": 100
+     },
+     "shadow": {
+      "x": 0,
+      "y": 22,
+      "blur": 56,
+      "color": "rgba(0,0,0,0.42)"
+     }
+    },
+    {
+     "id": "b7-d18",
+     "type": "device",
+     "name": "Device front",
+     "position": {
+      "x": 518.58,
+      "y": 758.99
+     },
+     "size": {
+      "width": 627,
+      "height": 1362.56
+     },
+     "rotation": -5,
+     "scale": 1,
+     "deviceType": "iphone-17-pro-max",
+     "styleType": "normal",
+     "frameColor": "#17171C",
+     "screenshotObjectFit": "cover",
+     "screenshotRect": {
+      "left": 0,
+      "top": 0,
+      "width": 100,
+      "height": 100
+     },
+     "shadow": {
+      "x": 0,
+      "y": 22,
+      "blur": 56,
+      "color": "rgba(0,0,0,0.42)"
+     }
+    }
+   ],
+   "localization": {
+    "baseLocale": "en-US",
+    "locales": [
+     {
+      "code": "en-US"
+     },
+     {
+      "code": "fr-FR"
+     }
+    ]
+   },
+   "localized": {
+    "fr-FR": {
+     "b7-t5": {
+      "content": "Clair ou sombre,"
+     },
+     "b7-t6": {
+      "content": "à vous de choisir"
+     },
+     "b7-t7": {
+      "content": "Superbe de jour comme de nuit"
+     },
+     "b7-t12": {
+      "content": "Clair"
+     },
+     "b7-t16": {
+      "content": "Sombre"
+     }
+    }
+   }
+  },
+  {
+   "id": "cardwallet-feature",
+   "name": "feature",
+   "position": {
+    "x": 10143,
+    "y": 15
+   },
+   "size": {
+    "width": 1024,
+    "height": 500
+   },
+   "backgroundColor": "#9D174D",
+   "backgroundType": "gradient",
+   "backgroundGradient": {
+    "color1": "#F43F5E",
+    "color2": "#9D174D",
+    "angle": 115
+   },
+   "zoom": 1,
+   "elements": [
+    {
+     "id": "f-s1",
+     "type": "shape",
+     "name": "Glow",
+     "position": {
+      "x": 337.92,
+      "y": -285.7
+     },
+     "size": {
+      "width": 1270,
+      "height": 1270
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#FFFFFF",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 0.2,
+     "blur": 90
+    },
+    {
+     "id": "f-s2",
+     "type": "shape",
+     "name": "Glow 2",
+     "position": {
+      "x": -253.95,
+      "y": 182.56
+     },
+     "size": {
+      "width": 889,
+      "height": 889
+     },
+     "rotation": 0,
+     "scale": 1,
+     "shapeType": "circle",
+     "fillColor": "#F43F5E",
+     "strokeColor": "transparent",
+     "strokeWidth": 0,
+     "fillOpacity": 0.5,
+     "blur": 80
+    },
+    {
+     "id": "f-i3",
+     "type": "image",
+     "name": "Icon",
+     "position": {
+      "x": 64,
+      "y": 70
+     },
+     "size": {
+      "width": 92,
+      "height": 92
+     },
+     "rotation": 0,
+     "scale": 1,
+     "imageSrc": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAIAAADTED8xAAAACXBIWXMAAAsTAAALEwEAmpwYAAAVCElEQVR4nO1dCVdUV7r1B720IsoMhRnarKx+rcxQVIE4JN1JOs+YGBN52u91Os/YMUZjOnnR59Cm09GIWBSgMggUAgIajXGoe08Vs0wyFVATVN2qt84twCGiFpziDrW/dVYWYYlS++x9v2+f8517lpFEHQYQIOFKg2WS/wYYQIBAACABECDIACABECAogUACIEDgAUACIEBggkECIECwCgQSAAGCZVCQAAgQ7AOABECAYCMMJAACBDvBIAEQIGiFAAmAAEEvEEgABAia4UACIEDQDQoSAAGCdmiQAAgQnAcACYAAwYEYkAAIEJwIAwmAAMGRSJAACBCcCQYJCA5k41A8SEDCWwZ4K4T0c4BBIACQAAgQZACQAAgQlEAgARAg8AAgARAgMMEgARAgWAUCCYAAwTIoSAAECPYBQAIgQLARBhIAAYKdYJAACBC0QoAEQICgFwgkAAIEzXAgARAg6AYFCYAAQTs0SAAECM4DgARAgOBADEgABAhOhIEEQIDgSCRIAAQIzgSDBATHkXEoHiQg4S0DvBVC+jnAIBAASAAECDIASAAECEogkAAIEHgAkAAIEJhgkAAIEKwCgQRAgGAZFCQAAgT7ACDBAhFI0hON3qLJs2jy6Nf0f/OIhn6TJOrDFlVshKl6BFiepCfxWj4uh4vK5CLTuVUZfHQWH53FrcrgVqVz0VkkTkv/sEZPkqT+hZd8QADqJX1CLh+Tza1K52NzrGs2tK97u2fz7oEPPh/YeWDor98O/fXbgZ0H+rbu6c7/qO21N/h4Lbc6g4/NmUkOkn+KpRoQgGpJb1mzoTNzW/+2vcOfHZv8V7mzpNZ1/rK7qtld3eyuvEJHVbO7oslZVu8orh796of+9z9r/90faXKIzQ4fGUAAqiZ9aZ27somyvLzeWWpyGmsdhhqHocZpqHUa6NdOQ43TWOcsNbkuNrormxzFl4Y+OdyR8icuKpOP14aDBiAAVZPeWBfgOv3i6aOkloqh1OSuaHIYagZ3f2V5cQMfnUX/Ock/dSgHBBDGpDc+aYg5wV15ZeIfJZ0ZW7moTHGZSGoQIADJkVIz6Y1PkIHrQoPDUNOzeRfVgHprIWQA6edALqQ3Pl4UucrqnWX1PVt28+rVAAQA0tc9zRiUmpxl9d0bPlJrLQQB6ML9SW98dh6wn61q//c3Z3YJpKYsBCA9aionvfExP1Drvtg09vUpkpArPZIQgOSQhQXpjY9poMZd0dT7zifqK4RQAoWI9Fo+Jos2F8QplvTGh0ZJrav88sQ/yy0vFpB4VeUBCCA0pH+poFP7fv/2faNfnJz84YK4sq400hsfSwK17oqmvnc/VVkSgADYk37ki5P2UxdcZSbab3Ox0VkmtiEokfTGR5PA+YbxY+dU5oMhgNCRXplPeuPThqvM1JX7AW2RUIsMIACQvu55BWCodVc2DXx0gIvKUE0VBAH8ChQ86Y3zV0EXGlW2HgoBgPR1QVRBZSZ7UZX11S1is7T09IUAFgEBnvTGBVjhOld5fc+GnXyUSmxAmGUAkH6RPthQ4668MlB4kFudoY6jAmEgAJCesQ1oGPv7D6qxASoVAH3bR7gvWYZqlKnKBqhIAIFX3CTpSHwuFw3Sh0wAJaqyActURfpVGXyc1vrKpi79DjzpQyUAg6pswDJVkf7D/aNffm//scJZVo/yJmQZoFZNNkAhAkjSzb7hbF7Su8rr3VWBmt4kPqhQ08MG6JQvAHENh4/PpUY2JnuG9DueRPoSkH6pfHCJemyAvAWQpOfjtFxUpvWVTb1vfTyy77j99EVK+pnVG5B+qRhvVK0NkKsAxOcKpf7azYOFBydPnXdXiP30ZfXiK5xQ3khEfaPabIAsBaChD34Sp+17538mf7zorrxC388x9x4/DDkgUKaS3QD5CUCjp7X+2i2jB79zVzS5yuvp875E6vnGMKrTBshMAJo8Ljqrfd1bE9+V0oLHUEMLHpBPhggYVGID5CQAjZ6Pzmpf/7b91EXXhQbnORQ8Mh4lKrEBshFAkp6PzW7/3R/sP1yg7Ee5L/9RpgYbIBsBJOQSTZ7tcBFd3wT7lZEE6lRgA+QhgCQ9F5U1uOtLd+UVsF8xw6AGGyADASTp+Ziszqxt0s8ohjHsbIAcBKDj47Rjh/4lFj9Y81GUDssUbwOkFkASXfnp0m6nW12STyeGMexsgAwEEJM9vPeouOqPx7/SRGhQvA2QWgDxWutvN9G+zlBngFLTgyE5bxQ6Sn+FofJtgKQC0Oi5qMyejYWu85dDteNLZ0tskz5X4yiqcpytdhZfmtlgxigJEoTiS86z1Y6iKvpFYL7o/TEme1Glcm2AtALI41ZnDO465K5qZr/6KT6lHMXV9Dbc8w3uxhvTtyyeth5PV5+3f8g7OILhDQqEgRFPd7+no9dzt83dcssVKFnPVjkN9KW5PQWF9B4xBb4vUfISKHf0y+9dFxtZZoBAgj5b7SwzTV297e2775+a8iPYhtfrHRqbukmcFxpc5ZcHdh7gYxR5qbCkAkjItSTnjZ8wsCyBSk00QZeapm9ZhAnHI3Pm82GwQeCh8Lnc3s7escNnuIhUuhCktLUgSQUQr7W+VGA/U0mPubB6/BdXuxtvCOP22fl5fMIQzML3AFuf0zX4+XE+KpNepKeoPCADARRVMRBAKV2RcBhqp/nOmVkB9ZcmfA+gnqxrta7dTG8PUI4GJBfARlEApsWz32ms894bBPWlCZ/P5xX8fr/b2t2e8rZoiJWhAWkFkGt5sYB2/9OTvotgv7HWUVLnHRyZYT9CKhV4vX6/f7p3UEEakNgEE03e+LFzizXBhhpvz+yzHyFteGkemGrrpjsDSrhYe5nUh2ByhvcdX3gfhLjmM323DeyXUXhpHpi41EyTAATwNAFo8rhV6f0ffO6uWtAxAJH97vqf8OCXZx4Y3HfcHJFqSZZ1ISR1BojO6i4opK9+WFjxU1IrDI1RxFH8yCp8tBb1DNva1r/Nx2bLOQ9IKwAdH6+1rt2ykIWgUpPzbPVU6y2ppxrxtCQwdvoC3SCTsRuWuhVCtMJjfz9FD8IH74OFERvFGo9/GYaPJgHB7uzI2MrHyDcJSC0AsR9uoPBgcKeBA9V/ww2pJxnxtAjsDNw/9L15RYolOV9yrstSAEl6PiqzZ0Ohq/xyEFsBpSbH2WpPW48IM5Y+5RoCnRrXLSLn0wKSC0C0Aa8GbwNKTYJtkqIMAcg2fOJ/pqY7srbJtgqSWgALsAH0gEuN61KLX6AZFiHr8FER9P/la2qFZbkeKgMBBGsDAgagBes/Cgifh26KjZw4Z/7NOnnaABkIIFgbUGpyFFVN37aKAMMAKMAHT1Q3yXZXWA4CCNIGiALw8J2hFcBDXb6IhYdYpjqu3iLxWumZJlMBBGsDQioAQaAtjY/+rb7ANxELFkDLL/TGE8k5Jl8BBGUDQiQAQQgs2wXC5/H6XG7f1PTD36R/BikhqIAA2NuAUAhgdkHJTbqGjxb17tjXmfdh2+/fbM/Y2v2H/xr429HJulafa2pWAxDBcwcEwN4GMBeAOEnutu6+wgMkUc+tSOEi0/joLD42m4/J5qMyzStS+NUZHRlbbaW1TzwYjpg3IAD2NoCtAMQZshlryZp8uladqKOrdYFLuQNDoyfid/joLC4i9d72zzxDo+IPQgPPERAAexvAUADi9IycNJhXpvLx2mcsVGvyLMl53Ir1nfodnvuiBpAHnhkQAHsbwEoA4tyMl9VxkWnP/0Iby5oN3IqU7j/+d2CFG/GMgADY2wAmAhB/cLqnn77GIy64o6uWNfnm5SnDR8/OTTBi3oAA2NsAJgIQK/j+T/7XHBF8p24Svcfb8sqm6b77i/odwiEE7AMwtwGLF0Dg8T8wbH15I92hDH6L3pKcz61IGTlxbm63H/HkgADY24BFCyBAWZuxhlb/Czutp9FzqzO7Xv/zTMsvYr6AANjbgMVnAHFWBvcd4xZ8UilJfK3dK5u8OJP59IAA2NsARqtA997by61KX/h57YRckqR33RWbUrEnMF9AAOxtgEwEkKjj43LsV36em2bEEwICYG8DZCMAkqRz3iJz04x4QkAA7G0AIw8wsOeweXEewPLyxpm2CKyEzhcQAHsbwGAViDb3j52t5FYu9J1NGj0fndlZsHNmDRRLQfMFBMDeBjDaB5jq7re8VLCwN3ZYkvPNK1KGvjmFfYBnBATA3gawa4XoLTzArUyjzZ7B1j8JuSQ5323tEucYz//5AwJgbwPYtUK4+A66DSwuaAbZC7T+/sGTcxOMmDcgAPY2gGk36Mh3Rm5FingA4HnZz0Wmdep3CHbnYn+BcAgBvUDMbQDr8wD3v/zOvHw9TQJPf3NTksj+lWlt6950t9+b+3HE0wICYG8DGAog8O4Tv3/4aBE98LU6Q5RB/oPjYOKwiEdhSJzWvHx91+b/nO7un5taxDMCAmBvA9geifTN+AHn9Tvdr+/mojO5iFR6321cDonX8nE5fEw2tzKNi0i1vrpl+MgZwekW5xWVz/MFBMDeBoTurRBer73554FPj3QV7LS++rr15Y3W325uT/+P3h2fj56+4B0Wr6IRcCI+mIAA2NuAUL0X6KF7z72C4HR5Boe9E3bflOeJfwbxXAEBsLcBIXwzHL3t2ffr8iZwCzSov4CAANjbgCV6N+js+3/wxF9MQADsbcDSCADBJCAA9jYAAlBQCNgIY24DIAAFhQABMLcBEICCQoAAmNsACEBBIUAAzG0ABKCgECAA5jYAAlBQCBAAcxsAASgoBAiAgQ3Q2b45/cAGQAAKCgECWCT7NXouKmNw91fuquYZGwABKCgECICBADJ7Nu9ynUcGUGAIEMAiBZCk4+O0ba+94SiupnfEIwMoKwQIgNGwfXtmxgagBFJQCBAAoypocPehGRsAASgoBAiAuQ0ItQBU0wIth+tcBQiAuQ1ABlBQCBAAw6agwG6AsS50GcA37Znqu++0dNrvWO23LcodjrtWp6VranA48CJUyXKaAAEwbAr6cD9tCgqFAAK3hg2NjrfcHDO1jtW1jpmuKn7QT9E6ce22xzbhlyoECICJAJL0fEx2Z+a7ztLZjTCuY464iw3x75gaGB4zXbVdvmZrvK6mMVZPP9T06PjcJ13SECAAViVQIu0LGvvmtLuiyfFjpYdnJwC/X3C6bE03bJd/sjWobjRet9VfG2/9xed56PUWSxYCBMB2LWjTLldFk+NM5TSrDCD+Da62nrG6VsqVBnVqYKyuxX1vgA1iQQUEwDoJ5NoOn3GV1E6b29mVQL7Jn822+qvSMzV0AjC1Ou62+Zc+BGQAhgJI0vPRWV3a7c5zlxiWQD5BGG/9hVb/kjM1dKP+6uRNMzwA+RWplrF9Qi+NGx7Yvs/b2cdOAL6Jn+7Y6q+pOgNcnQzc57fEISADhEIDUZmTVU0U38AVXYsOh7l9zKRyD+Bq76EfFR4gUdEZIHBBy7/9fvjIGTqbHnGXZ/E7ACM2ugaqVgGIwzvpED+vf0lDQAYIhQBeWDdyrJiNAGbDwXeM1bbMLJ9LTVZmI7AVUNfi6uj1SxICBKAQAfi8goNrp7un4s6RGjzx5WuBLWFnW7dfqhAgAIUIIBDTQ6P2W2S8+eZ44w3JN3EXM8abro+33LTfsXjGAnvAEjUDCRCAogTw4H4Al9vrcCl3CK4pnxwucRIgAGUJQOr+ebWFIAqg9RYfp2XOhHBdBUrONy9PGdx/Yg5fhGzDJ65Tj1c00AsINUFcxgwBzA+BJo+LTL/3/t+knlzEsyNwGmH4/4rML6yzrMmXnO5qyACBzeD21Hd8rikR4+eYB4RU4aPT0/fnQ9zKtGdcwwwBBAdBQq7rjpVCjBtL5c1+weluT/kTH5tNL12Wmu6qyADUBuRxEakj/zDMVZkIOYZAp8befJOPkSn7lSoAotHzqzM7NxbCBMtfAAN7j5hXpFhkWf8oVgABJxCbbW++OQc0Qob1j2do1PraG3xcDjJAaNaCtu6Zwxohr/DSp9Lw0SJuZSrRyPTxr+QMMNcXXdc6BzdCLiHQR9JUZ6917Ra6BSZXA6BwAWjoAbGO7Pe8E3YKOvKAfEKgz6PeD/fLdvVTFQJI1JHkPHNEav/HX8+BjpA+PHTza/RUOReZLufiRxUCmDEDaSMnSyj0KITksfXraLlJEnLpkHHxoxYBiBBzqzNGT52f2RZALSQN933+APt/umt5qUDOKz/qEkBAAwmiBv5pnJ0JAS0SSxqCMLPt1Xidsj82R/7Fj4oEMJMH9Fxkev/H3wh258NTggg19X0izj6vd+R4MR+bQ5d9FMJ+FQkgMDS0RaIja9tk/dW5CaJFkYCEwJ73fq937goCt6Wz+62/cBFpsw8jqZkQpgIQ24T46CwuKvPeu586rt1+tFWOlkY+jxdjwQj4KekfEcJU+72BPUfoiytXpdMVT0WxX4UCoEOjt2j0XGQaH5vdteGjkRMG112rb0rsnUYwCY93qrPXVnKpZ+seotGbV6aShFyLcsoetQsgMDT0acStzjRH0OlpT33n3nt7B/efGDlWjLFABI6fG/rq+96dX3Tkbresyeci0+hKf0IuSZbjSRcS7gIIDE0e0dDp4WOyuch08/L15hfWYSwcgd+sp6k1OovE51Js5b3L+zxD7QKYG0l6osmzJOdb1mAsDgFNnjxP9y5shI0AMIBAIgQAEgCBRGQAkAAIJKIEAgkSURnCA4AEiWEtA5hg6ecAg0AAIAEQIMgAIAEQICiBQAIgQOABQAIgQGCCQQIgQLAKBBIAAYJlUJAACBDsA4AEQIBgIwwkAAIEO8EgARBAKwRIAAR06AUCCYCADs1wIAEQ0KEbFCQAAjq0Q4MEQECH8wAgARDQ4UAMSAAEdDgRBhIAAR2ORIIEQECHM8EgARDAoXiQIDHcZYC3Qkg/BxgEAgAJgABBBgAJgABBCQQSAAECDwASAAECEwwSAAGCVSCQAAgQLIOCBECAYB8AJAACBBthIAEQINgJBgmAAEErBEgABAh6gUACIEDQDAcSAAGCblCQAAgQtEODBECA4DwASAAECA7EgARAgOBEGEgABAiORIIEQIDgTDBIQHAcGYfiQQIS3jLAWyGknwMMAgGABECAIAOABECAoAQCCYAAgQcACYAAgQkGCYAAwSoQSAAECJZBQQIgQLAPABIAAYKNMJAACBAWMvh/AdIqDJcDJk4AAAAASUVORK5CYII=",
+     "objectFit": "contain",
+     "borderRadius": 22,
+     "shadow": {
+      "x": 0,
+      "y": 8,
+      "blur": 16,
+      "color": "rgba(0,0,0,0.35)"
+     }
+    },
+    {
+     "id": "f-t4",
+     "type": "text",
+     "name": "Name",
+     "position": {
+      "x": 64,
+      "y": 188
+     },
+     "size": {
+      "width": 440,
+      "height": 130
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "OSS Card Wallet",
+     "fontSize": 15,
+     "color": "#FFFFFF",
+     "fontFamily": "Outfit",
+     "fontWeight": "800",
+     "fontStyle": "normal",
+     "textAlign": "left",
+     "lineHeight": 1.05
+    },
+    {
+     "id": "f-t5",
+     "type": "text",
+     "name": "Tagline",
+     "position": {
+      "x": 64,
+      "y": 316
+     },
+     "size": {
+      "width": 400,
+      "height": 120
+     },
+     "rotation": 0,
+     "scale": 1,
+     "content": "All your cards and passes in one private place. Free and open source.",
+     "fontSize": 7.8,
+     "color": "rgba(255,255,255,0.92)",
+     "fontFamily": "Outfit",
+     "fontWeight": "500",
+     "fontStyle": "normal",
+     "textAlign": "left",
+     "lineHeight": 1.25
+    },
+    {
+     "id": "f-d6",
+     "type": "device",
+     "name": "Device 1",
+     "position": {
+      "x": 640,
+      "y": 120
+     },
+     "size": {
+      "width": 190,
+      "height": 417.58
+     },
+     "rotation": -8,
+     "scale": 1,
+     "deviceType": "pixel-10-pro",
+     "styleType": "normal",
+     "frameColor": "#17171C",
+     "screenshotObjectFit": "cover",
+     "screenshotRect": {
+      "left": 0,
+      "top": 0,
+      "width": 100,
+      "height": 100
+     },
+     "shadow": {
+      "x": 0,
+      "y": 7,
+      "blur": 17,
+      "color": "rgba(0,0,0,0.42)"
+     }
+    },
+    {
+     "id": "f-d7",
+     "type": "device",
+     "name": "Device 2",
+     "position": {
+      "x": 500,
+      "y": 205
+     },
+     "size": {
+      "width": 190,
+      "height": 417.58
+     },
+     "rotation": -2,
+     "scale": 1,
+     "deviceType": "pixel-10-pro",
+     "styleType": "normal",
+     "frameColor": "#17171C",
+     "screenshotObjectFit": "cover",
+     "screenshotRect": {
+      "left": 0,
+      "top": 0,
+      "width": 100,
+      "height": 100
+     },
+     "shadow": {
+      "x": 0,
+      "y": 7,
+      "blur": 17,
+      "color": "rgba(0,0,0,0.42)"
+     }
+    },
+    {
+     "id": "f-d8",
+     "type": "device",
+     "name": "Device 3",
+     "position": {
+      "x": 800,
+      "y": 260
+     },
+     "size": {
+      "width": 190,
+      "height": 417.58
+     },
+     "rotation": 8,
+     "scale": 1,
+     "deviceType": "pixel-10-pro",
+     "styleType": "normal",
+     "frameColor": "#17171C",
+     "screenshotObjectFit": "cover",
+     "screenshotRect": {
+      "left": 0,
+      "top": 0,
+      "width": 100,
+      "height": 100
+     },
+     "shadow": {
+      "x": 0,
+      "y": 7,
+      "blur": 17,
+      "color": "rgba(0,0,0,0.42)"
+     }
+    }
+   ],
+   "localization": {
+    "baseLocale": "en-US",
+    "locales": [
+     {
+      "code": "en-US"
+     },
+     {
+      "code": "fr-FR"
+     }
+    ]
+   },
+   "localized": {
+    "fr-FR": {
+     "f-t4": {
+      "content": "OSS Card Wallet"
+     },
+     "f-t5": {
+      "content": "Toutes vos cartes et passes au même endroit, en privé. Gratuit et open source."
+     }
+    }
+   }
+  }
+ ],
+ "media": []
+}

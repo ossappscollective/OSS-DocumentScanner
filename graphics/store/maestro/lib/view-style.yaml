@@ -1,0 +1,17 @@
+# picks an entry of the "View style" menu. env: STYLE (regex of the entry)
+appId: ${APP_ID}
+---
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: "(?i)^more$|^plus$"
+      - tapOn: "(?i)view style|style de vue"
+      - tapOn: ${STYLE}
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn: "(?i)view style|style de vue"
+      - tapOn: ${STYLE}
+- waitForAnimationToEnd

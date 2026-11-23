@@ -1,0 +1,9 @@
+# (re)starts the app on its home screen. env: APP_ID, READY (regex of a demo document, visible once the list is loaded)
+appId: ${APP_ID}
+---
+- launchApp:
+    stopApp: true
+- extendedWaitUntil:
+    visible: ${READY}
+    timeout: 30000
+- waitForAnimationToEnd

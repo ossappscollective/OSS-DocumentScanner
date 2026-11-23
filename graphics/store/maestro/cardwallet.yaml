@@ -1,0 +1,43 @@
+# Store screens of OSS Card Wallet, needs the demo data of test_assets/demo.
+# env (set by scripts/capture.mjs): THUMB_BACK (thumbnail of the back page of a card)
+appId: com.akylas.cardwallet
+env:
+  APP_ID: com.akylas.cardwallet
+  READY: Blue Shield.*
+---
+- runFlow: lib/start.yaml
+- runFlow:
+    file: lib/view-style.yaml
+    env:
+      STYLE: (?i)^columns$|^colonnes$
+- runFlow: lib/start.yaml
+- takeScreenshot: cards
+
+# the two sides of a card
+- tapOn: Blue Shield health card
+- waitForAnimationToEnd
+- takeScreenshot: sides
+- tapOn:
+    point: ${THUMB_BACK}
+- waitForAnimationToEnd
+- takeScreenshot: sides_back
+
+# the list views
+- runFlow: lib/start.yaml
+- runFlow:
+    file: lib/view-style.yaml
+    env:
+      STYLE: (?i)^list$|^liste$
+- runFlow: lib/start.yaml
+- takeScreenshot: status
+- runFlow:
+    file: lib/view-style.yaml
+    env:
+      STYLE: (?i)^full$|^complet$
+- runFlow: lib/start.yaml
+- takeScreenshot: wallet
+- runFlow:
+    file: lib/view-style.yaml
+    env:
+      STYLE: (?i)^columns$|^colonnes$
+- takeScreenshot: _end
