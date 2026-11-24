@@ -4,8 +4,8 @@ import { networkService } from '~/services/api';
 import { DocumentEvents } from '~/services/documents';
 import { BasePDFSyncService, BasePDFSyncServiceOptions } from '~/services/sync/BasePDFSyncService';
 import { SERVICES_SYNC_MASK } from '~/services/sync/types';
-import { WebdavSyncOptions } from '~/services/sync/webdav/Webdav';
-import { AuthType, FileStat, WebDAVClient, createClient } from '~/webdav';
+import { WebdavSyncOptions, createWebdavClientFromConfig, normalizeRemoteFolder } from '~/services/sync/webdav/Webdav';
+import { FileStat, WebDAVClient } from '~/webdav';
 
 export interface WebdavPDFSyncServiceOptions extends BasePDFSyncServiceOptions, WebdavSyncOptions {}
 
@@ -26,22 +26,22 @@ export class WebdavPDFSyncService extends BasePDFSyncService {
 
     static start(config?: { id: number; [k: string]: any }) {
         if (config) {
-            const { authType, headers, remoteURL, ...otherConfig } = config;
             const service = WebdavPDFSyncService.getOrCreateInstance();
-            Object.assign(service, config);
+            Object.assign(service, config, { remoteFolder: normalizeRemoteFolder(config.remoteFolder) });
             DEV_LOG && console.log('WebdavPDFSyncService', 'start', JSON.stringify(config), service.autoSync);
-            service.client = createClient(remoteURL, {
-                headers,
-                authType: !authType || authType === AuthType.Password ? AuthType.None : authType,
-                ...otherConfig
-            });
+            service.client = createWebdavClientFromConfig(config);
             return service;
         }
     }
     override stop() {}
     override async ensureRemoteFolder(remoteFolder = this.remoteFolder) {
-        if (!(await this.client.exists(remoteFolder))) {
-            return this.client.createDirectory(remoteFolder, { recursive: true });
+        const normalized = normalizeRemoteFolder(remoteFolder);
+        if (!normalized || normalized === '/') {
+            return;
+        }
+        const collectionPath = normalized.endsWith('/') ? normalized : `${normalized}/`;
+        if (!(await this.client.exists(collectionPath))) {
+            return this.client.createDirectory(normalized, { recursive: true });
         }
     }
 
@@ -50,7 +50,8 @@ export class WebdavPDFSyncService extends BasePDFSyncService {
     }
 
     async uploadPDF(document: OCRDocument, localFilePath: string, fileName: string, docFolder?: DocFolder) {
-        let destinationPath = this.remoteFolder;
+        let destinationPath = this.remoteFolder || '/';
+        await this.ensureRemoteFolder(destinationPath);
         if (docFolder) {
             destinationPath = path.join(destinationPath, docFolder.name);
             await this.ensureRemoteFolder(destinationPath);

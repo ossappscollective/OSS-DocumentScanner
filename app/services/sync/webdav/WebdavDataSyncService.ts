@@ -4,8 +4,8 @@ import { networkService } from '~/services/api';
 import { DocumentEvents } from '~/services/documents';
 import { BaseDataSyncService, BaseDataSyncServiceOptions } from '~/services/sync/BaseDataSyncService';
 import { SERVICES_SYNC_MASK } from '~/services/sync/types';
-import { WebdavSyncOptions } from '~/services/sync/webdav/Webdav';
-import { AuthType, FileStat, GetFileContentsOptions, ResponseData, WebDAVClient, createClient } from '~/webdav';
+import { WebdavSyncOptions, createWebdavClientFromConfig, normalizeRemoteFolder } from '~/services/sync/webdav/Webdav';
+import { FileStat, GetFileContentsOptions, ResponseData, WebDAVClient } from '~/webdav';
 
 export interface WebdavDataSyncOptions extends BaseDataSyncServiceOptions, WebdavSyncOptions {}
 
@@ -26,24 +26,22 @@ export class WebdavDataSyncService extends BaseDataSyncService {
     stop() {}
     static start(config?: { id: number; [k: string]: any }) {
         if (config) {
-            // const config = JSON.parse(econfigStr);
-            const { authType, headers, remoteURL, ...otherConfig } = config;
             const service = WebdavDataSyncService.getOrCreateInstance();
-            Object.assign(service, config);
+            Object.assign(service, config, { remoteFolder: normalizeRemoteFolder(config.remoteFolder) });
             DEV_LOG && console.log('WebdavDataSyncService', 'start', JSON.stringify(config), service.autoSync);
-            // const context = createContext(config.remoteURL, { config.username, password, authType: AuthType.Password });
-            service.client = createClient(remoteURL, {
-                headers,
-                authType: !authType || authType === AuthType.Password ? AuthType.None : authType,
-                ...otherConfig
-            });
+            service.client = createWebdavClientFromConfig(config);
             return service;
         }
     }
     override async ensureRemoteFolder() {
-        DEV_LOG && console.log('ensureRemoteFolder', this.remoteFolder);
-        if (!(await this.client.exists(this.remoteFolder))) {
-            return this.client.createDirectory(this.remoteFolder, { recursive: true });
+        const normalized = normalizeRemoteFolder(this.remoteFolder);
+        DEV_LOG && console.log('ensureRemoteFolder', normalized);
+        if (!normalized || normalized === '/') {
+            return;
+        }
+        const collectionPath = normalized.endsWith('/') ? normalized : `${normalized}/`;
+        if (!(await this.client.exists(collectionPath))) {
+            return this.client.createDirectory(normalized, { recursive: true });
         }
     }
 
