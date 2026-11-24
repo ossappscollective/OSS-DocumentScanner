@@ -4,6 +4,7 @@ import { connectionType, getConnectionType, startMonitoring, stopMonitoring } fr
 import { EventData, Observable } from '@nativescript/core/data/observable';
 import { HTTPError, NoNetworkError, wrapNativeHttpException } from '@akylas/nativescript-app-utils/error';
 import { logRequestAsCurl } from '@shared/utils/curlify';
+import { toFriendlyError } from '~/utils/errorMessages';
 
 export type HTTPSOptions = https.HttpsRequestOptions;
 export type { Headers } from '@nativescript-community/https';
@@ -160,7 +161,8 @@ async function handleRequestRetry(requestParams: HttpRequestOptions, retry = 0) 
 }
 function getRequestHeaders(requestParams?: HttpRequestOptions) {
     const headers = requestParams?.headers ?? {};
-    if (!headers['Content-Type']) {
+    const method = (requestParams?.method || 'GET').toUpperCase();
+    if (!headers['Content-Type'] && requestParams?.body != null && method !== 'GET' && method !== 'HEAD') {
         headers['Content-Type'] = 'application/json';
     }
 
@@ -233,27 +235,37 @@ export async function handleRequestResponseError<U = any>(response: https.HttpsR
                 } catch (__) {}
             }
         }
-        const isJSON = typeof content === 'object' || Array.isArray(content);
-        let jsonReturn;
+        const isJSON = content !== null && (typeof content === 'object' || Array.isArray(content));
         if (isJSON) {
-            jsonReturn = content;
+            let jsonReturn: any = content;
             if (Array.isArray(jsonReturn)) {
                 jsonReturn = jsonReturn[0];
             }
-            // if (statusCode === 401 && jsonReturn.error === 'invalid_grant') {
-            //     return this.handleRequestRetry(requestParams, retry);
-            // }
-            const error = jsonReturn.error_description || jsonReturn.error || JSON.stringify(jsonReturn);
+            const rawErr = jsonReturn?.error_description || jsonReturn?.form || jsonReturn?.message || jsonReturn?.error || '';
+            const resolvedStatus = typeof jsonReturn?.error?.code === 'number' ? jsonReturn.error.code : statusCode;
+            const friendly = toFriendlyError(
+                { statusCode: resolvedStatus, message: typeof rawErr === 'string' ? rawErr : JSON.stringify(rawErr), requestParams: httpOptions },
+                resolvedStatus,
+                { url: httpOptions?.url, method: httpOptions?.method }
+            );
             throw new HTTPError({
-                statusCode: error.code || statusCode,
-                message: error.error_description || error.form || error.message || error.error || error,
+                statusCode: resolvedStatus,
+                title: friendly.title,
+                message: friendly.message,
                 requestParams: httpOptions
             });
         } else {
-            const match = /<title>(.*)\n*<\/title>/.exec(content as string);
+            const rawStr = content != null ? String(content) : '';
+            const match = /<title>(.*)\n*<\/title>/i.exec(rawStr);
+            const friendly = toFriendlyError(
+                { statusCode, message: match ? match[1] : rawStr, requestParams: httpOptions },
+                statusCode,
+                { url: httpOptions?.url, method: httpOptions?.method }
+            );
             throw new HTTPError({
                 statusCode,
-                message: match ? match[1] : content.toString(),
+                title: friendly.title,
+                message: friendly.message,
                 requestParams: httpOptions
             });
         }
