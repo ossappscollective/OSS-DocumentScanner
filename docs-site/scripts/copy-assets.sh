@@ -18,9 +18,9 @@ mkdir -p "$STATIC_IMG/icons"
 mkdir -p "$STATIC_IMG/screenshots/documentscanner"
 mkdir -p "$STATIC_IMG/screenshots/cardwallet"
 
-# Copy badges from root level
+# Copy store badges from graphics/badges
 echo "Copying badges..."
-cp "$ROOT_DIR/graphics/badge_github.png" "$STATIC_IMG/badges/badge_github.png" 2>/dev/null || true
+cp "$ROOT_DIR/graphics/badges/"* "$STATIC_IMG/badges/"
 
 # Copy app icons from root level
 echo "Copying icons..."
@@ -50,10 +50,5 @@ for APP in documentscanner cardwallet; do
         done
     done
 done
-
-# Copy App Store badges
-echo "Copying store badges..."
-cp "$ROOT_DIR/appstore.png" "$STATIC_IMG/badges/appstore.png" 2>/dev/null || true
-cp "$ROOT_DIR/appstore_cardwallet.png" "$STATIC_IMG/badges/appstore_cardwallet.png" 2>/dev/null || true
 
 echo "Asset copy complete!"

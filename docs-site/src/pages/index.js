@@ -147,7 +147,7 @@ function StoreButtons({ app }) {
                     rel="noopener"
                     aria-label={translate({ id: 'homepage.store.play.aria', message: 'Get {name} on Google Play' }, { name: app.name })}
                 >
-                    <Img path="/img/store/google-play.svg" alt={translate({ id: 'homepage.store.play.alt', message: 'Get it on Google Play' })} height="56" width="189" />
+                    <Img path="/img/badges/google-play.svg" alt={translate({ id: 'homepage.store.play.alt', message: 'Get it on Google Play' })} height="56" width="189" />
                 </a>
                 <a
                     href={app.appStore}
@@ -155,18 +155,18 @@ function StoreButtons({ app }) {
                     rel="noopener"
                     aria-label={translate({ id: 'homepage.store.appstore.aria', message: 'Download {name} on the App Store' }, { name: app.name })}
                 >
-                    <Img path="/img/store/app-store.svg" alt={translate({ id: 'homepage.store.appstore.alt', message: 'Download on the App Store' })} height="56" width="168" />
+                    <Img path="/img/badges/app-store.svg" alt={translate({ id: 'homepage.store.appstore.alt', message: 'Download on the App Store' })} height="56" width="168" />
                 </a>
             </div>
             <div className={clsx(styles.badgeRow, styles.altBadges)}>
                 <a href={app.github} target="_blank" rel="noopener">
-                    <Img path="/img/badges/badge_github.png" alt={translate({ id: 'homepage.store.github.alt', message: 'Get it on GitHub' })} height="40" width="135" />
+                    <Img path="/img/badges/github.png" alt={translate({ id: 'homepage.store.github.alt', message: 'Get it on GitHub' })} height="40" width="135" />
                 </a>
                 <a href={app.izzyOnDroid} target="_blank" rel="noopener">
-                    <Img path="/img/store/izzyondroid.png" alt={translate({ id: 'homepage.store.izzy.alt', message: 'Get it on IzzyOnDroid' })} height="40" width="136" />
+                    <Img path="/img/badges/izzyondroid.png" alt={translate({ id: 'homepage.store.izzy.alt', message: 'Get it on IzzyOnDroid' })} height="40" width="136" />
                 </a>
                 <a href={app.obtainium} target="_blank" rel="noopener">
-                    <Img path="/img/store/obtainium.png" alt={translate({ id: 'homepage.store.obtainium.alt', message: 'Get it on Obtainium' })} height="40" width="134" />
+                    <Img path="/img/badges/obtainium.png" alt={translate({ id: 'homepage.store.obtainium.alt', message: 'Get it on Obtainium' })} height="40" width="134" />
                 </a>
             </div>
         </div>

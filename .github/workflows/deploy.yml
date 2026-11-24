@@ -8,6 +8,7 @@ on:
             - 'docs-site/**'
             - 'fastlane/metadata/*/android/*/images/**'
             - 'graphics/*.png'
+            - 'graphics/badges/*'
             - '*.png'
             - '*.svg'
     workflow_dispatch:
