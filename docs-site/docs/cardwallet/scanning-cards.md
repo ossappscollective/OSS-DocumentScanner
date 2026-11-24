@@ -9,7 +9,7 @@ slug: /cardwallet/scanning-cards
 
 OSS CardWallet makes it easy to digitize your physical cards by scanning their barcodes.
 
-![Capture Screen](/img/screenshots/cardwallet/1_en-US.png)
+![Capture Screen](/img/screenshots/cardwallet/3_en-US.jpg)
 
 
 ## Using the Camera
@@ -81,7 +81,7 @@ If auto-detection doesn't perfectly identify edges:
 3. Drag edge midpoints for fine adjustments
 4. Tap **Done** to apply the selection
 
-![Edge Adjustment](/img/screenshots/cardwallet/2_en-US.png)
+![Edge Adjustment](/img/screenshots/cardwallet/2_en-US.jpg)
 
 ## Camera Settings
 

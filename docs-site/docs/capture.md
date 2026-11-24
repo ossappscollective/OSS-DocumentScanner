@@ -9,7 +9,7 @@ slug: /capture
 
 OSS Document Scanner provides powerful capture capabilities with automatic edge detection, multiple capture modes, and batch scanning support.
 
-![Capture Screen](/img/screenshots/documentscanner/0_en-US.png)
+![Capture Screen](/img/screenshots/documentscanner/2_en-US.jpg)
 
 ## Capture Modes
 

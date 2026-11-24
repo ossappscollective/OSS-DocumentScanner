@@ -74,10 +74,9 @@ docs-site/
 ├── static/
 │   └── img/                # Images and screenshots
 │       ├── apps/           # Feature graphics (copied from fastlane)
-│       ├── badges/         # Store badges (copied from root)
-│       ├── icons/          # App icons (copied from root)
-│       ├── screenshots/    # Phone screenshots (copied from fastlane)
-│       └── logo.svg
+│       ├── badges/         # Store badges (copied from graphics/badges)
+│       ├── icons/          # App icons (copied from fastlane)
+│       └── screenshots/    # Phone screenshots per locale (copied from fastlane)
 ├── i18n/                    # Internationalization files
 │   └── fr/                  # French translations
 ├── docusaurus.config.js    # Docusaurus configuration
@@ -91,7 +90,7 @@ Images are **NOT** duplicated in this directory. Instead, the `scripts/copy-asse
 
 - **Feature graphics** from `fastlane/metadata/*/android/en-US/images/featureGraphic.png`
 - **App icons** from root level (`icon.png`, `icon_cardwallet.png`, etc.)
-- **Store badges** from root level (`badge_github.png`, `appstore.png`)
+- **Store badges** from `graphics/badges/` (shared with the root `Readme.md`)
 - **Phone screenshots** from `fastlane/metadata/*/android/en-US/images/phoneScreenshots/`
 
 ### How it works

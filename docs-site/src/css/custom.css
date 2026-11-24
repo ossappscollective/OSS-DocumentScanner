@@ -6,32 +6,48 @@
 
 /* You can override the default Infima variables here. */
 :root {
-    --ifm-color-primary: #2e8555;
-    --ifm-color-primary-dark: #29784c;
-    --ifm-color-primary-darker: #277148;
-    --ifm-color-primary-darkest: #205d3b;
-    --ifm-color-primary-light: #33925d;
-    --ifm-color-primary-lighter: #359962;
-    --ifm-color-primary-lightest: #3cad6e;
+    --ifm-color-primary: #178f57;
+    --ifm-color-primary-dark: #15814e;
+    --ifm-color-primary-darker: #137a4a;
+    --ifm-color-primary-darkest: #0f643c;
+    --ifm-color-primary-light: #199d5f;
+    --ifm-color-primary-lighter: #1ba563;
+    --ifm-color-primary-lightest: #2fbf71;
     --ifm-code-font-size: 95%;
     --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+    --brand-scanner: #2fbf71;
+    --brand-cardwallet: #da3d5c;
 }
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
 [data-theme='dark'] {
-    --ifm-color-primary: #25c2a0;
-    --ifm-color-primary-dark: #21af90;
-    --ifm-color-primary-darker: #1fa588;
-    --ifm-color-primary-darkest: #1a8870;
-    --ifm-color-primary-light: #29d5b0;
-    --ifm-color-primary-lighter: #32d8b4;
-    --ifm-color-primary-lightest: #4fddbf;
+    --ifm-color-primary: #3ed483;
+    --ifm-color-primary-dark: #2fcc77;
+    --ifm-color-primary-darker: #2cc173;
+    --ifm-color-primary-darkest: #24a05f;
+    --ifm-color-primary-light: #59da95;
+    --ifm-color-primary-lighter: #66dc9d;
+    --ifm-color-primary-lightest: #8be6b8;
     --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
 
-/* Custom styles for document scanner docs */
-.hero--primary {
-    background: linear-gradient(135deg, var(--ifm-color-primary-darker) 0%, var(--ifm-color-primary) 100%);
+.navbar-cta.navbar__item {
+    background: var(--ifm-color-primary);
+    color: #ffffff;
+    border-radius: 999px;
+    padding: 0.35rem 1rem;
+    margin-left: 0.5rem;
+    font-weight: 600;
+}
+
+.navbar-cta.navbar__item:hover {
+    background: var(--ifm-color-primary-dark);
+    color: #ffffff;
+}
+
+[data-theme='dark'] .navbar-cta.navbar__item,
+[data-theme='dark'] .navbar-cta.navbar__item:hover {
+    color: #08140d;
 }
 
 /* Screenshot styling - constrain size for mobile screenshots */
@@ -93,7 +109,163 @@ table {
     font-weight: 700;
 }
 
+/* The fastlane icon is a full-bleed square */
+.navbar__logo img {
+    border-radius: 22%;
+}
+
 /* Footer improvements */
 .footer__title {
     font-size: 1.1rem;
+}
+
+/* ---------- Docs design ---------- */
+
+/* CardWallet pages use the coral accent */
+html[class*='docs-doc-id-cardwallet'] {
+    --ifm-color-primary: #c42f55;
+    --ifm-color-primary-dark: #b12b4d;
+    --ifm-color-primary-darker: #a62947;
+    --ifm-color-primary-darkest: #892139;
+    --ifm-color-primary-light: #d33a61;
+    --ifm-color-primary-lighter: #d84a6e;
+    --ifm-color-primary-lightest: #e26e8b;
+}
+
+html[class*='docs-doc-id-cardwallet'][data-theme='dark'] {
+    --ifm-color-primary: #ff7a93;
+    --ifm-color-primary-dark: #ff5f7e;
+    --ifm-color-primary-darker: #ff5175;
+    --ifm-color-primary-darkest: #ff1f4d;
+    --ifm-color-primary-light: #ff95a9;
+    --ifm-color-primary-lighter: #ffa3b4;
+    --ifm-color-primary-lightest: #ffc8d2;
+}
+
+:root {
+    --ifm-heading-font-weight: 700;
+    --ifm-navbar-shadow: 0 1px 0 var(--ifm-color-emphasis-200);
+    --ifm-global-radius: 10px;
+    --ifm-link-hover-decoration: underline;
+}
+
+.navbar {
+    backdrop-filter: saturate(180%) blur(12px);
+    background-color: color-mix(in srgb, var(--ifm-navbar-background-color) 85%, transparent);
+}
+
+/* Sidebar: small caps category labels, tinted pill for the active page */
+.theme-doc-sidebar-menu > .theme-doc-sidebar-item-category > .menu__list-item-collapsible > .menu__link {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ifm-color-emphasis-600);
+}
+
+.menu__link {
+    border-radius: 8px;
+}
+
+.menu__link--active:not(.menu__link--sublist) {
+    background: color-mix(in srgb, var(--ifm-color-primary) 12%, transparent);
+    color: var(--ifm-color-primary);
+    font-weight: 600;
+}
+
+/* Page title with accent bar, calmer heading scale */
+.theme-doc-markdown {
+    line-height: 1.7;
+}
+
+.theme-doc-markdown h1 {
+    font-size: 2.4rem;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 3px solid var(--ifm-color-primary);
+    width: fit-content;
+    max-width: 100%;
+}
+
+.theme-doc-markdown h2 {
+    font-size: 1.6rem;
+    margin-top: 2.5rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.theme-doc-markdown h3 {
+    font-size: 1.25rem;
+    margin-top: 1.75rem;
+}
+
+.theme-doc-markdown a:not(.hash-link) {
+    text-underline-offset: 3px;
+}
+
+/* Screenshots: centered phone frame */
+.markdown img {
+    display: block;
+    margin: 1.5rem auto;
+    border-radius: 24px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+/* Callouts */
+.admonition {
+    border-left-width: 4px;
+    box-shadow: none;
+}
+
+.alert--info {
+    --ifm-alert-background-color: color-mix(in srgb, var(--ifm-color-primary) 8%, transparent);
+    --ifm-alert-border-color: var(--ifm-color-primary);
+}
+
+/* Tables and code */
+table {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+table thead tr {
+    background: color-mix(in srgb, var(--ifm-color-primary) 10%, transparent);
+}
+
+code {
+    border-radius: 6px;
+}
+
+/* Breadcrumbs and table of contents */
+.breadcrumbs__link {
+    border-radius: 999px;
+}
+
+.table-of-contents__link--active {
+    color: var(--ifm-color-primary);
+    font-weight: 600;
+}
+
+/* Pagination cards */
+.pagination-nav__link {
+    border-radius: 12px;
+    transition:
+        border-color 0.15s ease,
+        transform 0.15s ease;
+}
+
+.pagination-nav__link:hover {
+    border-color: var(--ifm-color-primary);
+    transform: translateY(-2px);
+}
+
+.pagination-nav__label {
+    color: var(--ifm-color-primary);
+}
+
+/* Footer */
+.footer--dark {
+    --ifm-footer-background-color: #0b2a1c;
+    border-top: 3px solid var(--brand-scanner);
 }

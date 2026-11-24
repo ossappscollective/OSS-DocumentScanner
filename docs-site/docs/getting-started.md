@@ -26,7 +26,7 @@ You can install OSS Document Scanner on Android through:
 
 ## App Overview
 
-![App Overview](/img/screenshots/documentscanner/0_en-US.png)
+![App Overview](/img/screenshots/documentscanner/1_en-US.jpg)
 
 OSS Document Scanner provides a streamlined workflow for:
 

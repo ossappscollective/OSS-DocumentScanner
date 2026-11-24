@@ -9,7 +9,7 @@ slug: /edit-and-enhance
 
 After capturing a document, OSS Document Scanner provides comprehensive editing tools to perfect your scans.
 
-![Edit Screen](/img/screenshots/documentscanner/2_en-US.png)
+![Edit Screen](/img/screenshots/documentscanner/3_en-US.jpg)
 
 ## Rename
 
