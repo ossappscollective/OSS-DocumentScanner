@@ -56,6 +56,14 @@ async function _getFileContentsBuffer<T = any>(context: WebDAVClientContext, fil
     return response;
 }
 
+function safeDecodeURIComponent(str: string): string {
+    try {
+        return decodeURIComponent(str);
+    } catch (_e) {
+        return str;
+    }
+}
+
 function getDirectoryFiles(result: DAVResult, serverRemoteBasePath: string, requestedRemotePath: string, isDetailed: boolean = false, includeSelf: boolean = false): FileStat[] {
     const serverBase = join(serverRemoteBasePath, SEPARATOR);
     // Extract the response items (directory contents)
@@ -64,24 +72,34 @@ function getDirectoryFiles(result: DAVResult, serverRemoteBasePath: string, requ
     } = result;
 
     // Map all items to a consistent output structure (results)
-    const nodes = responseItems.map((item) => {
-        // HREF is the file path (in full)
-        const href = normaliseHREF(item.href);
-        // Each item should contain a stat object
-        const {
-            propstat: { prop: props }
-        } = item;
-        // Process the true full filename (minus the base server path)
-        const filename = serverBase === SEPARATOR ? decodeURIComponent(normalisePath(href)) : decodeURIComponent(normalisePath(join(serverBase, href)));
-        return prepareFileFromProps(props, filename, isDetailed);
-    });
+    const nodes = (responseItems || [])
+        .filter((item) => item && item.href && item.propstat?.prop)
+        .map((item) => {
+            // HREF is the file path (in full)
+            const href = normaliseHREF(item.href);
+            // Each item should contain a stat object
+            const {
+                propstat: { prop: props }
+            } = item;
+            // Process the true full filename (minus the base server path)
+            const filename = serverBase === SEPARATOR ? safeDecodeURIComponent(normalisePath(href)) : safeDecodeURIComponent(normalisePath(join(serverBase, href)));
+            return prepareFileFromProps(props, filename, isDetailed);
+        });
 
     // If specified, also return the current directory
     if (includeSelf) {
         return nodes;
     }
+    const normalizedRequested = safeDecodeURIComponent(normalisePath(requestedRemotePath));
+    const normalizedRequestedHref = safeDecodeURIComponent(normalisePath(normaliseHREF(requestedRemotePath)));
     // Else, filter out the item pointing to the current directory (not needed)
-    return nodes.filter((item) => item.basename && (item.type === 'file' || item.filename !== requestedRemotePath));
+    return nodes.filter((item) => {
+        if (!item.basename) return false;
+        if (item.type === 'file') return true;
+        const itemNorm = safeDecodeURIComponent(normalisePath(item.filename));
+        const itemHrefNorm = safeDecodeURIComponent(normalisePath(normaliseHREF(item.filename)));
+        return itemNorm !== normalizedRequested && itemHrefNorm !== normalizedRequestedHref;
+    });
 }
 
 type Response<V extends 'binary' | 'text' | 'file' = 'binary'> = V extends 'file' ? File : V extends 'text' ? string : BufferLike;
@@ -95,10 +113,10 @@ export class WebDAVClient {
     exists = (path: string, options?: WebDAVMethodOptions) => exists(this.context, path, options);
     async getDirectoryContents(remotePath: string, options: GetDirectoryContentsOptions = {}) {
         const context = this.context;
-        const _remotePath = remotePath.startsWith('http') ? remotePath : join(context.remoteURL, encodePath(remotePath));
-        // if (!_remotePath.endsWith(SEPARATOR)) {
-        //     _remotePath += SEPARATOR;
-        // }
+        let _remotePath = remotePath.startsWith('http') ? remotePath : join(context.remoteURL, encodePath(remotePath));
+        if (!_remotePath.endsWith(SEPARATOR)) {
+            _remotePath += SEPARATOR;
+        }
         const requestOptions = prepareRequestOptions(
             {
                 url: _remotePath,
