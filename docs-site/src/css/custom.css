@@ -109,6 +109,11 @@ table {
     font-weight: 700;
 }
 
+/* The fastlane icon is a full-bleed square */
+.navbar__logo img {
+    border-radius: 22%;
+}
+
 /* Footer improvements */
 .footer__title {
     font-size: 1.1rem;

@@ -24,8 +24,8 @@ cp "$ROOT_DIR/graphics/badge_github.png" "$STATIC_IMG/badges/badge_github.png" 2
 
 # Copy app icons from root level
 echo "Copying icons..."
-cp "$ROOT_DIR/graphics/icon.png" "$STATIC_IMG/icons/documentscanner-icon.png" 2>/dev/null || true
-cp "$ROOT_DIR/graphics/icon_cardwallet.png" "$STATIC_IMG/icons/cardwallet-icon.png" 2>/dev/null || true
+cp "$ROOT_DIR/fastlane/metadata/com.akylas.documentscanner/android/en-US/images/icon.png" "$STATIC_IMG/icons/documentscanner-icon.png" 2>/dev/null || true
+cp "$ROOT_DIR/fastlane/metadata/com.akylas.cardwallet/android/en-US/images/icon.png" "$STATIC_IMG/icons/cardwallet-icon.png" 2>/dev/null || true
 cp "$ROOT_DIR/graphics/documentscanner-icon.svg" "$STATIC_IMG/icons/documentscanner-icon.svg" 2>/dev/null || true
 cp "$ROOT_DIR/graphics/cardwallet-icon.svg" "$STATIC_IMG/icons/cardwallet-icon.svg" 2>/dev/null || true
 

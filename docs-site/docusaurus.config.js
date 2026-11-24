@@ -12,7 +12,8 @@ import { themes as prismThemes } from 'prism-react-renderer';
 const config = {
     title: 'OSS Apps',
     tagline: 'Free, open source document scanner and card wallet apps for Android & iOS. No ads, 100% privacy.',
-    favicon: 'img/favicon.ico',
+    // Icons are copied from fastlane by scripts/copy-assets.sh
+    favicon: 'img/icons/documentscanner-icon.png',
 
     // Set the production url of your site here
     url: 'https://ossdocumentscanner.akylas.fr',
@@ -60,7 +61,7 @@ const config = {
             tagName: 'link',
             attributes: {
                 rel: 'apple-touch-icon',
-                href: '/img/apple-touch-icon.png'
+                href: '/img/icons/documentscanner-icon.png'
             }
         }
     ],
@@ -120,7 +121,7 @@ const config = {
                 title: 'OSS Apps',
                 logo: {
                     alt: 'OSS Apps Logo',
-                    src: 'img/logo.svg'
+                    src: 'img/icons/documentscanner-icon.png'
                 },
                 items: [
                     {

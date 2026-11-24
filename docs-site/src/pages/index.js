@@ -160,7 +160,7 @@ function StoreButtons({ app }) {
             </div>
             <div className={clsx(styles.badgeRow, styles.altBadges)}>
                 <a href={app.github} target="_blank" rel="noopener">
-                    <Img path="/img/store/github.png" alt={translate({ id: 'homepage.store.github.alt', message: 'Get it on GitHub' })} height="40" width="135" />
+                    <Img path="/img/badges/badge_github.png" alt={translate({ id: 'homepage.store.github.alt', message: 'Get it on GitHub' })} height="40" width="135" />
                 </a>
                 <a href={app.izzyOnDroid} target="_blank" rel="noopener">
                     <Img path="/img/store/izzyondroid.png" alt={translate({ id: 'homepage.store.izzy.alt', message: 'Get it on IzzyOnDroid' })} height="40" width="136" />
@@ -180,7 +180,7 @@ function Hero() {
             <div className={clsx('container', styles.heroGrid)}>
                 <div className={styles.heroText}>
                     <Img
-                        path="/img/icon-192.png"
+                        path="/img/icons/documentscanner-icon.png"
                         alt={translate({ id: 'homepage.hero.iconAlt', message: 'OSS Document Scanner app icon' })}
                         width="72"
                         height="72"
@@ -323,7 +323,7 @@ function CardWallet() {
                 </div>
                 <div className={styles.heroText}>
                     <Img
-                        path="/img/icon-cardwallet-192.png"
+                        path="/img/icons/cardwallet-icon.png"
                         alt={translate({ id: 'homepage.cardwallet.iconAlt', message: 'OSS Card Wallet app icon' })}
                         width="72"
                         height="72"
@@ -485,7 +485,7 @@ function StructuredData() {
                     id: 'homepage.jsonld.scanner',
                     message: 'Free and open source document scanner with automatic edge detection, offline OCR, PDF export and sync. No ads, no tracking.'
                 }),
-                'icon-192.png',
+                'icons/documentscanner-icon.png',
                 'BusinessApplication'
             ),
             application(
@@ -494,7 +494,7 @@ function StructuredData() {
                     id: 'homepage.jsonld.cardwallet',
                     message: 'Free and open source wallet for loyalty cards, tickets and Passbook passes, with barcode scanning and private sync.'
                 }),
-                'icon-cardwallet-192.png',
+                'icons/cardwallet-icon.png',
                 'UtilitiesApplication'
             ),
             {

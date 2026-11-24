@@ -74,10 +74,10 @@ docs-site/
 ├── static/
 │   └── img/                # Images and screenshots
 │       ├── apps/           # Feature graphics (copied from fastlane)
-│       ├── badges/         # Store badges (copied from root)
-│       ├── icons/          # App icons (copied from root)
-│       ├── screenshots/    # Phone screenshots (copied from fastlane)
-│       └── logo.svg
+│       ├── badges/         # GitHub badge (copied from graphics/)
+│       ├── icons/          # App icons (copied from fastlane)
+│       ├── screenshots/    # Phone screenshots per locale (copied from fastlane)
+│       └── store/          # Google Play, App Store, IzzyOnDroid, Obtainium badges
 ├── i18n/                    # Internationalization files
 │   └── fr/                  # French translations
 ├── docusaurus.config.js    # Docusaurus configuration
