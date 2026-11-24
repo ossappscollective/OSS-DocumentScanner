@@ -93,6 +93,7 @@
     "camera_settings": "カメラ設定",
     "camera_view_size": "表示サイズ",
     "cancel": "キャンセル",
+    "capture_timeout": "カメラから写真が得られませんでした。もう一度お試しください",
     "capturing": "撮影中",
     "card_empty_help": "コード、写真、詳細のいずれかを追加してください",
     "card_empty_title": "このカードにはまだ何も登録されていません",
