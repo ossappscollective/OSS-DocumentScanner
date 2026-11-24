@@ -220,6 +220,18 @@
     function getDescription(item: Item) {
         switch (item.type) {
             case 'webdav_data':
+            case 'webdav_pdf':
+            case 'webdav_image': {
+                const webdavItem = item as WebdavDataSyncOptions & { deleteAfterSync?: boolean };
+                const parts = [webdavItem.remoteFolder || '/'];
+                if (webdavItem.autoSync) {
+                    parts.push(lc('auto_sync'));
+                }
+                if (webdavItem.deleteAfterSync) {
+                    parts.push(lc('delete_after_sync'));
+                }
+                return parts.join(' · ');
+            }
             case 'gdrive_data':
             case 'onedrive_data':
                 return (item as WebdavDataSyncOptions).remoteFolder;
