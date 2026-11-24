@@ -48,6 +48,7 @@ import { normalizeRemoteFolders } from '~/services/folderUtils';
 import { mergeDeletedDocumentTombstones, mergeTombstones } from '~/services/sync/deletedDocuments';
 import { filterBySyncFolders, filterPagedBySyncFolders } from '~/services/sync/folderFilter';
 import { networkService } from '~/services/api';
+import { getDefaultCustomText, resolveUniqueFilename } from '~/utils/namingTemplates';
 
 const context: Worker = self as any;
 
@@ -101,12 +102,14 @@ export default class SyncWorker extends BaseWorker {
         super(context);
 
         this.queue.on('done', () => {
-            this.notify({ eventName: EVENT_SYNC_STATE, state: 'finished' } as SyncStateEventData);
+            this.notify({ eventName: EVENT_SYNC_STATE, state: 'finished', uploadedFiles: this.uploadedFilesSummary } as SyncStateEventData);
+            this.uploadedFilesSummary = [];
             // ensure we unregister preferences or it will crash once the worker is closed
             prefs.destroy();
             this.stop();
         });
     }
+    uploadedFilesSummary: string[] = [];
 
     async handleStart(event: WorkerEvent) {
         if (!documentsService) {
@@ -1000,8 +1003,7 @@ export default class SyncWorker extends BaseWorker {
 
     async syncPDFDocuments({ event, force = false }: { force; event: DocumentEvents }) {
         if (event?.eventName === EVENT_DOCUMENT_UPDATED) {
-            // we ignore this event
-            // pages will be updated independently
+            // we ignore this event so intermediate edits/renames don't auto-upload multiple copies
             return;
         }
         const eventDocuments = (
@@ -1051,6 +1053,10 @@ export default class SyncWorker extends BaseWorker {
                         // Calculate total documents for progress tracking
                         const totalDocuments = documentsToSync.length;
                         let currentDocIndex = 0;
+                        // Track filenames assigned within this local sync batch so two distinct local documents
+                        // with the same timestamp don't overwrite each other, while still allowing an existing
+                        // document to update its own remote file in place instead of creating _001 copies.
+                        const batchUsedPdfNames = new Set<string>();
 
                         await doInBatch(
                             documentsToSync,
@@ -1058,11 +1064,16 @@ export default class SyncWorker extends BaseWorker {
                                 const pages = doc.pages.filter((p) => !!p);
                                 const document = doc.document;
 
-                                const name = service.getPDFName(document);
+                                let name = service.getPDFName(document);
+                                if (batchUsedPdfNames.has(name + '.pdf')) {
+                                    name = resolveUniqueFilename(name, batchUsedPdfNames, '.pdf');
+                                }
                                 const fullName = name + '.pdf';
+                                batchUsedPdfNames.add(fullName);
                                 const existing = remoteFiles.find((r) => r.basename === fullName);
-                                DEV_LOG && console.log('syncPDFDocuments', 'syncing PDF', document.id, document.modifiedDate, existing?.lastmod);
-                                if (!existing || new Date(existing.lastmod).valueOf() < document.modifiedDate) {
+                                const latestLocalModified = Math.max(document.modifiedDate || 0, ...pages.map((p) => p.modifiedDate || 0));
+                                DEV_LOG && console.log('syncPDFDocuments', 'syncing PDF', document.id, latestLocalModified, existing?.lastmod);
+                                if (!existing || (document._synced & service.syncMask) === 0 || new Date(existing.lastmod).valueOf() < latestLocalModified) {
                                     //see if we need to OCR
                                     if (service.OCREnabled && service.OCRLanguages.length && event?.eventName !== EVENT_DOCUMENT_PAGE_DELETED) {
                                         const OCRDataPath = path.join(baseOCRDataPath, service.OCRDataType);
@@ -1078,6 +1089,10 @@ export default class SyncWorker extends BaseWorker {
                                         name,
                                         service.useFoldersStructure && document.folders?.length ? await documentsService.folderRepository.findFolderById(document.folders[0]) : null
                                     );
+                                    const usedFreetext =
+                                        (typeof document.extra?.customText === 'string' && document.extra.customText.trim()) ||
+                                        getDefaultCustomText();
+                                    this.uploadedFilesSummary.push(usedFreetext ? `${fullName} (Freetext: ${usedFreetext})` : fullName);
                                 }
                                 if (service.deleteAfterSync) {
                                     // Collect into shared map; actual deletion happens after all services finish
