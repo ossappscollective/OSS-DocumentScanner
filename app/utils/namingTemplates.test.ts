@@ -23,16 +23,16 @@ describe('formatNamingTemplate', () => {
         expect(result).toBe('26-11-18_SCAN_12-40Frei_text');
     });
 
-    it('supports dot-separated YYYY-MM-DD.Freitext.HH-mm with both unbraced Freitext and literal text', () => {
+    it('supports dot-separated YYYY-MM-DD.Freetext.HH-mm with both unbraced Freetext/Freitext and literal text', () => {
         expect(
-            formatNamingTemplate('YYYY-MM-DD.Freitext.HH-mm', {
+            formatNamingTemplate('YYYY-MM-DD.Freetext.HH-mm', {
                 date: sampleTimestamp,
                 customText: 'Rechnung'
             })
         ).toBe('2026-11-18.Rechnung.12-40');
 
         expect(
-            formatNamingTemplate('YYYY-MM-DD.{freitext}.HH-mm', {
+            formatNamingTemplate('YYYY-MM-DD.{freetext}.HH-mm', {
                 date: sampleTimestamp,
                 customText: 'Mietvertrag'
             })
@@ -116,7 +116,7 @@ describe('NamingTemplates CRUD', () => {
     it('returns default templates initially', () => {
         const templates = getNamingTemplates();
         expect(templates.length).toBe(DEFAULT_NAMING_TEMPLATES.length);
-        expect(templates[0].pattern).toBe('YYYY-MM-DD.{freitext}.HH-mm');
+        expect(templates[0].pattern).toBe('YYYY-MM-DD.{freetext}.HH-mm');
     });
 
     it('adds, updates, and deletes custom naming templates', () => {

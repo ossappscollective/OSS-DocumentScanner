@@ -4,6 +4,7 @@ import { ApplicationSettings, EventData } from '@nativescript/core';
 import { debounce } from '@nativescript/core/utils';
 import { CustomError } from '@akylas/nativescript-app-utils/error';
 import { showError } from '@shared/utils/showError';
+import { showSnack } from '~/utils/ui';
 import { writable } from 'svelte/store';
 import { OCRDocument, OCRPage } from '~/models/OCRDocument';
 import {
@@ -133,6 +134,13 @@ export class SyncService extends BaseWorkerHandler<SyncWorker> {
             // DEV_LOG && console.info('worker notifying event', documentsService.id, eventData.eventName, documentsService.notify);
             documentsService.notify({ ...eventData, object: eventData.object || documentsService, fromWorker: true });
         } else {
+            if (eventData.eventName === EVENT_SYNC_STATE && eventData.state === 'finished' && Array.isArray(eventData.uploadedFiles) && eventData.uploadedFiles.length > 0) {
+                const summary =
+                    eventData.uploadedFiles.length <= 2
+                        ? eventData.uploadedFiles.join(', ')
+                        : `${eventData.uploadedFiles[0]} (+${eventData.uploadedFiles.length - 1})`;
+                showSnack({ message: `✅ Upload: ${summary}` });
+            }
             this.notify({ ...eventData });
         }
     }

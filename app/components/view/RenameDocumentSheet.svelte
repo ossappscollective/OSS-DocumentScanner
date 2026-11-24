@@ -9,6 +9,7 @@
     import { lc } from '~/helpers/locale';
     import type { OCRDocument } from '~/models/OCRDocument';
     import { DOCUMENT_NAME_FORMAT, SETTINGS_DOCUMENT_NAME_FORMAT } from '~/utils/constants';
+    import { showSnack } from '~/utils/ui';
     import {
         NAMING_PLACEHOLDERS,
         NamingTemplate,
@@ -45,7 +46,7 @@
     const defaultTemplatePattern =
         configuredGlobalPattern && configuredGlobalPattern !== 'L LTS'
             ? configuredGlobalPattern
-            : getActiveNamingPattern('YYYY-MM-DD.{freitext}.HH-mm');
+            : getActiveNamingPattern('YYYY-MM-DD.{freetext}.HH-mm');
 
     let pattern =
         initialPattern ||
@@ -205,11 +206,14 @@
                     true,
                     true
                 );
+                showSnack({
+                    message: cleanCustom ? `✅ ${nextName} (Freetext: ${cleanCustom})` : `✅ ${nextName}`
+                });
                 close(true);
             } else {
-                // If the user configured a pattern in Settings and also typed a specific Freitext,
-                // keep the pattern dynamic AND save the default customText (or if they didn't use a placeholder,
-                // bake it in so their personalization is always preserved).
+                showSnack({
+                    message: cleanCustom ? `✅ ${previewName}.pdf (Freetext: ${cleanCustom})` : `✅ ${previewName}.pdf`
+                });
                 close(cleanPattern);
             }
         } catch (error) {

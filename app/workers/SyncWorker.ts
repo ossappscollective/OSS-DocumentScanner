@@ -48,7 +48,7 @@ import { normalizeRemoteFolders } from '~/services/folderUtils';
 import { mergeDeletedDocumentTombstones, mergeTombstones } from '~/services/sync/deletedDocuments';
 import { filterBySyncFolders, filterPagedBySyncFolders } from '~/services/sync/folderFilter';
 import { networkService } from '~/services/api';
-import { resolveUniqueFilename } from '~/utils/namingTemplates';
+import { getDefaultCustomText, resolveUniqueFilename } from '~/utils/namingTemplates';
 
 const context: Worker = self as any;
 
@@ -102,12 +102,14 @@ export default class SyncWorker extends BaseWorker {
         super(context);
 
         this.queue.on('done', () => {
-            this.notify({ eventName: EVENT_SYNC_STATE, state: 'finished' } as SyncStateEventData);
+            this.notify({ eventName: EVENT_SYNC_STATE, state: 'finished', uploadedFiles: this.uploadedFilesSummary } as SyncStateEventData);
+            this.uploadedFilesSummary = [];
             // ensure we unregister preferences or it will crash once the worker is closed
             prefs.destroy();
             this.stop();
         });
     }
+    uploadedFilesSummary: string[] = [];
 
     async handleStart(event: WorkerEvent) {
         if (!documentsService) {
@@ -1087,6 +1089,10 @@ export default class SyncWorker extends BaseWorker {
                                         name,
                                         service.useFoldersStructure && document.folders?.length ? await documentsService.folderRepository.findFolderById(document.folders[0]) : null
                                     );
+                                    const usedFreetext =
+                                        (typeof document.extra?.customText === 'string' && document.extra.customText.trim()) ||
+                                        getDefaultCustomText();
+                                    this.uploadedFilesSummary.push(usedFreetext ? `${fullName} (Freetext: ${usedFreetext})` : fullName);
                                 }
                                 if (service.deleteAfterSync) {
                                     // Collect into shared map; actual deletion happens after all services finish

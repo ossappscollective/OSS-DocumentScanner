@@ -299,7 +299,6 @@
         keyboardType="url"
         label={lc('server_address')}
         margin={fieldMargin}
-        onChange={(event) => ($store.remoteURL = event.value)}
         returnKeyType="next"
         text={$store.remoteURL}
         onChange={(event) => {

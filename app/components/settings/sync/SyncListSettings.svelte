@@ -19,6 +19,7 @@
     import { SERVICES_SYNC_COLOR, SERVICES_SYNC_ICONS_COLORS, SYNC_TYPES } from '~/services/sync/types';
     import { createWebdavConfig } from '~/services/sync/webdav/Webdav';
     import { WebdavDataSyncOptions } from '~/services/sync/webdav/WebdavDataSyncService';
+    import { getDefaultCustomText } from '~/utils/namingTemplates';
     import { getDirectoryName, hideLoading, requestNotificationPermission } from '~/utils/ui';
     import { getSettingsRowProps } from '~/utils/settingsRows';
     import { colors, fontScale, fonts, isLandscape, windowInset } from '~/variables';
@@ -224,6 +225,10 @@
             case 'webdav_image': {
                 const webdavItem = item as WebdavDataSyncOptions & { deleteAfterSync?: boolean };
                 const parts = [webdavItem.remoteFolder || '/'];
+                const freetext = getDefaultCustomText();
+                if (freetext && item.type !== 'webdav_data') {
+                    parts.push(`Freetext: ${freetext}`);
+                }
                 if (webdavItem.autoSync) {
                     parts.push(lc('auto_sync'));
                 }

@@ -22,56 +22,56 @@ export interface NamingPlaceholderInfo {
 }
 
 export const NAMING_PLACEHOLDERS: NamingPlaceholderInfo[] = [
-    { label: 'YYYY-MM-DD', token: 'YYYY-MM-DD', description: 'Datum lang (z. B. 2026-11-24)' },
-    { label: 'YY-MM-DD', token: 'YY-MM-DD', description: 'Datum kurz (z. B. 26-11-24)' },
-    { label: 'DD.MM.YYYY', token: 'DD.MM.YYYY', description: 'Datum DE (z. B. 24.11.2026)' },
-    { label: 'HH-mm', token: 'HH-mm', description: 'Uhrzeit (z. B. 12-45)' },
-    { label: 'HH-mm-ss', token: 'HH-mm-ss', description: 'Uhrzeit mit Sekunden (z. B. 12-45-30)' },
-    { label: '{freitext}', token: '{freitext}', description: 'Eigener Freitext / Notiz' },
-    { label: 'SCAN', token: 'SCAN', description: 'Fester Text SCAN' },
-    { label: '.', token: '.', description: 'Punkt-Trennzeichen' },
-    { label: '_', token: '_', description: 'Unterstrich-Trennzeichen' },
-    { label: '-', token: '-', description: 'Bindestrich-Trennzeichen' },
-    { label: '{ordner}', token: '{ordner}', description: 'Name des Dokumentenordners' },
-    { label: '{seiten}', token: '{seiten}', description: 'Anzahl der Seiten' },
-    { label: '{nr}', token: '{nr}', description: 'Fortlaufende Nummer (001, 002, ...)' }
+    { label: 'YYYY-MM-DD', token: 'YYYY-MM-DD', description: 'Date long (e.g. 2026-11-24)' },
+    { label: 'YY-MM-DD', token: 'YY-MM-DD', description: 'Date short (e.g. 26-11-24)' },
+    { label: 'DD.MM.YYYY', token: 'DD.MM.YYYY', description: 'Date EU (e.g. 24.11.2026)' },
+    { label: 'HH-mm', token: 'HH-mm', description: 'Time (e.g. 12-45)' },
+    { label: 'HH-mm-ss', token: 'HH-mm-ss', description: 'Time with seconds (e.g. 12-45-30)' },
+    { label: '{freetext}', token: '{freetext}', description: 'Custom freetext / note' },
+    { label: 'SCAN', token: 'SCAN', description: 'Literal SCAN' },
+    { label: '.', token: '.', description: 'Dot separator' },
+    { label: '_', token: '_', description: 'Underscore separator' },
+    { label: '-', token: '-', description: 'Hyphen separator' },
+    { label: '{folder}', token: '{folder}', description: 'Document folder name' },
+    { label: '{pages}', token: '{pages}', description: 'Number of pages' },
+    { label: '{nr}', token: '{nr}', description: 'Sequential number (001, 002, ...)' }
 ];
 
 export const DEFAULT_NAMING_TEMPLATES: NamingTemplate[] = [
     {
         id: 'date_dot_custom_dot_time',
-        name: 'YYYY-MM-DD.Freitext.HH-mm',
-        pattern: 'YYYY-MM-DD.{freitext}.HH-mm'
+        name: 'YYYY-MM-DD.Freetext.HH-mm',
+        pattern: 'YYYY-MM-DD.{freetext}.HH-mm'
     },
     {
         id: 'date_under_custom_under_time',
-        name: 'YYYY-MM-DD_Freitext_HH-mm',
-        pattern: 'YYYY-MM-DD_{freitext}_HH-mm'
+        name: 'YYYY-MM-DD_Freetext_HH-mm',
+        pattern: 'YYYY-MM-DD_{freetext}_HH-mm'
     },
     {
         id: 'custom_first_ts',
-        name: 'Freitext_YYYY-MM-DD_HH-mm',
-        pattern: '{freitext}_YYYY-MM-DD_HH-mm'
+        name: 'Freetext_YYYY-MM-DD_HH-mm',
+        pattern: '{freetext}_YYYY-MM-DD_HH-mm'
     },
     {
         id: 'custom_dot_date',
-        name: 'Freitext.YYYY-MM-DD',
-        pattern: '{freitext}.YYYY-MM-DD'
+        name: 'Freetext.YYYY-MM-DD',
+        pattern: '{freetext}.YYYY-MM-DD'
     },
     {
         id: 'date_only_custom',
-        name: 'YYYY-MM-DD_Freitext',
-        pattern: 'YYYY-MM-DD_{freitext}'
+        name: 'YYYY-MM-DD_Freetext',
+        pattern: 'YYYY-MM-DD_{freetext}'
     },
     {
         id: 'de_date_custom',
-        name: 'DD.MM.YYYY_Freitext_HH-mm',
-        pattern: 'DD.MM.YYYY_{freitext}_HH-mm'
+        name: 'DD.MM.YYYY_Freetext_HH-mm',
+        pattern: 'DD.MM.YYYY_{freetext}_HH-mm'
     },
     {
         id: 'scan_short_ts_custom',
-        name: 'YY-MM-DD_SCAN_HH-mm_Freitext',
-        pattern: 'YY-MM-DD_SCAN_HH-mm_{freitext}'
+        name: 'YY-MM-DD_SCAN_HH-mm_Freetext',
+        pattern: 'YY-MM-DD_SCAN_HH-mm_{freetext}'
     },
     {
         id: 'scan_short_ts',
@@ -80,18 +80,18 @@ export const DEFAULT_NAMING_TEMPLATES: NamingTemplate[] = [
     },
     {
         id: 'compact_iso_custom',
-        name: 'YYYYMMDD_HHmmss_Freitext',
-        pattern: 'YYYYMMDD_HHmmss_{freitext}'
+        name: 'YYYYMMDD_HHmmss_Freetext',
+        pattern: 'YYYYMMDD_HHmmss_{freetext}'
     },
     {
         id: 'folder_date_custom',
-        name: 'Ordner_YYYY-MM-DD_Freitext',
-        pattern: '{ordner}_YYYY-MM-DD_{freitext}'
+        name: 'Folder_YYYY-MM-DD_Freetext',
+        pattern: '{folder}_YYYY-MM-DD_{freetext}'
     },
     {
         id: 'custom_only',
-        name: 'Nur Freitext',
-        pattern: '{freitext}'
+        name: 'Freetext',
+        pattern: '{freetext}'
     }
 ];
 
@@ -119,7 +119,7 @@ export function hasTemplateTokensOrPlaceholders(pattern?: string): boolean {
     if (/\{[^}]+\}/.test(pattern)) {
         return true;
     }
-    if (/(?:^|[^A-Za-zäöüßÄÖÜ])(freitext|freitxt|frei[-_ ]?text|customtext)(?=$|[^A-Za-zäöüßÄÖÜ])/i.test(pattern)) {
+    if (/(?:^|[^A-Za-zäöüßÄÖÜ])(freetext|freetxt|free[-_ ]?text|freitext|freitxt|frei[-_ ]?text|customtext)(?=$|[^A-Za-zäöüßÄÖÜ])/i.test(pattern)) {
         return true;
     }
     return /(?:^|[^A-Z])(YYYYMMDD|YYMMDD|YYYY|YY|JJJJ|JJ|MM|DD|TT|HHmmss|HHmm|HH|SSS)(?=$|[^A-Z])|(?:^|[^a-z])(mm|ss)(?=$|[^a-z])/.test(pattern);
@@ -141,7 +141,7 @@ export function setDefaultCustomText(text: string): void {
     }
 }
 
-export function getActiveNamingPattern(fallback = 'YYYY-MM-DD.{freitext}.HH-mm'): string {
+export function getActiveNamingPattern(fallback = 'YYYY-MM-DD.{freetext}.HH-mm'): string {
     try {
         return ApplicationSettings.getString(SETTINGS_ACTIVE_NAMING_PATTERN, '') || fallback;
     } catch (_e) {
@@ -224,6 +224,11 @@ export function formatNamingTemplate(pattern?: string, options: FormatNamingOpti
         zeit: d.format('HH-mm'),
         timestamp: String(d.valueOf()),
         iso: d.toISOString(),
+        freetext: trimmedCustomText,
+        freetxt: trimmedCustomText,
+        'free-text': trimmedCustomText,
+        free_text: trimmedCustomText,
+        'free text': trimmedCustomText,
         freitext: trimmedCustomText,
         freitxt: trimmedCustomText,
         'frei-text': trimmedCustomText,
@@ -245,7 +250,25 @@ export function formatNamingTemplate(pattern?: string, options: FormatNamingOpti
         name: documentName?.trim() || ''
     };
 
-    const CUSTOM_TEXT_KEYS = new Set(['freitext', 'freitxt', 'frei-text', 'frei_text', 'frei text', 'customtext', 'text', 'custom', 'notiz', 'note', 'titel', 'title']);
+    const CUSTOM_TEXT_KEYS = new Set([
+        'freetext',
+        'freetxt',
+        'free-text',
+        'free_text',
+        'free text',
+        'freitext',
+        'freitxt',
+        'frei-text',
+        'frei_text',
+        'frei text',
+        'customtext',
+        'text',
+        'custom',
+        'notiz',
+        'note',
+        'titel',
+        'title'
+    ]);
     let usedCustomPlaceholder = false;
     let hadEmptyPlaceholder = false;
 
@@ -285,8 +308,8 @@ export function formatNamingTemplate(pattern?: string, options: FormatNamingOpti
         return SaveSegment(key);
     });
 
-    // 2b. Support unbraced "Freitext" / "Freitxt" / "Frei-Text" / "CustomText" token (e.g. "YYYY-MM-DD.Freitext.HH-mm")
-    working = working.replace(/(^|[^A-Za-zäöüßÄÖÜ\x01])(freitext|freitxt|frei[-_ ]?text|customtext)(?=$|[^A-Za-zäöüßÄÖÜ\x01])/gi, (_m, prefix) => {
+    // 2b. Support unbraced "Freetext" / "Freitext" / "Freitxt" / "CustomText" token (e.g. "YYYY-MM-DD.Freetext.HH-mm")
+    working = working.replace(/(^|[^A-Za-zäöüßÄÖÜ\x01])(freetext|freetxt|free[-_ ]?text|freitext|freitxt|frei[-_ ]?text|customtext)(?=$|[^A-Za-zäöüßÄÖÜ\x01])/gi, (_m, prefix) => {
         usedCustomPlaceholder = true;
         if (!trimmedCustomText) {
             hadEmptyPlaceholder = true;

@@ -461,7 +461,11 @@
                         key: SETTINGS_DOCUMENT_NAME_FORMAT,
                         title: lc('document_name_date_format'),
                         description: lc('document_name_date_format_desc'),
-                        rightValue: () => ApplicationSettings.getString(SETTINGS_DOCUMENT_NAME_FORMAT, DOCUMENT_NAME_FORMAT),
+                        rightValue: () => {
+                            const pat = ApplicationSettings.getString(SETTINGS_DOCUMENT_NAME_FORMAT, DOCUMENT_NAME_FORMAT);
+                            const ft = ApplicationSettings.getString('default_naming_custom_text', '');
+                            return ft ? `${pat} (Freetext: ${ft})` : pat;
+                        },
                         onTap: async () => {
                             const RenameDocumentSheet = (await import('~/components/view/RenameDocumentSheet.svelte')).default;
                             const chosenPattern = await showBottomSheet({
@@ -490,7 +494,11 @@
                         key: SETTINGS_FILE_NAME_FORMAT,
                         title: lc('filename_date_format'),
                         description: lc('filename_date_format_desc'),
-                        rightValue: () => ApplicationSettings.getString(SETTINGS_FILE_NAME_FORMAT, FILENAME_DATE_FORMAT),
+                        rightValue: () => {
+                            const pat = ApplicationSettings.getString(SETTINGS_FILE_NAME_FORMAT, FILENAME_DATE_FORMAT);
+                            const ft = ApplicationSettings.getString('default_naming_custom_text', '');
+                            return ft ? `${pat} (Freetext: ${ft})` : pat;
+                        },
                         onTap: async () => {
                             const RenameDocumentSheet = (await import('~/components/view/RenameDocumentSheet.svelte')).default;
                             const chosenPattern = await showBottomSheet({

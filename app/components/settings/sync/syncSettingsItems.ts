@@ -3,6 +3,7 @@ import type { TextFieldProperties } from '@nativescript-community/ui-textfield';
 import { Writable, get } from 'svelte/store';
 import { lc } from '~/helpers/locale';
 import { SHEET_PAN_SOFT_INPUT_MODE } from '~/utils/constants';
+import { formatNamingTemplate, getDefaultCustomText } from '~/utils/namingTemplates';
 import { getNameFormatHTMLArgs, openLink } from '~/utils/ui';
 
 interface SyncSettingsValues {
@@ -45,7 +46,12 @@ export const getFileNameFormatItem = (store: Writable<SyncSettingsValues>) => ({
     key: 'fileNameFormat',
     useHTML: true,
     title: lc('filename_date_format'),
-    description: lc('filename_date_format_desc'),
+    description: () => {
+        const pattern = get(store).fileNameFormat || 'YYYY-MM-DD.{freetext}.HH-mm';
+        const freetext = getDefaultCustomText();
+        const preview = formatNamingTemplate(pattern, { date: Date.now(), customText: freetext || 'Freetext', clean: true });
+        return freetext ? `${lc('filename_date_format_desc')} · Freetext: "${freetext}" → ${preview}.pdf` : `${lc('filename_date_format_desc')} → ${preview}.pdf`;
+    },
     full_description: lc('filename_date_format_fulldesc', ...getNameFormatHTMLArgs()),
     onLinkTap: ({ link }) => {
         openLink(link);
@@ -57,7 +63,7 @@ export const getFileNameFormatItem = (store: Writable<SyncSettingsValues>) => ({
             windowSoftInputMode: SHEET_PAN_SOFT_INPUT_MODE,
             ignoreTopSafeArea: true,
             props: {
-                initialPattern: get(store).fileNameFormat || 'YY-MM-DD_SCAN_HH-mm',
+                initialPattern: get(store).fileNameFormat || 'YYYY-MM-DD.{freetext}.HH-mm',
                 title: lc('filename_date_format')
             }
         });
@@ -70,7 +76,11 @@ export const getFileNameFormatItem = (store: Writable<SyncSettingsValues>) => ({
         autocapitalizationType: 'none',
         autocorrect: false
     } as TextFieldProperties,
-    rightValue: () => get(store).fileNameFormat,
+    rightValue: () => {
+        const pattern = get(store).fileNameFormat;
+        const freetext = getDefaultCustomText();
+        return freetext ? `${pattern} (${freetext})` : pattern;
+    },
     type: 'prompt'
 });
 
