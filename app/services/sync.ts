@@ -355,10 +355,19 @@ export class SyncService extends BaseWorkerHandler<SyncWorker> {
                 // }
                 DEV_LOG && console.log('syncDocumentsInternal', data.type, data.fromEvent, Object.keys(otherProps));
             }
-            await this.sendMessageToWorker('sync', {
-                ...data,
-                event: eventData
-            });
+            // no id/timeout: the library takes the fire-and-forget path, which needs nativeData
+            await this.sendMessageToWorker(
+                'sync',
+                {
+                    ...data,
+                    event: eventData
+                },
+                undefined,
+                undefined,
+                false,
+                0,
+                {}
+            );
         } catch (error) {
             DEV_LOG && console.error(error);
             showError(error);
