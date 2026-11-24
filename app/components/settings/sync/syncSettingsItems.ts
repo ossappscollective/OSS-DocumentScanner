@@ -1,6 +1,9 @@
+import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
 import type { TextFieldProperties } from '@nativescript-community/ui-textfield';
 import { Writable, get } from 'svelte/store';
 import { lc } from '~/helpers/locale';
+import { SHEET_PAN_SOFT_INPUT_MODE } from '~/utils/constants';
+import { formatNamingTemplate, getDefaultCustomText } from '~/utils/namingTemplates';
 import { getNameFormatHTMLArgs, openLink } from '~/utils/ui';
 
 interface SyncSettingsValues {
@@ -43,17 +46,41 @@ export const getFileNameFormatItem = (store: Writable<SyncSettingsValues>) => ({
     key: 'fileNameFormat',
     useHTML: true,
     title: lc('filename_date_format'),
-    description: lc('filename_date_format_desc'),
+    description: () => {
+        const pattern = get(store).fileNameFormat || 'YYYY-MM-DD.{freetext}.HH-mm';
+        const freetext = getDefaultCustomText();
+        const preview = formatNamingTemplate(pattern, { date: Date.now(), customText: freetext || 'Freetext', clean: true });
+        return freetext ? `${lc('filename_date_format_desc')} · Freetext: "${freetext}" → ${preview}.pdf` : `${lc('filename_date_format_desc')} → ${preview}.pdf`;
+    },
     full_description: lc('filename_date_format_fulldesc', ...getNameFormatHTMLArgs()),
     onLinkTap: ({ link }) => {
         openLink(link);
+    },
+    onTap: async () => {
+        const RenameDocumentSheet = (await import('~/components/view/RenameDocumentSheet.svelte')).default;
+        const chosenPattern = await showBottomSheet({
+            view: RenameDocumentSheet,
+            windowSoftInputMode: SHEET_PAN_SOFT_INPUT_MODE,
+            ignoreTopSafeArea: true,
+            props: {
+                initialPattern: get(store).fileNameFormat || 'YYYY-MM-DD.{freetext}.HH-mm',
+                title: lc('filename_date_format')
+            }
+        });
+        if (typeof chosenPattern === 'string' && chosenPattern.trim()) {
+            store.update((s) => ({ ...s, fileNameFormat: chosenPattern.trim(), useDocumentName: false }));
+        }
     },
     valueType: 'string',
     textFieldProperties: {
         autocapitalizationType: 'none',
         autocorrect: false
     } as TextFieldProperties,
-    rightValue: () => get(store).fileNameFormat,
+    rightValue: () => {
+        const pattern = get(store).fileNameFormat;
+        const freetext = getDefaultCustomText();
+        return freetext ? `${pattern} (${freetext})` : pattern;
+    },
     type: 'prompt'
 });
 

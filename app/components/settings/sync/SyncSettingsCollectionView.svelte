@@ -92,6 +92,11 @@
             switch (item.id) {
                 case 'store_setting':
                 case 'setting': {
+                    if (typeof item.onTap === 'function') {
+                        await item.onTap(item, event);
+                        updateItem(item);
+                        break;
+                    }
                     if (item.type === 'prompt') {
                         const result = await prompt({
                             title: getTitle(item),
@@ -228,7 +233,7 @@
     </Template>
     <Template key="switch" let:item>
         <ListItemAutoSize item={{ ...item, title: getTitle(item), subtitle: getDescription(item) }} {...getRowProps(item)} on:tap={(event) => onTap(item, event)}>
-            <switch id="checkbox" checked={item.value} col={1} marginLeft={10} verticalAlignment="center" on:checkedChange={(e) => onCheckBox(item, e)} />
+            <switch id="checkbox" checked={$store[item.key || item.id] ?? item.value} col={1} marginLeft={10} verticalAlignment="center" on:checkedChange={(e) => onCheckBox(item, e)} />
         </ListItemAutoSize>
     </Template>
     <Template let:item>
