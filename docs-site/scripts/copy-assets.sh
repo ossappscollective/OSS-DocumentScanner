@@ -34,14 +34,22 @@ echo "Copying feature graphics..."
 cp "$ROOT_DIR/fastlane/metadata/com.akylas.documentscanner/android/en-US/images/featureGraphic.png" "$STATIC_IMG/apps/documentscanner-feature.png" 2>/dev/null || true
 cp "$ROOT_DIR/fastlane/metadata/com.akylas.cardwallet/android/en-US/images/featureGraphic.png" "$STATIC_IMG/apps/cardwallet-feature.png" 2>/dev/null || true
 
-# Copy phone screenshots from fastlane (if they exist)
+# Copy phone screenshots from fastlane, one set per site locale (store locale codes).
+# A screenshot missing for a locale falls back to its en-US version.
 echo "Copying screenshots..."
-if [ -d "$ROOT_DIR/fastlane/metadata/com.akylas.documentscanner/android/en-US/images/phoneScreenshots" ]; then
-    cp "$ROOT_DIR/fastlane/metadata/com.akylas.documentscanner/android/en-US/images/phoneScreenshots/"*.png "$STATIC_IMG/screenshots/documentscanner/" 2>/dev/null || true
-fi
-if [ -d "$ROOT_DIR/fastlane/metadata/com.akylas.cardwallet/android/en-US/images/phoneScreenshots" ]; then
-    cp "$ROOT_DIR/fastlane/metadata/com.akylas.cardwallet/android/en-US/images/phoneScreenshots/"*.png "$STATIC_IMG/screenshots/cardwallet/" 2>/dev/null || true
-fi
+LOCALES="en-US fr-FR"
+for APP in documentscanner cardwallet; do
+    SRC="$ROOT_DIR/fastlane/metadata/com.akylas.$APP/android"
+    for FILE in "$SRC/en-US/images/phoneScreenshots/"*_en-US.jpg; do
+        [ -f "$FILE" ] || continue
+        NAME="$(basename "$FILE" _en-US.jpg)"
+        for LOCALE in $LOCALES; do
+            LOCALIZED="$SRC/$LOCALE/images/phoneScreenshots/${NAME}_$LOCALE.jpg"
+            [ -f "$LOCALIZED" ] || LOCALIZED="$FILE"
+            cp "$LOCALIZED" "$STATIC_IMG/screenshots/$APP/${NAME}_$LOCALE.jpg"
+        done
+    done
+done
 
 # Copy App Store badges
 echo "Copying store badges..."
