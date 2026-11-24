@@ -1797,7 +1797,7 @@ export async function addCurrentImageToDocument({
         colorMatrix = null;
         ApplicationSettings.remove(SETTINGS_DEFAULT_COLORMATRIX);
     }
-    const transforms = ApplicationSettings.getString(SETTINGS_DEFAULT_TRANSFORM, '');
+    const transforms = ApplicationSettings.getString(SETTINGS_DEFAULT_TRANSFORM, DEFAULT_TRANSFORM);
     DEV_LOG && console.log('addCurrentImageToDocument', sourceImagePath, quads);
     const images: CropResult[] = [];
     const imageExportSettings = getImageExportSettings();

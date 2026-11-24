@@ -1,6 +1,8 @@
+import { showBottomSheet } from '@nativescript-community/ui-bottomsheet/svelte';
 import type { TextFieldProperties } from '@nativescript-community/ui-textfield';
 import { Writable, get } from 'svelte/store';
 import { lc } from '~/helpers/locale';
+import { SHEET_PAN_SOFT_INPUT_MODE } from '~/utils/constants';
 import { getNameFormatHTMLArgs, openLink } from '~/utils/ui';
 
 interface SyncSettingsValues {
@@ -47,6 +49,21 @@ export const getFileNameFormatItem = (store: Writable<SyncSettingsValues>) => ({
     full_description: lc('filename_date_format_fulldesc', ...getNameFormatHTMLArgs()),
     onLinkTap: ({ link }) => {
         openLink(link);
+    },
+    onTap: async () => {
+        const RenameDocumentSheet = (await import('~/components/view/RenameDocumentSheet.svelte')).default;
+        const chosenPattern = await showBottomSheet({
+            view: RenameDocumentSheet,
+            windowSoftInputMode: SHEET_PAN_SOFT_INPUT_MODE,
+            ignoreTopSafeArea: true,
+            props: {
+                initialPattern: get(store).fileNameFormat || 'YY-MM-DD_SCAN_HH-mm',
+                title: lc('filename_date_format')
+            }
+        });
+        if (typeof chosenPattern === 'string' && chosenPattern.trim()) {
+            store.update((s) => ({ ...s, fileNameFormat: chosenPattern.trim() }));
+        }
     },
     valueType: 'string',
     textFieldProperties: {
