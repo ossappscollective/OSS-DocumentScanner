@@ -70,5 +70,17 @@
     "copyright": {
         "message": "Copyright © 2026 OSS Document Scanner & CardWallet. Créé avec Docusaurus.",
         "description": "The footer copyright"
+    },
+    "link.title.Privacy": {
+        "message": "Confidentialité",
+        "description": "The title of the footer links column with title=Privacy in the footer"
+    },
+    "link.item.label.Open Collective": {
+        "message": "Open Collective",
+        "description": "The label of footer link with label=Open Collective linking to https://opencollective.com/oss-appscollective"
+    },
+    "link.item.label.Privacy policy": {
+        "message": "Politique de confidentialité",
+        "description": "The label of footer link with label=Privacy policy linking to https://www.akylas.fr/privacy"
     }
 }

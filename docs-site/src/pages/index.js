@@ -1,154 +1,272 @@
 import clsx from 'clsx';
+import Head from '@docusaurus/Head';
 import Link from '@docusaurus/Link';
-import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import Translate, { translate } from '@docusaurus/Translate';
 import useBaseUrl from '@docusaurus/useBaseUrl';
+import useBrokenLinks from '@docusaurus/useBrokenLinks';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
 
+import { APPS } from '../data/apps';
 import styles from './index.module.css';
 
-function HomepageHeader() {
+const SCANNER_FEATURES = [
+    {
+        icon: '📷',
+        title: translate({ id: 'homepage.feature.scan.title', message: 'Smart scanning' }),
+        text: translate({
+            id: 'homepage.feature.scan.text',
+            message: 'Automatic edge detection, bulk scan for books and receipts, import from photos or existing PDFs.'
+        })
+    },
+    {
+        icon: '✨',
+        title: translate({ id: 'homepage.feature.enhance.title', message: 'Crisp, clean scans' }),
+        text: translate({
+            id: 'homepage.feature.enhance.text',
+            message: 'Color or black & white filters, brightness and contrast, crop, rotate, reorder and merge pages.'
+        })
+    },
+    {
+        icon: '🔎',
+        title: translate({ id: 'homepage.feature.ocr.title', message: 'Offline OCR' }),
+        text: translate({
+            id: 'homepage.feature.ocr.text',
+            message: 'Search inside your documents and copy any text. Powered by Tesseract, models run on your device.'
+        })
+    },
+    {
+        icon: '🗂️',
+        title: translate({ id: 'homepage.feature.organize.title', message: 'Organized for you' }),
+        text: translate({
+            id: 'homepage.feature.organize.text',
+            message: 'Colored folders, tags, favorites and instant search to find any document in a tap.'
+        })
+    },
+    {
+        icon: '☁️',
+        title: translate({ id: 'homepage.feature.sync.title', message: 'Sync your way' }),
+        text: translate({
+            id: 'homepage.feature.sync.text',
+            message: 'WebDAV, Google Drive, OneDrive or a local folder. Your files, your servers, your choice.'
+        })
+    },
+    {
+        icon: '🔒',
+        title: translate({ id: 'homepage.feature.privacy.title', message: 'Private by design' }),
+        text: translate({
+            id: 'homepage.feature.privacy.text',
+            message: 'Everything is processed on your device. Password-protect PDFs. No ads, no tracking, no account.'
+        })
+    }
+];
+
+const CARDWALLET_FEATURES = [
+    translate({ id: 'homepage.cardwallet.chip.cards', message: 'Loyalty, membership and transit cards' }),
+    translate({ id: 'homepage.cardwallet.chip.barcode', message: 'Barcode & QR auto detection' }),
+    translate({ id: 'homepage.cardwallet.chip.passbook', message: 'Passbook .pkpass support' }),
+    translate({ id: 'homepage.cardwallet.chip.sides', message: 'Front and back scanning' }),
+    translate({ id: 'homepage.cardwallet.chip.expiry', message: 'Expiry dates and balances' }),
+    translate({ id: 'homepage.cardwallet.chip.sync', message: 'Private sync, no account' })
+];
+
+const FAQ = [
+    {
+        question: translate({ id: 'homepage.faq.free.question', message: 'Is OSS Document Scanner really free?' }),
+        answer: translate({
+            id: 'homepage.faq.free.answer',
+            message: 'Yes. It is free and open source, with no ads, no account and no tracking. The code is public on GitHub and developed with the help of the community.'
+        })
+    },
+    {
+        question: translate({ id: 'homepage.faq.upload.question', message: 'Are my documents uploaded anywhere?' }),
+        answer: translate({
+            id: 'homepage.faq.upload.answer',
+            message: 'No. Scanning, enhancing and OCR all happen on your device. Sync is optional and goes to storage you control: WebDAV, Google Drive, OneDrive or a local folder.'
+        })
+    },
+    {
+        question: translate({ id: 'homepage.faq.ocr.question', message: 'Does the OCR work offline?' }),
+        answer: translate({
+            id: 'homepage.faq.ocr.answer',
+            message: 'Yes. Download the language models you need once, then recognize text without any connection. You can also generate searchable PDFs.'
+        })
+    },
+    {
+        question: translate({ id: 'homepage.faq.export.question', message: 'Which formats can I export?' }),
+        answer: translate({
+            id: 'homepage.faq.export.answer',
+            message: 'PDF, JPEG and PNG. PDFs can be configured and protected with a password before you share them.'
+        })
+    },
+    {
+        question: translate({ id: 'homepage.faq.platforms.question', message: 'Which platforms are supported?' }),
+        answer: translate({
+            id: 'homepage.faq.platforms.answer',
+            message: 'Android and iOS. On Android you can also install from IzzyOnDroid, GitHub releases or Obtainium.'
+        })
+    },
+    {
+        question: translate({ id: 'homepage.faq.cardwallet.question', message: 'What is OSS Card Wallet?' }),
+        answer: translate({
+            id: 'homepage.faq.cardwallet.answer',
+            message: 'A companion app built on the same engine to scan and store loyalty cards, tickets, IDs and Passbook passes with their barcodes, in one private place.'
+        })
+    }
+];
+
+function Img({ path, ...props }) {
+    return <img src={useBaseUrl(path)} decoding="async" {...props} />;
+}
+
+// Store screenshots exist per locale (copy-assets.sh falls back to en-US for missing ones)
+function Shot({ app, index, alt, className, priority = false }) {
+    const { i18n } = useDocusaurusContext();
+    const storeLocale = i18n.localeConfigs[i18n.currentLocale]?.htmlLang ?? 'en-US';
     return (
-        <header className={clsx('hero hero--primary', styles.heroBanner)}>
-            <div className="container">
-                <Heading as="h1" className="hero__title">
-                    Two Powerful Open Source Apps
-                </Heading>
-                <p className="hero__subtitle">Scan documents and manage cards - privacy-focused, free, and open source</p>
-                <div className={styles.badges}>
-                    <a href="https://github.com/ossappscollective/OSS-DocumentScanner/stargazers">
-                        <img src="https://img.shields.io/github/stars/ossappscollective/OSS-DocumentScanner?style=flat" alt="GitHub stars" />
-                    </a>
-                    <a href="https://github.com/ossappscollective/OSS-DocumentScanner/blob/master/COPYING">
-                        <img src="https://img.shields.io/github/license/ossappscollective/OSS-DocumentScanner" alt="License" />
-                    </a>
-                    <a href="https://github.com/ossappscollective/OSS-DocumentScanner/releases/">
-                        <img src="https://img.shields.io/github/downloads/ossappscollective/OSS-DocumentScanner/total.svg" alt="Downloads" />
-                    </a>
-                    <a href="https://hosted.weblate.org/engage/oss-document-scanner/">
-                        <img src="https://hosted.weblate.org/widgets/oss-document-scanner/-/svg-badge.svg" alt="Translation status" />
-                    </a>
+        <Img
+            path={`/img/screenshots/${app}/${index}_${storeLocale}.jpg`}
+            alt={alt}
+            width="1080"
+            height="1920"
+            className={className}
+            loading={priority ? 'eager' : 'lazy'}
+            fetchpriority={priority ? 'high' : undefined}
+        />
+    );
+}
+
+function StoreButtons({ app }) {
+    return (
+        <div className={styles.storeButtons}>
+            <div className={styles.badgeRow}>
+                <a
+                    href={app.playStore}
+                    target="_blank"
+                    rel="noopener"
+                    aria-label={translate({ id: 'homepage.store.play.aria', message: 'Get {name} on Google Play' }, { name: app.name })}
+                >
+                    <Img path="/img/store/google-play.svg" alt={translate({ id: 'homepage.store.play.alt', message: 'Get it on Google Play' })} height="56" width="189" />
+                </a>
+                <a
+                    href={app.appStore}
+                    target="_blank"
+                    rel="noopener"
+                    aria-label={translate({ id: 'homepage.store.appstore.aria', message: 'Download {name} on the App Store' }, { name: app.name })}
+                >
+                    <Img path="/img/store/app-store.svg" alt={translate({ id: 'homepage.store.appstore.alt', message: 'Download on the App Store' })} height="56" width="168" />
+                </a>
+            </div>
+            <div className={clsx(styles.badgeRow, styles.altBadges)}>
+                <a href={app.github} target="_blank" rel="noopener">
+                    <Img path="/img/store/github.png" alt={translate({ id: 'homepage.store.github.alt', message: 'Get it on GitHub' })} height="40" width="135" />
+                </a>
+                <a href={app.izzyOnDroid} target="_blank" rel="noopener">
+                    <Img path="/img/store/izzyondroid.png" alt={translate({ id: 'homepage.store.izzy.alt', message: 'Get it on IzzyOnDroid' })} height="40" width="136" />
+                </a>
+                <a href={app.obtainium} target="_blank" rel="noopener">
+                    <Img path="/img/store/obtainium.png" alt={translate({ id: 'homepage.store.obtainium.alt', message: 'Get it on Obtainium' })} height="40" width="134" />
+                </a>
+            </div>
+        </div>
+    );
+}
+
+function Hero() {
+    useBrokenLinks().collectAnchor('document-scanner');
+    return (
+        <header className={styles.hero} id="document-scanner">
+            <div className={clsx('container', styles.heroGrid)}>
+                <div className={styles.heroText}>
+                    <Img
+                        path="/img/icon-192.png"
+                        alt={translate({ id: 'homepage.hero.iconAlt', message: 'OSS Document Scanner app icon' })}
+                        width="72"
+                        height="72"
+                        className={styles.heroIcon}
+                    />
+                    <Heading as="h1" className={styles.heroTitle}>
+                        <Translate id="homepage.hero.title">Free document scanner for Android & iOS</Translate>
+                    </Heading>
+                    <p className={styles.heroSubtitle}>
+                        <Translate id="homepage.hero.subtitle">
+                            Scan to PDF, find any text with offline OCR and keep everything private. Open source, no ads, no account.
+                        </Translate>
+                    </p>
+                    <StoreButtons app={APPS.scanner} />
+                    <ul className={styles.heroTrust}>
+                        <li>
+                            <Translate id="homepage.hero.trust.free">100% free</Translate>
+                        </li>
+                        <li>
+                            <Translate id="homepage.hero.trust.noAds">No ads</Translate>
+                        </li>
+                        <li>
+                            <Translate id="homepage.hero.trust.noTracking">No tracking</Translate>
+                        </li>
+                        <li>
+                            <Translate id="homepage.hero.trust.openSource">Open source</Translate>
+                        </li>
+                    </ul>
+                </div>
+                <div className={styles.heroPhones}>
+                    <Shot
+                        app="documentscanner"
+                        index={2}
+                        alt={translate({ id: 'homepage.hero.shot.edges', message: 'Automatic edge detection in OSS Document Scanner' })}
+                        className={clsx(styles.phone, styles.phoneLeft)}
+                    />
+                    <Shot
+                        app="documentscanner"
+                        index={1}
+                        alt={translate({ id: 'homepage.hero.shot.library', message: 'Document library with folders, tags and search' })}
+                        className={clsx(styles.phone, styles.phoneCenter)}
+                        priority
+                    />
+                    <Shot
+                        app="documentscanner"
+                        index={4}
+                        alt={translate({ id: 'homepage.hero.shot.search', message: 'Offline text search inside documents' })}
+                        className={clsx(styles.phone, styles.phoneRight)}
+                    />
                 </div>
             </div>
         </header>
     );
 }
 
-function AppShowcase() {
-    const apps = [
-        {
-            name: 'OSS Document Scanner',
-            description: 'Scan, edit, and export documents with automatic edge detection and perspective correction.',
-            featureImage: useBaseUrl('/img/apps/documentscanner-feature.png'),
-            github: 'https://github.com/ossappscollective/OSS-DocumentScanner/releases?q=documentscanner&expanded=true',
-            playStore: 'https://play.google.com/store/apps/details?id=com.akylas.documentscanner',
-            appStore: 'https://apps.apple.com/us/app/oss-document-scanner/id6472918564',
-            izzyOnDroid: 'https://apt.izzysoft.de/packages/com.akylas.documentscanner',
-            obtainium:
-                'https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22com.akylas.documentscanner%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2FAkylas%2FOSS-DocumentScanner%22%2C%22author%22%3A%22Akylas%22%2C%22name%22%3A%22OSS%20Document%20Scanner%22%2C%22preferredApkIndex%22%3A0%2C%22additionalSettings%22%3A%22%7B%5C%22includePrereleases%5C%22%3Afalse%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22Document%20Scanner%5C%22%2C%5C%22filterReleaseNotesByRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22verifyLatestTag%5C%22%3Afalse%2C%5C%22dontSortReleasesList%5C%22%3Afalse%2C%5C%22useLatestAssetDateAsReleaseDate%5C%22%3Afalse%2C%5C%22trackOnly%5C%22%3Afalse%2C%5C%22versionExtractionRegEx%5C%22%3A%5C%22github%2F(.%2B)%5C%22%2C%5C%22matchGroupToUse%5C%22%3A%5C%221%5C%22%2C%5C%22versionDetection%5C%22%3Afalse%2C%5C%22releaseDateAsVersion%5C%22%3Afalse%2C%5C%22useVersionCodeAsOSVersion%5C%22%3Afalse%2C%5C%22apkFilterRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22invertAPKFilter%5C%22%3Afalse%2C%5C%22autoApkFilterByArch%5C%22%3Atrue%2C%5C%22appName%5C%22%3A%5C%22%5C%22%2C%5C%22shizukuPretendToBeGooglePlay%5C%22%3Afalse%2C%5C%22exemptFromBackgroundUpdates%5C%22%3Afalse%2C%5C%22skipUpdateNotifications%5C%22%3Afalse%2C%5C%22about%5C%22%3A%5C%22%5C%22%7D%22%2C%22overrideSource%22%3Anull%7D',
-            docsLink: '/getting-started',
-            features: ['Document scanning', 'Auto edge detection', 'PDF export', 'OCR support', 'Cloud sync']
-        },
-        {
-            name: 'OSS CardWallet',
-            description: 'Store and manage loyalty cards, tickets, and barcodes securely on your device.',
-            featureImage: useBaseUrl('/img/apps/cardwallet-feature.png'),
-            github: 'https://github.com/ossappscollective/OSS-DocumentScanner/releases?q=cardwallet&expanded=true',
-            playStore: 'https://play.google.com/store/apps/details?id=com.akylas.cardwallet',
-            appStore: 'https://apps.apple.com/app/oss-cardwallet/id6504414362',
-            izzyOnDroid: 'https://apt.izzysoft.de/packages/com.akylas.cardwallet',
-            obtainium:
-                'https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22com.akylas.cardwallet%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2FAkylas%2FOSS-DocumentScanner%22%2C%22author%22%3A%22Akylas%22%2C%22name%22%3A%22OSS%20Card%20Wallet%22%2C%22preferredApkIndex%22%3A0%2C%22additionalSettings%22%3A%22%7B%5C%22includePrereleases%5C%22%3Afalse%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22Card%20Wallet%5C%22%2C%5C%22filterReleaseNotesByRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22verifyLatestTag%5C%22%3Afalse%2C%5C%22dontSortReleasesList%5C%22%3Afalse%2C%5C%22useLatestAssetDateAsReleaseDate%5C%22%3Afalse%2C%5C%22trackOnly%5C%22%3Afalse%2C%5C%22versionExtractionRegEx%5C%22%3A%5C%22github%2F(.%2B)%5C%22%2C%5C%22versionDetection%5C%22%3Afalse%2C%5C%22releaseDateAsVersion%5C%22%3Afalse%2C%5C%22useVersionCodeAsOSVersion%5C%22%3Afalse%2C%5C%22apkFilterRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22invertAPKFilter%5C%22%3Afalse%2C%5C%22autoApkFilterByArch%5C%22%3Atrue%2C%5C%22appName%5C%22%3A%5C%22%5C%22%2C%5C%22shizukuPretendToBeGooglePlay%5C%22%3Afalse%2C%5C%22exemptFromBackgroundUpdates%5C%22%3Afalse%2C%5C%22skipUpdateNotifications%5C%22%3Afalse%2C%5C%22about%5C%22%3A%5C%22%5C%22%7D%22%2C%22overrideSource%22%3Anull%7D',
-            docsLink: '/cardwallet/getting-started',
-            features: ['Barcode scanning', 'Card management', 'Pass Book support(pkpass)', 'Multiple formats', 'Backup & sync', 'Privacy focused']
-        }
-    ];
-
+function Gallery({ app, count, label, altPrefix }) {
+    const indexes = Array.from({ length: count }, (_, idx) => idx + 1);
     return (
-        <section className={styles.appShowcase}>
-            <div className="container">
-                <div className={styles.appGrid}>
-                    {apps.map((app, idx) => (
-                        <div key={idx} className={styles.appCard}>
-                            <img src={app.featureImage} alt={`${app.name} feature graphic`} className={styles.featureGraphic} />
-                            <div className={styles.appContent}>
-                                <Heading as="h2">{app.name}</Heading>
-                                <p>{app.description}</p>
-                                <ul className={styles.featureList}>
-                                    {app.features.map((feature, fidx) => (
-                                        <li key={fidx}>✓ {feature}</li>
-                                    ))}
-                                </ul>
-                                <div className={styles.downloadButtons}>
-                                    <a href={app.playStore} className={styles.storeButton} target="_blank">
-                                        <img src="https://raw.githubusercontent.com/pioug/google-play-badges/refs/heads/main/svg/en.svg" alt="Get it on Google Play" height="50" />
-                                    </a>
-                                    <a href={app.appStore} className={styles.storeButton} target="_blank">
-                                        <img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83" alt="Download on the App Store" height="50" />
-                                    </a>
-                                    <a href={app.izzyOnDroid} className={styles.storeButton} target="_blank">
-                                        <img src="https://izzyondroid.org/assets/static/IzzyOnDroidButtonGreyBorder_nofont.png" alt="Get it on IzzyOnDroid" height="50" />
-                                    </a>
-                                    <a href={app.github} className={styles.storeButton} target="_blank">
-                                        <img src="https://raw.githubusercontent.com/ossappscollective/OSS-DocumentScanner/main/graphics/badge_github.png" alt="Get it on Github" height="50" />
-                                    </a>
-                                    <a href={app.obtainium} className={styles.storeButton} target="_blank">
-                                        <img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="50" />
-                                    </a>
-                                </div>
-                                <Link className="button button--primary button--md" to={app.docsLink}>
-                                    View Documentation →
-                                </Link>
-                            </div>
-                        </div>
-                    ))}
+        <div className={styles.gallery} role="list" aria-label={label}>
+            {indexes.map((index) => (
+                <div key={index} role="listitem" className={styles.galleryItem}>
+                    <Shot app={app} index={index} alt={`${altPrefix} ${index}`} className={styles.galleryImage} />
                 </div>
-            </div>
-        </section>
+            ))}
+        </div>
     );
 }
 
-function CommonFeatures() {
-    const features = [
-        {
-            title: '🔒 Privacy First',
-            description: 'All processing happens on your device. Your data never leaves your control.'
-        },
-        {
-            title: '📱 Cross Platform',
-            description: 'Available on both Android and iOS with consistent features.'
-        },
-        {
-            title: '🌍 Open Source',
-            description: 'Free and open source. No ads, no tracking, community driven.'
-        },
-        {
-            title: '☁️ Cloud Sync',
-            description: 'Optional sync via WebDAV to your own cloud storage.'
-        },
-        {
-            title: '🌐 Multi-language',
-            description: 'Translated into many languages by the community.'
-        },
-        {
-            title: '⚡ Fast & Efficient',
-            description: 'Native performance with optimized image processing.'
-        }
-    ];
-
+function ScannerFeatures() {
     return (
-        <section className={styles.features}>
+        <section className={styles.section}>
             <div className="container">
-                <Heading as="h2" className="text--center margin-bottom--lg">
-                    Shared Features
+                <Heading as="h2" className={styles.sectionTitle}>
+                    <Translate id="homepage.features.title">Everything you need to scan, search and organize</Translate>
                 </Heading>
-                <div className="row">
-                    {features.map((feature, idx) => (
-                        <div key={idx} className={clsx('col col--4', styles.feature)}>
-                            <div className="text--center padding-horiz--md">
-                                <Heading as="h3">{feature.title}</Heading>
-                                <p>{feature.description}</p>
-                            </div>
+                <p className={styles.sectionLead}>
+                    <Translate id="homepage.features.lead">One app to turn paper into clean, searchable PDFs, without handing your documents to anyone.</Translate>
+                </p>
+                <div className={styles.featureGrid}>
+                    {SCANNER_FEATURES.map((feature) => (
+                        <div key={feature.title} className={styles.featureCard}>
+                            <span className={styles.featureIcon} aria-hidden="true">
+                                {feature.icon}
+                            </span>
+                            <Heading as="h3">{feature.title}</Heading>
+                            <p>{feature.text}</p>
                         </div>
                     ))}
                 </div>
@@ -157,89 +275,107 @@ function CommonFeatures() {
     );
 }
 
-function DonationBanner() {
+function ScannerGallery() {
     return (
-        <section className={styles.donationBanner}>
+        <section className={clsx(styles.section, styles.sectionTinted)}>
             <div className="container">
-                <div className={styles.donationContent}>
-                    <div className={styles.donationText}>
-                        <Heading as="h2">❤️ Love These Apps? Support Development!</Heading>
-                        <p>These apps are 100% free, open source, and ad-free. Your donation directly supports continued development, new features, and bug fixes.</p>
-                    </div>
-                    <div className={styles.donationButtons}>
-                        <a href="https://github.com/sponsors/farfromrefug" className="button button--primary button--lg">
-                            💝 Sponsor on GitHub
-                        </a>
-                        <a
-                            href="https://opencollective.com/oss-appscollective"
-                            target="_blank"
-                            style={{
-                                display: 'inline-block',
-                                padding: '12px 24px',
-                                background: '#0d2e67',
-                                color: 'white',
-                                textDecoration: 'none',
-                                borderRadius: '6px',
-                                fontWeight: 600,
-                                display: 'flex'
-                            }}
-                        >
-                            <svg role="img" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg" fill="#b5d2f0" style={{ marginRight: 10 + 'em' }}>
-                                <title>Open Collective</title>
-                                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12c2.54 0 4.894-.79 6.834-2.135l-3.107-3.109a7.715 7.715 0 1 1 0-13.512l3.107-3.109A11.943 11.943 0 0 0 12 0zm9.865 5.166l-3.109 3.107A7.67 7.67 0 0 1 19.715 12a7.682 7.682 0 0 1-.959 3.727l3.109 3.107A11.943 11.943 0 0 0 24 12c0-2.54-.79-4.894-2.135-6.834z" />
-                            </svg>
-                            Open Collective
-                        </a>
-                    </div>
+                <Heading as="h2" className={styles.sectionTitle}>
+                    <Translate id="homepage.gallery.title">See it in action</Translate>
+                </Heading>
+                <p className={styles.sectionLead}>
+                    <Translate id="homepage.gallery.lead">From first scan to synced archive, in light or dark.</Translate>
+                </p>
+            </div>
+            <Gallery
+                app="documentscanner"
+                count={8}
+                label={translate({ id: 'homepage.gallery.label', message: 'OSS Document Scanner previews' })}
+                altPrefix={translate({ id: 'homepage.gallery.altPrefix', message: 'OSS Document Scanner preview' })}
+            />
+        </section>
+    );
+}
+
+function CardWallet() {
+    useBrokenLinks().collectAnchor('cardwallet');
+    return (
+        <section className={styles.cardwallet} id="cardwallet">
+            <div className={clsx('container', styles.heroGrid)}>
+                <div className={styles.cardwalletPhones}>
+                    <Shot
+                        app="cardwallet"
+                        index={6}
+                        alt={translate({ id: 'homepage.cardwallet.shot.stack', message: 'Cards stacked in OSS Card Wallet' })}
+                        className={clsx(styles.phone, styles.phoneLeft)}
+                    />
+                    <Shot
+                        app="cardwallet"
+                        index={1}
+                        alt={translate({ id: 'homepage.cardwallet.shot.cards', message: 'All loyalty and membership cards in OSS Card Wallet' })}
+                        className={clsx(styles.phone, styles.phoneCenter)}
+                    />
+                    <Shot
+                        app="cardwallet"
+                        index={4}
+                        alt={translate({ id: 'homepage.cardwallet.shot.pass', message: 'Boarding pass imported in OSS Card Wallet' })}
+                        className={clsx(styles.phone, styles.phoneRight)}
+                    />
                 </div>
-            </div>
-        </section>
-    );
-}
-
-function SupportSection() {
-    return (
-        <section className={styles.supportSection}>
-            <div className="container text--center">
-                <Heading as="h2">Our Sponsors</Heading>
-                <p>Thank you to all our generous sponsors who help keep this project alive!</p>
-                <div className={styles.sponsors}>
-                    <img src="https://raw.githubusercontent.com/farfromrefug/sponsorkit/main/sponsors.svg" alt="Sponsors" className={styles.sponsorsImage} />
-                </div>
-                <a href="https://github.com/sponsors/farfromrefug" className="button button--outline button--primary button--lg margin-top--md">
-                    Become a Sponsor →
-                </a>
-            </div>
-        </section>
-    );
-}
-
-function TranslationSection() {
-    return (
-        <section className={styles.translationSection}>
-            <div className="container text--center">
-                <Heading as="h2">Help Translate</Heading>
-                <p>Translations are hosted on Weblate. Help make these apps available in your language!</p>
-                <a href="https://hosted.weblate.org/engage/oss-document-scanner/">
-                    <img src="https://hosted.weblate.org/widgets/oss-document-scanner/-/multi-auto.svg" alt="Translation status" className={styles.translationWidget} />
-                </a>
-            </div>
-        </section>
-    );
-}
-
-function ContributeSection() {
-    return (
-        <section className={styles.contributeSection}>
-            <div className="container text--center">
-                <Heading as="h2">📝 Contribute to Documentation</Heading>
-                <p>Help improve this documentation! Fix typos, add examples, improve explanations, or translate into your language.</p>
-                <div className={styles.contributeButtons}>
-                    <Link className="button button--primary button--lg" to="/contributing">
-                        📖 Contribution Guide
+                <div className={styles.heroText}>
+                    <Img
+                        path="/img/icon-cardwallet-192.png"
+                        alt={translate({ id: 'homepage.cardwallet.iconAlt', message: 'OSS Card Wallet app icon' })}
+                        width="72"
+                        height="72"
+                        className={styles.heroIcon}
+                    />
+                    <Heading as="h2" className={styles.heroTitle}>
+                        <Translate id="homepage.cardwallet.title">Every card and pass in one private wallet</Translate>
+                    </Heading>
+                    <p className={styles.heroSubtitle}>
+                        <Translate id="homepage.cardwallet.subtitle">
+                            Scan loyalty cards, tickets and IDs, or import Passbook files. Barcodes are always bright and ready at the checkout.
+                        </Translate>
+                    </p>
+                    <ul className={styles.chipList}>
+                        {CARDWALLET_FEATURES.map((feature) => (
+                            <li key={feature}>{feature}</li>
+                        ))}
+                    </ul>
+                    <StoreButtons app={APPS.cardwallet} />
+                    <Link className={styles.textLink} to={APPS.cardwallet.docsLink}>
+                        <Translate id="homepage.cardwallet.guide">Card Wallet guide →</Translate>
                     </Link>
-                    <a className="button button--outline button--primary button--lg" href="https://github.com/ossappscollective/OSS-DocumentScanner/tree/main/docs-site">
-                        ✏️ Edit on GitHub
+                </div>
+            </div>
+        </section>
+    );
+}
+
+function OpenSource() {
+    return (
+        <section className={styles.section}>
+            <div className={clsx('container', styles.center)}>
+                <Heading as="h2" className={styles.sectionTitle}>
+                    <Translate id="homepage.opensource.title">Free, open source, and private</Translate>
+                </Heading>
+                <p className={styles.sectionLead}>
+                    <Translate id="homepage.opensource.lead">
+                        No ads. No tracking. No lock-in. Read the code, send a fix, or translate the apps into your language.
+                    </Translate>
+                </p>
+                <div className={styles.badges}>
+                    <a href="https://github.com/ossappscollective/OSS-DocumentScanner/stargazers">
+                        <img src="https://img.shields.io/github/stars/ossappscollective/OSS-DocumentScanner?style=flat" alt="GitHub stars" height="20" />
+                    </a>
+                    <a href="https://github.com/ossappscollective/OSS-DocumentScanner/blob/master/COPYING">
+                        <img src="https://img.shields.io/github/license/ossappscollective/OSS-DocumentScanner" alt="License" height="20" />
+                    </a>
+                    <a href="https://github.com/ossappscollective/OSS-DocumentScanner/releases/">
+                        <img src="https://img.shields.io/github/downloads/ossappscollective/OSS-DocumentScanner/total.svg" alt="Downloads" height="20" />
+                    </a>
+                    <a href="https://hosted.weblate.org/engage/oss-document-scanner/">
+                        <img src="https://hosted.weblate.org/widgets/oss-document-scanner/-/svg-badge.svg" alt="Translation status" height="20" />
                     </a>
                 </div>
             </div>
@@ -247,20 +383,156 @@ function ContributeSection() {
     );
 }
 
+function Faq() {
+    return (
+        <section className={clsx(styles.section, styles.sectionTinted)} id="faq">
+            <div className={clsx('container', styles.faqContainer)}>
+                <Heading as="h2" className={styles.sectionTitle}>
+                    <Translate id="homepage.faq.title">Frequently asked questions</Translate>
+                </Heading>
+                {FAQ.map((item) => (
+                    <details key={item.question} className={styles.faqItem}>
+                        <summary>{item.question}</summary>
+                        <p>{item.answer}</p>
+                    </details>
+                ))}
+                <p className={styles.center}>
+                    <Translate id="homepage.faq.more" values={{ link: <Link to="/faq">{translate({ id: 'homepage.faq.moreLink', message: 'full FAQ' })}</Link> }}>
+                        {'More answers in the {link}.'}
+                    </Translate>
+                </p>
+            </div>
+        </section>
+    );
+}
+
+function Download() {
+    useBrokenLinks().collectAnchor('download');
+    return (
+        <section className={styles.download} id="download">
+            <div className={clsx('container', styles.downloadGrid)}>
+                {[APPS.scanner, APPS.cardwallet].map((app) => (
+                    <div key={app.name} className={styles.downloadCard}>
+                        <Heading as="h2">{app.name}</Heading>
+                        <StoreButtons app={app} />
+                        <Link to={app.docsLink}>
+                            <Translate id="homepage.download.guide">Read the guide →</Translate>
+                        </Link>
+                    </div>
+                ))}
+            </div>
+        </section>
+    );
+}
+
+function Community() {
+    return (
+        <section className={styles.section}>
+            <div className={clsx('container', styles.center)}>
+                <Heading as="h2" className={styles.sectionTitle}>
+                    <Translate id="homepage.community.title">Built by the community</Translate>
+                </Heading>
+                <p className={styles.sectionLead}>
+                    <Translate id="homepage.community.lead">Thank you to everyone who sponsors, translates and contributes.</Translate>
+                </p>
+                <img
+                    src="https://raw.githubusercontent.com/farfromrefug/sponsorkit/main/sponsors.svg"
+                    alt={translate({ id: 'homepage.community.sponsorsAlt', message: 'Sponsors' })}
+                    className={styles.sponsorsImage}
+                    loading="lazy"
+                />
+                <div className={styles.buttonRow}>
+                    <a className="button button--primary button--lg" href="https://github.com/sponsors/farfromrefug">
+                        <Translate id="homepage.community.sponsor">Sponsor on GitHub</Translate>
+                    </a>
+                    <a className="button button--outline button--primary button--lg" href="https://opencollective.com/oss-appscollective">
+                        Open Collective
+                    </a>
+                    <a className="button button--outline button--primary button--lg" href="https://hosted.weblate.org/engage/oss-document-scanner/">
+                        <Translate id="homepage.community.translate">Help translate</Translate>
+                    </a>
+                    <Link className="button button--outline button--primary button--lg" to="/contributing">
+                        <Translate id="homepage.community.contribute">Contribute</Translate>
+                    </Link>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+function StructuredData() {
+    const { siteConfig } = useDocusaurusContext();
+    const iconUrl = (name) => `${siteConfig.url}/img/${name}`;
+    const application = (app, description, icon, applicationCategory) => ({
+        '@type': 'MobileApplication',
+        name: app.name,
+        description,
+        operatingSystem: 'Android, iOS',
+        applicationCategory,
+        image: iconUrl(icon),
+        downloadUrl: app.playStore,
+        installUrl: app.appStore,
+        license: 'https://opensource.org/license/mit',
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+        author: { '@type': 'Organization', name: 'Akylas' }
+    });
+    const data = {
+        '@context': 'https://schema.org',
+        '@graph': [
+            application(
+                APPS.scanner,
+                translate({
+                    id: 'homepage.jsonld.scanner',
+                    message: 'Free and open source document scanner with automatic edge detection, offline OCR, PDF export and sync. No ads, no tracking.'
+                }),
+                'icon-192.png',
+                'BusinessApplication'
+            ),
+            application(
+                APPS.cardwallet,
+                translate({
+                    id: 'homepage.jsonld.cardwallet',
+                    message: 'Free and open source wallet for loyalty cards, tickets and Passbook passes, with barcode scanning and private sync.'
+                }),
+                'icon-cardwallet-192.png',
+                'UtilitiesApplication'
+            ),
+            {
+                '@type': 'FAQPage',
+                mainEntity: FAQ.map((item) => ({
+                    '@type': 'Question',
+                    name: item.question,
+                    acceptedAnswer: { '@type': 'Answer', text: item.answer }
+                }))
+            }
+        ]
+    };
+    return (
+        <Head>
+            <script type="application/ld+json">{JSON.stringify(data)}</script>
+        </Head>
+    );
+}
+
 export default function Home() {
     return (
         <Layout
-            title="Best Free Document Scanner App - Open Source PDF Scanner"
-            description="OSS Document Scanner - The best free, open source document scanner app for Android and iOS. Scan documents to PDF, auto edge detection, OCR, cloud sync. No ads, 100% privacy."
+            title={translate({ id: 'homepage.meta.title', message: 'Free Document Scanner App for Android & iOS' })}
+            description={translate({
+                id: 'homepage.meta.description',
+                message: 'Free, open source document scanner for Android & iOS. Scan to PDF with auto edge detection, offline OCR and sync. No ads, no tracking, no account.'
+            })}
         >
-            <HomepageHeader />
+            <StructuredData />
+            <Hero />
             <main>
-                <DonationBanner />
-                <AppShowcase />
-                <CommonFeatures />
-                <ContributeSection />
-                <SupportSection />
-                <TranslationSection />
+                <ScannerFeatures />
+                <ScannerGallery />
+                <CardWallet />
+                <OpenSource />
+                <Faq />
+                <Download />
+                <Community />
             </main>
         </Layout>
     );

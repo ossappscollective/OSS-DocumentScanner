@@ -6,32 +6,48 @@
 
 /* You can override the default Infima variables here. */
 :root {
-    --ifm-color-primary: #2e8555;
-    --ifm-color-primary-dark: #29784c;
-    --ifm-color-primary-darker: #277148;
-    --ifm-color-primary-darkest: #205d3b;
-    --ifm-color-primary-light: #33925d;
-    --ifm-color-primary-lighter: #359962;
-    --ifm-color-primary-lightest: #3cad6e;
+    --ifm-color-primary: #178f57;
+    --ifm-color-primary-dark: #15814e;
+    --ifm-color-primary-darker: #137a4a;
+    --ifm-color-primary-darkest: #0f643c;
+    --ifm-color-primary-light: #199d5f;
+    --ifm-color-primary-lighter: #1ba563;
+    --ifm-color-primary-lightest: #2fbf71;
     --ifm-code-font-size: 95%;
     --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+    --brand-scanner: #2fbf71;
+    --brand-cardwallet: #da3d5c;
 }
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
 [data-theme='dark'] {
-    --ifm-color-primary: #25c2a0;
-    --ifm-color-primary-dark: #21af90;
-    --ifm-color-primary-darker: #1fa588;
-    --ifm-color-primary-darkest: #1a8870;
-    --ifm-color-primary-light: #29d5b0;
-    --ifm-color-primary-lighter: #32d8b4;
-    --ifm-color-primary-lightest: #4fddbf;
+    --ifm-color-primary: #3ed483;
+    --ifm-color-primary-dark: #2fcc77;
+    --ifm-color-primary-darker: #2cc173;
+    --ifm-color-primary-darkest: #24a05f;
+    --ifm-color-primary-light: #59da95;
+    --ifm-color-primary-lighter: #66dc9d;
+    --ifm-color-primary-lightest: #8be6b8;
     --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
 
-/* Custom styles for document scanner docs */
-.hero--primary {
-    background: linear-gradient(135deg, var(--ifm-color-primary-darker) 0%, var(--ifm-color-primary) 100%);
+.navbar-cta.navbar__item {
+    background: var(--ifm-color-primary);
+    color: #ffffff;
+    border-radius: 999px;
+    padding: 0.35rem 1rem;
+    margin-left: 0.5rem;
+    font-weight: 600;
+}
+
+.navbar-cta.navbar__item:hover {
+    background: var(--ifm-color-primary-dark);
+    color: #ffffff;
+}
+
+[data-theme='dark'] .navbar-cta.navbar__item,
+[data-theme='dark'] .navbar-cta.navbar__item:hover {
+    color: #08140d;
 }
 
 /* Screenshot styling - constrain size for mobile screenshots */

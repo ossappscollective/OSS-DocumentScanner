@@ -1,6 +1,6 @@
 {
     "title": {
-        "message": "Applications OSS",
+        "message": "Apps OSS",
         "description": "The title in the navbar"
     },
     "logo.alt": {
@@ -8,15 +8,15 @@
         "description": "The alt text of navbar logo"
     },
     "item.label.Document Scanner": {
-        "message": "Scanner de Documents",
+        "message": "Scanner",
         "description": "Navbar item with label Document Scanner"
     },
     "item.label.CardWallet": {
-        "message": "Portefeuille de Cartes",
+        "message": "Cartes",
         "description": "Navbar item with label CardWallet"
     },
     "item.label.Sync & Backup": {
-        "message": "Synchronisation et Sauvegarde",
+        "message": "Synchronisation",
         "description": "Navbar item with label Sync & Backup"
     },
     "item.label.Settings": {
@@ -50,5 +50,9 @@
     "item.label.Managing Cards": {
         "message": "Gérer les Cartes",
         "description": "Navbar item with label Managing Cards"
+    },
+    "item.label.Get the apps": {
+        "message": "Télécharger",
+        "description": "Navbar item with label Get the apps"
     }
 }

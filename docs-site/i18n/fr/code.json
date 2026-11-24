@@ -325,5 +325,233 @@
     "theme.tags.tagsPageTitle": {
         "message": "Tags",
         "description": "The title of the tag list page"
+    },
+    "homepage.feature.scan.title": {
+        "message": "Scan intelligent"
+    },
+    "homepage.feature.scan.text": {
+        "message": "Détection automatique des bords, scan en lot pour livres et reçus, import depuis des photos ou des PDF existants."
+    },
+    "homepage.feature.enhance.title": {
+        "message": "Des scans nets et propres"
+    },
+    "homepage.feature.enhance.text": {
+        "message": "Filtres couleur ou noir et blanc, luminosité et contraste, recadrage, rotation, réorganisation et fusion des pages."
+    },
+    "homepage.feature.ocr.title": {
+        "message": "OCR hors ligne"
+    },
+    "homepage.feature.ocr.text": {
+        "message": "Cherchez dans vos documents et copiez n'importe quel texte. Propulsé par Tesseract, les modèles tournent sur votre appareil."
+    },
+    "homepage.feature.organize.title": {
+        "message": "Organisé pour vous"
+    },
+    "homepage.feature.organize.text": {
+        "message": "Dossiers colorés, étiquettes, favoris et recherche instantanée pour retrouver un document en un geste."
+    },
+    "homepage.feature.sync.title": {
+        "message": "Synchronisez à votre façon"
+    },
+    "homepage.feature.sync.text": {
+        "message": "WebDAV, Google Drive, OneDrive ou un dossier local. Vos fichiers, vos serveurs, votre choix."
+    },
+    "homepage.feature.privacy.title": {
+        "message": "Confidentiel par conception"
+    },
+    "homepage.feature.privacy.text": {
+        "message": "Tout est traité sur votre appareil. Protégez vos PDF par mot de passe. Sans pub, sans pistage, sans compte."
+    },
+    "homepage.cardwallet.chip.cards": {
+        "message": "Cartes de fidélité, d'adhésion et de transport"
+    },
+    "homepage.cardwallet.chip.barcode": {
+        "message": "Détection automatique des codes-barres et QR"
+    },
+    "homepage.cardwallet.chip.passbook": {
+        "message": "Compatible Passbook .pkpass"
+    },
+    "homepage.cardwallet.chip.sides": {
+        "message": "Scan recto et verso"
+    },
+    "homepage.cardwallet.chip.expiry": {
+        "message": "Dates d'expiration et soldes"
+    },
+    "homepage.cardwallet.chip.sync": {
+        "message": "Synchronisation privée, sans compte"
+    },
+    "homepage.faq.free.question": {
+        "message": "OSS Document Scanner est-il vraiment gratuit ?"
+    },
+    "homepage.faq.free.answer": {
+        "message": "Oui. Il est gratuit et open source, sans publicité, sans compte et sans pistage. Le code est public sur GitHub et développé avec l'aide de la communauté."
+    },
+    "homepage.faq.upload.question": {
+        "message": "Mes documents sont-ils envoyés quelque part ?"
+    },
+    "homepage.faq.upload.answer": {
+        "message": "Non. Le scan, l'amélioration et l'OCR se font sur votre appareil. La synchronisation est optionnelle et va vers un stockage que vous contrôlez : WebDAV, Google Drive, OneDrive ou un dossier local."
+    },
+    "homepage.faq.ocr.question": {
+        "message": "L'OCR fonctionne-t-il hors ligne ?"
+    },
+    "homepage.faq.ocr.answer": {
+        "message": "Oui. Téléchargez une fois les modèles de langue dont vous avez besoin, puis reconnaissez le texte sans connexion. Vous pouvez aussi générer des PDF interrogeables."
+    },
+    "homepage.faq.export.question": {
+        "message": "Quels formats puis-je exporter ?"
+    },
+    "homepage.faq.export.answer": {
+        "message": "PDF, JPEG et PNG. Les PDF peuvent être configurés et protégés par mot de passe avant le partage."
+    },
+    "homepage.faq.platforms.question": {
+        "message": "Quelles plateformes sont prises en charge ?"
+    },
+    "homepage.faq.platforms.answer": {
+        "message": "Android et iOS. Sur Android, vous pouvez aussi installer depuis IzzyOnDroid, les versions GitHub ou Obtainium."
+    },
+    "homepage.faq.cardwallet.question": {
+        "message": "Qu'est-ce que OSS Card Wallet ?"
+    },
+    "homepage.faq.cardwallet.answer": {
+        "message": "Une application compagnon, basée sur le même moteur, pour scanner et ranger cartes de fidélité, billets, pièces d'identité et passes Passbook avec leurs codes-barres, dans un endroit privé."
+    },
+    "homepage.store.play.aria": {
+        "message": "Obtenir {name} sur Google Play"
+    },
+    "homepage.store.play.alt": {
+        "message": "Disponible sur Google Play"
+    },
+    "homepage.store.appstore.aria": {
+        "message": "Télécharger {name} sur l'App Store"
+    },
+    "homepage.store.appstore.alt": {
+        "message": "Télécharger dans l'App Store"
+    },
+    "homepage.hero.iconAlt": {
+        "message": "Icône de l'application OSS Document Scanner"
+    },
+    "homepage.hero.title": {
+        "message": "Scanner de documents gratuit pour Android et iOS"
+    },
+    "homepage.hero.subtitle": {
+        "message": "Scannez en PDF, retrouvez n'importe quel texte grâce à l'OCR hors ligne et gardez tout privé. Open source, sans pub, sans compte."
+    },
+    "homepage.hero.trust.free": {
+        "message": "100 % gratuit"
+    },
+    "homepage.hero.trust.noAds": {
+        "message": "Sans pub"
+    },
+    "homepage.hero.trust.noTracking": {
+        "message": "Sans pistage"
+    },
+    "homepage.hero.trust.openSource": {
+        "message": "Open source"
+    },
+    "homepage.hero.shot.edges": {
+        "message": "Détection automatique des bords dans OSS Document Scanner"
+    },
+    "homepage.hero.shot.library": {
+        "message": "Bibliothèque de documents avec dossiers, étiquettes et recherche"
+    },
+    "homepage.hero.shot.search": {
+        "message": "Recherche de texte hors ligne dans les documents"
+    },
+    "homepage.features.title": {
+        "message": "Tout ce qu'il faut pour scanner, chercher et organiser"
+    },
+    "homepage.features.lead": {
+        "message": "Une seule application pour transformer le papier en PDF propres et interrogeables, sans confier vos documents à personne."
+    },
+    "homepage.gallery.title": {
+        "message": "Voyez-le en action"
+    },
+    "homepage.gallery.lead": {
+        "message": "Du premier scan à l'archive synchronisée, en clair ou en sombre."
+    },
+    "homepage.gallery.label": {
+        "message": "Aperçus de OSS Document Scanner"
+    },
+    "homepage.gallery.altPrefix": {
+        "message": "Aperçu de OSS Document Scanner"
+    },
+    "homepage.cardwallet.shot.stack": {
+        "message": "Cartes empilées dans OSS Card Wallet"
+    },
+    "homepage.cardwallet.shot.cards": {
+        "message": "Toutes les cartes de fidélité et d'adhésion dans OSS Card Wallet"
+    },
+    "homepage.cardwallet.shot.pass": {
+        "message": "Carte d'embarquement importée dans OSS Card Wallet"
+    },
+    "homepage.cardwallet.iconAlt": {
+        "message": "Icône de l'application OSS Card Wallet"
+    },
+    "homepage.cardwallet.title": {
+        "message": "Toutes vos cartes et passes dans un portefeuille privé"
+    },
+    "homepage.cardwallet.subtitle": {
+        "message": "Scannez cartes de fidélité, billets et pièces d'identité, ou importez des fichiers Passbook. Les codes-barres sont toujours lumineux et prêts en caisse."
+    },
+    "homepage.cardwallet.guide": {
+        "message": "Guide Card Wallet →"
+    },
+    "homepage.opensource.title": {
+        "message": "Gratuit, open source et privé"
+    },
+    "homepage.opensource.lead": {
+        "message": "Sans pub. Sans pistage. Sans enfermement. Lisez le code, proposez un correctif ou traduisez les applications dans votre langue."
+    },
+    "homepage.faq.title": {
+        "message": "Questions fréquentes"
+    },
+    "homepage.faq.more": {
+        "message": "Plus de réponses dans la {link}."
+    },
+    "homepage.faq.moreLink": {
+        "message": "FAQ complète"
+    },
+    "homepage.download.guide": {
+        "message": "Lire le guide →"
+    },
+    "homepage.community.title": {
+        "message": "Construit par la communauté"
+    },
+    "homepage.community.lead": {
+        "message": "Merci à tous ceux qui sponsorisent, traduisent et contribuent."
+    },
+    "homepage.community.sponsorsAlt": {
+        "message": "Sponsors"
+    },
+    "homepage.community.sponsor": {
+        "message": "Sponsoriser sur GitHub"
+    },
+    "homepage.community.translate": {
+        "message": "Aider à traduire"
+    },
+    "homepage.community.contribute": {
+        "message": "Contribuer"
+    },
+    "homepage.jsonld.scanner": {
+        "message": "Scanner de documents gratuit et open source avec détection automatique des bords, OCR hors ligne, export PDF et synchronisation. Sans pub, sans pistage."
+    },
+    "homepage.jsonld.cardwallet": {
+        "message": "Portefeuille gratuit et open source pour cartes de fidélité, billets et passes Passbook, avec scan de codes-barres et synchronisation privée."
+    },
+    "homepage.meta.title": {
+        "message": "Scanner de documents gratuit pour Android et iOS"
+    },
+    "homepage.meta.description": {
+        "message": "Scanner de documents gratuit et open source pour Android et iOS. Scan en PDF avec détection des bords, OCR hors ligne et synchronisation. Sans pub, sans pistage, sans compte."
+    },
+    "homepage.store.github.alt": {
+        "message": "Disponible sur GitHub"
+    },
+    "homepage.store.izzy.alt": {
+        "message": "Disponible sur IzzyOnDroid"
+    },
+    "homepage.store.obtainium.alt": {
+        "message": "Disponible sur Obtainium"
     }
 }

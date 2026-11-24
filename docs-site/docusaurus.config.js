@@ -10,7 +10,7 @@ import { themes as prismThemes } from 'prism-react-renderer';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-    title: 'OSS Document Scanner - Best Free PDF Scanner App',
+    title: 'OSS Apps',
     tagline: 'Free, open source document scanner and card wallet apps for Android & iOS. No ads, 100% privacy.',
     favicon: 'img/favicon.ico',
 
@@ -48,6 +48,20 @@ const config = {
                 name: 'author',
                 content: 'Akylas'
             }
+        },
+        {
+            tagName: 'meta',
+            attributes: {
+                name: 'theme-color',
+                content: '#2FBF71'
+            }
+        },
+        {
+            tagName: 'link',
+            attributes: {
+                rel: 'apple-touch-icon',
+                href: '/img/apple-touch-icon.png'
+            }
         }
     ],
 
@@ -56,7 +70,7 @@ const config = {
     // may want to replace "en" with "zh-Hans".
     i18n: {
         defaultLocale: 'en',
-        locales: ['en'],
+        locales: ['en', 'fr'],
         localeConfigs: {
             en: {
                 label: 'English',
@@ -100,8 +114,8 @@ const config = {
     themeConfig:
         /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
         ({
-            // Replace with your project's social card
-            image: 'img/docusaurus-social-card.jpg',
+            // Scanner feature graphic, copied by scripts/copy-assets.sh
+            image: 'img/apps/documentscanner-feature.png',
             navbar: {
                 title: 'OSS Apps',
                 logo: {
@@ -112,6 +126,7 @@ const config = {
                     {
                         type: 'dropdown',
                         label: 'Document Scanner',
+                        to: '/#document-scanner',
                         position: 'left',
                         items: [
                             {
@@ -135,6 +150,7 @@ const config = {
                     {
                         type: 'dropdown',
                         label: 'CardWallet',
+                        to: '/#cardwallet',
                         position: 'left',
                         items: [
                             {
@@ -169,6 +185,12 @@ const config = {
                         href: 'https://github.com/ossappscollective/OSS-DocumentScanner',
                         label: 'GitHub',
                         position: 'right'
+                    },
+                    {
+                        to: '/#download',
+                        label: 'Get the apps',
+                        position: 'right',
+                        className: 'navbar-cta'
                     }
                 ]
             },
