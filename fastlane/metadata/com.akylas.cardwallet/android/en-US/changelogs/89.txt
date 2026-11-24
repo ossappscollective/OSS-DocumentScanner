@@ -1,0 +1,11 @@
+Features:
+- use the native app bar, inline search and selection toolbar
+- add Mac Catalyst build configuration
+- give the app bar its scroll target and a text field search on Android
+- sort imported files oldest first by name
+- add a reverse pages action
+- add camera as primary action and bottom search on iOS
+- add app icon ids and an options to menu helper
+- native camera controls and grouped settings sheet
+- native app bar and bottom toolbar in the card view
+- show the code and the images of a
