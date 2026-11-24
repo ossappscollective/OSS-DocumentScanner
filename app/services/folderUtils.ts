@@ -17,6 +17,17 @@ export function filterEmptyFolders<T extends FolderLike>(folders: T[]): T[] {
     return folders.filter((folder) => !folder.count);
 }
 
+export function buildFolderName(parentName: string | undefined, input: string): string | null {
+    const segments = input
+        .split('/')
+        .map((segment) => segment.trim())
+        .filter((segment) => segment.length);
+    if (!segments.length) {
+        return null;
+    }
+    return (parentName ? [parentName, ...segments] : segments).join('/');
+}
+
 export function folderAncestorNames(name: string): string[] {
     const parts = name.split('/');
     const ancestors: string[] = [];

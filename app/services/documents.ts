@@ -7,7 +7,15 @@ import SqlQuery from 'kiss-orm/dist/Queries/SqlQuery';
 import CrudRepository from 'kiss-orm/dist/Repositories/CrudRepository';
 import { DocFolder, Document, IDocFolder, OCRDocument, OCRPage, Page, Tag } from '~/models/OCRDocument';
 import { PKPass, PKPassType } from '~/models/PKPass';
-import { EVENT_DOCUMENT_DELETED, EVENT_DOCUMENT_RESTORED, EVENT_DOCUMENT_TRASHED, EVENT_DOCUMENT_USE_COUNT, EVENT_FOLDER_DELETED, SETTINGS_ROOT_DATA_FOLDER } from '~/utils/constants';
+import {
+    EVENT_DOCUMENT_DELETED,
+    EVENT_DOCUMENT_RESTORED,
+    EVENT_DOCUMENT_TRASHED,
+    EVENT_DOCUMENT_USE_COUNT,
+    EVENT_FOLDER_ADDED,
+    EVENT_FOLDER_DELETED,
+    SETTINGS_ROOT_DATA_FOLDER
+} from '~/utils/constants';
 import { groupByArray } from '@shared/utils';
 import { missingFolderAncestors } from '~/services/folderUtils';
 import { StorageSizes } from '~/utils/originals';
@@ -1114,6 +1122,16 @@ WHERE d.trashedDate IS NULL`);
         await this.db.query(sql`DELETE FROM DocumentsFolders WHERE folder_id IN (${ids})`);
         await this.db.query(sql`DELETE FROM Folder WHERE id IN (${ids})`);
         this.notify({ eventName: EVENT_FOLDER_DELETED, folders } as FolderDeletedEventData);
+    }
+    async createFolder(name: string) {
+        const existing = (await this.folderRepository.search({ where: sql`name=${name}` }))[0];
+        if (existing) {
+            return existing;
+        }
+        const folder = await this.folderRepository.create({ id: Date.now(), name, modifiedDate: Date.now() });
+        const ancestors = await this.folderRepository.ensureAncestors([name]);
+        ancestors.concat(folder).forEach((added) => this.notify({ eventName: EVENT_FOLDER_ADDED, folder: added } as DocumentFolderAddedEventData));
+        return folder;
     }
     async trashDocuments(documents: OCRDocument[]) {
         DEV_LOG &&
