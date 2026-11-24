@@ -103,10 +103,10 @@ export class SyncService extends BaseWorkerHandler<SyncWorker> {
         super(() => new Worker('~/workers/SyncWorker'));
     }
     handleError(error: any) {
-        showError(error);
+        showError(error, { showAsSnack: true });
     }
     handleWorkerError(error: any) {
-        showError(CustomError.fromObject({ ...error, sentryReportTranslatedName: true }));
+        showError(CustomError.fromObject({ ...error, sentryReportTranslatedName: true }), { showAsSnack: true });
     }
     async onWorkerEvent(eventData) {
         // DEV_LOG && console.log('onWorkerEvent', eventData);
@@ -182,13 +182,9 @@ export class SyncService extends BaseWorkerHandler<SyncWorker> {
         this.sendDataEvent(event);
     }
     onDocumentUpdated(event: DocumentUpdatedEventData) {
-        // only used for data sync
+        // only used for data sync; PDF/image sync happens when the user triggers sync/upload
         DEV_LOG && console.log('SYNC', 'onDocumentUpdated', event.updateModifiedDate);
         if (event.updateModifiedDate !== false && event.fromWorker !== true) {
-            // let type = SyncType.PDF;
-            // if (event.fromWorker !== true) {
-            // let type = SyncType.DATA;
-            // }
             this.syncDocumentsInternal({ event, type: SyncType.DATA, fromEvent: event.eventName });
         }
     }
@@ -254,8 +250,9 @@ export class SyncService extends BaseWorkerHandler<SyncWorker> {
         return true;
         // }
     }
+    listenersAttached = false;
     async start() {
-        if (this.enabled) {
+        if (this.enabled && this.listenersAttached) {
             return;
         }
         const syncServices = (this.services = this.getStoredSyncServices().filter((s) => s.enabled !== false));
@@ -264,28 +261,32 @@ export class SyncService extends BaseWorkerHandler<SyncWorker> {
         // DEV_LOG && console.log('Sync', 'start', /* this.services.length,  */ this.enabled);
         if (this.enabled) {
             this.notify({ eventName: EVENT_STATE, enabled: this.enabled } as SyncEnabledEventData);
-            documentsService.on(EVENT_DOCUMENT_ADDED, this.onDocumentAdded, this);
-            documentsService.on(EVENT_DOCUMENT_UPDATED, this.onDocumentUpdated, this);
-            documentsService.on(EVENT_DOCUMENT_DELETED, this.onDocumentDeleted, this);
-            documentsService.on(EVENT_DOCUMENT_PAGE_UPDATED, this.sendImagesEvent, this);
-            documentsService.on(EVENT_DOCUMENT_PAGES_ADDED, this.sendImageEvent, this);
-            documentsService.on(EVENT_DOCUMENT_PAGE_DELETED, this.sendPDFEvent, this);
-            documentsService.on(EVENT_DOCUMENT_MOVED_FOLDER, this.sendDataEvent, this);
-            documentsService.on(EVENT_FOLDER_UPDATED, this.sendDataEvent, this);
-            documentsService.on(EVENT_FOLDER_ADDED, this.sendDataEvent, this);
-            documentsService.on(EVENT_FOLDER_DELETED, this.onFolderDeleted, this);
-            this.on(EVENT_SYNC_STATE, this.onSyncState, this);
+            if (!this.listenersAttached) {
+                this.listenersAttached = true;
+                documentsService.on(EVENT_DOCUMENT_ADDED, this.onDocumentAdded, this);
+                documentsService.on(EVENT_DOCUMENT_UPDATED, this.onDocumentUpdated, this);
+                documentsService.on(EVENT_DOCUMENT_DELETED, this.onDocumentDeleted, this);
+                documentsService.on(EVENT_DOCUMENT_PAGE_UPDATED, this.sendImagesEvent, this);
+                documentsService.on(EVENT_DOCUMENT_PAGES_ADDED, this.sendImageEvent, this);
+                documentsService.on(EVENT_DOCUMENT_PAGE_DELETED, this.sendPDFEvent, this);
+                documentsService.on(EVENT_DOCUMENT_MOVED_FOLDER, this.sendDataEvent, this);
+                documentsService.on(EVENT_FOLDER_UPDATED, this.sendDataEvent, this);
+                documentsService.on(EVENT_FOLDER_ADDED, this.sendDataEvent, this);
+                documentsService.on(EVENT_FOLDER_DELETED, this.onFolderDeleted, this);
+                this.on(EVENT_SYNC_STATE, this.onSyncState, this);
+            }
 
             DEV_LOG && console.log('SyncService', 'start');
         }
     }
     async stop() {
         DEV_LOG && console.log('Sync', 'stop');
+        this.listenersAttached = false;
         this.off(EVENT_SYNC_STATE, this.onSyncState, this);
         documentsService.off(EVENT_DOCUMENT_ADDED, this.onDocumentAdded, this);
         documentsService.off(EVENT_DOCUMENT_UPDATED, this.onDocumentUpdated, this);
         documentsService.off(EVENT_DOCUMENT_DELETED, this.onDocumentDeleted, this);
-        documentsService.off(EVENT_DOCUMENT_PAGE_UPDATED, this.sendImageEvent, this);
+        documentsService.off(EVENT_DOCUMENT_PAGE_UPDATED, this.sendImagesEvent, this);
         documentsService.off(EVENT_DOCUMENT_PAGES_ADDED, this.sendImageEvent, this);
         documentsService.off(EVENT_DOCUMENT_PAGE_DELETED, this.sendPDFEvent, this);
         documentsService.off(EVENT_DOCUMENT_MOVED_FOLDER, this.sendDataEvent, this);
@@ -301,10 +302,16 @@ export class SyncService extends BaseWorkerHandler<SyncWorker> {
     }
 
     onServiceChanged(force = false) {
+        const wasEnabled = this.enabled;
         const services = this.getStoredSyncServices().filter((s) => s.enabled !== false);
         this.services = services;
         syncServicesStore.set(services);
         DEV_LOG && console.log('onServiceChanged', this.services.length);
+        if (this.enabled && !this.listenersAttached) {
+            this.start();
+        } else if (wasEnabled !== this.enabled) {
+            this.notify({ eventName: EVENT_STATE, enabled: this.enabled } as SyncEnabledEventData);
+        }
     }
 
     syncRunning = false;
@@ -355,11 +362,20 @@ export class SyncService extends BaseWorkerHandler<SyncWorker> {
                 // }
                 DEV_LOG && console.log('syncDocumentsInternal', data.type, data.fromEvent, Object.keys(otherProps));
             }
-            await this.sendMessageToWorker('sync', {
-                ...data,
-                event: eventData
-            });
+            await this.sendMessageToWorker(
+                'sync',
+                {
+                    ...data,
+                    event: eventData
+                },
+                undefined,
+                undefined,
+                false,
+                0,
+                {}
+            );
         } catch (error) {
+            this.notify({ eventName: EVENT_SYNC_STATE, state: 'finished' } as SyncStateEventData);
             DEV_LOG && console.error(error);
             showError(error);
         }
