@@ -139,7 +139,7 @@ export class SyncService extends BaseWorkerHandler<SyncWorker> {
                     eventData.uploadedFiles.length <= 2
                         ? eventData.uploadedFiles.join(', ')
                         : `${eventData.uploadedFiles[0]} (+${eventData.uploadedFiles.length - 1})`;
-                showSnack({ message: `✅ Upload: ${summary}` });
+                showSnack({ message: `Upload: ${summary}` });
             }
             this.notify({ ...eventData });
         }

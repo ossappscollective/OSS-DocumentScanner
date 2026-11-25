@@ -665,7 +665,7 @@
     "create_new_subfolder": "New subfolder",
     "select_remote_folder": "Select target folder on server",
     "select_remote_folder_from_list": "Browse folders on server",
-    "seafile_luh_preset": "Seafile (/dav)",
+    "seafile_dav_preset": "Seafile (/dav)",
     "seafile_append_seafdav": "Seafile (/seafdav)",
     "nextcloud_preset": "Nextcloud (/remote.php/dav)",
     "seafile_root_folder_warning": "Note for Seafile: Files cannot be uploaded directly to the root directory (/). Please select a library folder below (e.g. /My Library).",
@@ -697,5 +697,9 @@
     "friendly_error_locked": "The file is currently locked on the server or too many requests were sent. Please wait a moment and try again.",
     "friendly_error_server_title": "Server error",
     "friendly_error_server": "The WebDAV server reported an internal error.",
-    "friendly_error_general": "Could not complete the WebDAV request."
+    "friendly_error_general": "Could not complete the WebDAV request.",
+    "freetext_label": "Freetext",
+    "template_pattern_label": "Template pattern",
+    "placeholders": "Placeholders",
+    "webdav_endpoint_presets": "Quick endpoint presets"
 }

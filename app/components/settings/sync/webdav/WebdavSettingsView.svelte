@@ -9,7 +9,6 @@
     import TestConnectionButton from '~/components/settings/sync/TestConnectionButton.svelte';
     import { lc } from '~/helpers/locale';
     import {
-        LUH_SEAFILE_WEBDAV_URL,
         WebdavDirectoryEntry,
         WebdavSyncOptions,
         createWebdavSubdirectory,
@@ -25,7 +24,7 @@
     import { AuthType } from '~/webdav';
 
     $: ({ authType } = $store);
-    $: ({ colorError, colorOnSurfaceVariant } = $colors);
+    $: ({ colorError, colorOnSurfaceVariant, colorOutlineVariant, colorSurfaceContainer } = $colors);
     $: authRowProps = getSettingsRowProps({ position: 'only' }, $colors, __IOS__);
     const fieldMargin = '4 16 4 16';
 
@@ -47,7 +46,7 @@
         const raw = ($store.remoteURL || '').trim();
         if (!raw) {
             if (preset === 'seafile_dav') {
-                $store.remoteURL = LUH_SEAFILE_WEBDAV_URL;
+                $store.remoteURL = 'https://seafile.example.com/dav';
             } else if (preset === 'seafile_seafdav') {
                 $store.remoteURL = 'https://seafile.example.com/seafdav';
             } else {
@@ -176,7 +175,7 @@
                 ...(currentBrowsePath && currentBrowsePath !== '/'
                     ? [
                           {
-                              name: `✅ ${lc('use_this_folder')}: ${currentBrowsePath}`,
+                              name: `${lc('use_this_folder')}: ${currentBrowsePath}`,
                               data: { action: 'select', path: currentBrowsePath },
                               boxType: 'circle',
                               type: 'checkbox',
@@ -187,7 +186,7 @@
                 ...(parentPath
                     ? [
                           {
-                              name: `⬆️ ${lc('parent_folder')} (${parentPath})`,
+                              name: `${lc('parent_folder')} (${parentPath})`,
                               data: { action: 'browse', path: parentPath },
                               boxType: 'circle',
                               type: 'checkbox',
@@ -196,14 +195,14 @@
                       ]
                     : []),
                 {
-                    name: `➕ ${lc('create_new_subfolder')}`,
+                    name: `+ ${lc('create_new_subfolder')}`,
                     data: { action: 'create', path: currentBrowsePath },
                     boxType: 'circle',
                     type: 'checkbox',
                     value: false
                 },
                 ...remoteDirectories.map((dir) => ({
-                    name: `📁 ${dir.name} (${dir.path})`,
+                    name: `${dir.name} (${dir.path})`,
                     data: { action: 'folder', path: dir.path, name: dir.name },
                     boxType: 'circle',
                     type: 'checkbox',
@@ -306,22 +305,32 @@
             testConnectionSuccess = 0;
         }} />
 
-    <wraplayout margin="0 16 4 16">
+    <label color={colorOnSurfaceVariant} fontSize={11} fontWeight="600" margin="2 16 4 16" text={lc('webdav_endpoint_presets')} />
+    <wraplayout margin="0 16 8 16">
         <uibutton
+            borderRadius={16}
+            fontSize={12}
             height={30}
             margin="0 6 4 0"
+            padding="0 10"
             text={lc('seafile_append_seafdav')}
             variant={/\/seafdav$/i.test($store.remoteURL || '') ? 'contained' : 'outline'}
             on:tap={() => applyEndpointPreset('seafile_seafdav')} />
         <uibutton
+            borderRadius={16}
+            fontSize={12}
             height={30}
             margin="0 6 4 0"
-            text={lc('seafile_luh_preset')}
+            padding="0 10"
+            text={lc('seafile_dav_preset')}
             variant={/\/dav$/i.test($store.remoteURL || '') ? 'contained' : 'outline'}
             on:tap={() => applyEndpointPreset('seafile_dav')} />
         <uibutton
+            borderRadius={16}
+            fontSize={12}
             height={30}
             margin="0 6 4 0"
+            padding="0 10"
             text={lc('nextcloud_preset')}
             variant={/\/remote\.php\/dav/i.test($store.remoteURL || '') ? 'contained' : 'outline'}
             on:tap={() => applyEndpointPreset('nextcloud')} />
@@ -370,48 +379,64 @@
             textWrap={true} />
     {/if}
 
-    <gridlayout columns="*,auto" margin="0 16 6 16">
+    <gridlayout columns="*,auto" margin="2 16 8 16">
         <uibutton
+            borderRadius={18}
             height={36}
             isEnabled={!loadingFolders}
-            text={loadingFolders ? lc('loading') : `📁 ${lc('select_remote_folder_from_list')}`}
+            text={loadingFolders ? lc('loading') : lc('select_remote_folder_from_list')}
             variant="outline"
             on:tap={() => openRemoteFolderPicker($store.remoteFolder || '/')} />
         <uibutton
+            borderRadius={18}
             col={1}
             height={36}
             isEnabled={!loadingFolders}
             marginLeft={8}
-            text={`➕ ${lc('create_new_subfolder')}`}
+            text={`+ ${lc('create_new_subfolder')}`}
             variant="outline"
             on:tap={() => promptCreateSubfolder($store.remoteFolder || currentBrowsePath || '/')} />
     </gridlayout>
 
     {#if remoteDirectories.length > 0 || currentBrowsePath !== '/'}
-        <label color={colorOnSurfaceVariant} fontSize={12} margin="2 16 4 16" text={`${lc('existing_folders')} (${currentBrowsePath}):`} />
-        <wraplayout margin="0 16 4 16">
-            {#if parentBrowsePath}
-                <uibutton
-                    height={32}
-                    margin="0 6 6 0"
-                    text={`⬆️ ${parentBrowsePath}`}
-                    variant="outline"
-                    on:tap={() => {
-                        $store.remoteFolder = parentBrowsePath;
-                        loadRemoteFolders(parentBrowsePath);
-                    }} />
-            {/if}
-            {#each remoteDirectories as dir (dir.path)}
-                <uibutton
-                    height={32}
-                    margin="0 6 6 0"
-                    text={`📁 ${dir.name}`}
-                    variant={$store.remoteFolder === dir.path ? 'contained' : 'outline'}
-                    on:tap={() => {
-                        $store.remoteFolder = dir.path;
-                        loadRemoteFolders(dir.path);
-                    }} />
-            {/each}
-        </wraplayout>
+        <stacklayout
+            backgroundColor={colorSurfaceContainer}
+            borderColor={colorOutlineVariant}
+            borderRadius={12}
+            borderWidth={1}
+            margin="0 16 8 16"
+            padding="8 10 4 10">
+            <label color={colorOnSurfaceVariant} fontSize={11} fontWeight="600" margin="0 0 6 2" text={`${lc('existing_folders')} (${currentBrowsePath})`} />
+            <wraplayout>
+                {#if parentBrowsePath}
+                    <uibutton
+                        borderRadius={16}
+                        fontSize={12}
+                        height={30}
+                        margin="0 6 6 0"
+                        padding="0 10"
+                        text={`.. (${parentBrowsePath})`}
+                        variant="outline"
+                        on:tap={() => {
+                            $store.remoteFolder = parentBrowsePath;
+                            loadRemoteFolders(parentBrowsePath);
+                        }} />
+                {/if}
+                {#each remoteDirectories as dir (dir.path)}
+                    <uibutton
+                        borderRadius={16}
+                        fontSize={12}
+                        height={30}
+                        margin="0 6 6 0"
+                        padding="0 10"
+                        text={dir.name}
+                        variant={$store.remoteFolder === dir.path ? 'contained' : 'outline'}
+                        on:tap={() => {
+                            $store.remoteFolder = dir.path;
+                            loadRemoteFolders(dir.path);
+                        }} />
+                {/each}
+            </wraplayout>
+        </stacklayout>
     {/if}
 </stacklayout>

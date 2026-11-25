@@ -657,7 +657,7 @@
     "create_new_subfolder": "Neuer Unterordner",
     "select_remote_folder": "Zielordner auf Server auswählen",
     "select_remote_folder_from_list": "Ordner vom Server durchsuchen",
-    "seafile_luh_preset": "Seafile (/dav)",
+    "seafile_dav_preset": "Seafile (/dav)",
     "seafile_append_seafdav": "Seafile (/seafdav)",
     "nextcloud_preset": "Nextcloud (/remote.php/dav)",
     "seafile_root_folder_warning": "Hinweis für Seafile: Im Hauptverzeichnis (/) können keine Dateien gespeichert werden. Bitte wähle unten eine Bibliothek (z. B. /Meine Bibliothek) als Zielordner aus.",
@@ -689,5 +689,9 @@
     "friendly_error_locked": "Die Datei ist auf dem Server gerade gesperrt oder es wurden zu viele Anfragen gesendet. Bitte kurz warten und erneut versuchen.",
     "friendly_error_server_title": "Serverfehler",
     "friendly_error_server": "Der WebDAV-Server hat einen internen Fehler gemeldet.",
-    "friendly_error_general": "Die WebDAV-Anfrage konnte nicht abgeschlossen werden."
+    "friendly_error_general": "Die WebDAV-Anfrage konnte nicht abgeschlossen werden.",
+    "freetext_label": "Freitext",
+    "template_pattern_label": "Vorlagen-Muster",
+    "placeholders": "Platzhalter",
+    "webdav_endpoint_presets": "Schnellauswahl für WebDAV-Endpunkte"
 }

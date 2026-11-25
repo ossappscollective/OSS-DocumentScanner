@@ -49,8 +49,8 @@ export const getFileNameFormatItem = (store: Writable<SyncSettingsValues>) => ({
     description: () => {
         const pattern = get(store).fileNameFormat || 'YYYY-MM-DD.{freetext}.HH-mm';
         const freetext = getDefaultCustomText();
-        const preview = formatNamingTemplate(pattern, { date: Date.now(), customText: freetext || 'Freetext', clean: true });
-        return freetext ? `${lc('filename_date_format_desc')} · Freetext: "${freetext}" → ${preview}.pdf` : `${lc('filename_date_format_desc')} → ${preview}.pdf`;
+        const preview = formatNamingTemplate(pattern, { date: Date.now(), customText: freetext, clean: true });
+        return `${lc('filename_date_format_desc')} (${preview}.pdf)`;
     },
     full_description: lc('filename_date_format_fulldesc', ...getNameFormatHTMLArgs()),
     onLinkTap: ({ link }) => {
@@ -76,11 +76,7 @@ export const getFileNameFormatItem = (store: Writable<SyncSettingsValues>) => ({
         autocapitalizationType: 'none',
         autocorrect: false
     } as TextFieldProperties,
-    rightValue: () => {
-        const pattern = get(store).fileNameFormat;
-        const freetext = getDefaultCustomText();
-        return freetext ? `${pattern} (${freetext})` : pattern;
-    },
+    rightValue: () => get(store).fileNameFormat || 'YYYY-MM-DD.{freetext}.HH-mm',
     type: 'prompt'
 });
 

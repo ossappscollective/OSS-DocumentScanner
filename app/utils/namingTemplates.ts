@@ -159,9 +159,29 @@ export function setActiveNamingPattern(pattern: string): void {
     }
 }
 
+function escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Checks whether `candidate` already appears as a standalone segment inside `text`
+ * (bounded by string start/end or common filename separators), so freetext is never appended twice.
+ */
+export function containsTextSegment(text: string, candidate: string): boolean {
+    const trimmed = (candidate || '').trim();
+    if (!text || !trimmed) {
+        return false;
+    }
+    const variants = Array.from(new Set([trimmed, cleanTemplateFilename(trimmed)])).filter(Boolean);
+    return variants.some((variant) => {
+        const re = new RegExp(`(?:^|[._\\-\\s/])${escapeRegExp(variant)}(?=$|[._\\-\\s/])`, 'i');
+        return re.test(text);
+    });
+}
+
 /**
  * Replaces `{freetext}` / `Freetext` / `{freitext}` / `Freitext` in a template pattern
- * directly with the user's custom word (or appends it if the pattern had no freetext token).
+ * directly with the user's custom word (or appends it once if the pattern had no freetext token).
  */
 export function applyFreetextToPattern(basePattern: string, freetext?: string): string {
     const cleanPattern = (basePattern || 'YYYY-MM-DD.{freetext}.HH-mm').trim();
@@ -176,6 +196,9 @@ export function applyFreetextToPattern(basePattern: string, freetext?: string): 
     const unbracedRe = /(^|[^A-Za-zäöüßÄÖÜ])(freetext|freetxt|free[-_ ]?text|freitext|freitxt|frei[-_ ]?text|customtext)(?=$|[^A-Za-zäöüßÄÖÜ])/gi;
     if (unbracedRe.test(cleanPattern)) {
         return cleanPattern.replace(unbracedRe, (_m, prefix) => `${prefix}${cleanText}`);
+    }
+    if (containsTextSegment(cleanPattern, cleanText)) {
+        return cleanPattern;
     }
     const sep = cleanPattern.includes('.') && !cleanPattern.includes('_') ? '.' : '_';
     return `${cleanPattern}${sep}${cleanText}`;
@@ -352,8 +375,9 @@ export function formatNamingTemplate(pattern?: string, options: FormatNamingOpti
     // Restore segments
     let result = working.replace(/\x01SEG_(\d+)_\x01/g, (_m, idxStr) => segments[Number(idxStr)] ?? '');
 
-    // 4. Append customText if provided and no {freitext}/Freitext placeholder was in the pattern
-    if (trimmedCustomText && !usedCustomPlaceholder && appendCustomTextIfMissingPlaceholder) {
+    // 4. Append customText if provided, no {freitext}/Freitext placeholder was in the pattern,
+    // and the resulting filename does not already contain the same customText segment.
+    if (trimmedCustomText && !usedCustomPlaceholder && appendCustomTextIfMissingPlaceholder && !containsTextSegment(result, trimmedCustomText)) {
         const sep = result.includes('.') && !result.includes('_') ? '.' : '_';
         result = result ? `${result}${sep}${trimmedCustomText}` : trimmedCustomText;
     }

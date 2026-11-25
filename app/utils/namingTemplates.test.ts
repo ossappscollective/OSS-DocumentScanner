@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
     DEFAULT_NAMING_TEMPLATES,
     addOrUpdateNamingTemplate,
+    applyFreetextToPattern,
+    containsTextSegment,
     deleteNamingTemplate,
     formatNamingTemplate,
     getNamingTemplates,
@@ -68,11 +70,11 @@ describe('formatNamingTemplate', () => {
     });
 
     it('collapses redundant underscores when {freitext} is empty', () => {
-        const result = formatNamingTemplate('YYYY-MM-DD_LUH_{freitext}_HH-mm', {
+        const result = formatNamingTemplate('YYYY-MM-DD_DOC_{freitext}_HH-mm', {
             date: sampleTimestamp,
             customText: ''
         });
-        expect(result).toBe('2026-11-18_LUH_12-40');
+        expect(result).toBe('2026-11-18_DOC_12-40');
     });
 
     it('appends customText automatically when pattern has no {freitext} placeholder', () => {
@@ -86,11 +88,11 @@ describe('formatNamingTemplate', () => {
     it('supports {ordner}, {seiten}, and {nr} placeholders', () => {
         const result = formatNamingTemplate('{ordner}_YYYY-MM-DD_{seiten}p_{nr}', {
             date: sampleTimestamp,
-            folderName: 'Uni Hannover',
+            folderName: 'Invoices 2026',
             pageCount: 4,
             counter: 7
         });
-        expect(result).toBe('Uni_Hannover_2026-11-18_4p_007');
+        expect(result).toBe('Invoices_2026_2026-11-18_4p_007');
     });
 
     it('supports curly-brace date/time placeholders {YYYY}-{MM}-{DD}_{HH}-{mm}-{ss}', () => {
@@ -98,6 +100,27 @@ describe('formatNamingTemplate', () => {
             date: sampleTimestamp
         });
         expect(result).toBe('2026-11-18_12-40-05');
+    });
+
+    it('never duplicates freetext when pattern already contains the same freetext segment', () => {
+        expect(
+            formatNamingTemplate('YYYY-MM-DD.Rechnung.HH-mm', {
+                date: sampleTimestamp,
+                customText: 'Rechnung'
+            })
+        ).toBe('2026-11-18.Rechnung.12-40');
+
+        const applied = applyFreetextToPattern('YYYY-MM-DD.{freetext}.HH-mm', 'Rechnung');
+        expect(applied).toBe('YYYY-MM-DD.Rechnung.HH-mm');
+        expect(
+            formatNamingTemplate(applied, {
+                date: sampleTimestamp,
+                customText: 'Rechnung'
+            })
+        ).toBe('2026-11-18.Rechnung.12-40');
+
+        expect(applyFreetextToPattern(applied, 'Rechnung')).toBe('YYYY-MM-DD.Rechnung.HH-mm');
+        expect(containsTextSegment('2026-11-18.Mathe_Klausur.12-40', 'Mathe Klausur')).toBe(true);
     });
 });
 
@@ -121,21 +144,21 @@ describe('NamingTemplates CRUD', () => {
 
     it('adds, updates, and deletes custom naming templates', () => {
         const afterAdd = addOrUpdateNamingTemplate({
-            id: 'custom_uni',
-            name: 'LUH Vorlesung',
-            pattern: 'YY-MM-DD_LUH_HH-mm_{freitext}'
+            id: 'custom_work',
+            name: 'Work Lecture',
+            pattern: 'YY-MM-DD_WORK_HH-mm_{freitext}'
         });
-        expect(afterAdd.some((t) => t.id === 'custom_uni')).toBe(true);
+        expect(afterAdd.some((t) => t.id === 'custom_work')).toBe(true);
 
         const afterUpdate = addOrUpdateNamingTemplate({
-            id: 'custom_uni',
-            name: 'LUH Seminar',
+            id: 'custom_work',
+            name: 'Work Seminar',
             pattern: 'YYYY-MM-DD_Seminar_{freitext}'
         });
-        expect(afterUpdate.find((t) => t.id === 'custom_uni')?.name).toBe('LUH Seminar');
+        expect(afterUpdate.find((t) => t.id === 'custom_work')?.name).toBe('Work Seminar');
 
-        const afterDelete = deleteNamingTemplate('custom_uni');
-        expect(afterDelete.some((t) => t.id === 'custom_uni')).toBe(false);
+        const afterDelete = deleteNamingTemplate('custom_work');
+        expect(afterDelete.some((t) => t.id === 'custom_work')).toBe(false);
 
         resetNamingTemplatesToDefault();
     });

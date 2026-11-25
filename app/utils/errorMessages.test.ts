@@ -8,8 +8,8 @@ describe('stripTechnicalNoise', () => {
     });
 
     it('strips Java exception prefixes and stack traces', () => {
-        const raw = 'java.net.UnknownHostException: Unable to resolve host "seafile.cloud.uni-hannover.de"\n at okhttp3.internal.connection.RealConnection.connect(RealConnection.kt:123)';
-        expect(stripTechnicalNoise(raw)).toBe('Unable to resolve host "seafile.cloud.uni-hannover.de"');
+        const raw = 'java.net.UnknownHostException: Unable to resolve host "seafile.example.com"\n at okhttp3.internal.connection.RealConnection.connect(RealConnection.kt:123)';
+        expect(stripTechnicalNoise(raw)).toBe('Unable to resolve host "seafile.example.com"');
     });
 });
 

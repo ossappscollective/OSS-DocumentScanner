@@ -8,13 +8,13 @@
     import SheetHeader from '~/components/common/SheetHeader.svelte';
     import { lc } from '~/helpers/locale';
     import type { OCRDocument } from '~/models/OCRDocument';
+    import { appIcon } from '~/utils/appIcons';
     import { DOCUMENT_NAME_FORMAT, SETTINGS_DOCUMENT_NAME_FORMAT } from '~/utils/constants';
     import { showSnack } from '~/utils/ui';
     import {
         NAMING_PLACEHOLDERS,
         NamingTemplate,
         addOrUpdateNamingTemplate,
-        applyFreetextToPattern,
         deleteNamingTemplate,
         formatNamingTemplate,
         getActiveNamingPattern,
@@ -30,7 +30,7 @@
     export let initialPattern: string = null;
     export let title: string = null;
 
-    $: ({ colorOnSurfaceVariant, colorPrimary } = $colors);
+    $: ({ colorOnSurface, colorOnSurfaceVariant, colorOutlineVariant, colorPrimary, colorSurfaceContainer } = $colors);
 
     let rootView;
     let patternTextField: NativeViewElementNode<TextField>;
@@ -49,14 +49,6 @@
             ? configuredGlobalPattern
             : getActiveNamingPattern('YYYY-MM-DD.{freetext}.HH-mm');
 
-    let basePattern =
-        savedDocPattern ||
-        getActiveNamingPattern(
-            initialPattern && /freetext|freitext/i.test(initialPattern)
-                ? initialPattern
-                : 'YYYY-MM-DD.{freetext}.HH-mm'
-        );
-
     let pattern =
         initialPattern ||
         savedDocPattern ||
@@ -71,16 +63,10 @@
         }
     }
 
-    if (customText) {
-        pattern = applyFreetextToPattern(basePattern, customText);
-    }
-
     let templates: NamingTemplate[] = getNamingTemplates();
-    let selectedTemplateId: string = null;
+    let selectedTemplateId: string = templates.find((t) => t.pattern === pattern)?.id ?? null;
 
-    $: effectivePattern = customText.trim() ? applyFreetextToPattern(basePattern, customText.trim()) : pattern;
-
-    $: effectiveResultClean = formatNamingTemplate(effectivePattern, {
+    $: previewName = formatNamingTemplate(pattern, {
         date: sampleDate,
         customText,
         pageCount,
@@ -88,9 +74,7 @@
         clean: true
     });
 
-    $: previewName = effectiveResultClean;
-
-    $: resolvedDocumentName = formatNamingTemplate(effectivePattern, {
+    $: resolvedDocumentName = formatNamingTemplate(pattern, {
         date: sampleDate,
         customText,
         pageCount,
@@ -98,31 +82,33 @@
         clean: false
     });
 
-    $: valid = effectivePattern.trim().length > 0 && (document ? resolvedDocumentName.trim().length > 0 : true);
+    $: valid = pattern.trim().length > 0 && (document ? resolvedDocumentName.trim().length > 0 : true);
 
     function onCustomTextInput(newCustomText: string) {
-        customText = newCustomText;
-        pattern = customText.trim() ? applyFreetextToPattern(basePattern, customText.trim()) : basePattern;
-        if (patternTextField?.nativeView && patternTextField.nativeView.text !== pattern) {
-            patternTextField.nativeView.text = pattern;
+        customText = newCustomText ?? '';
+    }
+
+    function clearCustomText() {
+        customText = '';
+        if (customTextField?.nativeView) {
+            customTextField.nativeView.text = '';
         }
     }
 
     function onPatternInput(newPattern: string) {
-        pattern = newPattern;
-        basePattern = newPattern;
+        pattern = newPattern ?? '';
+        selectedTemplateId = templates.find((t) => t.pattern === pattern)?.id ?? null;
     }
 
     function selectTemplate(tpl: NamingTemplate) {
         selectedTemplateId = tpl.id;
-        basePattern = tpl.pattern;
+        pattern = tpl.pattern;
         if (tpl.defaultCustomText && !customText) {
             customText = tpl.defaultCustomText;
             if (customTextField?.nativeView) {
                 customTextField.nativeView.text = customText;
             }
         }
-        pattern = customText.trim() ? applyFreetextToPattern(basePattern, customText.trim()) : basePattern;
         if (patternTextField?.nativeView) {
             patternTextField.nativeView.text = pattern;
         }
@@ -130,13 +116,13 @@
 
     function insertPlaceholder(token: string) {
         const isSeparatorToken = token === '.' || token === '_' || token === '-';
-        const endsWithSeparator = /[._\-\s/]$/.test(basePattern);
-        const nextBase =
-            basePattern.length === 0 || isSeparatorToken || endsWithSeparator
-                ? `${basePattern}${token}`
-                : `${basePattern}.${token}`;
-        basePattern = nextBase;
-        pattern = customText.trim() ? applyFreetextToPattern(basePattern, customText.trim()) : basePattern;
+        const endsWithSeparator = /[._\-\s/]$/.test(pattern);
+        const nextPattern =
+            pattern.length === 0 || isSeparatorToken || endsWithSeparator
+                ? `${pattern}${token}`
+                : `${pattern}.${token}`;
+        pattern = nextPattern;
+        selectedTemplateId = templates.find((t) => t.pattern === pattern)?.id ?? null;
         if (patternTextField?.nativeView) {
             patternTextField.nativeView.text = pattern;
         }
@@ -160,6 +146,7 @@
                     pattern: pattern.trim(),
                     defaultCustomText: customText.trim() || undefined
                 });
+                selectedTemplateId = templates.find((t) => t.pattern === pattern.trim())?.id ?? null;
             }
         } catch (error) {
             showError(error);
@@ -194,10 +181,9 @@
             return;
         }
         try {
-            const cleanBase = basePattern.trim() || pattern.trim();
+            const cleanPattern = pattern.trim();
             const cleanCustom = customText.trim();
-            const finalPatternWithFreetext = cleanCustom ? applyFreetextToPattern(cleanBase, cleanCustom) : pattern.trim();
-            setActiveNamingPattern(cleanBase);
+            setActiveNamingPattern(cleanPattern);
             setDefaultCustomText(cleanCustom);
             if (document) {
                 const nextName = resolvedDocumentName.trim();
@@ -205,7 +191,7 @@
                 const extra = {
                     ...(document.extra || {}),
                     customText: cleanCustom,
-                    templatePattern: cleanBase,
+                    templatePattern: cleanPattern,
                     customRenamed: true
                 };
                 await document.save(
@@ -217,22 +203,18 @@
                     true,
                     true
                 );
-                showSnack({
-                    message: cleanCustom ? `✅ ${nextName} (Freetext: ${cleanCustom})` : `✅ ${nextName}`
-                });
+                showSnack({ message: nextName });
                 close(true);
             } else {
-                showSnack({
-                    message: cleanCustom ? `✅ ${previewName}.pdf (Freetext: ${cleanCustom})` : `✅ ${previewName}.pdf`
-                });
-                close(finalPatternWithFreetext);
+                showSnack({ message: `${previewName}.pdf` });
+                close(cleanPattern);
             }
         } catch (error) {
             showError(error);
         }
     }
 
-    // Focus the Freetext field first so the user can immediately type their custom word!
+    // Focus the Freetext field first so the user can immediately type their custom text
     onMount(() =>
         rootView.nativeView.once('shownInBottomSheet', () => {
             const field = customTextField?.nativeView || patternTextField?.nativeView;
@@ -247,55 +229,117 @@
 <gesturerootview bind:this={rootView} padding="0 0 {$windowInset.bottom + 16} 0" rows="auto,auto,auto,auto,auto,auto">
     <SheetHeader doneEnabled={valid} doneText={lc('save')} onCancel={() => close()} onDone={save} title={title || lc('rename')} />
 
-    <textfield
-        bind:this={customTextField}
-        hint={lc('custom_text_placeholder')}
-        margin="0 16 4 16"
-        returnKeyType="done"
-        row={1}
-        text={customText}
-        variant="outline"
-        on:returnPress={save}
-        on:textChange={(event) => onCustomTextInput(event['value'])} />
+    <!-- Live Filename Preview Card -->
+    <gridlayout
+        backgroundColor={colorSurfaceContainer}
+        borderColor={colorOutlineVariant}
+        borderRadius={12}
+        borderWidth={1}
+        columns="*,auto"
+        margin="4 16 10 16"
+        padding="10 12"
+        row={1}>
+        <stacklayout verticalAlignment="center">
+            <label color={colorOnSurfaceVariant} fontSize={11} fontWeight="600" text={lc('preview')} />
+            <label
+                color={colorPrimary}
+                fontSize={14}
+                fontWeight="bold"
+                marginTop={2}
+                text={document ? resolvedDocumentName : `${previewName}.pdf`}
+                textWrap={true} />
+        </stacklayout>
+        <uibutton
+            col={1}
+            height={34}
+            marginLeft={8}
+            text={lc('save_as_template')}
+            variant="text"
+            verticalAlignment="center"
+            on:tap={saveCurrentAsTemplate} />
+    </gridlayout>
 
+    <!-- Freetext Input -->
+    <gridlayout margin="0 16 8 16" row={2}>
+        <textfield
+            bind:this={customTextField}
+            accessibilityLabel={lc('freetext_label')}
+            android:height={56}
+            hint={lc('custom_text_placeholder')}
+            ios:paddingRight={customText ? 44 : undefined}
+            returnKeyType="done"
+            text={customText}
+            variant="outline"
+            on:returnPress={save}
+            on:textChange={(event) => onCustomTextInput(event['value'])} />
+        {#if customText}
+            <uibutton
+                accessibilityLabel={lc('clear')}
+                color={colorOnSurfaceVariant}
+                height={44}
+                horizontalAlignment="right"
+                padding="0"
+                variant="text"
+                verticalAlignment="center"
+                width={44}
+                {...{ src: appIcon('clear') }}
+                on:tap={clearCustomText} />
+        {/if}
+    </gridlayout>
+
+    <!-- Template Pattern Input -->
     <textfield
         bind:this={patternTextField}
+        accessibilityLabel={lc('template_pattern_label')}
+        android:height={56}
         autocapitalizationType="none"
         autocorrect={false}
         hint={lc('template_pattern_hint')}
-        margin="4 16 4 16"
+        margin="0 16 10 16"
         returnKeyType="done"
-        row={2}
+        row={3}
         text={pattern}
         variant="outline"
         on:returnPress={save}
         on:textChange={(event) => onPatternInput(event['value'])} />
 
-    <gridlayout columns="*,auto" margin="2 16 4 16" row={3}>
-        <label color={colorPrimary} fontSize={13} fontWeight="bold" text={`${lc('preview')}: ${previewName}.pdf`} textWrap={true} verticalAlignment="center" />
-        <uibutton col={1} height={30} text={lc('save_as_template')} variant="text" on:tap={saveCurrentAsTemplate} />
-    </gridlayout>
+    <!-- Saved & Default Presets -->
+    <stacklayout margin="0 0 8 0" row={4}>
+        <label color={colorOnSurfaceVariant} fontSize={12} fontWeight="600" margin="0 16 4 16" text={lc('naming_templates')} />
+        <scrollview height={40} orientation="horizontal" scrollBarIndicatorVisible={false}>
+            <stacklayout orientation="horizontal" padding="0 12">
+                {#each templates as tpl (tpl.id)}
+                    <uibutton
+                        borderRadius={16}
+                        fontSize={12}
+                        height={32}
+                        margin="2 4"
+                        padding="0 12"
+                        text={tpl.name}
+                        variant={selectedTemplateId === tpl.id || pattern === tpl.pattern ? 'contained' : 'outline'}
+                        on:tap={() => selectTemplate(tpl)}
+                        on:longPress={() => removeTemplate(tpl)} />
+                {/each}
+            </stacklayout>
+        </scrollview>
+    </stacklayout>
 
-    <scrollview height={40} margin="0 12 4 12" orientation="horizontal" row={4}>
-        <stacklayout orientation="horizontal">
-            {#each templates as tpl (tpl.id)}
-                <uibutton
-                    height={32}
-                    margin="2 4"
-                    text={tpl.name}
-                    variant={selectedTemplateId === tpl.id || pattern === tpl.pattern ? 'contained' : 'outline'}
-                    on:tap={() => selectTemplate(tpl)}
-                    on:longPress={() => removeTemplate(tpl)} />
-            {/each}
-        </stacklayout>
-    </scrollview>
-
-    <stacklayout margin="2 16 0 16" row={5}>
-        <label color={colorOnSurfaceVariant} fontSize={11} margin="0 0 4 0" text={lc('tap_placeholder_to_insert')} />
+    <!-- Placeholders -->
+    <stacklayout margin="0 16 0 16" row={5}>
+        <label color={colorOnSurfaceVariant} fontSize={12} fontWeight="600" margin="0 0 4 0" text={lc('placeholders')} />
         <wraplayout>
             {#each NAMING_PLACEHOLDERS as ph (ph.token)}
-                <uibutton height={30} margin="0 5 5 0" text={ph.label} variant="outline" on:tap={() => insertPlaceholder(ph.token)} />
+                <uibutton
+                    borderRadius={14}
+                    fontSize={12}
+                    height={30}
+                    margin="0 6 6 0"
+                    padding="0 10"
+                    text={ph.label}
+                    variant="outline"
+                    on:tap={() => insertPlaceholder(ph.token)} />
             {/each}
         </wraplayout>
+        <label color={colorOnSurfaceVariant} fontSize={11} margin="2 0 0 0" opacity={0.8} text={lc('tap_placeholder_to_insert')} textWrap={true} />
     </stacklayout>
 </gesturerootview>

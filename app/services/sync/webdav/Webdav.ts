@@ -23,11 +23,9 @@ export interface WebdavDirectoryEntry {
 
 export type WebdavSyncModeId = 'auto_keep' | 'auto_delete' | 'manual_keep' | 'manual_delete';
 
-export const LUH_SEAFILE_WEBDAV_URL = 'https://seafile.cloud.uni-hannover.de/dav';
-
 /**
- * Normalizes a WebDAV URL. If the host looks like a Seafile server (e.g. seafile.cloud.uni-hannover.de)
- * or `forceSeafile` is true and no path is given, `/dav` (for LUH) or `/seafdav` is appended automatically.
+ * Normalizes a WebDAV URL. If the host looks like a Seafile server
+ * or `forceSeafile` is true and no path is given, `/seafdav` is appended automatically.
  */
 export function normalizeWebdavUrl(rawUrl: string, forceSeafile = false): string {
     if (!rawUrl || !rawUrl.trim()) {
@@ -47,7 +45,7 @@ export function normalizeWebdavUrl(rawUrl: string, forceSeafile = false): string
         const pathPart = slashIdx === -1 ? '' : withoutProto.slice(slashIdx);
 
         if ((forceSeafile || host.includes('seafile')) && (!pathPart || pathPart === '/')) {
-            url = host.includes('uni-hannover.de') ? `${url}/dav` : `${url}/seafdav`;
+            url = `${url}/seafdav`;
         }
     } catch (_e) {
         // keep normalized url

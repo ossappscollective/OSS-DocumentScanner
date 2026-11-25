@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AuthType } from '~/webdav';
 import {
-    LUH_SEAFILE_WEBDAV_URL,
     applyWebdavSyncMode,
     createWebdavClientFromConfig,
     createWebdavConfig,
@@ -11,15 +10,15 @@ import {
 } from './Webdav';
 
 describe('normalizeWebdavUrl', () => {
-    it('automatically appends /dav for LUH seafile hosts without a path', () => {
-        expect(normalizeWebdavUrl('seafile.cloud.uni-hannover.de')).toBe(LUH_SEAFILE_WEBDAV_URL);
-        expect(normalizeWebdavUrl('https://seafile.cloud.uni-hannover.de/')).toBe(LUH_SEAFILE_WEBDAV_URL);
+    it('automatically appends /seafdav for seafile hosts without a path', () => {
+        expect(normalizeWebdavUrl('seafile.example.com')).toBe('https://seafile.example.com/seafdav');
+        expect(normalizeWebdavUrl('https://seafile.example.com/')).toBe('https://seafile.example.com/seafdav');
     });
 
     it('preserves existing /dav or /seafdav paths and strips trailing slash', () => {
-        expect(normalizeWebdavUrl('https://seafile.cloud.uni-hannover.de/dav/')).toBe(LUH_SEAFILE_WEBDAV_URL);
-        expect(normalizeWebdavUrl('https://seafile.cloud.uni-hannover.de/dav/0-inbox/')).toBe(
-            'https://seafile.cloud.uni-hannover.de/dav/0-inbox'
+        expect(normalizeWebdavUrl('https://seafile.example.com/dav/')).toBe('https://seafile.example.com/dav');
+        expect(normalizeWebdavUrl('https://seafile.example.com/dav/0-inbox/')).toBe(
+            'https://seafile.example.com/dav/0-inbox'
         );
         expect(normalizeWebdavUrl('https://seafile.example.com/seafdav/')).toBe('https://seafile.example.com/seafdav');
     });
@@ -49,13 +48,13 @@ describe('normalizeRemoteFolder', () => {
 describe('createWebdavConfig and createWebdavClientFromConfig', () => {
     it('preserves Basic Authorization header when restarting a saved password config without raw password', () => {
         const saved = createWebdavConfig({
-            remoteURL: 'https://seafile.cloud.uni-hannover.de/dav/',
+            remoteURL: 'https://seafile.example.com/dav/',
             remoteFolder: '0-inbox/',
             username: 'alice',
             password: 'secret',
             authType: AuthType.Password
         });
-        expect(saved.remoteURL).toBe(LUH_SEAFILE_WEBDAV_URL);
+        expect(saved.remoteURL).toBe('https://seafile.example.com/dav');
         expect(saved.remoteFolder).toBe('/0-inbox');
         expect(saved.headers?.Authorization).toMatch(/^Basic /);
 
