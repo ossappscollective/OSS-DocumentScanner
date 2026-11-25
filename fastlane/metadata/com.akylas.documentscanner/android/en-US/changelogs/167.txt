@@ -1,0 +1,11 @@
+Features:
+- product landing page with seo and fr localization
+
+Bug fixes:
+- restore docs build with new store screenshots
+- use ossdocumentscanner.akylas.fr as site url
+- use fastlane icons and the graphics github badge
+- pass nativeData to the sync worker message
+Code refactoring:
+- share store badges between readme and site
+- Translations update
