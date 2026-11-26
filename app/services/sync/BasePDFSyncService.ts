@@ -10,7 +10,7 @@ import { getPageColorMatrix } from '~/utils/matrix';
 import { pkpassToImage } from '~/utils/pkpass';
 import { getFileNameForDocument } from '~/utils/utils.common';
 import { FileStat } from '~/webdav';
-import type { PDFExportBaseOptions } from '../pdf/PDFCanvas';
+import { PDFExportBaseOptions, getPDFDefaultExportOptions } from '../pdf/PDFCanvas';
 import { BaseSyncService, BaseSyncServiceOptions } from './BaseSyncService';
 
 export interface BasePDFSyncServiceOptions extends BaseSyncServiceOptions {
@@ -58,7 +58,7 @@ export abstract class BasePDFSyncService extends BaseSyncService {
         }
 
         if (__ANDROID__) {
-            const exportOptions = this.exportOptions;
+            const exportOptions = this.exportOptions || getPDFDefaultExportOptions();
             const black_white = exportOptions.color === 'black_white';
             const thePages = pages.map((p) => ({ document, page: { ...p, colorMatrix: getPageColorMatrix(p, black_white ? 'grayscale' : undefined) } as OCRPage }));
             if (CARD_APP) {
@@ -111,8 +111,9 @@ export abstract class BasePDFSyncService extends BaseSyncService {
 
         await this.writePDFToFolder(document, fileName, temp, _docFolder);
         const localFilePath = path.join(temp, fileName);
-        if (File.exists(localFilePath)) {
-            return this.uploadPDF(document, localFilePath, fileName, _docFolder);
+        if (!File.exists(localFilePath)) {
+            throw new Error(`Failed to generate PDF file for upload: ${fileName}`);
         }
+        return this.uploadPDF(document, localFilePath, fileName, _docFolder);
     }
 }

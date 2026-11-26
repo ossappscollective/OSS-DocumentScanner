@@ -78,6 +78,7 @@
         SETTINGS_TRANSFORM_BATCH_SIZE,
         SETTINGS_TRASH_ENABLED,
         SETTINGS_TRASH_REMEMBERED_DELETE_MODE,
+        SHEET_PAN_SOFT_INPUT_MODE,
         TRANSFORM_BATCH_SIZE,
         USE_SYSTEM_CAMERA
     } from '~/utils/constants';
@@ -456,22 +457,32 @@
             case 'document_naming':
                 return [
                     {
-                        id: 'setting',
+                        id: 'manage_doc_naming_templates',
                         key: SETTINGS_DOCUMENT_NAME_FORMAT,
-                        useHTML: true,
                         title: lc('document_name_date_format'),
                         description: lc('document_name_date_format_desc'),
-                        full_description: lc('document_name_date_format_fulldesc', ...getNameFormatHTMLArgs()),
-                        onLinkTap: ({ link }) => {
-                            openLink(link);
+                        rightValue: () => {
+                            const pat = ApplicationSettings.getString(SETTINGS_DOCUMENT_NAME_FORMAT, DOCUMENT_NAME_FORMAT);
+                            return pat;
                         },
-                        valueType: 'string',
-                        textFieldProperties: {
-                            autocapitalizationType: 'none',
-                            autocorrect: false
-                        } as TextFieldProperties,
-                        rightValue: () => ApplicationSettings.getString(SETTINGS_DOCUMENT_NAME_FORMAT, DOCUMENT_NAME_FORMAT),
-                        type: 'prompt'
+                        onTap: async () => {
+                            const RenameDocumentSheet = (await import('~/components/view/RenameDocumentSheet.svelte')).default;
+                            const chosenPattern = await showBottomSheet({
+                                view: RenameDocumentSheet,
+                                windowSoftInputMode: SHEET_PAN_SOFT_INPUT_MODE,
+                                ignoreTopSafeArea: true,
+                                props: {
+                                    initialPattern: ApplicationSettings.getString(SETTINGS_DOCUMENT_NAME_FORMAT, DOCUMENT_NAME_FORMAT),
+                                    title: lc('document_name_date_format')
+                                }
+                            });
+                            if (typeof chosenPattern === 'string' && chosenPattern.trim()) {
+                                ApplicationSettings.setString(SETTINGS_DOCUMENT_NAME_FORMAT, chosenPattern.trim());
+                                ApplicationSettings.setString(SETTINGS_FILE_NAME_FORMAT, chosenPattern.trim());
+                                refresh?.(true);
+                                return true;
+                            }
+                        }
                     },
                     {
                         type: 'sectionheader',
@@ -479,22 +490,31 @@
                     },
                     switchItem(SETTINGS_FILE_NAME_USE_DOCUMENT_NAME, FILENAME_USE_DOCUMENT_NAME, lc('filename_use_document_name')),
                     {
-                        id: 'setting',
+                        id: 'manage_export_naming_templates',
                         key: SETTINGS_FILE_NAME_FORMAT,
-                        useHTML: true,
                         title: lc('filename_date_format'),
                         description: lc('filename_date_format_desc'),
-                        full_description: lc('filename_date_format_fulldesc', ...getNameFormatHTMLArgs()),
-                        onLinkTap: ({ link }) => {
-                            openLink(link);
+                        rightValue: () => {
+                            const pat = ApplicationSettings.getString(SETTINGS_FILE_NAME_FORMAT, FILENAME_DATE_FORMAT);
+                            return pat;
                         },
-                        valueType: 'string',
-                        textFieldProperties: {
-                            autocapitalizationType: 'none',
-                            autocorrect: false
-                        } as TextFieldProperties,
-                        rightValue: () => ApplicationSettings.getString(SETTINGS_FILE_NAME_FORMAT, FILENAME_DATE_FORMAT),
-                        type: 'prompt'
+                        onTap: async () => {
+                            const RenameDocumentSheet = (await import('~/components/view/RenameDocumentSheet.svelte')).default;
+                            const chosenPattern = await showBottomSheet({
+                                view: RenameDocumentSheet,
+                                windowSoftInputMode: SHEET_PAN_SOFT_INPUT_MODE,
+                                ignoreTopSafeArea: true,
+                                props: {
+                                    initialPattern: ApplicationSettings.getString(SETTINGS_FILE_NAME_FORMAT, FILENAME_DATE_FORMAT),
+                                    title: lc('filename_date_format')
+                                }
+                            });
+                            if (typeof chosenPattern === 'string' && chosenPattern.trim()) {
+                                ApplicationSettings.setString(SETTINGS_FILE_NAME_FORMAT, chosenPattern.trim());
+                                refresh?.(true);
+                                return true;
+                            }
+                        }
                     }
                 ];
             case 'storage':

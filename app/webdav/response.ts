@@ -1,21 +1,33 @@
 import { HTTPError } from '@akylas/nativescript-app-utils/error';
 import { parseRawXML } from './tools/dav';
 import { Response, ResponseDataDetailed, WebDAVClientContext } from './types';
-import { lc } from '@nativescript-community/l';
 import { RequestResponse } from '~/services/api';
+import { toFriendlyError } from '~/utils/errorMessages';
 
 export async function createErrorFromResponse(response: RequestResponse, requestParams, prefix: string = '') {
-    const serverResponse = await response.text();
-    const result = await parseRawXML(serverResponse);
-
-    let error = result.error?.message;
-    if (!error && result.html) {
-        error = result.html?.head?.title + (result.html?.body?.p ? ': ' + result.html?.body?.p : '');
+    let rawErrorText = '';
+    try {
+        const serverResponse = await response.text();
+        const result = await parseRawXML(serverResponse);
+        rawErrorText = result?.error?.message || '';
+        if (!rawErrorText && result?.html) {
+            rawErrorText = (result.html?.head?.title || '') + (result.html?.body?.p ? ': ' + result.html?.body?.p : '');
+        }
+        if (!rawErrorText) {
+            rawErrorText = serverResponse || '';
+        }
+    } catch (_e) {
+        // ignore XML parse errors on empty or non-XML responses
     }
+    const friendly = toFriendlyError(
+        { statusCode: response.statusCode, message: rawErrorText, requestParams },
+        response.statusCode,
+        { url: requestParams?.url, method: requestParams?.method }
+    );
     return new HTTPError({
         statusCode: response.statusCode,
-        title: lc('webdav_error'),
-        message: prefix + (error || serverResponse),
+        title: friendly.title,
+        message: prefix ? `${prefix}: ${friendly.message}` : friendly.message,
         requestParams
     });
 }

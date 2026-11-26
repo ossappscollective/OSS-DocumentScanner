@@ -7,6 +7,9 @@ import { CreateDirectoryOptions, FileStat, WebDAVClientContext } from '../types'
 import { getStat } from './stat';
 
 export async function createDirectory(context: WebDAVClientContext, dirPath: string, options: CreateDirectoryOptions = {}) {
+    if (!dirPath || dirPath === SEPARATOR || dirPath === '.') {
+        return;
+    }
     if (options.recursive === true) return createDirectoryRecursively(context, dirPath, options);
     const requestOptions = prepareRequestOptions(
         {
@@ -17,7 +20,16 @@ export async function createDirectory(context: WebDAVClientContext, dirPath: str
         options
     );
     const response = await request(requestOptions);
-    await handleResponseCode(context, response, requestOptions);
+    try {
+        await handleResponseCode(context, response, requestOptions);
+    } catch (err) {
+        const error = err as HTTPError;
+        // 405 Method Not Allowed on MKCOL indicates the collection already exists (e.g. Seafile / WsgiDAV)
+        if (error?.statusCode === 405) {
+            return;
+        }
+        throw err;
+    }
 }
 
 /**
@@ -54,7 +66,7 @@ async function createDirectoryRecursively(context: WebDAVClientContext, dirPath:
             continue;
         }
         try {
-            const testStat = (await getStat(context, testPath)) as FileStat;
+            const testStat = (await getStat(context, ensureCollectionPath(testPath))) as FileStat;
             if (testStat.type !== 'directory') {
                 throw new Error(`Path includes a file: ${dirPath}`);
             }
@@ -66,6 +78,9 @@ async function createDirectoryRecursively(context: WebDAVClientContext, dirPath:
                     ...options,
                     recursive: false
                 });
+            } else if ((error.statusCode === 403 || error.statusCode === 405) && testPath !== paths[paths.length - 1]) {
+                // Some servers restrict PROPFIND on intermediate mount points; proceed to deeper segments
+                continue;
             } else {
                 throw err;
             }

@@ -30,12 +30,23 @@ function getParser(): XMLParser {
 
 function getPropertyOfType(obj: object, prop: string, type: PropertyType = PropertyType.Original): any {
     const val = nestedProp.get(obj, prop);
-    if (type === 'array' && Array.isArray(val) === false) {
-        return [val];
+    if (type === 'array') {
+        if (val === undefined || val === null) {
+            return [];
+        }
+        return Array.isArray(val) ? val : [val];
     } else if (type === 'object' && Array.isArray(val)) {
         return val[0];
     }
     return val;
+}
+
+function selectPreferredPropstat(propstatValue: any): any {
+    if (!Array.isArray(propstatValue)) {
+        return propstatValue;
+    }
+    const okPropstat = propstatValue.find((entry) => entry && /\b200\b/.test(String(entry.status || '')));
+    return okPropstat || propstatValue[0];
 }
 
 function normaliseResponse(response: any): DAVResultResponse {
@@ -44,7 +55,8 @@ function normaliseResponse(response: any): DAVResultResponse {
     if (output.status) {
         nestedProp.set(output, 'status', getPropertyOfType(output, 'status', PropertyType.Object));
     } else {
-        nestedProp.set(output, 'propstat', getPropertyOfType(output, 'propstat', PropertyType.Object));
+        const preferredPropstat = selectPreferredPropstat(nestedProp.get(output, 'propstat'));
+        nestedProp.set(output, 'propstat', preferredPropstat);
         nestedProp.set(output, 'propstat.prop', getPropertyOfType(output, 'propstat.prop', PropertyType.Object));
     }
     return output;
@@ -99,7 +111,7 @@ export function parseRawXML(xml: string): Promise<any> {
 
 export function prepareFileFromProps(props: DAVResultResponseProps, rawFilename: string, isDetailed: boolean = false): FileStat {
     // Last modified time, raw size, item type and mime
-    const { getcontentlength: rawSize = '0', getcontenttype: mimeType, getetag: etag, getlastmodified, resourcetype: resourceType } = props;
+    const { getcontentlength: rawSize = '0', getcontenttype: mimeType, getetag: etag, getlastmodified, resourcetype: resourceType } = props || ({} as DAVResultResponseProps);
     const type = resourceType && typeof resourceType === 'object' && typeof resourceType.collection !== 'undefined' ? 'directory' : 'file';
     const filename = decodeHTMLEntities(rawFilename);
     const stat: FileStat = {
@@ -146,7 +158,7 @@ export function parseStat(result: DAVResult, filename: string, isDetailed: boole
     } = responseItem;
 
     // As defined in https://tools.ietf.org/html/rfc2068#section-6.1
-    const [_, statusCodeStr, statusText] = statusLine.split(' ', 3);
+    const [_, statusCodeStr, statusText] = String(statusLine || '').split(' ', 3);
     const statusCode = parseInt(statusCodeStr, 10);
     if (statusCode >= 400) {
         // const err: WebDAVClientError = new Error(`Invalid response: ${statusCode} ${statusText}`) as WebDAVClientError;

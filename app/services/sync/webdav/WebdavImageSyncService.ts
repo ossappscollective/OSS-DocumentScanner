@@ -4,9 +4,9 @@ import { networkService } from '~/services/api';
 import { DocumentEvents } from '~/services/documents';
 import { BaseImageSyncService, BaseImageSyncServiceOptions } from '~/services/sync/BaseImageSyncService';
 import { SERVICES_SYNC_MASK } from '~/services/sync/types';
-import { WebdavSyncOptions } from '~/services/sync/webdav/Webdav';
+import { WebdavSyncOptions, createWebdavClientFromConfig, normalizeRemoteFolder } from '~/services/sync/webdav/Webdav';
 import { saveImage } from '~/utils/utils';
-import { AuthType, FileStat, WebDAVClient, createClient } from '~/webdav';
+import { FileStat, WebDAVClient } from '~/webdav';
 
 export interface WebdavImageSyncServiceOptions extends BaseImageSyncServiceOptions, WebdavSyncOptions {}
 
@@ -27,22 +27,22 @@ export class WebdavImageSyncService extends BaseImageSyncService {
 
     static start(config?: { id: number; [k: string]: any }) {
         if (config) {
-            const { authType, headers, remoteURL, ...otherConfig } = config;
             const service = WebdavImageSyncService.getOrCreateInstance();
-            Object.assign(service, config);
+            Object.assign(service, config, { remoteFolder: normalizeRemoteFolder(config.remoteFolder) });
             DEV_LOG && console.log('WebdavImageSyncService', 'start', JSON.stringify(config), service.autoSync);
-            service.client = createClient(remoteURL, {
-                headers,
-                authType: !authType || authType === AuthType.Password ? AuthType.None : authType,
-                ...otherConfig
-            });
+            service.client = createWebdavClientFromConfig(config);
             return service;
         }
     }
     override stop() {}
     override async ensureRemoteFolder(remoteFolder = this.remoteFolder) {
-        if (!(await this.client.exists(remoteFolder))) {
-            return this.client.createDirectory(remoteFolder, { recursive: true });
+        const normalized = normalizeRemoteFolder(remoteFolder);
+        if (!normalized || normalized === '/') {
+            return;
+        }
+        const collectionPath = normalized.endsWith('/') ? normalized : `${normalized}/`;
+        if (!(await this.client.exists(collectionPath))) {
+            return this.client.createDirectory(normalized, { recursive: true });
         }
     }
     override async getRemoteFolderFiles(relativePath: string) {
