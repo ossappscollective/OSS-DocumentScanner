@@ -130,6 +130,16 @@
         }
     }
 
+    // Android: a text scrolls to its cursor when the sheet gets smaller. The cursor goes to the first visible line
+    function onDragStart() {
+        const editText = editing ? null : textView?.nativeView?.nativeTextViewProtected;
+        const layout = editText?.getLayout();
+        if (layout) {
+            textView.nativeView.clearFocus();
+            editText.setSelection(layout.getLineStart(layout.getLineForVertical(editText.getScrollY())));
+        }
+    }
+
     function toggleShowTextOnImage() {
         viewState.update((state) => ({ ...state, showText: !state.showText }));
     }
@@ -214,7 +224,7 @@
             <appBarItem ios.position="right" prominent={editing} text={editing ? lc('done') : lc('edit')} on:tap={toggleEditing} />
         {/if}
     </appBar>
-    <PageSheetLayout scrollAtAnyStep={true} scrollViewId="ocrText" stepIndex={START_STEP_INDEX} {steps} bind:sheet on:animated={revealSelection} on:stepIndexChange={onStepIndexChange}>
+    <PageSheetLayout scrollAtAnyStep={true} scrollViewId="ocrText" stepIndex={START_STEP_INDEX} {steps} bind:sheet on:animated={revealSelection} on:dragStart={onDragStart} on:stepIndexChange={onStepIndexChange}>
         <gridlayout slot="content" class="pageContent" height="100%" width="100%">
             <pager {items} selectedIndex={currentIndex} on:selectedIndexChange={onSelectedIndex}>
                 <Template let:item>

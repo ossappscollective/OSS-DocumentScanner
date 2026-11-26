@@ -29,7 +29,7 @@
         </gridlayout>
     </gridlayout>
 {:else}
-    <bottomsheet bind:this={sheet} {scrollAtAnyStep} {scrollViewId} {stepIndex} {steps} {translationFunction} dragToss={0.3} on:animated on:stepIndexChange on:layoutChanged>
+    <bottomsheet bind:this={sheet} {scrollAtAnyStep} {scrollViewId} {stepIndex} {steps} {translationFunction} dragToss={0.3} on:animated on:dragStart on:stepIndexChange on:layoutChanged>
         <slot name="content" />
         <slot name="sheet" />
     </bottomsheet>
