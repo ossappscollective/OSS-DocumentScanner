@@ -8,6 +8,12 @@
     export let sheet: NativeViewElementNode<PersistentBottomSheet> = null;
     /** landscape: the panel takes half of the width, or nothing */
     export let panelOpen = true;
+    // explicit props, not `{...$$restProps}`: svelte re-applies all the rest props on every re-render of the slots, and the sheet went back to its first step
+    export let stepIndex: number;
+    export let steps: number[];
+    export let scrollViewId: string;
+    export let scrollAtAnyStep = false;
+    export let translationFunction: PersistentBottomSheet['translationFunction'] = undefined;
     // iOS: the panel goes under the home indicator like the sheet does in portrait
     const bottomInset = getIOSBottomInset();
 </script>
@@ -23,7 +29,7 @@
         </gridlayout>
     </gridlayout>
 {:else}
-    <bottomsheet bind:this={sheet} {...$$restProps} on:animated on:stepIndexChange on:layoutChanged>
+    <bottomsheet bind:this={sheet} {scrollAtAnyStep} {scrollViewId} {stepIndex} {steps} {translationFunction} dragToss={0.3} on:animated on:stepIndexChange on:layoutChanged>
         <slot name="content" />
         <slot name="sheet" />
     </bottomsheet>

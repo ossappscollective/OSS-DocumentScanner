@@ -134,26 +134,6 @@
         viewState.update((state) => ({ ...state, showText: !state.showText }));
     }
 
-    // Android: `editable=false` also makes the text not focusable, clickable and long clickable, and `setTextIsSelectable(true)` does nothing when the text is already selectable
-    function makeSelectable(view = textView?.nativeView) {
-        if (__ANDROID__) {
-            const editText = view?.nativeTextViewProtected;
-            if (editText) {
-                editText.setTextIsSelectable(true);
-                editText.setShowSoftInputOnFocus(false);
-                editText.setFocusable(true);
-                editText.setFocusableInTouchMode(true);
-                editText.setClickable(true);
-                editText.setLongClickable(true);
-            }
-        }
-    }
-    // the native view applies `editable` after it is loaded
-    function onTextViewLoaded(event: { object?: any }) {
-        makeSelectable(event.object);
-        setTimeout(() => makeSelectable(), 500);
-    }
-
     async function toggleEditing() {
         editing = !editing;
         await tick();
@@ -161,11 +141,9 @@
             if (stepIndex < EDIT_STEP_INDEX) {
                 sheet?.nativeView?.animateStepIndex(EDIT_STEP_INDEX);
             }
-            textView?.nativeView?.nativeTextViewProtected?.setShowSoftInputOnFocus?.(true);
             textView?.nativeView?.focus();
         } else {
             textView?.nativeView?.blur();
-            makeSelectable();
         }
     }
 
@@ -264,7 +242,6 @@
                 row={2}
                 {text}
                 variant="none"
-                on:loaded={onTextViewLoaded}
                 on:textChange={(e) => onTextChange(e.value)} />
         </PersistentSheetFrame>
     </PageSheetLayout>
